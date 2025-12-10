@@ -17,6 +17,9 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth.Net;
 
+// TODO: optimize, wildly
+// change to serialized messages and deserialized ones, like
+// new SyncLivesMessage(player: 1, lives: 2) or something
 /// <summary>
 /// Holds the keys to all of what happens through the networking of the game.
 /// </summary>
@@ -32,8 +35,8 @@ public static class NetPlay {
 
     /// <summary>Takes in the client's mapped client ID (<see cref="Client.Id"/>) and returns its real ID (<see cref="NetPeer.Id"/>).</summary>
     public static Dictionary<int, int> ReversePeerMap { get; set; } = [];
-    /// <summary>Whether or not to log packets going out or coming in.</summary>
 
+    /// <summary>Whether or not to log packets going out or coming in.</summary>
     public static bool DoPacketLogging = false;
 
     public static string? ServerName;
@@ -147,11 +150,10 @@ public static class NetPlay {
             case PacketID.SyncSeeds:
                 var millis = reader.GetInt();
                 Server.RandSeed = millis;
-                // ChatSystem.SendMessage("Seed synced: " + millis, Color.Lime);
                 break;
             case PacketID.SendCommandUsage:
                 var cmd = reader.GetString();
-                ChatSystem.SendMessage(cmd, Color.White, "cmd_sync");
+                TankGame.IngameConsole.ProcessCommand(cmd, false);
                 break;
             case PacketID.SendCampaign:
                 var campaign = new Campaign();

@@ -1,21 +1,41 @@
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals;
-using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.Net;
-using TanksRebirth.Internals.Common;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI;
 
 public static class GameSceneUI {
-    public static void Initialize() {
-        // put any initialization logic here if needed
+    public static bool DrawingEnabled = true;
+    static GameSceneUI() {
+        // any init logic
     }
+    public static void DrawAll() {
+        if (!DrawingEnabled) return;
+
+        if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
+            var xpBar = GameHandler.ExpBar;
+            xpBar.Position = new(WindowUtils.WindowWidth / 2 - xpBar.Scale.X / 2, 50);
+            xpBar.Scale = new(600, 20);
+            xpBar.Alignment = Anchor.LeftCenter;
+            xpBar.FillColor = Color.Green;
+            xpBar.EmptyColor = Color.Red;
+            xpBar.GainedColor = Color.Lime;
+            xpBar.Render(TankGame.SpriteRenderer);
+        }
+
+        DrawScores();
+        DrawMissionInfoBar();
+    }
+
     public static void DrawScores() {
         // TODO: probably make it where single player can use controllers
         // make a ui for that later xd im too FUCKING TIRED rn
@@ -59,7 +79,7 @@ public static class GameSceneUI {
     }
 
     // helpers
-    private static void DrawScore(Color color, int score, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
+    static void DrawScore(Color color, int score, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
         color = ColorUtils.ChangeColorBrightness(color, 0.25f);
         var brighterColor = ColorUtils.ChangeColorBrightness(color, 0.5f);
 

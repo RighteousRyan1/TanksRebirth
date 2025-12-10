@@ -4,13 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
-using static StbVorbisSharp.StbVorbis;
 
 namespace TanksRebirth.GameContent.UI;
 
+// rename?
 public static class GraphicsUI {
     public static UITextButton PPLButton;
     public static UITextButton VSyncBtn;
@@ -142,6 +144,7 @@ public static class GraphicsUI {
 
         FadeTracksBtn.OnLeftClick = (uiElement) => {
             TankGame.Settings.FadeFootprints = !TankGame.Settings.FadeFootprints;
+            TankFootprint.ShouldTracksFade = TankGame.Settings.FadeFootprints;
             FadeTracksBtn.Text = TankGame.GameLanguage.FadeTracks + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.FadeFootprints);
         };
 
@@ -154,6 +157,8 @@ public static class GraphicsUI {
         MenuGameplayBtn.OnLeftClick = (uiElement) => {
             TankGame.Settings.MenuGameplayEnabled = !TankGame.Settings.MenuGameplayEnabled;
             MenuGameplayBtn.Text = TankGame.GameLanguage.MenuGameplay + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.MenuGameplayEnabled);
+
+            if (!MainMenuUI.IsActive) return;
             foreach (var tank in GameHandler.AllTanks) {
                 tank?.Remove(true);
             }

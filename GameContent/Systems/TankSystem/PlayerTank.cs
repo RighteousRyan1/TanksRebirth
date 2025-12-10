@@ -275,23 +275,23 @@ public class PlayerTank : Tank {
             return;
         }
 
-        if (NetPlay.IsClientMatched(PlayerId)) {
-            if (!Properties.Stationary && CurShootStun <= 0 && CurMineStun <= 0) {
-                switch (InputMethod) {
-                    case PlayerInput.Gamepad:
-                        ControlHandle_Gamepad();
-                        break;
-                    case PlayerInput.KBM:
-                        ControlHandle_Keybinding();
-                        break;
-                    case PlayerInput.Wiimote:
-                        ControlHandle_Wiimote(WiimoteSystem.State);
-                        break;
+        if (!TankGame.MouseUIHover) {
+            if (NetPlay.IsClientMatched(PlayerId)) {
+                if (!Properties.Stationary && CurShootStun <= 0 && CurMineStun <= 0) {
+                    switch (InputMethod) {
+                        case PlayerInput.Gamepad:
+                            ControlHandle_Gamepad();
+                            break;
+                        case PlayerInput.KBM:
+                            ControlHandle_Keybinding();
+                            break;
+                        case PlayerInput.Wiimote:
+                            ControlHandle_Wiimote(WiimoteSystem.State);
+                            break;
+                    }
                 }
-            }
 
-            if (InputUtils.CanDetectClick() && UsesKeyboard) {
-                if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused) {
+                if (InputUtils.CanDetectClick() && UsesKeyboard) {
                     Shoot(false);
                 }
             }

@@ -36,7 +36,7 @@ public class GameHandler {
     public static event PostUpdate? OnPostUpdate;
 
     public static ParticleManager Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
-    public static XpBar ExperienceBar;
+    public static XpBar ExpBar;
 
     public static byte ActiveTankCount;
     public static byte ActiveAITankCount;
@@ -58,17 +58,16 @@ public class GameHandler {
         AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
         AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
-        ExperienceBar = new() {
+        ExpBar = new() {
             Level = (ushort)TankGame.SaveFile.ExpLevel
         };
-        ExperienceBar.Value = TankGame.SaveFile.ExpLevel - ExperienceBar.Level;
-        ExperienceBar.ApproachValue = ExperienceBar.Value;
+        ExpBar.Value = TankGame.SaveFile.ExpLevel - ExpBar.Level;
+        ExpBar.ApproachValue = ExpBar.Value;
 
-        ExperienceBar.Alignment = Anchor.LeftCenter;
-        ExperienceBar.FillColor = Color.Lime;
-        ExperienceBar.EmptyColor = Color.Red;
+        ExpBar.Alignment = Anchor.LeftCenter;
+        ExpBar.FillColor = Color.Lime;
+        ExpBar.EmptyColor = Color.Red;
 
-        GameSceneUI.Initialize();
         CosmeticsUI.Initialize();
     }
 
@@ -103,7 +102,7 @@ public class GameHandler {
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
             doTestWithFont();*/
 
-        ExperienceBar.Update();
+        ExpBar.Update();
 
         CosmeticsUI.Update();
         RoomScene.Update();
@@ -208,16 +207,6 @@ public class GameHandler {
 
     internal static void RenderAll() {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
-
-        if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
-            ExperienceBar.Position = new(WindowUtils.WindowWidth / 2 - ExperienceBar.Scale.X / 2, 50);
-            ExperienceBar.Scale = new(600, 20);
-            ExperienceBar.Alignment = Anchor.LeftCenter;
-            ExperienceBar.FillColor = Color.Green;
-            ExperienceBar.EmptyColor = Color.Red;
-            ExperienceBar.GainedColor = Color.Lime;
-            ExperienceBar.Render(TankGame.SpriteRenderer);
-        }
         
         // CHECK: move this back if necessary
         GameScene.RenderWorldModels();

@@ -346,6 +346,8 @@ public static class IntermissionSystem {
             Alpha = 0f;
         }
 
+        if (!CampaignGlobals.ShouldMissionsProgress) return;
+
         // System.Diagnostics.Debug.WriteLine($"{IntermissionAnimator.ElapsedTime} - {IntermissionAnimator.CurrentInterpolation}");
         // TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB

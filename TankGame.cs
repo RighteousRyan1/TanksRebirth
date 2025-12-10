@@ -59,6 +59,7 @@ public class TankGame : Game {
 
     public static bool IsCrashInfoVisible;
     bool _wasActive;
+    public static bool MouseUIHover;
 
     // ### STRUCTURES / CLASSES ###
 
@@ -82,7 +83,7 @@ public class TankGame : Game {
     public static Stopwatch CurrentSessionTimer = new();
 
     /// <summary>Counts the average FPS over the entire lifespan of the process/game.</summary>
-    public static readonly FpsTracker ProcessLifetimeFpsTracker = new();
+    public static readonly FpsTracker FPSTracker = new();
     public readonly GraphicsDeviceManager Graphics;
 
     public static OrthographicCamera OrthographicCamera;
@@ -110,6 +111,8 @@ public class TankGame : Game {
     public delegate void OnResolutionChangedDelegate(int newX, int newY);
     public static event OnResolutionChangedDelegate OnResolutionChanged;
 
+    public static GameConsole IngameConsole;
+
     /// <summary>A queue of actions to be taken on the main thread.
     /// <br></br>This is particularly useful for performing things on the main thread when you are processing on other threads.</summary>
     public static ConcurrentQueue<Action> MainThreadTasks = [];
@@ -123,6 +126,8 @@ public class TankGame : Game {
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Backup"));
         ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "tanks_rebirth_client");
+        IngameConsole = new GameConsole(this);
+        ClientLog.OnLogWrite += WriteToIngameConsole;
 
         // logging speaks for itself
         Task.Run(() => {
@@ -181,6 +186,18 @@ public class TankGame : Game {
             LogType.Info);
     }
 
+    private void WriteToIngameConsole(string data, LogType logType) {
+        var color = logType switch {
+            LogType.Info => Color.Orange,
+            LogType.Warn => Color.IndianRed,
+            LogType.ErrorFatal => Color.Red,
+            LogType.ErrorSilent => Color.OrangeRed,
+            LogType.Debug => Color.MediumPurple,
+            _ => Color.Green
+        };
+        IngameConsole?.Log($"[{logType}] " + data, color);
+    }
+
     protected override void Initialize() {
         try {
             if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
@@ -211,17 +228,14 @@ public class TankGame : Game {
             SpriteRenderer = new(GraphicsDevice);
 
             Graphics.PreferMultiSampling = true;
-
             Graphics.ApplyChanges();
 
             ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
-
             ClientLog.Write($"Loaded save data.", LogType.Info);
 
             VanillaAchievements.InitializeToRepository();
-
+            ClientLog.Write("Loaded achievements.", LogType.Info);
             IntermissionSystem.InitializeAllStartupLogic();
-
             TextureGlobals.Populate();
 
             VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
@@ -229,9 +243,10 @@ public class TankGame : Game {
             AIManager.AIThread1.Start();
             AIManager.AIThread2.Start();
             AIManager.AIThread3.Start();
+            ClientLog.Write("Tank AI Threads started.", LogType.Info);
 
             // add the main player in when loading
-            PlayerMice.Add(0, new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue));
+            PlayerMice.Add(PlayerID.Blue, new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue));
 
             Client.OnClientStart += UpdateMainClientMouse;
 
@@ -246,10 +261,12 @@ public class TankGame : Game {
     }
 
     private void InputUtils_OnGamePadDisconnected(int player) {
+        ClientLog.Write($"Gamepad disconnected from player {player}.", LogType.Info);
         PlayerMice.Remove(player + 1);
     }
 
     private void InputUtils_OnGamePadConnected(int player) {
+        ClientLog.Write($"Gamepad connected, controlling player {player}.", LogType.Info);
         PlayerMice.Add(player + 1, new RebirthMouse(PlayerID.PlayerTankColors[player + 1], PlayerID.PlayerTankColorsBright[player + 1], player + 1));
         PlayerMice[player + 1].Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * (player + 1);
     }
@@ -271,7 +288,7 @@ public class TankGame : Game {
         JsonSerializerOptions opts = new() { WriteIndented = true };
         SettingsHandler.Serialize(opts, true);
 
-        SaveFile.ExpLevel = GameHandler.ExperienceBar.Level + GameHandler.ExperienceBar.Value;
+        SaveFile.ExpLevel = GameHandler.ExpBar.Level + GameHandler.ExpBar.Value;
         SaveFile.Serialize();
 
         WiimoteSystem.TryDisconnect();
@@ -285,7 +302,7 @@ public class TankGame : Game {
 
         // write end-life metrics
 
-        ClientLog.Write($"Average overall FPS: {ProcessLifetimeFpsTracker.AverageFPS}", LogType.Info);
+        ClientLog.Write($"Average overall FPS: {FPSTracker.AverageFPS}", LogType.Info);
         ClientLog.Write($"Session time: {CurrentSessionTimer.Elapsed.StringFormat()}", LogType.Info);
 
         ClientLog.Dispose();
@@ -423,11 +440,11 @@ public class TankGame : Game {
 
                     profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
-                    ChatSystem.SendMessage(ramr, Color.White);
-                    ChatSystem.SendMessage(gpur, Color.White);
-                    ChatSystem.SendMessage(cpur, Color.White);
+                    //ChatSystem.SendMessage(ramr, Color.White);
+                    //ChatSystem.SendMessage(gpur, Color.White);
+                    //ChatSystem.SendMessage(cpur, Color.White);
 
-                    ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+                    // ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
 
                     ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
                 }
@@ -543,14 +560,13 @@ public class TankGame : Game {
             MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
 
             MainMenuUI.Open();
-
             ModLoader.LoadMods();
 
             if (ModLoader.IsLoadingMods) {
                 MainMenuUI.MenuState = MainMenuUI.UIState.LoadingMods;
                 Task.Run(async () => {
                     while (ModLoader.IsLoadingMods)
-                        await Task.Delay(50).ConfigureAwait(false);
+                        await Task.Delay(RuntimeData.LogicTime).ConfigureAwait(false);
                     MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
                 });
             }
@@ -560,11 +576,14 @@ public class TankGame : Game {
             ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
             ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
 
+            if (SteamworksUtils.IsInitialized) {
+                ClientLog.Write($"Steam Active, username: {SteamworksUtils.MyUsername} with {SteamworksUtils.FriendsCount} friends.", LogType.Info);
+            }
+
             s.Stop();
 
             // it isnt really an autoupdater tho.
             Task.Run(() => {
-                ClientLog.Write("Checking for update...", LogType.Info);
                 AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", RuntimeData.GameVersion);
 
                 if (!AutoUpdater.IsOutdated) {
@@ -589,6 +608,11 @@ public class TankGame : Game {
     // FIXME: this method is a clusterfuck
     protected override void Update(GameTime gameTime) {
         try {
+            MouseUIHover = false;
+
+            if (GameUI.Paused)
+                MouseUIHover = true;
+            IngameConsole.Update(gameTime);
             /*if (Debugger.IsAttached) {
                 SteamworksUtils.SetSteamStatus("balls", "inspector");
                 SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
@@ -836,7 +860,10 @@ public class TankGame : Game {
 
         DrawNonInteractiveUI();
 
-        DrawInteractiveUI();
+        DrawInteractiveUI(gameTime);
+
+        if (IngameConsole.IsOpen)
+            IngameConsole.Draw(SpriteRenderer, FontGlobals.RebirthFont);
 
         DrawCursors();
 
@@ -847,7 +874,7 @@ public class TankGame : Game {
 
         // we only want to track frames where the game is active because if they aren't tabbed into the game, it locks to ~42fps
         if (IsActive)
-            ProcessLifetimeFpsTracker.Update(gameTime.ElapsedGameTime.TotalSeconds);
+            FPSTracker.Update(gameTime.ElapsedGameTime.TotalSeconds);
     }
     private static void DrawErrorScreen() {
         SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], WindowUtils.ScreenRect, Color.Blue);
@@ -875,7 +902,7 @@ public class TankGame : Game {
             TankMusicSystem.ResumeAll();
         }
     }
-    public static void DrawInteractiveUI() {
+    public static void DrawInteractiveUI(GameTime gameTime) {
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
         // if (LevelEditorUI.Active) LevelEditorUI.Render();
@@ -890,8 +917,10 @@ public class TankGame : Game {
         IntermissionSystem.Draw(SpriteRenderer);
 
         // hardcode hell. but whatever
-        if (!LevelEditorUI.IsActive && MainMenuUI.MenuState != MainMenuUI.UIState.ModsMenu)
+        if (!LevelEditorUI.IsActive && MainMenuUI.MenuState != MainMenuUI.UIState.ModsMenu) {
             ChatSystem.DrawMessages();
+            ChatSystem.Update(gameTime);
+        }
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
@@ -912,15 +941,20 @@ public class TankGame : Game {
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
 
-        if (Debugger.IsAttached) SpriteRenderer.DrawString(FontGlobals.RebirthFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
+        if (Debugger.IsAttached) {
+            var font = FontGlobals.RebirthFont;
+            var msg = "DEBUGGER ATTACHED";
+            var measure = font.MeasureString(msg);
+            SpriteRenderer.DrawString(font, msg, WindowUtils.WindowBottom, Color.Red, new Vector2(0.8f), origin: new Vector2(measure.X / 2, measure.Y));
+        }
+
         DebugManager.DrawDebug(SpriteRenderer);
         DebugManager.DrawDebugMetrics();
         Speedrun.DrawSpeedrunHUD(SpriteRenderer);
 
         var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults;
         if (shouldSeeInfo) {
-            GameSceneUI.DrawScores();
-            GameSceneUI.DrawMissionInfoBar();
+            GameSceneUI.DrawAll();
         }
 
         SpriteRenderer.End();

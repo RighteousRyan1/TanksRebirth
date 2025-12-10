@@ -177,7 +177,7 @@ public static class RoomScene {
     public static OggAudio ChimeS5;
     public static OggAudio ChimeHour;
 
-    public static Vector3 ClockAudioPosition = new(1663.5045f, 850.9713f, -65.44688f);
+    public static readonly Vector3 ClockAudioPosition = new(1663.5045f, 850.9713f, -65.44688f);
 
     public static float HourHandRotation;
     public static float MinuteHandRotation;
@@ -271,7 +271,7 @@ public static class RoomScene {
         //var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
         HourHandRotation = TimeUtils.InterpolateHourToDay(DateTime.Now);
         MinuteHandRotation = TimeUtils.InterpolateMinuteToHour(DateTime.Now);
-        PendulumRotation = MathHelper.Pi / 32 * TimeUtils.SineForSecond(DateTime.Now, 3f);
+        PendulumRotation = MathHelper.Pi / 32 * TimeUtils.SineForSecond(DateTime.Now, 0.5f);
 
         Hour = TimeUtils.GetHourFromCircle(HourHandRotation);
         Minute = TimeUtils.GetMinuteFromCircle(MinuteHandRotation);
@@ -284,6 +284,11 @@ public static class RoomScene {
             }
             // this will not run if the hour changes since this is an 'else if' branch.
             else if (Minute != _oldMin) {
+                // prevent chimes that would have happened when unfocused
+                if (Math.Abs(Minute - _oldMin) >= 3)
+                    return;
+
+
                 if (Minute % 15 == 0) {
                     Console.WriteLine($"Attempting chime at quarter {Minute / 15}");
                     ChimeQuarterly(Minute / 15);

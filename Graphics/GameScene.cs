@@ -11,6 +11,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.Graphics;
@@ -22,15 +23,24 @@ public enum MapTheme
     Christmas,
 }
 public static class GameScene {
-    public static bool ShouldRenderAll { get; set; } = true;
-    public static bool ShouldRenderFloor { get; set; } = true;
-    public static bool ShouldRenderBounds { get; set; } = true;
-    public static bool RenderFloorAsBlack { get; set; } = false;
+    public static bool ShouldRenderAll = true;
+
+    static bool _ucscBacking;
+    public static bool UseCustomSceneColor {
+        get => _ucscBacking;
+
+        set {
+            // only do if necessary
+            if (!value && _ucscBacking)
+                BoundsRenderer.SetBoundTextureDefaults();
+            _ucscBacking = value;
+        }
+    }
+
+    public static Color SceneRenderColor = Color.Transparent;
 
     // wrong and also useless?
-    public static Vector2 MapCenter => new(0, MIN_Z + MAX_Z / 2);
-
-    private static Texture2D _blackPixel;
+    public static readonly Vector2 MapCenter = Vector2.Zero;
 
     public delegate void PostLoadBoundsDelegate();
     public static event PostLoadBoundsDelegate PostLoadBounds;
@@ -39,9 +49,7 @@ public static class GameScene {
     public delegate void PostLoadTexturesDelegate();
     public static event PostLoadTexturesDelegate PostLoadTextures;
 
-    public static Matrix View;
-    public static Matrix Projection;
-    public static Matrix World;
+    public static BasicDrawParams DrawParams;
 
     public static string AssetRoot;
 
@@ -126,8 +134,6 @@ public static class GameScene {
         public static float scale = 1f;
 
         public static void LoadFloor() {
-            _blackPixel = new Texture2D(TankGame.Instance.GraphicsDevice, 1, 1);
-            _blackPixel.SetData(new Color[] { Color.Black });
             FloorModelBase = ModelGlobals.Floor.Asset;
             switch (Theme) {
                 case MapTheme.Vanilla:
@@ -142,21 +148,21 @@ public static class GameScene {
         }
         // TODO: finish christmas stuff kekw failure
         public static void RenderFloor() {
-            scale = 0.95f;
-            if (!ShouldRenderFloor) return;
+            scale = 0.95f; // cus naturally it's a little large?
+
             foreach (var mesh in FloorModelBase.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.View = View;
-                    effect.Projection = Projection;
-                    effect.World = World * Matrix.CreateScale(scale);
-
-                    effect.SetDefaultGameLighting();
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
+                    effect.World = DrawParams.World * Matrix.CreateScale(scale);
 
                     effect.TextureEnabled = true;
+                    effect.Texture = Assets["floor_lower"];
 
-                    //effect.Texture = GameResources.GetGameResource<Texture2D>(AssetRoot + "floor_face");
-                    if (RenderFloorAsBlack) {
-                        effect.Texture = _blackPixel;
+                    if (UseCustomSceneColor) {
+                        effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
+                        effect.LightingEnabled = false;
+                        // effect.VertexColorEnabled = false;
                         continue;
                     }
                     effect.Texture = Theme switch {
@@ -164,6 +170,8 @@ public static class GameScene {
                         MapTheme.Christmas => Assets["snow"],
                         _ => null
                     };
+
+                    effect.SetDefaultGameLighting();
                 }
 
                 mesh.Draw();
@@ -194,6 +202,11 @@ public static class GameScene {
 
             Array.ForEach(Boundaries, x => x.Tag = BOUNDARY_TAG);
 
+            SetBoundTextureDefaults();
+            PostLoadBounds?.Invoke();
+        }
+
+        public static void SetBoundTextureDefaults() {
             switch (Theme) {
                 case MapTheme.Vanilla:
                     BoundaryModel = ModelGlobals.GameBoundary.Asset;
@@ -215,12 +228,10 @@ public static class GameScene {
             SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
 
             SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
-            PostLoadBounds?.Invoke();
         }
 
         public static void RenderBounds() {
-            // hardcode hell wtf
-            if (!ShouldRenderBounds) return;
+            // more hardcode yay
             switch (Theme) {
                 case MapTheme.Vanilla:
                     foreach (var mesh in BoundaryModel.Meshes) {
@@ -230,9 +241,17 @@ public static class GameScene {
                                 continue;
                             }
 
-                            effect.View = View;
-                            effect.Projection = Projection;
-                            effect.World = World;
+                            effect.View = DrawParams.View;
+                            effect.Projection = DrawParams.Projection;
+                            effect.World = DrawParams.World;
+                            effect.VertexColorEnabled = true;
+
+                            if (UseCustomSceneColor) {
+                                effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
+                                effect.LightingEnabled = false;
+                                effect.VertexColorEnabled = false;
+                                continue;
+                            }
 
                             if (mesh.Name == "polygon2")
                                 effect.Alpha = 0.1f;
@@ -248,9 +267,9 @@ public static class GameScene {
                 case MapTheme.Christmas:
                     foreach (var mesh in BoundaryModel.Meshes) {
                         foreach (BasicEffect effect in mesh.Effects) {
-                            effect.View = View;
-                            effect.Projection = Projection;
-                            effect.World = World;
+                            effect.View = DrawParams.View;
+                            effect.Projection = DrawParams.Projection;
+                            effect.World = DrawParams.World;
                             effect.TextureEnabled = true;
                             effect.Alpha = 1f;
 
@@ -259,6 +278,11 @@ public static class GameScene {
                                 effect.Texture = Assets["snow"];
                                 // literally what the fuck is this
                                 effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(62) * Matrix.CreateTranslation(Center);
+                            }
+
+                            if (UseCustomSceneColor) {
+                                effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
+                                continue;
                             }
 
                             effect.SetDefaultGameLighting();
@@ -327,9 +351,9 @@ public static class GameScene {
     public static Vector3 Center = Vector3.Zero;
 
     public static void RenderWorldModels() {
-        View = CameraGlobals.GameView;
-        Projection = CameraGlobals.GameProjection;
-        World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Center);
+        DrawParams.View = CameraGlobals.GameView;
+        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Center);
 
         if (ShouldRenderAll) {
             FloorRenderer.RenderFloor();

@@ -13,6 +13,12 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better
 - Added slight randomized pitch shifting in many game-related sound effects
 - Way more localization where previously missing
+- Added a ton of new options in the settings menu
+- Added a new mods menu!
+	- It appears in the top right of the main menu
+	- It allows you to quickly load/unload/reload mods instead of having to use debug functions or restart the game
+- Added some new commands to assist with chroma keying
+- Added a new dev console which is accessible from the tilde key (~)
 
 # Changes
 
@@ -41,6 +47,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Mods should load ~25% quicker on average, depending on content
 - Fixed some tank destruction particles having frame-dependent animation
 - Fixed bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
+- Fixed clock pendulum not accurately tracking seconds (there was some margin of error before)
 
 # TODO
 

@@ -7,7 +7,7 @@ using HidSharp;
 namespace TanksRebirth.Graphics;
 
 public class Trail {
-    private int _maxTrailPoints = 20;
+    int _maxTrailPoints = 20;
     public int MaxTrailPoints {
         get => _maxTrailPoints;
         set {
@@ -19,15 +19,15 @@ public class Trail {
     public float StartWidth = 5f;
     public float BorderOffset = 3f;
 
-    private readonly GraphicsDevice _graphicsDevice;
+    readonly GraphicsDevice _graphicsDevice;
 
     // probably shouldn't be instanced per-trail. fix later.
-    private readonly BasicEffect _effect;
-    private readonly Queue<Vector2> _positions = [];
-    private VertexPositionColor[] _vertices;
-    private short[] _indices;
+    readonly BasicEffect _effect;
+    readonly Queue<Vector2> _positions = [];
+    VertexPositionColor[] _vertices;
+    short[] _indices;
 
-    private Color _mainColor;
+    Color _mainColor;
     public Color MainColor {
         get => _mainColor;
         set {
@@ -37,7 +37,7 @@ public class Trail {
     }
 
     // maybe public later. not for now tho xd.
-    private Color _borderColor;
+    Color _borderColor;
 
     public Trail(GraphicsDevice device, Color mainColor) {
         _graphicsDevice = device;

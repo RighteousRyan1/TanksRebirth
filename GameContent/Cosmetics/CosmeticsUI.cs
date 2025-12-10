@@ -2,9 +2,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.RebirthUtils;
@@ -60,43 +57,7 @@ public static class CosmeticsUI {
         var basePos = Chest.ChestPosition - new Vector3(15, 23, 15);
         _clickSpot = new BoundingSphere(Chest.KeySlotPos, 6);
 
-        var ray = RayUtils.GetMouseToWorldRay();
-        var inter = ray.Intersects(_clickSpot);
-
-        if (inter.HasValue) {
-
-            if (InputUtils.CanDetectClick()) {
-                var ypr = Matrix.CreateFromYawPitchRoll(Chest.Rotation.Z, Chest.Rotation.Y, Chest.Rotation.X);
-                var preSlotPos = Chest.KeySlotPos + Vector3.Transform(new Vector3(0, 0, 50), ypr);
-                var lookAt = MathUtils.GetLookAtEulerAngles(preSlotPos, Chest.KeySlotPos);
-
-                float[] slotRot = [lookAt.Roll, lookAt.Pitch, lookAt.Yaw];
-
-                var rand = Client.ClientRandom.Next(_keys.Count);
-                _movingKey = _keys[rand];
-
-                // i fucking hate this animation system.
-                // keyframe durations should be of the duration that it's GOING TO not the one it's GOING FROM
-                // TODO: fix
-                _keyAnimation = Animator.Create()
-                    .WithFrame(new(_movingKey.Position, Vector3.One, duration: TimeSpan.FromSeconds(1),
-                    easing: EasingFunction.InOutQuad, floats: [_movingKey.Roll, _movingKey.Pitch, _movingKey.Yaw]))
-                    // just x for now
-                    .WithFrame(new(preSlotPos, Vector3.One, easing: EasingFunction.InOutCubic, duration: TimeSpan.FromSeconds(2), floats: slotRot))
-                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(0.5), floats: slotRot, easing: EasingFunction.InOutCubic))
-                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
-                    // what the fuck is this rotational magic??? rotating just one axis doesn't work at all
-                    //.WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(2), floats: [slotRot[0] - MathHelper.PiOver2, slotRot[1] - MathHelper.PiOver2, slotRot[2] + MathHelper.PiOver2]))
-                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
-                    .WithFrame(new(preSlotPos, Vector3.One, floats: slotRot));
-
-                _keyAnimation.Run();
-            }
-
-            // GameHandler.Particles.MakeShineSpot(ray.Direction * inter.Value, Color.White, 0.5f);
-
-            // ChatSystem.SendMessage(inter.Value, ColorUtils.DiscoPartyColor);
-        }
+        HandleInputs();
         if (_keyAnimation is not null) {
             // start things
             if (_keyAnimation.TotalProgress > 0.6f && _prevTotalAnim <= 0.6f) {
@@ -133,6 +94,44 @@ public static class CosmeticsUI {
         Chest.LidRotation = new Vector3(0, Easings.ComputeEase
             (_isOpening ? EasingFunction.OutBounce : EasingFunction.OutSine, _interp) * (MathHelper.Pi + MathHelper.PiOver4 / 2), 
             0);
+    }
+
+    public static void HandleInputs() {
+        var ray = RayUtils.GetMouseToWorldRay();
+        var inter = ray.Intersects(_clickSpot);
+
+        if (_keys.Count == 0) return;
+        if (inter.HasValue) {
+            // prevent NaN working lmao
+            if (!float.IsFinite(inter.Value)) return;
+            if (InputUtils.CanDetectClick()) {
+                var ypr = Matrix.CreateFromYawPitchRoll(Chest.Rotation.Z, Chest.Rotation.Y, Chest.Rotation.X);
+                var preSlotPos = Chest.KeySlotPos + Vector3.Transform(new Vector3(0, 0, 50), ypr);
+                var lookAt = MathUtils.GetLookAtEulerAngles(preSlotPos, Chest.KeySlotPos);
+
+                float[] slotRot = [lookAt.Roll, lookAt.Pitch, lookAt.Yaw];
+
+                var rand = Client.ClientRandom.Next(_keys.Count);
+                _movingKey = _keys[rand];
+
+                // i fucking hate this animation system.
+                // keyframe durations should be of the duration that it's GOING TO not the one it's GOING FROM
+                // TODO: fix
+                _keyAnimation = Animator.Create()
+                    .WithFrame(new(_movingKey.Position, Vector3.One, duration: TimeSpan.FromSeconds(1),
+                    easing: EasingFunction.InOutQuad, floats: [_movingKey.Roll, _movingKey.Pitch, _movingKey.Yaw]))
+                    // just x for now
+                    .WithFrame(new(preSlotPos, Vector3.One, easing: EasingFunction.InOutCubic, duration: TimeSpan.FromSeconds(2), floats: slotRot))
+                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(0.5), floats: slotRot, easing: EasingFunction.InOutCubic))
+                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
+                    // what the fuck is this rotational magic??? rotating just one axis doesn't work at all
+                    //.WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(2), floats: [slotRot[0] - MathHelper.PiOver2, slotRot[1] - MathHelper.PiOver2, slotRot[2] + MathHelper.PiOver2]))
+                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
+                    .WithFrame(new(preSlotPos, Vector3.One, floats: slotRot));
+
+                _keyAnimation.Run();
+            }
+        }
     }
     public static void EnterMenu() {
         var pos = Chest.ChestPosition;

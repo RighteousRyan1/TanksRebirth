@@ -135,7 +135,7 @@ public class GameData : IFileSerializable {
 
             ExpLevel = reader.ReadSingle();
 
-            GameHandler.ExperienceBar = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
+            GameHandler.ExpBar = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
 
             // version 1 and up
 

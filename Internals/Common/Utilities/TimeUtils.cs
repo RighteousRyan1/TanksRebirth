@@ -24,7 +24,8 @@ public static class TimeUtils
         string hours = dt.Hour == 0 ? "" : (dt.Hour == 1 ? $"{dt.Hour} hour, " : $"{dt.Hour} hours, ");
         string mins = dt.Minute == 0 ? "" : (dt.Minute == 1 ? $"{dt.Minute} minute, " : $"{dt.Minute} minutes, ");
         string secs = dt.Second == 0 ? "" : (dt.Second == 1 ? $"{dt.Second} second" : $"{dt.Second} seconds");
-
+        
+        // how can i properly format this...?
         return $"{days}{hours}{mins}{secs}";
     }
     public static string StringFormatCustom(this TimeSpan span, char between)
@@ -69,9 +70,6 @@ public static class TimeUtils
     public static float InterpolateHourToDay(TimeSpan timeSpan) {
         return (float)timeSpan.TotalHours % 24 / 12;
     }
-    public static float SineForSecond(TimeSpan timeSpan, float mult = 1f) {
-        return MathF.Sin((float)timeSpan.TotalMilliseconds / 1000 * mult);
-    }
     public static float InterpolateMinuteToHour(DateTime dateTime) {
         var timeSpan = dateTime.TimeOfDay;
         return (float)timeSpan.TotalMinutes % 60 / 60;
@@ -81,8 +79,12 @@ public static class TimeUtils
         return (float)timeSpan.TotalHours % 24 / 12;
     }
     public static float SineForSecond(DateTime dateTime, float mult = 1f) {
-        var timeSpan = dateTime.TimeOfDay;
-        return MathF.Sin((float)timeSpan.TotalMilliseconds / 1000 * mult);
+        float t = (float)dateTime.TimeOfDay.TotalSeconds;
+        return MathF.Sin(t * MathF.Tau * mult);
+    }
+    public static float SineForSecond(TimeSpan timeSpan, float mult = 1f) {
+        float t = (float)timeSpan.TotalSeconds;
+        return MathF.Sin(t * MathF.Tau * mult);
     }
 
     public static int GetHourFromCircle(float percentRotation) {

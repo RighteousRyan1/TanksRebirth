@@ -5,14 +5,30 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class ColorUtils
 {
-    public static Color[] AllColors { get; } = [.. typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!)];
-    public static Color[] BrightColors { get; } = [.. AllColors.Where(x => GetLuminosity(x) > 0.33f)];
+    static readonly PropertyInfo[] _colorProperties = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public);
+    public static Color[] AllColors { get; }
+    // mainly used for book colors in the background. xd.
+    public static Color[] BrightColors { get; }
     public static Color DiscoPartyColor => HsvToRgb(RuntimeData.RunTime % 255 / 255f * 360, 1, 1);
+
+    public static readonly Dictionary<string, Color> ColorsByName;
+
+    static ColorUtils() {
+        AllColors = [.. _colorProperties.Select(x => (Color)x.GetValue(null)!)];
+        BrightColors = [.. AllColors.Where(x => GetLuminosity(x) > 0.33f)];
+        ColorsByName = [];
+        for (int i = 0; i < _colorProperties.Length; i++) {
+            var prop = _colorProperties[i];
+
+            ColorsByName.Add(prop.Name, AllColors[i]);
+        }
+    }
 
     /// <summary>Returns the average color of a given <see cref="Texture2D"/>.</summary>
     public static Color GetAverageColor(Texture2D texture) {

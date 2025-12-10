@@ -316,7 +316,6 @@ public static class ModLoader {
         if (folders.Length == 0) {
             _firstLoad = true;
             Status = LoadStatus.Complete;
-            ChatSystem.SendMessage(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", Color.Lime);
             return;
         }
 
@@ -416,7 +415,7 @@ public static class ModLoader {
                             OnPostModLoad?.Invoke(mod);
                         }
                         ActionsComplete++;
-                        TankGame.ClientLog.Write($"Loaded mod assembly '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", LogType.Info);
+                        TankGame.ClientLog.Write($"Loaded mod '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", LogType.Info);
                     } catch (Exception e) {
                         TankGame.ReportError(e, true, true);
                         Error = e.Message;
@@ -426,13 +425,13 @@ public static class ModLoader {
             }
         }
         Task.Run(() => {
-            _loadingActions.ForEach(x => x.Invoke());
+            _loadingActions.ForEach(x => x());
 
             IsLoadingMods = false;
             ModBeingLoaded = string.Empty;
             Status = LoadStatus.Complete;
 
-            ChatSystem.SendMessage(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", Color.Lime);
+            TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", LogType.Info);
             _firstLoad = false;
 
             ModTanks = [.. _modTanks];

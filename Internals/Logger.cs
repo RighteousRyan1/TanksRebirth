@@ -5,6 +5,7 @@ using System;
 using System.Globalization;
 using System.Text;
 using TanksRebirth.Internals.Common.Utilities;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TanksRebirth.Internals;
 
@@ -25,12 +26,16 @@ public enum LogType {
     Debug
 }
 
+public delegate void OnLog(string data, LogType logType);
+
 /// <summary>Represents a system which reads and writes to a logging file.</summary>
 public sealed class Logger : IDisposable {
     readonly StringBuilder _builder = new(128);
     readonly string _filePath;
     readonly FileStream _stream;
     readonly StreamWriter _writer;
+
+    public event OnLog? OnLogWrite;
 
     public string Name { get; }
     public string FileName { get; }
@@ -57,21 +62,23 @@ public sealed class Logger : IDisposable {
     /// <param name="throwException">Whether or not to throw an exception upon write completion.</param>
     /// <exception cref="Exception">If <paramref name="throwException"/> is set to <see langword="true"/>, this exception will be thrown upon write completion.</exception>
     public void Write(object contents, LogType writeType, bool throwException = false) {
-        var contentsAsString = contents.ToString();
+        var contentsAsString = contents.ToString()!;
         _stream.Position = _stream.Length;
         lock (_writer) {
             _builder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
             // Equivalent to $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}"
+
             _builder
                 .Append('[').Append(DateTime.Now.ToString(CultureInfo.InvariantCulture)).Append("] ")
                 .Append('[').Append(Assembly.GetCallingAssembly().GetName().Name).Append("] ")
                 .Append('[').Append(FromLogLevel(writeType)).Append("]: ")
                 .Append(contentsAsString);
 
-            var str = _builder.ToString();
-            _writer.WriteLine(str);
-            Debug.WriteLine(str);
-            if (GameLauncher.IsConsoleAllocated) Console.WriteLine(str);
+            var finalStr = _builder.ToString();
+            _writer.WriteLine(finalStr);
+            Debug.WriteLine(finalStr);
+            OnLogWrite?.Invoke(contentsAsString, writeType);
+            if (GameLauncher.IsConsoleAllocated) Console.WriteLine(finalStr);
             _writer.Flush();
         }
 

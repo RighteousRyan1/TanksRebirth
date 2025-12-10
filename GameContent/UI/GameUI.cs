@@ -17,8 +17,9 @@ using TanksRebirth.GameContent.Cosmetics;
 namespace TanksRebirth.GameContent.UI;
 
 // holy fucking shit. this class is beyond horrid. organize ts
-public static class GameUI
-{
+
+#pragma warning disable 
+public static class GameUI {
     public static bool InOptions { get; set; }
 
     public static Keybind Pause = new("Pause", Keys.Escape);
@@ -27,7 +28,7 @@ public static class GameUI
 
     public static UITextButton RestartButton;
 
-    public static UITextButton QuitButton;
+    public static UITextButton QuitButton { get; set; }
 
     public static UITextButton OptionsButton;
 
@@ -58,8 +59,7 @@ public static class GameUI
     internal static Vector2 QuitButtonPos = new(700, 850);
     internal static Vector2 OptionsButtonPos = new(700, 600);
 
-    internal static void Initialize()
-    {
+    internal static void Initialize() {
         if (_initialized) {
             foreach (var field in typeof(GameUI).GetFields()) {
                 if (field.GetValue(null) is UIElement element) {
@@ -72,26 +72,22 @@ public static class GameUI
         var ttColor = Color.LightGray;
         var font = FontGlobals.RebirthFont;
 
-        ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
-        {
+        ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         ResumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
         ResumeButton.OnLeftClick = (uiElement) => Pause.Fire();
 
-        RestartButton = new(TankGame.GameLanguage.StartOver, font, Color.WhiteSmoke)
-        {
+        RestartButton = new(TankGame.GameLanguage.StartOver, font, Color.WhiteSmoke) {
             IsVisible = false,
         };
         RestartButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
 
-        OptionsButton = new(TankGame.GameLanguage.Options, font, Color.WhiteSmoke)
-        {
+        OptionsButton = new(TankGame.GameLanguage.Options, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         OptionsButton.SetDimensions(() => OptionsButtonPos.ToResolution(), () => OptionsButtonSize.ToResolution());
-        OptionsButton.OnLeftClick = (uiElement) =>
-        {
+        OptionsButton.OnLeftClick = (uiElement) => {
             _delay = 1;
             InOptions = true;
 
@@ -106,19 +102,16 @@ public static class GameUI
 
             BackButton.Size.Y = 150;
 
-            if (MainMenuUI.IsActive)
-            {
+            if (MainMenuUI.IsActive) {
                 MainMenuUI.PlayButton.IsVisible = false;
             }
         };
 
-        VolumeButton = new(TankGame.GameLanguage.Volume, font, Color.WhiteSmoke)
-        {
+        VolumeButton = new(TankGame.GameLanguage.Volume, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         VolumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        VolumeButton.OnLeftClick = (uiElement) =>
-        {
+        VolumeButton.OnLeftClick = (uiElement) => {
             VolumeUI.BatchVisible = true;
             VolumeUI.ShowAll();
             VolumeUI.MusicVolume.IgnoreMouseInteractions = true;
@@ -128,13 +121,11 @@ public static class GameUI
             ControlsButton.IsVisible = false;
         };
 
-        GraphicsButton = new(TankGame.GameLanguage.Graphics, font, Color.WhiteSmoke)
-        {
+        GraphicsButton = new(TankGame.GameLanguage.Graphics, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         GraphicsButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        GraphicsButton.OnLeftClick = (uiElement) =>
-        {
+        GraphicsButton.OnLeftClick = (uiElement) => {
             GraphicsUI.SetVisibility(true);
             GraphicsUI.VSyncBtn.IgnoreMouseInteractions = true;
             _delay = 1;
@@ -143,13 +134,11 @@ public static class GameUI
             ControlsButton.IsVisible = false;
         };
 
-        ControlsButton = new(TankGame.GameLanguage.Controls, font, Color.WhiteSmoke)
-        {
+        ControlsButton = new(TankGame.GameLanguage.Controls, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         ControlsButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        ControlsButton.OnLeftClick = (uiElement) =>
-        {
+        ControlsButton.OnLeftClick = (uiElement) => {
             ControlsUI.BatchVisible = true;
             ControlsUI.ShowAll();
             VolumeButton.IsVisible = false;
@@ -157,18 +146,15 @@ public static class GameUI
             ControlsButton.IsVisible = false;
         };
 
-        QuitButton = new(TankGame.GameLanguage.Quit, font, Color.WhiteSmoke)
-        {
+        QuitButton = new(TankGame.GameLanguage.Quit, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         QuitButton.SetDimensions(() => QuitButtonPos.ToResolution(), () => QuitButtonSize.ToResolution());
-        QuitButton.OnLeftClick = (ui) =>
-        {
+        QuitButton.OnLeftClick = (ui) => {
             QuitOut();
         };
 
-        BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke)
-        {
+        BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         BackButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
@@ -225,10 +211,8 @@ public static class GameUI
         }
     }
 
-    private static void PostInitialize()
-    {
-        Pause.OnPress = () =>
-        {
+    private static void PostInitialize() {
+        Pause.OnPress = () => {
             if (CampaignCompleteUI.IsViewingResults)
                 return;
             if (InOptions) {
@@ -282,8 +266,7 @@ public static class GameUI
             GraphicsUI.WinKindBtn,
             GraphicsUI.ResBtn
         ];
-        foreach (UIElement button in graphicsElements)
-        {
+        foreach (UIElement button in graphicsElements) {
             // button.HasScissor = true;
             // button.Scissor = () => new(0, (int)(WindowUtils.WindowHeight * 0.05f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.7f));
             button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
@@ -297,8 +280,7 @@ public static class GameUI
     // 7/7/25 - WHAT THE FUCK IS THIS SHIT.
     // TODO: pls get arctan to finish the rewrite
     // TODO: arctan is fucking ignoring me
-    private static void HandleBackButton()
-    {
+    private static void HandleBackButton() {
         if (!_initialized)
             return;
         if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics) {
@@ -312,12 +294,12 @@ public static class GameUI
         if (MainMenuUI.MenuState == MainMenuUI.UIState.Settings && MainMenuUI.IsActive && VolumeButton.IsVisible) {
             // Set to main menu, we are going back to it after all.
             MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
-            
+
             // Hide Options buttons and load MMenu buttons.
             MainMenuUI.PlayButton.IsVisible = true;
             OptionsButton.IsVisible = true;
             QuitButton.IsVisible = true;
-            
+
             ResumeButton.IsVisible = false;
             RestartButton.IsVisible = false;
             BackButton.IsVisible = false;
@@ -325,10 +307,9 @@ public static class GameUI
             GraphicsButton.IsVisible = false;
             VolumeButton.IsVisible = false;
         }
-        
 
-        if (VolumeButton.IsVisible && !MainMenuUI.IsActive)
-        {
+
+        if (VolumeButton.IsVisible && !MainMenuUI.IsActive) {
             ResumeButton.IsVisible = true;
             OptionsButton.IsVisible = true;
             RestartButton.IsVisible = true;
@@ -339,16 +320,14 @@ public static class GameUI
             GraphicsButton.IsVisible = false;
             VolumeButton.IsVisible = false;
         }
-        else if (VolumeUI.BatchVisible)
-        {
+        else if (VolumeUI.BatchVisible) {
             VolumeUI.BatchVisible = false;
             VolumeUI.HideAll();
             VolumeButton.IsVisible = true;
             GraphicsButton.IsVisible = true;
             ControlsButton.IsVisible = true;
         }
-        else if (GraphicsUI.IsVisible)
-        {
+        else if (GraphicsUI.IsVisible) {
             GraphicsUI.SetVisibility(false);
             VolumeButton.IsVisible = true;
             GraphicsButton.IsVisible = true;
@@ -367,31 +346,26 @@ public static class GameUI
             // FIXME: acts weird
             // TankGame.Instance.CalculateProjection();
         }
-        else if (ControlsUI.BatchVisible)
-        {
+        else if (ControlsUI.BatchVisible) {
             ControlsUI.BatchVisible = false;
             ControlsUI.HideAll();
             VolumeButton.IsVisible = true;
             GraphicsButton.IsVisible = true;
             ControlsButton.IsVisible = true;
         }
-        else
-        {
+        else {
             // WHAT THE HELL IS THIS CODE????
-            if (MainMenuUI.IsActive)
-            {
+            if (MainMenuUI.IsActive) {
                 if (MainMenuUI.PlayButton.IsVisible)
                     return;
-                if (MainMenuUI.campaignNames.Count > 0)
-                {
+                if (MainMenuUI.campaignNames.Count > 0) {
                     foreach (var elem in MainMenuUI.campaignNames)
                         elem.Remove();
                     MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
 
                     MainMenuUI.campaignNames.Clear();
                 }
-                else if (MainMenuUI.PlayButton_SinglePlayer.IsVisible)
-                {
+                else if (MainMenuUI.PlayButton_SinglePlayer.IsVisible) {
                     MainMenuUI.PlayButton.IsVisible = true;
                     OptionsButton.IsVisible = true;
                     QuitButton.IsVisible = true;
@@ -401,8 +375,7 @@ public static class GameUI
                     MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
                 }
 
-                else if (GraphicsButton.IsVisible)
-                {
+                else if (GraphicsButton.IsVisible) {
                     BackButton.IsVisible = false;
                     VolumeButton.IsVisible = false;
                     GraphicsButton.IsVisible = false;
@@ -414,17 +387,14 @@ public static class GameUI
 
                     MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
                 }
-                else if (MainMenuUI.ConnectToServerButton.IsVisible || MainMenuUI.DisconnectButton.IsVisible)
-                {
+                else if (MainMenuUI.ConnectToServerButton.IsVisible || MainMenuUI.DisconnectButton.IsVisible) {
                     MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
                 }
-                if (MainMenuUI.TanksAreCalculators.IsVisible)
-                {
+                if (MainMenuUI.TanksAreCalculators.IsVisible) {
                     MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
                 }
             }
-            else
-            {
+            else {
                 InOptions = false;
                 VolumeUI.HideAll();
                 BackButton.IsVisible = false;
@@ -438,15 +408,8 @@ public static class GameUI
     }
 
     // i swear these are present elsewhere in the codebase
-    private static int _newScroll;
-    private static int _oldScroll;
 
-    public static void UpdateButtons()
-    {
-        if (!Paused) {
-            _newScroll = 0;
-            _oldScroll = 0;
-        }    
+    public static void UpdateButtons() {
         if (!_initialized)
             return;
 
@@ -468,15 +431,12 @@ public static class GameUI
 
         if (_delay > 0 && !InputUtils.MouseLeft)
             _delay--;
-        if (_delay <= 0)
-        {
+        if (_delay <= 0) {
             VolumeUI.MusicVolume.IgnoreMouseInteractions = false;
             GraphicsUI.VSyncBtn.IgnoreMouseInteractions = false;
         }
         VolumeUI.MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
         VolumeUI.EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";
         VolumeUI.AmbientVolume.Tooltip = $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%";
-
-        _oldScroll = _newScroll;
     }
 }

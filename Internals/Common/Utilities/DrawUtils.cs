@@ -28,6 +28,24 @@ public static class DrawUtils {
         // right line
         TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitX * (end.X - start.X), null, boxColor, 0f, Vector2.Zero, new Vector2(1, end.Y - start.Y), default, 0);
     }
+    public static void DrawBox(Rectangle rect, Color boxColor, float width = 1, Point origin = default) {
+        var tex = TextureGlobals.Pixels[Color.White];
+
+        rect.X -= origin.X;
+        rect.Y -= origin.Y;
+
+        var start = new Vector2(rect.X, rect.Y);
+        var end = new Vector2(rect.X + rect.Width, rect.Y + rect.Height);
+
+        // top line
+        TankGame.SpriteRenderer.Draw(tex, start, null, boxColor, 0f, Vector2.Zero, new Vector2(end.X - start.X, width), default, 0);
+        // bottom line
+        TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitY * (end.Y - start.Y), null, boxColor, 0f, Vector2.Zero, new Vector2(end.X - start.X + width, width), default, 0);
+        // left line
+        TankGame.SpriteRenderer.Draw(tex, start, null, boxColor, 0f, Vector2.Zero, new Vector2(width, end.Y - start.Y), default, 0);
+        // right line
+        TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitX * (end.X - start.X), null, boxColor, 0f, Vector2.Zero, new Vector2(width, end.Y - start.Y + width), default, 0);
+    }
     public static void DrawStringWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {

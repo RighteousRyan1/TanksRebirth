@@ -11,8 +11,7 @@ using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class SteamworksUtils
-{
+public static class SteamworksUtils {
     public static bool IsInitialized { get; private set; }
     public static string? MyUsername { get; private set; }
     public static int FriendsCount { get; private set; }
@@ -29,14 +28,12 @@ public static class SteamworksUtils
         _overlayActivate = Callback<GameOverlayActivated_t>.Create(OnGameOverlayActivated);
 
         MyUsername = SteamFriends.GetPersonaName();
+        FriendsCount = SteamFriends.GetFriendCount(EFriendFlags.k_EFriendFlagAll);
     }
-    private static void OnGameOverlayActivated(GameOverlayActivated_t pCallback)
-    {
+    private static void OnGameOverlayActivated(GameOverlayActivated_t pCallback) {
         IsOverlayActive = pCallback.m_bActive != 0;
     }
     public static void Update() {
-        if (RuntimeData.UpdateCount % 30 == 0)
-            FriendsCount = SteamFriends.GetFriendCount(EFriendFlags.k_EFriendFlagAll);
         SteamAPI.RunCallbacks();
     }
 

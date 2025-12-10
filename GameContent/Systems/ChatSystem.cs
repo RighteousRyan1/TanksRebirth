@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Reflection;
+using System.Text;
 using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
@@ -18,391 +18,495 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems;
 
+public enum ChatMessageCorner {
+    TopLeft = 0,
+    TopRight = 1,
+    BottomLeft = 2,
+    BottomRight = 3
+}
+
 /// <summary>A system for handling chat.</summary>
 public sealed record ChatSystem {
-    // TODO: add more here.
-    public readonly struct ChatTag {
-        // TODO: start sometime eventually?
-        // [HEX###:text]
-        // [r,g,b: text]
+    // constants
+    const int MAX_LENGTH = 250;
+    const int MAX_MESSAGES_AT_ONCE = 10;
+    const float DEFAULT_SCALE = 0.8f;
+    const int BOX_WIDTH_BASE = 750;
+    const int PADDING_BASE = 8;
+    const int MESSAGE_OFFSET_BASE = 20;
 
-        public static readonly char[] Hexadecimals = [
-            'A', 'B', 'C', 'D', 'E', 'F',
-            '0','1','2','3','4','5','6','7','8','9'
-        ];
 
-        /// <summary>The color for each character in the string array.</summary>
-        public readonly Color[] Colors;
-        public readonly string ParsedString;
-        public ChatTag(string tag) {
-            ParsedString = string.Empty;
-            Colors = new Color[tag.Length];
+    public static List<ChatMessage> ChatMessages = [];
+    public static int UnreadMessageCount;
+    public static bool IsOpen;
+    public static ChatMessageCorner Corner = ChatMessageCorner.TopLeft;
+    public static string CurTyping = string.Empty;
+    public static bool ActiveHandle;
+    public static bool ChatBoxHover;
+    public static Texture2D ChatAlert;
 
-            var lastOpenBracket = -1;
+    static Vector2 _openOrigin = new(8, 8);
 
-            for (int i = 0; i < tag.Length; i++) {
-                var c = tag[i];
+    static float _openProgress = 0f;
+    static Color _backgroundColor = new(20, 20, 20); // Dark sleek background
+    static Color _borderColor = new(60, 60, 60);
 
-                if (c == '[') {
-                    lastOpenBracket = i;
-                    bool success = true;
-                    // check all characters within 6 spaces ahead of the open bracket to see if it is hexadecimal
-                    for (int j = 1; j <= 6; j++) {
-                        if (!Hexadecimals.Contains(c)) {
-                            success = false;
-                            break;
-                        }
-                    }
-                    if (!success)
-                        continue;
-                    // check one space after the final hexadecimal value, since the check was successful.
-                    if (tag[i + 7] != ':')
-                        continue;
-                    // now read the rest of the string as intended.
-                    bool endRead = false;
-                    for (int k = i + 8; k < tag.Length; k++) {
-                        var v = tag[k];
-
-                        if (v == ']') {
-                            endRead = true;
-                            break;
-                        }
-                        else {
-                            ParsedString += v;
-                        }
-                        // no clue if ts works :sob:
-                    }
-                }
-            }
-        }
-
-        private void Colorize(int from, int to) {
-
-        }
-    }
-
+    // events
     public delegate void OnMessageAddedDelegate(string message);
     public static event OnMessageAddedDelegate? OnMessageAdded;
 
-    public static List<ChatMessage> ChatMessages { get; private set; } = [];
-    /// <summary>The number that appears by the red exclamation bubble, notifying the player of unread messages.</summary>
-    public static int UnreadMessageCount;
-    /// <summary>Whether or not the chat window is open for the player to read.</summary>
-    public static bool IsOpen;
+    // properties
+    public static Keybind ToggleChat { get; } = new("Toggle Chat", Keys.F2) {
+        OnPress = () => IsOpen = !IsOpen
+    };
 
-    /// <summary>The corner </summary>
-    public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
+    // struct(s)
+    public struct TextSection(string text, Color color) {
+        public string Text = text;
+        public Color Color = color;
+    }
 
-    public static Vector2 OpenOrigin = new(8, 8);
+    // yes, terraria inspired :rolling_eyes:
+    /// <summary>
+    /// Parses input text for chat tags (e.g., [c/FF0000:Text]).
+    /// </summary>
+    static List<TextSection> ParseText(string text, Color defaultColor) {
+        var snippets = new List<TextSection>();
+        var buffer = new StringBuilder();
+        var currentColor = defaultColor;
 
-    public static Vector2 Scale = new(0.8f);
+        for (int i = 0; i < text.Length; i++) {
+            // tag start
+            if (text[i] == '[' && i + 3 < text.Length && text[i + 1] == 'c' && text[i + 2] == '/') {
+                if (buffer.Length > 0) {
+                    snippets.Add(new TextSection(buffer.ToString(), currentColor));
+                    buffer.Clear();
+                }
 
-    /// <summary>How many messages can be viewed at once on the window.</summary>
-    public static int MessagesAtOnce = 10;
+                // parses hex
+                int endHex = text.IndexOf(':', i);
+                if (endHex != -1 && endHex - (i + 3) == 6) { //
+                    string hexStr = text.Substring(i + 3, 6);
+                    if (int.TryParse(hexStr, NumberStyles.HexNumber, null, out int hexVal)) {
+                        // find tag endpoint
+                        int endTag = text.IndexOf(']', endHex);
+                        if (endTag != -1) {
+                            // Extract content inside tag
+                            string content = text.Substring(endHex + 1, endTag - (endHex + 1));
 
-    public static string CurTyping = string.Empty;
-    public static bool ActiveHandle;
-    public static int MaxLength = 100;
-    public static int BoxWidth = 750;
+                            // converts hex to a color
+                            var tagColor = new Color(
+                                (hexVal >> 16) & 0xFF,
+                                (hexVal >> 8) & 0xFF,
+                                hexVal & 0xFF
+                            );
 
-    public static bool ChatBoxHover;
+                            snippets.Add(new TextSection(content, tagColor));
 
-    public static Texture2D ChatAlert;
+                            // move to the end of the tag to continue parsing
+                            i = endTag;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            buffer.Append(text[i]);
+        }
+
+        // remove buffer after parsing
+        if (buffer.Length > 0) {
+            snippets.Add(new TextSection(buffer.ToString(), currentColor));
+        }
+
+        return snippets;
+    }
 
     public static void Initialize() {
         ChatAlert = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chatalert");
     }
-    /// <summary>
-    /// Sends a new <see cref="ChatMessage"/> to the chat.
-    /// </summary>
-    /// <param name="contents">The content of the <see cref="ChatMessage"/>.</param>
-    /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
-    /// <param name="sender">The sender of the message, e.g: a player</param>
-    /// <param name="netSend">If true, will send the message to the server in a multiplayer context.</param>
-    public static void SendMessage(object contents, Color color, string? sender = null, bool netSend = false)
-    {
+
+    public static void SendMessage(object contents, Color color, string? sender = null, bool netSend = false) {
         var message = contents.ToString()!;
-        if (message.Length > 0 && message[0] == CommandGlobals.ExpectedPrefix) {
-            var cmdSplit = message.Remove(0, 1).Split(' ');
-            var cmdName = cmdSplit[0];
-            var index = CommandGlobals.Commands.Keys.ToList().FindIndex(cmd => cmd.Name == cmdName);
-            if (index > -1) {
-                try {
-                    var value = CommandGlobals.Commands.ElementAt(index).Value;
 
-                    // if the length is equal to zero, the user has provided no arguments.
-                    var args = cmdSplit.Length == 0 ? [] : cmdSplit[1..];
-
-                    /*if (args.Length == 0 && !cmdSplit[0].Contains("help")) {
-                        SendMessage("Invalid command syntax! Arguments missing.", Color.Red);
-                        return;
-                    }*/
-                    
-                    if (value.NetSync && Client.IsConnected()) {
-                        if (sender != "cmd_sync" && !Client.IsHost()) {
-                            SendMessage("You cannot use this command as you are not the host of the server.", Color.Red);
-                            return;
-                        }
-                        if (Client.IsHost())
-                            Client.SendCommandUsage(message);
-                    }
-                    if (value.RequireCheats) {
-                        if (CommandGlobals.AreCheatsEnabled)
-                            value.ActionToPerform?.Invoke(args);
-                        else
-                            SendMessage("In order to use this command, cheats must be enabled.", Color.Red, "CMD");
-                    }
-                    else
-                        value.ActionToPerform?.Invoke(args);
-                    return;
-                }
-                catch(Exception e) {
-                    TankGame.ReportError(e);
-                    SendMessage("Error with command.", Color.Orange);
-                }
-            }
-        }
-
-        List<ChatMessage> msgs = [];
-
-        if (sender is not null)
-        {
+        if (sender is not null) {
             SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect);
             if (Client.IsConnected() && !netSend)
-                Client.SendMessage(message.ToString(), color, sender.ToString());
+                Client.SendMessage(message, color, sender);
         }
 
-        var split = message.Split('\n');
+        // split message by newlines
+        var lines = message.Split('\n');
+        foreach (var line in lines) {
+            // Prepare the full raw string
+            string fullText = (sender is not null && line == lines[0])
+                ? $"<{sender}> {line}"
+                : line;
 
-        for (int i = 0; i < split.Length; i++)
-        {
-            if (i == 0 && sender is not null)
-                msgs.Add(new ChatMessage($"<{sender}> {split[i]}", color));
-            else
-                msgs.Add(new ChatMessage($"{split[i]}", color));
+            // tag parsing
+            var snippets = ParseText(fullText, color);
+            ChatMessages.Add(new ChatMessage(snippets, fullText));
         }
+
         UnreadMessageCount++;
-
-        ChatMessages.AddRange(msgs);
-
         OnMessageAdded?.Invoke(message);
-        // return msgs.ToArray();
     }
-    /// <summary>Sends a message in the color white.</summary>
+
     public static void SendMessage(object contents, string? sender = null, bool netSend = false) {
         SendMessage(contents, Color.White, sender, netSend);
     }
 
-    private static void DrawChatBox(out Rectangle chatBox, out Rectangle typeBox)
-    {
-        // tallest letter i'm guessing?
-        var measureY = (ChatMessage.Font.MeasureString("X").Y * Scale.Y).ToResolutionY();
-        // draw it out of view if not open chat box.
-        var chatRect = new Rectangle((int)OpenOrigin.X, IsOpen ? (int)OpenOrigin.Y : -5000, (int)BoxWidth.ToResolutionX(), (int)(measureY.ToResolutionY() * MessagesAtOnce));
+    private static string WrapText(SpriteFontBase font, string text, float maxLineWidth, float scale = 1f) {
+        if (string.IsNullOrEmpty(text)) return "";
 
-        var typeRect = new Rectangle(chatRect.X, chatRect.Y + chatRect.Height + (int)8.ToResolutionY(), chatRect.Width, (int)(ChatMessage.Font.MeasureString(CurTyping).Y.ToResolutionY() + (CurTyping.Length == 0 ? 32.ToResolutionY() : 0)));
+        string[] words = text.Split(' ');
+        StringBuilder sb = new StringBuilder();
+        float lineWidth = 0f;
+        float spaceWidth = font.MeasureString(" ").X * scale;
 
-        // TODO: do it. do it.
-
-        // one box for the chat which is bigger, one box for the text, which scales to text size.
-
-        chatBox = chatRect;
-        typeBox = typeRect;
+        foreach (var word in words) {
+            Vector2 size = font.MeasureString(word) * scale;
+            if (lineWidth + size.X < maxLineWidth) {
+                sb.Append(word + " ");
+                lineWidth += size.X + spaceWidth;
+            }
+            else {
+                if (sb.Length > 0) sb.Append("\n");
+                sb.Append(word + " ");
+                lineWidth = size.X + spaceWidth;
+            }
+        }
+        return sb.ToString();
     }
-    public static Keybind ToggleChat = new("Toggle Chat", Keys.F2) {
-        OnPress = () => IsOpen = !IsOpen
-    };
-    public static void DrawMessages()
-    {
-        #region Draw Chat
 
-        TankGame.SpriteRenderer.Begin();
+    private static List<List<TextSection>> WrapColoredText(List<TextSection> sections, SpriteFontBase font, float maxLineWidth, float scale) {
+        var lines = new List<List<TextSection>>();
+        var currentLine = new List<TextSection>();
+        float currentLineWidth = 0f;
+        float spaceWidth = font.MeasureString(" ").X * scale;
 
-        DrawChatBox(out var chatRect, out var typeRect);
+        foreach (var section in sections) {
+            var words = section.Text.Split(' ');
+            for (int i = 0; i < words.Length; i++) {
+                string word = words[i];
+                // preserve space unless it's the very last word of the section which might not have had one
+                // simplified: just add space to all
+                string wordWithSpace = word + " ";
+                float wordWidth = font.MeasureString(wordWithSpace).X * scale;
 
-        var crc = chatRect.Contains(MouseUtils.MousePosition);
-        var trc = typeRect.Contains(MouseUtils.MousePosition);
+                if (currentLineWidth + wordWidth < maxLineWidth) {
+                    currentLine.Add(new TextSection(wordWithSpace, section.Color));
+                    currentLineWidth += wordWidth;
+                }
+                else {
+                    if (currentLine.Count > 0) lines.Add([.. currentLine]);
+                    currentLine.Clear();
+                    currentLine.Add(new TextSection(wordWithSpace, section.Color));
+                    currentLineWidth = wordWidth;
+                }
+            }
+        }
+        if (currentLine.Count > 0) lines.Add(currentLine);
+        return lines;
+    }
 
-        var alpha1 = crc ? 0.9f : 0.45f;
-        var alpha2 = trc ? 0.9f : 0.45f;
+    public static void DrawMessages() {
+        var sb = TankGame.SpriteRenderer;
 
+        if (_openProgress <= 0f && !IsOpen) {
+            sb.Begin();
+            DrawUnreadNotification(sb);
+            sb.End();
+            return;
+        }
+
+        var font = FontGlobals.RebirthFont;
+
+        // applies easing
+        float smoothOpen = Easings.InOutQuint(_openProgress);
+
+        var resScale = new Vector2(DEFAULT_SCALE).ToResolution();
+        var padding = new Vector2(PADDING_BASE).ToResolution();
+        // var messageOffset = MESSAGE_OFFSET_BASE.ToResolutionY();
+
+        // calculates wrapped text
+        float maxInputWidth = BOX_WIDTH_BASE.ToResolutionX(); // approximately
+        string wrappedInput = WrapText(font, CurTyping, maxInputWidth, resScale.X);
+        Vector2 inputSize = font.MeasureString(wrappedInput) * resScale;
+
+        sb.Begin();
+
+        // Pass the smoothed value to calculate position
+        DrawChatBox(smoothOpen, out var chatRect, out var typeRect, inputSize.Y);
+
+        var mousePos = MouseUtils.MousePosition;
+        var crc = chatRect.Contains(mousePos);
+        var trc = typeRect.Contains(mousePos);
         ChatBoxHover = crc || trc;
 
-        // var alpha = shiftAlpha ? 0.9f : 0.45f;
+        void DrawPanel(Rectangle rect, bool hover) {
+            // bg of box
+            sb.Draw(TextureGlobals.Pixels[Color.White], rect, _backgroundColor * 0.85f * smoothOpen);
 
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], chatRect, Color.Gray * alpha1);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], typeRect, Color.Gray * alpha2);
-        TankGame.SpriteRenderer.DrawString(ChatMessage.Font, CurTyping, new Vector2(typeRect.X, typeRect.Y), Color.White, Scale.ToResolution());
+            var border = hover ? Color.CornflowerBlue : _borderColor;
 
-        TankGame.SpriteRenderer.End();
+            DrawUtils.DrawBox(rect, border * smoothOpen, 3);
+        }
 
-        var boxRasterizer = new RasterizerState()
-        {
-            ScissorTestEnable = true,
-        };
+        DrawPanel(chatRect, crc);
+        DrawPanel(typeRect, trc || ActiveHandle);
 
-        TankGame.SpriteRenderer.Begin(rasterizerState: boxRasterizer);
+        if (smoothOpen > 0.1f) {
+            // Calculate text position
+            var typePos = new Vector2(typeRect.X + padding.X, typeRect.Y + padding.Y);
+
+            sb.DrawString(font, wrappedInput, typePos, Color.White * smoothOpen, resScale);
+
+            // blinking caret
+            if (ActiveHandle && RuntimeData.RunTime % 60 < 30) {
+                var lines = wrappedInput.Split('\n');
+                var lastLine = lines.LastOrDefault() ?? "";
+                var lineCount = lines.Length;
+
+                var caretX = font.MeasureString(lastLine).X * resScale.X;
+                var caretY = (lineCount - 1) * font.LineHeight * resScale.Y;
+
+                var caretPos = typePos + new Vector2(caretX + 2, caretY);
+                sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle((int)caretPos.X, (int)caretPos.Y, 2, (int)(font.MeasureString("A").Y * resScale.Y)), Color.White * smoothOpen);
+            }
+        }
+
+        sb.End();
+
+        var boxRasterizer = new RasterizerState() { ScissorTestEnable = true };
+        sb.Begin(rasterizerState: boxRasterizer);
 
         TankGame.Instance.GraphicsDevice.ScissorRectangle = chatRect;
 
-        var basePosition = new Vector2(chatRect.X + 8.ToResolutionX(), chatRect.Y + chatRect.Height - 8.ToResolutionY());
-        var offset = 20f;
+        HandleTextInputState(trc, typeRect);
 
-        var drawOrigin = new Vector2();
+        // prunes old messages
+        while (ChatMessages.Count > MAX_MESSAGES_AT_ONCE) ChatMessages.RemoveAt(0);
 
-        var measure = ChatMessage.Font.MeasureString(CurTyping).X * Scale.X;
+        float currentY = chatRect.Y + chatRect.Height - padding.Y;
+        float maxMsgWidth = chatRect.Width - (padding.X * 2);
 
-        if (measure > typeRect.Width)
-        {
-            var lastChar = CurTyping[^1];
-            CurTyping = CurTyping.Remove(CurTyping.Length - 1);
-            CurTyping += '\n';
-            CurTyping += lastChar;
+        for (int i = ChatMessages.Count - 1; i >= 0; i--) {
+            var msg = ChatMessages[i];
+
+            // wraps tags
+            var lines = WrapColoredText(msg.Sections, font, maxMsgWidth, resScale.X);
+
+            // total msg height
+            float msgHeight = lines.Count * font.LineHeight * resScale.Y;
+
+            // move cursor y
+            currentY -= msgHeight;
+
+            var drawPos = new Vector2(chatRect.X + padding.X, currentY);
+
+            // draws each line
+            foreach (var line in lines) {
+                foreach (var section in line) {
+                    sb.DrawString(font, section.Text, drawPos, section.Color * smoothOpen, resScale);
+                    drawPos.X += font.MeasureString(section.Text).X * resScale.X;
+                }
+                // reset x + move y for next line
+                drawPos.X = chatRect.X + padding.X;
+                drawPos.Y += font.LineHeight * resScale.Y;
+            }
+
+            // adds spacing between messages
+            currentY += 10f * resScale.Y;
         }
 
-        if (InputUtils.CanDetectClick())
-        {
-            if (trc && !ActiveHandle) { 
+        sb.End();
+    }
+
+    // i want to slowly start moving from RuntimeData.DeltaTime to just direct elapsed time calculations... soon.
+    public static void Update(GameTime gameTime) {
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (ChatBoxHover || ActiveHandle)
+            TankGame.MouseUIHover = true;
+
+        if (IsOpen) {
+            UnreadMessageCount = 0;
+            _openProgress += dt * 3f; // speed of opening
+            if (_openProgress > 1f) _openProgress = 1f;
+        }
+        else {
+            _openProgress -= dt * 3f; // speed of closing
+            if (_openProgress < 0f) _openProgress = 0f;
+        }
+    }
+
+    // non-api
+    static void DrawChatBox(float animProgress, out Rectangle chatBox, out Rectangle typeBox, float inputContentHeight) {
+        var fontY = FontGlobals.RebirthFont.MeasureString("X").Y;
+        var scale = new Vector2(DEFAULT_SCALE).ToResolution();
+        var margin = _openOrigin.ToResolution();
+        var boxWidthRes = BOX_WIDTH_BASE.ToResolutionX();
+        var paddingRes = PADDING_BASE.ToResolutionY();
+
+        var chatHeight = (int)(fontY * scale.Y * MAX_MESSAGES_AT_ONCE);
+
+        // Dynamic height for input box
+        var typeBoxHeight = (int)Math.Max(32.ToResolutionY(), inputContentHeight + (paddingRes * 2));
+
+        var totalHeight = chatHeight + paddingRes + typeBoxHeight;
+        var viewport = TankGame.Instance.GraphicsDevice.Viewport;
+
+        float x = 0, y = 0;
+
+        // handle slide-in anim
+        // invert progress cuz 1 = open, 0 = closed
+        float slideOffset = (1f - animProgress) * 50f;
+
+        switch (Corner) {
+            case ChatMessageCorner.TopLeft:
+                x = margin.X - slideOffset;
+                y = margin.Y;
+                break;
+
+            case ChatMessageCorner.TopRight:
+                x = (viewport.Width - boxWidthRes - margin.X) + slideOffset;
+                y = margin.Y;
+                break;
+
+            case ChatMessageCorner.BottomLeft:
+                x = margin.X - slideOffset;
+                y = viewport.Height - totalHeight - margin.Y;
+                break;
+
+            case ChatMessageCorner.BottomRight:
+                x = (viewport.Width - boxWidthRes - margin.X) + slideOffset;
+                y = viewport.Height - totalHeight - margin.Y;
+                break;
+        }
+
+        // ensures no mouse interaction
+        if (animProgress <= 0.01f) y = -50000;
+
+        // chat history
+        chatBox = new Rectangle((int)x, (int)y, (int)boxWidthRes, chatHeight);
+
+        // input box
+        typeBox = new Rectangle(chatBox.X, chatBox.Y + chatBox.Height + (int)paddingRes, chatBox.Width, typeBoxHeight);
+    }
+
+    static void HandleTextInputState(bool isHoveringTypeRect, Rectangle typeRect) {
+        // line overflow handling removed (handled by wrapping in draw)
+
+        if (InputUtils.CanDetectClick()) {
+            if (isHoveringTypeRect && !ActiveHandle) {
                 TankGame.Instance.Window.TextInput += HandleInput;
                 ActiveHandle = true;
             }
-            else if (!trc && ActiveHandle) {
+            else if (!isHoveringTypeRect && ActiveHandle) {
                 TankGame.Instance.Window.TextInput -= HandleInput;
                 ActiveHandle = false;
             }
         }
 
         if (ActiveHandle) {
-            if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.V)) {
+            if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.V))
                 CurTyping += TextCopy.ClipboardService.GetText();
-            }
-            if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {
+            if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C))
                 TextCopy.ClipboardService.SetText(CurTyping);
-            }
             if (ToggleChat.JustPressed) {
                 TankGame.Instance.Window.TextInput -= HandleInput;
                 ActiveHandle = false;
             }
         }
+    }
 
-        if (ChatMessages.Count >= MessagesAtOnce)
-        {
-            ChatMessages[0] = default;
-            var arr = ChatMessages.ToArray();
-            arr = ArrayUtils.Shift(arr, -1);
-            Array.Resize(ref arr, arr.Length - 1);
-            ChatMessages = [.. arr];
+    static void DrawUnreadNotification(SpriteBatch sb) {
+        var scale = new Vector2(DEFAULT_SCALE).ToResolution();
+        var margin = _openOrigin.ToResolution();
+        var font = FontGlobals.RebirthFont;
+        var viewport = TankGame.Instance.GraphicsDevice.Viewport;
+
+        // Helper to calculate size
+        string textMsg = $"{TankGame.GameLanguage.Press} [{ToggleChat.Assigned}] {TankGame.GameLanguage.ToToggleChat}";
+        var textSize = font.MeasureString(textMsg) * scale;
+        var alertSize = ChatAlert.Size() * scale;
+
+        var contentWidth = (UnreadMessageCount > 0)
+            ? (alertSize.X + 10.ToResolutionX() + textSize.X)
+            : textSize.X;
+
+        var position = Vector2.Zero;
+
+        switch (Corner) {
+            case ChatMessageCorner.TopLeft:
+                position = margin;
+                break;
+            case ChatMessageCorner.TopRight:
+                position = new(viewport.Width - contentWidth - margin.X, margin.Y);
+                break;
+            case ChatMessageCorner.BottomLeft:
+                position = new Vector2(margin.X, viewport.Height - textSize.Y - margin.Y);
+                break;
+            case ChatMessageCorner.BottomRight:
+                position = new Vector2(viewport.Width - contentWidth - margin.X, viewport.Height - textSize.Y - margin.Y);
+                break;
         }
 
-        for (int i = ChatMessages.Count - 1; i >= 0; i--)
-        {
-            var pos = basePosition - new Vector2(0, ((ChatMessages.Count - i) * offset).ToResolutionY());
-            TankGame.SpriteRenderer.DrawString(ChatMessage.Font, ChatMessages[i].Content, pos, ChatMessages[i].Color, Scale.ToResolution(), 0f, drawOrigin);
-        }
+        if (UnreadMessageCount > 0) {
+            sb.Draw(ChatAlert, position, null, Color.White, 0f, Vector2.Zero, scale, default, default);
 
-        TankGame.SpriteRenderer.End();
+            var countPos = position + (ChatAlert.Size() * scale) - new Vector2(12, 12).ToResolution();
+            sb.DrawString(font, UnreadMessageCount.ToString(), countPos, Color.White, scale);
 
-        if (IsOpen) {
-            UnreadMessageCount = 0;
+            var textPos = position + new Vector2(ChatAlert.Size().X * scale.X + 10.ToResolutionX(), 0);
+            sb.DrawString(font, textMsg, textPos, Color.White, scale);
         }
         else {
-            TankGame.SpriteRenderer.Begin();
-            var scale = new Vector2(0.8f);
-            if (UnreadMessageCount > 0) {
-                TankGame.SpriteRenderer.Draw(ChatAlert, OpenOrigin.ToResolution(), null, Color.White, 0f, Vector2.Zero, scale, default, default);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, UnreadMessageCount.ToString(), OpenOrigin.ToResolution() + (ChatAlert.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution() + new Vector2(ChatAlert.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale);
-            }
-            else
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution(), Color.White, scale);
-            // TODO: draw an alertbox saying "!1" or something similar.
-            TankGame.SpriteRenderer.End();
+            sb.DrawString(font, textMsg, position, Color.White, scale);
         }
-
-        #endregion
     }
-    private static void HandleInput(object sender, TextInputEventArgs e)
-    {
-        if (TankGame.Instance.IsActive) {
 
-            if (e.Key == Keys.Back) {
-                if (CurTyping.Length > 0)
-                    CurTyping = CurTyping.Remove(CurTyping.Length - 1);
-            }
-            else if (e.Key == Keys.Escape) {
-                CurTyping = string.Empty;
+    static void HandleInput(object? sender, TextInputEventArgs e) {
+        if (!TankGame.Instance.IsActive) return;
+
+        // ignores the toggle key to prevent it from being typed
+        if (e.Key == ToggleChat.Assigned) return;
+
+        if (e.Key == Keys.Back) {
+            if (CurTyping.Length > 0) CurTyping = CurTyping[..^1];
+        }
+        else if (e.Key == Keys.Escape) {
+            CurTyping = string.Empty;
+            TankGame.Instance.Window.TextInput -= HandleInput;
+            ActiveHandle = false;
+        }
+        else if (e.Key == Keys.Tab) {
+            CurTyping += "   ";
+        }
+        else if (e.Key == Keys.Enter) {
+            if (string.IsNullOrEmpty(CurTyping)) {
                 TankGame.Instance.Window.TextInput -= HandleInput;
                 ActiveHandle = false;
+                return;
             }
-            else if (e.Key == Keys.Tab)
-                CurTyping += "   ";
-            else if (e.Key == Keys.Enter) {
 
-                if (CurTyping == string.Empty) {
-                    TankGame.Instance.Window.TextInput -= HandleInput;
-                    ActiveHandle = false;
-                    return;
-                }
-
-                /*if (CurTyping.Contains('\n'))
-                {
-                    var split = CurTyping.Split('\n');
-
-                    for (int i = 0; i < split.Length; i++)
-                    {
-                        string sender1 = null;
-
-                        if (Client.IsConnected() && i == 0)
-                            sender1 = NetPlay.CurrentClient.Name;
-
-                        SendMessage(split[i], Color.White, sender1);
-                    }
-                }
-                else
-                {
-                    string sender1 = null;
-
-                    if (Client.IsConnected())
-                        sender1 = NetPlay.CurrentClient.Name;
-
-                    SendMessage(CurTyping, Color.White, sender1);
-                }*/
-                string sender1 = null;
-
-                if (Client.IsConnected())
-                    sender1 = NetPlay.CurrentClient.Name;
-                SendMessage(CurTyping, Color.White, sender1);
-                CurTyping = string.Empty;
-            }
-            else
-            {
-                if (CurTyping.Length < MaxLength)
-                    CurTyping += e.Character;
-            }
+            string? senderName = Client.IsConnected() ? NetPlay.CurrentClient.Name : null;
+            SendMessage(CurTyping, Color.White, senderName);
+            CurTyping = string.Empty;
+        }
+        else {
+            if (CurTyping.Length < MAX_LENGTH)
+                CurTyping += e.Character;
         }
     }
 }
 
 /// <summary>Represents a system used to store messages and their contents in use with the <see cref="ChatSystem"/>.</summary>
-/// <remarks>
-/// Creates a new <see cref="ChatMessage"/>.
-/// </remarks>
-/// <param name="content">The content of the <see cref="ChatMessage"/>.</param>
-/// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
-public struct ChatMessage(string content, Color color) {
-    /// <summary>The content of this <see cref="ChatMessage"/>.</summary>
-    public string Content = content;
+public struct ChatMessage(List<ChatSystem.TextSection> snippets, string rawContent) {
+    /// <summary>The parsed segments of the message containing text and color data.</summary>
+    public List<ChatSystem.TextSection> Sections = snippets;
 
-    /// <summary>The color of the content of this <see cref="ChatMessage"/>.</summary>
-    public Color Color = color;
-
-    /// <summary>The <see cref="SpriteFont"/> in which to use to render the content of this <see cref="ChatMessage"/>.</summary>
-    public static SpriteFontBase Font = FontGlobals.RebirthFont;
-}
-
-public enum ChatMessageCorner {
-    TopLeft = 0,
-    TopRight = 1,
-    BottomLeft = 2,
-    BottomRight = 3
+    /// <summary>The raw text content.</summary>
+    public string RawContent = rawContent;
 }

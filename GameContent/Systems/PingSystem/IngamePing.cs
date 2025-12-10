@@ -139,7 +139,7 @@ public class IngamePing {
         }
         TankGame.SpriteRenderer.Draw(_pingGraphic, 
             MatrixUtils.ConvertWorldToScreen(Position + new Vector3(0, fullEase * 2 * 30, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection), 
-            null, Color, 0f, _pingGraphic.Size() / 2, Vector2.One * 0.25f * fullEase, default, 0f);
+            null, Color, 0f, _pingGraphic.Size() / 2, (Vector2.One * 0.25f * fullEase).ToResolution(), default, 0f);
     }
     public static IngamePing CreateFromTankSender(Vector3 position3d, int pingId, int playerId, bool send = false) {
         if (send)

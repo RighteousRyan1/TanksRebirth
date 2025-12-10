@@ -225,12 +225,11 @@ public static partial class MainMenuUI
         device.SetRenderTarget(null);
     }
     public static void RenderGeneralUI(SpriteBatch spriteBatch) {
-        if (SteamworksUtils.IsInitialized)
-            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Seam: {SteamworksUtils.MyUsername}" +
-                $"\n{SteamworksUtils.FriendsCount} friends", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
+        // this is scary to have here... oh well.
         spriteBatch.End();
 
+        // uhhhhhhh.
         GameShaders.AnimatedRainbow.Parameters["oMinLum"].SetValue(0.5f);
         spriteBatch.Begin(effect: GameShaders.AnimatedRainbow);
         spriteBatch.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);

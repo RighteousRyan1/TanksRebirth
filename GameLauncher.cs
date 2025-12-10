@@ -38,10 +38,10 @@ public static partial class GameLauncher
     }
     
     //[STAThread]
-    static void Main() {
-
+    static void Main(string[] args) {
         DebugCheck();
-        
+        Console.WriteLine("args: " + string.Join(", ", args));
+
         if (AutoLaunch)
             LaunchGame();
     }

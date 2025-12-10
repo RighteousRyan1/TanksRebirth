@@ -451,7 +451,7 @@ public partial class AITank : Tank {
         var gain = Parameters.BaseXP * rand;
         // i will keep this commented if anything else happens.
         //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
-        GameHandler.ExperienceBar.GainExperience(gain);
+        GameHandler.ExpBar.GainExperience(gain);
 
         var str = $"+{gain * 100:0.00} XP";
         var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), str);
