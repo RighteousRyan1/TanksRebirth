@@ -93,7 +93,7 @@ public class GameConsole {
                     _currentInput = "help " + selected;
                 }
                 else {
-                    _currentInput = selected;
+                    _currentInput = selected + " ";
                 }
 
                 // autocomplete clears suggestions
