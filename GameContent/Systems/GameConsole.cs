@@ -93,7 +93,7 @@ public class GameConsole {
                     _currentInput = "help " + selected;
                 }
                 else {
-                    _currentInput = selected + " ";
+                    _currentInput = selected + " "; // add small space because they want to type the command right after
                 }
 
                 // autocomplete clears suggestions
