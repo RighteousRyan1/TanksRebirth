@@ -8,7 +8,9 @@ using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.ModSupport;
 
+#pragma warning disable CS8618
 public class ModShell : ILoadable, IModContent {
+    public string InternalName { get; set; }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModShell"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     public Shell Shell { get; set; }

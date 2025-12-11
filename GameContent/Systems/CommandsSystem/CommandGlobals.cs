@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using tainicom.Aether.Physics2D;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
@@ -58,6 +59,23 @@ public static class CommandGlobals {
             var isGoodColor = ColorUtils.ColorsByName.ContainsKey(color);
             if (isGoodColor) {
                 TankGame.IngameConsole.ConsoleBaseColor = ColorUtils.ColorsByName[color];
+            }
+        }),
+
+        // mods
+        [new CommandInput(name: "mod_reload", description: "Reloads all mods, on the spot.")] = new CommandOutput(netSync: false, false, (args) => {
+            ModLoader.LoadMods();
+        }),
+        [new CommandInput(name: "mod_toggle", description: "Toggles a specific mod on/off using the mod's internal name.")] = new CommandOutput(netSync: false, false, (args) => {
+            var mod_find = args[0];
+
+            var modIndex = ModLoader.modNames.IndexOf(mod_find);
+
+            if (modIndex > -1) {
+                ModLoader.modEnablement[modIndex] = !ModLoader.modEnablement[modIndex];
+                TankGame.IngameConsole.Log($"Mod '{mod_find}': {ModLoader.modEnablement[modIndex]}", Color.Lime);
+            } else {
+                TankGame.IngameConsole.Log($"There is no mod by the given name '{mod_find}'.", Color.Red);
             }
         }),
 

@@ -5,9 +5,13 @@ using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.ModSupport;
 // maybe allow for changing the model.
+
+#pragma warning disable CS8618
 public class ModBlock : ILoadable, IModContent
 {
-    private Texture2D? _texture;
+    Texture2D? _texture;
+
+    public string InternalName { get; set; }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModBlock"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     public Block Block { get; internal set; }

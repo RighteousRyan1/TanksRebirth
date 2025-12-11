@@ -33,9 +33,9 @@ public static partial class MainMenuUI {
     public delegate void MenuOpenDelegate();
     public delegate void MenuCloseDelegate();
     public delegate void CampaignSelectedDelegate(Campaign campaign);
-    public static event MenuOpenDelegate OnMenuOpen;
-    public static event MenuCloseDelegate OnMenuClose;
-    public static event CampaignSelectedDelegate OnCampaignSelected;
+    public static event MenuOpenDelegate? OnMenuOpen;
+    public static event MenuCloseDelegate? OnMenuClose;
+    public static event CampaignSelectedDelegate? OnCampaignSelected;
 
     public static int MissionCheckpoint = 0;
 
@@ -49,7 +49,7 @@ public static partial class MainMenuUI {
     // if this dict does not contain the UIState we want, we just default to CamPosMain
     // cosmetics menu in the future can be just a simple transition over to a post where a player tank can render in front of the camera at
     // the camera's position plus the Camera's world forward matrix times a certain amount for distance
-    public static Dictionary<UIState, (Vector3 Position, Vector3 Rotation)> MenuCameraManipulations = new() {
+    public static readonly Dictionary<UIState, (Vector3 Position, Vector3 Rotation)> MenuCameraManipulations = new() {
         [UIState.Campaigns] = (new(330f, 204f, 879f), new(0, -0.18f, 0.29f)), // seat headrest
         [UIState.PlayList] = (new Vector3(247.031f, 59.885f, 204.935f), new Vector3(0f, -0.404f, 1.397f)),
         [UIState.Mulitplayer] = (new Vector3(57.25f, 47.419f, -263.85f), new Vector3(0f, -0.53f, 3.78f)), // behind game scene
@@ -58,7 +58,7 @@ public static partial class MainMenuUI {
         [UIState.Difficulties] = (new(-1189f, 288f, 2583f), new(0f, -0.25f, -2.27f)), // near books
         [UIState.LoadingMods] = (new(-3443f, 2088f, 3183f), new(0, -0.6307f, -0.91f)), // top of the door
         [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f)), // second-to-top shelf of bookshelf
-        [UIState.ModsMenu] = (new Vector3(1186.641f, 180.621f, 507.690f), new Vector3(0f, 0.003f, -0.773f)) // facing towards the clock pendulum
+        [UIState.ModsMenu] = (new Vector3(1305.43f, 1030.8687f, 340.08344f), new Vector3(0f, -0.6007973f, -0.789088f)) // facing towards the clock pendulum
     };
 
     public static Vector3 CamPosMain = new(0, 150, GameScene.MAX_Z + 100); // this is in front of the game scene, viewing it
@@ -258,7 +258,7 @@ public static partial class MainMenuUI {
             RenderGeneralUI(spriteBatch);
             if (MenuState == UIState.StatsMenu)
                 RenderStatsMenu();
-            else if (MenuState == UIState.LoadingMods)
+            else if (ModLoader.IsLoadingMods)
                 ModLoader.DrawModLoading();
 
             if (MenuState == UIState.Mulitplayer)
