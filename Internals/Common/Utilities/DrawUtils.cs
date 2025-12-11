@@ -143,4 +143,6 @@ public static class DrawUtils {
         spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, area.Width - useBorder.X * 2, useBorder.Y), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color, 0f, origin, default, 0f);
         spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, useBorder.X, useBorder.Y), new Rectangle(texture.Width - border, texture.Height - border, border, border), color, 0f, origin, default, 0f);
     }
+
+    public static Rectangle GetOffset(this Rectangle rect, int x, int y) => new Rectangle(rect.X + x, rect.Y + y, rect.Width, rect.Height);
 }

@@ -172,7 +172,7 @@ public static class SceneManager {
         foreach (var expl in Explosion.Explosions)
             expl?.Remove();
 
-        foreach (var crate in Crate.crates)
+        foreach (var crate in Crate.AllCrates)
             crate?.Remove();
 
         foreach (var pu in Powerup.Powerups)

@@ -483,8 +483,8 @@ public class TankGame : Game {
             }
        
             // english is loaded so fallback characters work.
-            FontGlobals.LoadFont(LangCode.English);
-            FontGlobals.LoadFont(Settings.Language);
+            FontGlobals.LoadLocalizedFont(LangCode.English);
+            FontGlobals.LoadLocalizedFont(Settings.Language);
 
             FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
             FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
@@ -600,6 +600,8 @@ public class TankGame : Game {
             PlaceSecrets();
 
             SceneManager.GameLight.Apply(false);
+
+            IngameConsole.PrepareForUser("cascadia");
         }
         catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e);
@@ -862,8 +864,7 @@ public class TankGame : Game {
 
         DrawInteractiveUI(gameTime);
 
-        if (IngameConsole.IsOpen)
-            IngameConsole.Draw(SpriteRenderer, FontGlobals.RebirthFont);
+        IngameConsole.Draw(SpriteRenderer);
 
         DrawCursors();
 

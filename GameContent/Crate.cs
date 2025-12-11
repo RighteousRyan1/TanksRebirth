@@ -15,33 +15,34 @@ using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent;
 
+// TODO: due for an overhaul
 public class Crate {
     public delegate void OpenDelegate(Crate crate);
-    public static event OpenDelegate OnOpen;
+    public static event OpenDelegate? OnOpen;
     public delegate void PostUpdateDelegate(Crate crate);
-    public static event PostUpdateDelegate OnPostUpdate;
+    public static event PostUpdateDelegate? OnPostUpdate;
     public delegate void PostRenderDelegate(Crate crate);
-    public static event PostRenderDelegate OnPostRender;
+    public static event PostRenderDelegate? OnPostRender;
 
+    const float MAGICAL_BOUNCE_NUMBER = 9.6f;
     public const int MAX_CRATES = 50;
 
-    public static Crate[] crates = new Crate[MAX_CRATES];
+    public static Crate[] AllCrates = new Crate[MAX_CRATES];
 
-    public Vector3 position;
+    public Vector3 Position;
+    public Vector3 Velocity;
 
-    public Vector3 velocity;
-
-    public float gravity;
+    public float Gravity;
 
     /// <summary>How much this <see cref="Crate"/> accelerates while falling in the air.</summary>
-    public float dropSpeedAccel = 0.05f;
+    public float DropAcceleration = 0.05f;
 
-    /// <summary>The scale of this <see cref="Crate"/>.</summary>
-    public float scale = 1f;
+    /// <summary>The uniform scale of this <see cref="Crate"/>.</summary>
+    public float Scale = 1f;
 
     public Model Model;
 
-    public Matrix[] faceWorlds = new Matrix[6];
+    readonly Matrix[] _faceWorlds = new Matrix[6];
 
     /// <summary>Whether or not an animation sequence plays when the <see cref="Crate"/> lands.</summary>
     public bool IsOpening { get; private set; }
@@ -53,20 +54,19 @@ public class Crate {
     public bool ContainsTank = true;
 
     /// <summary>How fast this <see cref="Crate"/> shrinks when it starts to open.</summary>
-    public float fadeScale = 0.05f;
+    public float FadeScale = 0.05f;
 
-    private int _bounceCount;
+    int _bounceCount;
+    readonly int _maxBounces = 2;
 
-    private int _maxBounces = 2;
-
-    private Crate() {
+    Crate() {
         Model = ModelGlobals.BoxFace.Asset;
 
-        int index = Array.IndexOf(crates, crates.First(c => c is null));
+        int index = Array.IndexOf(AllCrates, AllCrates.First(c => c is null));
 
         id = index;
 
-        crates[index] = this;
+        AllCrates[index] = this;
     }
 
     /// <summary>
@@ -81,37 +81,37 @@ public class Crate {
         SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 
         return new() {
-            position = pos,
-            gravity = gravity,
+            Position = pos,
+            Gravity = gravity,
         };
     }
     public void Remove() {
-        crates[id] = null;
+        AllCrates[id] = null;
     }
     public void Render() {
         // face order: right, left, front, back, top, bottom
-
-
-        var cubeOffset = 9.6f * scale;
+        // 9.6 is waht?
+        var blockOffset = MAGICAL_BOUNCE_NUMBER * Scale;
 
         var rotationMtxX = Matrix.CreateRotationX(MathHelper.PiOver2);
         var rotationMtxZ = Matrix.CreateRotationZ(MathHelper.PiOver4);
 
-        var scaleMtx = Matrix.CreateScale(scale, 11 * scale, 0.1f);
+        // why is this a scale matrix bro
+        var scaleMtx = Matrix.CreateScale(Scale, 11 * Scale, 0.1f);
 
-        faceWorlds[0] = scaleMtx * rotationMtxZ * rotationMtxX * Matrix.CreateRotationZ(MathHelper.PiOver2) * Matrix.CreateTranslation(position.X + cubeOffset, position.Y, position.Z);
-        faceWorlds[1] = scaleMtx * rotationMtxZ * rotationMtxX * Matrix.CreateRotationZ(MathHelper.PiOver2) * Matrix.CreateTranslation(position.X - cubeOffset, position.Y, position.Z);
+        _faceWorlds[0] = scaleMtx * rotationMtxZ * rotationMtxX * Matrix.CreateRotationZ(MathHelper.PiOver2) * Matrix.CreateTranslation(Position.X + blockOffset, Position.Y, Position.Z);
+        _faceWorlds[1] = scaleMtx * rotationMtxZ * rotationMtxX * Matrix.CreateRotationZ(MathHelper.PiOver2) * Matrix.CreateTranslation(Position.X - blockOffset, Position.Y, Position.Z);
 
-        faceWorlds[2] = scaleMtx * rotationMtxZ * Matrix.CreateTranslation(position.X, position.Y, position.Z - cubeOffset);
-        faceWorlds[3] = scaleMtx * rotationMtxZ * Matrix.CreateTranslation(position.X, position.Y, position.Z + cubeOffset);
+        _faceWorlds[2] = scaleMtx * rotationMtxZ * Matrix.CreateTranslation(Position.X, Position.Y, Position.Z - blockOffset);
+        _faceWorlds[3] = scaleMtx * rotationMtxZ * Matrix.CreateTranslation(Position.X, Position.Y, Position.Z + blockOffset);
 
-        faceWorlds[4] = scaleMtx * rotationMtxZ * Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(position.X, position.Y + cubeOffset, position.Z);
-        faceWorlds[5] = scaleMtx * rotationMtxZ * Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(position.X, position.Y - cubeOffset, position.Z);
+        _faceWorlds[4] = scaleMtx * rotationMtxZ * Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(Position.X, Position.Y + blockOffset, Position.Z);
+        _faceWorlds[5] = scaleMtx * rotationMtxZ * Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(Position.X, Position.Y - blockOffset, Position.Z);
 
-        for (int i = 0; i < faceWorlds.Length; i++) {
+        for (int i = 0; i < _faceWorlds.Length; i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = faceWorlds[i];
+                    effect.World = _faceWorlds[i];
                     effect.View = CameraGlobals.GameView;
                     effect.Projection = CameraGlobals.GameProjection;
 
@@ -132,19 +132,19 @@ public class Crate {
     }
     public void Update() {
         if (!IsOpening) {
-            velocity.Y -= gravity * 0.05f * RuntimeData.DeltaTime;
+            Velocity.Y -= Gravity * 0.05f * RuntimeData.DeltaTime;
 
             // dropSpeed += dropSpeedAccel;
 
-            position += velocity * RuntimeData.DeltaTime;
+            Position += Velocity * RuntimeData.DeltaTime;
 
-            if (position.Y <= (9.6f * scale)) {
-                if (velocity.Y <= -1f) {
+            if (Position.Y <= (MAGICAL_BOUNCE_NUMBER * Scale)) {
+                if (Velocity.Y <= -1f) {
                     var spawnSfx = "Assets/sounds/crate/CrateImpact.ogg";
 
                     SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 
-                    velocity.Y = -velocity.Y * 0.3f;
+                    Velocity.Y = -Velocity.Y * 0.3f;
 
                     _bounceCount++;
                 }
@@ -155,13 +155,13 @@ public class Crate {
         }
 
         else {
-            scale -= fadeScale;
+            Scale -= FadeScale;
 
-            if (scale <= 0)
-                crates[id] = null;
+            if (Scale <= 0)
+                AllCrates[id] = null;
         }
-        if (position.Y < 0)
-            position.Y = 0;
+        if (Position.Y < 0)
+            Position.Y = 0;
 
         OnPostUpdate?.Invoke(this);
     }
@@ -175,8 +175,8 @@ public class Crate {
             if (Modifiers.Map[Modifiers.MASTER])
                 tier = Modifiers.VanillaToMasterModeConversions[tier];
             var t = new AITank(tier);
-            t.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
-            t.Position = position.FlattenZ();
+            t.Physics.Position = Position.FlattenZ() / Tank.UNITS_PER_METER;
+            t.Position = Position.FlattenZ();
             t.IsDestroyed = false;
             t.Team = TankToSpawn.Team;
         }

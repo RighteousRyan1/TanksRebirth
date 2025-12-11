@@ -23,8 +23,11 @@ public class GameConsole {
     const int PADDING = 5;
 
     string _lastCmd = string.Empty;
-    public Color UserInputColor = Color.LightGreen;
-    public Color ErrorColor = Color.Red;
+    readonly FontSystem _consoleFontSystem;
+    public SpriteFontBase Font;
+    public readonly Color UserInputColor = Color.LightGreen;
+    public readonly Color ErrorColor = Color.Red;
+    public Color ConsoleBaseColor = Color.Black;
     public float LogScale = 1f; // scale of the text in the log
 
     // suggestion stuff
@@ -33,7 +36,9 @@ public class GameConsole {
 
     // window state
     public bool IsOpen { get; private set; } = false;
-    Rectangle _windowRect = new(50, 50, 600, 300);
+    Rectangle _windowRect = new(50, 50, 800, 500);
+    // float _fade;
+    // RenderTarget2D _windowBuffer;
 
     // input/drag state
     string _currentInput = "";
@@ -55,6 +60,8 @@ public class GameConsole {
         _game = game;
         _toggleKey = toggleKey;
         _game.Window.TextInput += OnTextInput;
+
+        _consoleFontSystem = new();
     }
 
     public void Log(string message, Color color) {
@@ -68,10 +75,15 @@ public class GameConsole {
 
     public void Update(GameTime gameTime) {
         var mousePos = MouseUtils.MousePosition.ToPoint();
+        // var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         if (InputUtils.KeyJustPressed(_toggleKey)) {
             IsOpen = !IsOpen;
+
+            EnsureOnScreen();
         }
+
+        // _fade += (IsOpen ? 0.05f : -0.05f) * dt;
 
         if (!IsOpen) return;
 
@@ -138,8 +150,21 @@ public class GameConsole {
             _isResizing = false;
         }
     }
+    void EnsureOnScreen() {
+        _windowRect.X = (int)MathF.Max(_windowRect.X, 0);
+        _windowRect.Y = (int)MathF.Max(_windowRect.Y, 0);
 
-    private void OnTextInput(object? sender, TextInputEventArgs e) {
+        var rectMaxX = _windowRect.X + _windowRect.Width;
+        var rectMaxY = _windowRect.Y + _windowRect.Height;
+
+        if (rectMaxX > WindowUtils.WindowWidth) {
+            _windowRect.X -= rectMaxX - WindowUtils.WindowWidth;
+        }
+        if (rectMaxY > WindowUtils.WindowHeight) {
+            _windowRect.Y -= rectMaxY - WindowUtils.WindowHeight;
+        }
+    }
+    void OnTextInput(object? sender, TextInputEventArgs e) {
         if (!IsOpen) return;
 
         // ignores the toggle key to prevent it from being typed
@@ -170,18 +195,15 @@ public class GameConsole {
         }
     }
 
+    public void Clear() {
+        _logLines.Clear();
+    }
+
     public void ProcessCommand(string commandInput, bool log = true) {
         if (log)
             Log($"> {commandInput}", UserInputColor);
 
         if (string.IsNullOrWhiteSpace(commandInput)) return;
-
-        // hard-coded command
-        if (commandInput.Equals("clear", StringComparison.OrdinalIgnoreCase)) {
-            _logLines.Clear();
-            return;
-        }
-
 
         // do help command specific shit
         if (commandInput.StartsWith("help ", StringComparison.OrdinalIgnoreCase)) {
@@ -203,7 +225,6 @@ public class GameConsole {
 
         if (commandInput.Equals("help", StringComparison.OrdinalIgnoreCase)) {
             Log("Type 'help <command>' to see a description.", UserInputColor);
-            Log("Type 'clear' to wipe console text.", UserInputColor);
             return;
         }
 
@@ -290,51 +311,56 @@ public class GameConsole {
             _selectedSuggestionIndex = 0;
     }
 
-    public void Draw(SpriteBatch spriteBatch, SpriteFontBase font) {
+    // eventually or osmething
+    void PrepareBuffer() {
+        // RenderGlobals.EnsureRenderTargetOK(ref )
+    }
+
+    public void Draw(SpriteBatch spriteBatch) {
         if (!IsOpen) return;
 
         // logging draw
         spriteBatch.Begin();
 
         // bg
-        spriteBatch.Draw(TextureGlobals.Pixels[Color.Black], _windowRect, Color.White * BG_ALPHA);
+        spriteBatch.Draw(TextureGlobals.Pixels[ConsoleBaseColor], _windowRect, Color.White * BG_ALPHA);
         Rectangle headerRect = new(_windowRect.X, _windowRect.Y, _windowRect.Width, HEADER_HEIGHT);
         spriteBatch.Draw(TextureGlobals.Pixels[Color.DarkGray], headerRect, Color.White);
 
         // header
         var devConsoleText = "Developer Console";
-        var devMeasure = font.MeasureString(devConsoleText);
-        spriteBatch.DrawString(font, devConsoleText, new Vector2(_windowRect.X + PADDING, _windowRect.Y + PADDING), Color.White, origin: new(0, devMeasure.Y / 2));
+        var devMeasure = Font.MeasureString(devConsoleText);
+        spriteBatch.DrawString(Font, devConsoleText, new Vector2(_windowRect.X + PADDING, _windowRect.Y + PADDING), Color.White, origin: new(0, devMeasure.Y * .25f));
 
         // input section, handling overflow
         float maxInputWidth = _windowRect.Width - (PADDING * 2);
-        string wrappedInput = StringUtils.WrapText(font, "$ " + _currentInput, maxInputWidth);
-        Vector2 inputSize = font.MeasureString(wrappedInput);
+        string wrappedInput = StringUtils.WrapText(Font, "$ " + _currentInput, maxInputWidth);
+        Vector2 inputSize = Font.MeasureString(wrappedInput);
 
         // calculate dynamic input height
-        int inputHeight = (int)Math.Max(font.MeasureString("A").Y + (PADDING * 2), inputSize.Y + (PADDING * 2));
+        int inputHeight = (int)Math.Max(Font.MeasureString("A").Y + (PADDING * 2), inputSize.Y + (PADDING * 2));
         Rectangle inputRect = new(_windowRect.X, _windowRect.Bottom - inputHeight, _windowRect.Width, inputHeight);
 
         // pixel-tall separation
         spriteBatch.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(_windowRect.X, inputRect.Y, _windowRect.Width, 1), Color.White);
 
         // input display
-        spriteBatch.DrawString(font, wrappedInput, new Vector2(inputRect.X + PADDING, inputRect.Y + PADDING), Color.Yellow);
+        spriteBatch.DrawString(Font, wrappedInput, new Vector2(inputRect.X + PADDING, inputRect.Y + PADDING), Color.Yellow);
 
         // caret animation
         if (RuntimeData.RunTime % 60 < 30) {
-            // Find position of last line to place caret
+            // finds position of last line to place caret
             var lines = wrappedInput.Split('\n');
             var lastLine = lines.Last();
             var lastLineIdx = lines.Length - 1;
 
             // Y position is based on line count, X position is width of the last line
-            float caretY = lastLineIdx * font.LineHeight;
-            float caretX = font.MeasureString(lastLine).X;
+            float caretY = lastLineIdx * Font.LineHeight;
+            float caretX = Font.MeasureString(lastLine[..^1]).X;
 
-            // Adjust for padding
-            Vector2 caretPos = new Vector2(inputRect.X + PADDING + caretX, inputRect.Y + PADDING + caretY);
-            spriteBatch.DrawString(font, "|", caretPos, Color.Yellow);
+            // adjusts for padding
+            var caretPos = new Vector2(inputRect.X + PADDING + caretX, inputRect.Y + PADDING + caretY);
+            spriteBatch.DrawString(Font, "|", caretPos, Color.Yellow);
         }
 
         // handle resizing
@@ -342,7 +368,7 @@ public class GameConsole {
         spriteBatch.Draw(TextureGlobals.Pixels[Color.Gray], handleRect, Color.White);
 
         if (_currentSuggestions.Count > 0) {
-            DrawSuggestions(spriteBatch, font, inputRect);
+            DrawSuggestions(spriteBatch, Font, inputRect);
         }
 
         spriteBatch.End();
@@ -353,7 +379,7 @@ public class GameConsole {
 
         if (logAreaHeight > 0 && _windowRect.Width > 0) {
             Rectangle scissorRect = new(_windowRect.X, logAreaY, _windowRect.Width, logAreaHeight);
-            Rectangle viewportRect = _game.GraphicsDevice.Viewport.Bounds;
+            var viewportRect = _game.GraphicsDevice.Viewport.Bounds;
             scissorRect = Rectangle.Intersect(scissorRect, viewportRect);
 
             if (scissorRect.Width > 0 && scissorRect.Height > 0) {
@@ -367,19 +393,19 @@ public class GameConsole {
                 float maxLogWidth = _windowRect.Width - (PADDING * 2);
 
                 foreach (var line in _logLines.Reverse()) {
-                    // Wrap log text
-                    string wrappedLog = StringUtils.WrapText(font, line.Text, maxLogWidth, LogScale);
+                    // wraps log text
+                    string wrappedLog = StringUtils.WrapText(Font, line.Text, maxLogWidth, LogScale);
                     string[] wrappedLogLines = wrappedLog.Split('\n');
 
-                    // Draw each line of the wrapped log message (bottom-up)
+                    // draws each line of the wrapped log message (bottom-up)
                     for (int i = wrappedLogLines.Length - 1; i >= 0; i--) {
                         var logLine = wrappedLogLines[i];
-                        Vector2 size = font.MeasureString(logLine) * LogScale;
+                        Vector2 size = Font.MeasureString(logLine) * LogScale;
                         currentY -= (int)size.Y;
 
                         if (currentY + size.Y < scissorRect.Y) break;
                         if (currentY < scissorRect.Bottom) {
-                            spriteBatch.DrawString(font, logLine, new Vector2(_windowRect.X + PADDING, currentY), line.Color, new Vector2(LogScale));
+                            spriteBatch.DrawString(Font, logLine, new Vector2(_windowRect.X + PADDING, currentY), line.Color, new Vector2(LogScale));
                         }
                     }
                     if (currentY < scissorRect.Y) break;
@@ -391,7 +417,7 @@ public class GameConsole {
         }
     }
 
-    private void DrawSuggestions(SpriteBatch sb, SpriteFontBase font, Rectangle inputRect) {
+    void DrawSuggestions(SpriteBatch sb, SpriteFontBase font, Rectangle inputRect) {
         int totalHeight = _currentSuggestions.Count * SUGGESTION_ITEM_HEIGHT;
 
         // draws the box beneath text input
@@ -401,10 +427,10 @@ public class GameConsole {
         sb.Draw(TextureGlobals.Pixels[Color.Black], suggestionRect, Color.Black * 0.9f);
 
         // border
-        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.X, suggestionRect.Y, suggestionRect.Width, 1), Color.White); // Top border (Separator)
-        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.X, suggestionRect.Y, 1, suggestionRect.Height), Color.White); // Left border
-        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.Right - 1, suggestionRect.Y, 1, suggestionRect.Height), Color.White); // Right border
-        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.X, suggestionRect.Bottom - 1, suggestionRect.Width, 1), Color.White); // Bottom border
+        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.X, suggestionRect.Y, suggestionRect.Width, 1), Color.White); // separator
+        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.X, suggestionRect.Y, 1, suggestionRect.Height), Color.White); // left 
+        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.Right - 1, suggestionRect.Y, 1, suggestionRect.Height), Color.White); // right
+        sb.Draw(TextureGlobals.Pixels[Color.Gray], new Rectangle(suggestionRect.X, suggestionRect.Bottom - 1, suggestionRect.Width, 1), Color.White); // bottom
 
         for (int i = 0; i < _currentSuggestions.Count; i++) {
             var itemText = _currentSuggestions[i];
@@ -420,6 +446,35 @@ public class GameConsole {
 
             var pos = new Vector2(suggestionRect.X + PADDING, suggestionRect.Y + (i * SUGGESTION_ITEM_HEIGHT) + 2); // +2 for vertical centering adjustment
             sb.DrawString(font, itemText, pos, textColor);
+        }
+    }
+
+    internal void PrepareForUser(string fontName) {
+        FontGlobals.LoadFontDirect(_consoleFontSystem, $@"Content/Assets/fonts/{fontName}.ttf");
+        Font = _consoleFontSystem.GetFont(24);
+        PrintAsciiArt();
+    }
+    internal void PrepareForUser(SpriteFontBase font) {
+        Font = font;
+        PrintAsciiArt();
+    }
+    internal void PrintAsciiArt() {
+        string[] ascii = [
+            @"  ______   ______   __   __   __  __   ______    ",
+            @" /\__  _\ /\  __ \ /\ ""-.\ \ /\ \/ /  /\  ___\   ",
+            @" \/_/\ \/ \ \  __ \\ \ \-.  \\ \  _""-. \ \___  \  ",
+            @"    \ \_\  \ \_\ \_\\ \_\\""\_\\ \_\ \_\ \/\_____\ ",
+            @"     \/_/   \/_/\/_/ \/_/ \/_/ \/_/\/_/  \/_____/ ",
+            @"                                                  ",
+            @"  ______   ______   ______   __   ______   ______  __  __    ",
+            @" /\  == \ /\  ___\ /\  == \ /\ \ /\  == \ /\__  _\/\ \_\ \   ",
+            @" \ \  __< \ \  __\ \ \  __< \ \ \\ \  __< \/_/\ \/\ \  __ \  ",
+            @"  \ \_\ \_\\ \_____\\ \_____\\ \_\\ \_\ \_\  \ \_\ \ \_\ \_\ ",
+            @"   \/_/ /_/ \/_____/ \/_____/ \/_/ \/_/ /_/   \/_/  \/_/\/_/ "
+        ];
+
+        foreach (var line in ascii) {
+            Log(line, Color.CornflowerBlue);
         }
     }
 }

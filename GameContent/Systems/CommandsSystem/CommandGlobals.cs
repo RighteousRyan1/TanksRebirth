@@ -17,6 +17,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
@@ -44,6 +45,19 @@ public static class CommandGlobals {
             for (int i = 0; i < names.Length; i++) {
                 if (corner == names[i])
                     ChatSystem.Corner = (ChatMessageCorner)i;
+            }
+        }),
+        [new CommandInput(name: "destroy", description: "Destroy yourself.")] = new CommandOutput(netSync: false, false, (args) => {
+            PlayerTank.ClientTank?.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Used commands."), true);
+        }),
+        [new CommandInput(name: "cmd_clear", description: "Clear the console.")] = new CommandOutput(netSync: false, false, (args) => {
+            TankGame.IngameConsole.Clear();
+        }),
+        [new CommandInput(name: "cmd_color", description: "Clear the console.")] = new CommandOutput(netSync: false, false, (args) => {
+            var color = args[0];
+            var isGoodColor = ColorUtils.ColorsByName.ContainsKey(color);
+            if (isGoodColor) {
+                TankGame.IngameConsole.ConsoleBaseColor = ColorUtils.ColorsByName[color];
             }
         }),
 
@@ -84,7 +98,7 @@ public static class CommandGlobals {
             if (exists) {
                 var parseLang = LangCode.Parse(lang);
                 Language.LoadLang(parseLang, out TankGame.GameLanguage);
-                FontGlobals.LoadFont(parseLang);
+                FontGlobals.LoadLocalizedFont(parseLang);
                 TankGame.Settings.Language = parseLang;
 
                 // TODO: try to only initialize the localization lol (causes UI to appear when it shouldn't)
@@ -99,12 +113,15 @@ public static class CommandGlobals {
         }),
         [new CommandInput(name: "snd_mus", description: "Set music volume.")] = new CommandOutput(netSync: false, false, (args) => {
             TankGame.Settings.MusicVolume = float.Parse(args[0]);
+            VolumeUI.MusicVolume.Value = TankGame.Settings.MusicVolume;
         }),
         [new CommandInput(name: "snd_fx", description: "Set sound volume.")] = new CommandOutput(netSync: false, false, (args) => {
             TankGame.Settings.EffectsVolume = float.Parse(args[0]);
+            VolumeUI.EffectsVolume.Value = TankGame.Settings.EffectsVolume;
         }),
         [new CommandInput(name: "snd_amb", description: "Set ambient volume.")] = new CommandOutput(netSync: false, false, (args) => {
             TankGame.Settings.AmbientVolume = float.Parse(args[0]);
+            VolumeUI.AmbientVolume.Value = TankGame.Settings.AmbientVolume;
         }),
         // render engine
         [new CommandInput(name: "r_menu", description: "Disable/enable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, false, (args) => {

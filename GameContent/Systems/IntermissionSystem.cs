@@ -570,9 +570,9 @@ public static class IntermissionSystem {
 
         spriteBatch.End();
 
-        device.SetRenderTarget(null);
-
         #endregion
+
+        device.SetRenderTarget(null);
 
         // maximum value should be 40% of window height
         _renderY = _forceBonusDrawToHeight ? WindowUtils.WindowHeight * 0.4f : BonusLifeAnimator.CurrentPosition.Y;

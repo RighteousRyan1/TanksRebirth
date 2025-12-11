@@ -75,6 +75,7 @@ public static class GraphicsUI {
         VSyncBtn.OnLeftClick = (uiElement) => {
             TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = TankGame.Settings.Vsync = !TankGame.Settings.Vsync;
             TankGame.Instance.Graphics.ApplyChanges();
+            VSyncBtn.Text = TankGame.GameLanguage.VSync + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.Vsync);
         };
 
         WinKindBtn = new($"{TankGame.GameLanguage.WindowKind}: {StringUtils.SplitByCamel(Enum.GetName(TankGame.Settings.WindowKind)!)}", FontGlobals.RebirthFont, Color.WhiteSmoke) {

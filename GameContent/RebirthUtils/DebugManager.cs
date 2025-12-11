@@ -291,8 +291,9 @@ public static class DebugManager {
             Lighting.AccurateShadows = !Lighting.AccurateShadows;
         if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
             RenderWireframe = !RenderWireframe;
-        if (InputUtils.AreKeysJustPressed(Keys.O, Keys.P))
+        if (InputUtils.AreKeysJustPressed(Keys.O, Keys.P)) {
             ModLoader.LoadMods();
+        }
         if (DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.U, Keys.I))
             ModLoader.UnloadAll();
 
@@ -537,7 +538,7 @@ public static class DebugManager {
         var pos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
 
         var drop = Crate.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
-        drop.scale = 1.25f;
+        drop.Scale = 1.25f;
         drop.TankToSpawn = new TankTemplate() {
             AiTier = AITank.PickRandomTier(),
             Team = TeamID.NoTeam
@@ -608,7 +609,7 @@ public static class DebugManager {
         var random = new BlockMapPosition(Client.ClientRandom.Next(0, 26), Client.ClientRandom.Next(0, 20));
 
         var drop = Crate.SpawnCrate(new(BlockMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : Client.ClientRandom.Next(-300, 301)), BlockMapPosition.Convert3D(random).Z), 2f);
-        drop.scale = 1.25f;
+        drop.Scale = 1.25f;
         drop.TankToSpawn = new TankTemplate() {
             AiTier = tierOverride == default ? AITank.PickRandomTier() : tierOverride,
             Team = teamOverride == default ? Client.ClientRandom.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride

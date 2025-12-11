@@ -12,12 +12,24 @@ public static class FontGlobals {
     public static SpriteFontBase RebirthFont;
     public static SpriteFontBase RebirthFontLarge;
 
-    public static List<LangCode> LoadedFontLangs = [];
+    readonly static List<LangCode> _loadedFontLangs = [];
 
-    public static void LoadFont(LangCode lang) {
-        if (LoadedFontLangs.Contains(lang)) return;
+    readonly static List<string> _loadedFontPaths = [];
 
-        LoadedFontLangs.Add(lang);
+    public static void LoadLocalizedFont(LangCode lang) {
+        if (_loadedFontLangs.Contains(lang)) return;
+
+        _loadedFontLangs.Add(lang);
         RebirthFontSystem.AddFont(File.ReadAllBytes(@$"Content/Assets/fonts/{lang.Language}_{lang.Country}.ttf"));
+    }
+
+    public static void LoadFontDirect(FontSystem fs, string fontPath) {
+        if (_loadedFontPaths.Contains(fontPath)) {
+            return;
+        }
+
+        _loadedFontPaths.Add(fontPath);
+
+        fs.AddFont(File.ReadAllBytes(fontPath));
     }
 }

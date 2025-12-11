@@ -157,7 +157,7 @@ public class GameHandler {
         if (CampaignGlobals.InMission) {
             TankMusicSystem.Update();
 
-            foreach (var crate in Crate.crates)
+            foreach (var crate in Crate.AllCrates)
                 crate?.Update();
 
             foreach (var pu in Powerup.Powerups)
@@ -213,6 +213,7 @@ public class GameHandler {
         GameScene.RenderWorldModels();
         // TankFootprint.Draw();
 
+        // TankGame.Instance.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         foreach (var tank in AllTanks)
             tank?.Render();
 
@@ -237,7 +238,7 @@ public class GameHandler {
         //foreach (var print in TankFootprint.footprints)
         //print?.Render();
 
-        foreach (var crate in Crate.crates)
+        foreach (var crate in Crate.AllCrates)
             crate?.Render();
 
         foreach (var powerup in Powerup.Powerups)

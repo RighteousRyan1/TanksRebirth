@@ -10,6 +10,8 @@ using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.UI.MainMenu; 
+
+// TODO: make this fully functional next!
 public partial class MainMenuUI {
     // button to press to enter the mods menu
     public static UITextButton ModsMenuButton;

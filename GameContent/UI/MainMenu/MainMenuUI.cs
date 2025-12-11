@@ -19,8 +19,7 @@ using Microsoft.Xna.Framework.Graphics;
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 // unfortunately godclassed asf
-public static partial class MainMenuUI
-{
+public static partial class MainMenuUI {
     public static bool IsActive { get; private set; } = true;
 
     public static Animator CameraPositionAnimator;
@@ -262,7 +261,7 @@ public static partial class MainMenuUI
             else if (MenuState == UIState.LoadingMods)
                 ModLoader.DrawModLoading();
 
-            else if (MenuState == UIState.Mulitplayer)
+            if (MenuState == UIState.Mulitplayer)
                 RenderMP();
             else if (MenuState == UIState.Campaigns)
                 DrawCampaignsUI();

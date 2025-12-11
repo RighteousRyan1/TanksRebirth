@@ -40,6 +40,17 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - All drawing-related fields/properties of drawn objects have been moved into their own `DrawParams`
 - `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
 - `MathUtils.Rotate` -> `MathUtils.RotatedBy` because the new MonoGame version has `Vector2.Rotate` declared
+- `Campaign.TrackedSpawnPoints` is now static instead of instanced, and is now `CurrentTrackedSpawns`
+- Every `Crate` field has been properly named for C# naming conventions
+- `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
+- Most rendering/drawing info has been moved into a struct called `DrawParamsBasic`, where the field name for it is `DrawParams`
+	- Entity-specific draw params are named `DrawParamsX` (i.e: `DrawParamsTank`)
+- `SwapXTexture` from entity classes is now just `DrawParamsX.XTexture = newTexture;`
+- Keyframes now are dimension-agnostic
+- `CameraGlobals.IsUsingFirstPresonCamera` has been de-typo'd :|
+- `Difficulties.Types` -> `Modifiers.Map`
+- All string identifiers in `Modifiers` are now constants so they can be easily identified- and yes, you'll have to use them
+
 
 # Fixes
 

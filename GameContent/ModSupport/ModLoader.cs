@@ -284,6 +284,7 @@ public static class ModLoader {
         }
         mod.Data.assemblyContainer.Unload();
     }
+
     /// <summary>Prepare your garbage collector!</summary>
     internal static void LoadMods() {
         if (Status == LoadStatus.Unloading)
@@ -341,7 +342,7 @@ public static class ModLoader {
                     return;
                 }
 
-                /*_loadingActions.Add(() => {
+                _loadingActions.Add(() => {
                     try {
                         ModBeingLoaded = modName;
 
@@ -414,93 +415,10 @@ public static class ModLoader {
                         Error = e.Message;
                         return;
                     }
-                });*/
-                try {
-                    ModBeingLoaded = modName;
-
-                    AttemptCompile(modName);
-
-                    Status = LoadStatus.Loading;
-                    string filepath = Path.Combine(folder, "bin", LoadType, EXPECTED_NET_VERSION, $"{modName}.dll");
-                    string pdb = Path.ChangeExtension(filepath, ".pdb");
-
-                    var alc = new AssemblyLoadContext(modName, isCollectible: true);
-
-                    // loads mod-specific dependencies into *this* ALC
-                    var dirPath = Path.Combine(folder, "modrefs");
-                    if (Directory.Exists(dirPath)) {
-                        foreach (var dllPath in Directory.GetFiles(dirPath, "*.dll")) {
-                            alc.LoadFromAssemblyPath(dllPath);
-                        }
-                    }
-
-                    // now load the mod itself into the same ALC
-                    using var mainDll = File.OpenRead(filepath);
-                    using var mainPdb = File.Exists(pdb) ? File.OpenRead(pdb) : null;
-
-                    if (mainPdb is not null)
-                        alc.LoadFromStream(mainDll, mainPdb);
-                    else
-                        alc.LoadFromStream(mainDll);
-
-                    _loadedAlcs.Add(alc);
-
-                    var assembly = alc.Assemblies.First(x => x.GetName().Name == modName);
-                    var types = assembly.GetTypes();
-                    var tanksModTypes = types.Where(t => t.IsSubclassOf(typeof(TanksMod)) && !t.IsAbstract).ToArray();
-
-                    TanksMod mod;
-
-                    if (tanksModTypes.Length != 1) {
-                        if (tanksModTypes.Length > 1)
-                            throw new ModLoadException($"Too many classes inherit from {nameof(TanksMod)}! Only one is allowed per-mod.");
-                        else
-                            throw new ModLoadException($"No classes that inherit from {nameof(TanksMod)}, no entrypoint to use.");
-                    }
-                    // initialize what needs to be initialized (DAMN THATS A BAR)
-                    else {
-                        mod = (Activator.CreateInstance(tanksModTypes[0]) as TanksMod)!;
-                        mod.InternalName = modName;
-                        mod.Data.LoadDirectory = folder;
-                        mod.Data.assemblyContainer = alc;
-                        mod.Data.LoadDirectory = filepath;
-                        mod.Data.Dependencies = alc.Assemblies.Select(x => x.FullName!).ToArray();
-                        mod.Data.Assemblies = alc.Assemblies;
-
-                        var modInfoPath = Path.Combine(folder, "mod_info.json");
-
-                        SetupMod(mod, modInfoPath);
-
-                        LoadModContent(mod, types);
-
-                        FirstLoadMods.Add(mod.InternalName);
-                        ModsEnabled.TryAdd(mod.InternalName, true);
-
-                        LoadedMods.Add(mod);
-                        mod.OnLoad();
-                        OnPostModLoad?.Invoke(mod);
-                    }
-                    ActionsComplete++;
-                    TankGame.ClientLog.Write($"Loaded mod '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", LogType.Info);
-                } catch (Exception e) {
-                    TankGame.ReportError(e, true, true);
-                    Error = e.Message;
-                    return;
-                }
+                });
             }
         }
-        IsLoadingMods = false;
-        ModBeingLoaded = string.Empty;
-        Status = LoadStatus.Complete;
-        TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", LogType.Info);
-        _firstLoad = false;
-
-        ModTanks = [.. _modTanks];
-        ModBlocks = [.. _modBlocks];
-        ModShells = [.. _modShells];
-
-        OnFinishModLoading?.Invoke();
-        /*Task.Run(() => {
+        Task.Run(() => {
             _loadingActions.ForEach(x => x());
 
             IsLoadingMods = false;
@@ -515,9 +433,36 @@ public static class ModLoader {
             ModShells = [.. _modShells];
 
             OnFinishModLoading?.Invoke();
-        });*/
+        });
+        /*IsLoadingMods = false;
+        ModBeingLoaded = string.Empty;
+        Status = LoadStatus.Complete;
+        TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", LogType.Info);
+        _firstLoad = false;
+
+        ModTanks = [.. _modTanks];
+        ModBlocks = [.. _modBlocks];
+        ModShells = [.. _modShells];*/
 
     }
+    /*internal static void LoadMods() {
+        Task.Run(() => {
+            loadingActions.ForEach(x => x());
+
+            IsLoadingMods = false;
+            ModBeingLoaded = string.Empty;
+            Status = LoadStatus.Complete;
+
+            TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", LogType.Info);
+            _firstLoad = false;
+
+            ModTanks = [.. _modTanks];
+            ModBlocks = [.. _modBlocks];
+            ModShells = [.. _modShells];
+
+            OnFinishModLoading?.Invoke();
+        });
+    }*/
     internal static void SetupMod(TanksMod mod, string modInfoPath) {
         mod.Data.Tanks = [];
         mod.Data.Blocks = [];
@@ -558,7 +503,6 @@ public static class ModLoader {
             }
         }
     }
-
     public static void LoadModTank(TanksMod mod, Type type) {
         var modTank = (Activator.CreateInstance(type) as ModTank)!;
         mod.Data.Tanks.Add(modTank);
@@ -600,7 +544,7 @@ public static class ModLoader {
         // again, but with modshels
         ModSingletons._singletonMap.Add(type, modShell);
         modShell.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{modShell.GetType().Name}");
-        modShell.Register();
+        TankGame.MainThreadTasks.Enqueue(modShell.Register);
         TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
     }
     public static int LocateCsprojProperty(string[] contents, string match) {
@@ -615,30 +559,100 @@ public static class ModLoader {
         return property;
     }
 
-    // rendering
-    // refactor pl0x
+    // okay this is refactored but idk if it's good enough
     public static void DrawModLoading() {
-        var alpha = 0.7f;
-        var width = WindowUtils.WindowWidth / 3;
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
+        var renderer = TankGame.SpriteRenderer;
+        var font = FontGlobals.RebirthFont;
 
-        var barDims = new Vector2(width - 120, 20).ToResolution();
+        // dims the background to make the loading ui more apparent
+        renderer.Draw(
+            TextureGlobals.Pixels[Color.Black],
+            new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
+            Color.Black * 0.6f
+        );
 
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
-            barDims, default, 0f);
-        var ratio = (float)ActionsComplete / ActionsNeeded;
-        if (ActionsNeeded == 0)
-            ratio = 0;
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
-            barDims * new Vector2(ratio, 1f).ToResolution(), default, 0f);
+        // panel drawing parameters
+        // yes they're hardcoded. deal with it.
+        var center = new Vector2(WindowUtils.WindowWidth / 2f, WindowUtils.WindowHeight / 2f);
+        var panelWidth = 700.ToResolutionX();
+        var panelHeight = 350.ToResolutionY();
+        var panelRect = new Rectangle(
+            (int)(center.X - panelWidth / 2),
+            (int)(center.Y - panelHeight / 2),
+            (int)panelWidth,
+            (int)panelHeight
+        );
 
-        var txt = $"{Status} {ModBeingLoaded}...";
-        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, FontGlobals.RebirthFont.MeasureString(txt)));
+        // panel shadow
+        renderer.Draw(TextureGlobals.Pixels[Color.Black], panelRect.GetOffset(10, 10), Color.Black * 0.5f);
 
-        txt = Error == string.Empty ? 
-            $"Loading mods... {ratio * 100:0}% ({ActionsComplete + 1} / {ActionsNeeded})" :
-            $"Error Loading '{ModBeingLoaded}' ({Error})";
+        // panel
+        renderer.Draw(TextureGlobals.Pixels[Color.Gray], panelRect, new Color(30, 30, 35));
 
-        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, FontGlobals.RebirthFont.MeasureString(txt)));
+        // panel accent
+        var accentHeight = 6.ToResolutionY();
+        renderer.Draw(
+            TextureGlobals.Pixels[Color.White],
+            new Rectangle(panelRect.X, panelRect.Y, panelRect.Width, (int)accentHeight),
+            Color.Goldenrod
+        );
+
+        // text drawing
+        var titleText = "MOD INITIALIZATION";
+        var titleScale = new Vector2(1.5f).ToResolution();
+        var titleSize = font.MeasureString(titleText) * titleScale;
+        var titlePos = new Vector2(center.X, panelRect.Y + 60.ToResolutionY());
+
+        // title shadow
+        renderer.DrawString(font, titleText, titlePos + new Vector2(2), Color.Black * 0.5f, titleScale, 0f, GameUtils.GetAnchor(Anchor.Center, titleSize / titleScale), 1f, 0f);
+        renderer.DrawString(font, titleText, titlePos, Color.White, titleScale, 0f, GameUtils.GetAnchor(Anchor.Center, titleSize / titleScale), 1f, 0f);
+
+        // current status
+        var statusText = Error != string.Empty ? $"ERROR: {Error}" : $"{Status}: {ModBeingLoaded}...";
+        var statusScale = new Vector2(0.9f).ToResolution();
+        var statusSize = font.MeasureString(statusText) * statusScale;
+        // Make it "pulse" slightly using Sine wave
+        var pulse = (float)Math.Sin(RuntimeData.RunTime / 20f) * 0.1f + 0.9f;
+        var statusColor = Error != string.Empty ? Color.Red : Color.LightGray * pulse;
+
+        renderer.DrawString(font, statusText, center - new Vector2(0, 20.ToResolutionY()), statusColor, statusScale, 0f, GameUtils.GetAnchor(Anchor.Center, statusSize / statusScale), 1f, 0f);
+
+        // progress bar
+
+        var barWidth = panelWidth * 0.8f;
+        var barHeight = 30.ToResolutionY();
+        var barRect = new Rectangle(
+            (int)(center.X - barWidth / 2),
+            (int)(center.Y + 40.ToResolutionY()),
+            (int)barWidth,
+            (int)barHeight
+        );
+
+        // bar border
+        var borderRect = barRect;
+        borderRect.Inflate(2, 2);
+        renderer.Draw(TextureGlobals.Pixels[Color.White], borderRect, Color.Gray);
+
+        // bar track
+        renderer.Draw(TextureGlobals.Pixels[Color.Black], barRect, Color.Black);
+
+        // bar fill
+        float ratio = ActionsNeeded == 0 ? 0 : (float)ActionsComplete / ActionsNeeded;
+        var fillWidth = (int)(barWidth * ratio);
+        var fillRect = new Rectangle(barRect.X, barRect.Y, fillWidth, barRect.Height);
+
+        // fill color, made to match accent
+        renderer.Draw(TextureGlobals.Pixels[Color.White], fillRect, Color.Goldenrod);
+
+        // gloss effect
+        renderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(fillRect.X, fillRect.Y, fillRect.Width, fillRect.Height / 2), Color.White * 0.3f);
+
+        // progress text
+        var percentText = $"{ratio * 100:0}% ({ActionsComplete}/{ActionsNeeded})";
+        var percentScale = new Vector2(0.75f).ToResolution();
+        var percentSize = font.MeasureString(percentText) * percentScale;
+        var percentPos = new Vector2(center.X, barRect.Bottom + 15.ToResolutionY());
+
+        renderer.DrawString(font, percentText, percentPos, Color.Gray, percentScale, 0f, GameUtils.GetAnchor(Anchor.Center, percentSize / percentScale), 1f, 0f);
     }
 }
