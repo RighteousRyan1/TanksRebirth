@@ -262,7 +262,7 @@ public static partial class MainMenuUI {
                 ModLoader.DrawModLoading();
 
             if (MenuState == UIState.Mulitplayer)
-                RenderMP(gameTime);
+                RenderMPMenu(gameTime);
             else if (MenuState == UIState.Campaigns)
                 DrawCampaignsUI();
             else if (MenuState == UIState.Cosmetics)

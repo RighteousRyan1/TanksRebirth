@@ -24,7 +24,6 @@ public static partial class MainMenuUI {
     private static float _panelHeaderHeight;
     private static float _panelHeight;
 
-    // Animation state
     private static float _mpOpenProgress = 0f;
 
     private static bool _ssbbv = true;
@@ -40,7 +39,7 @@ public static partial class MainMenuUI {
             PortInput.IsVisible = value;
             ServerNameInput.IsVisible = value && !Client.IsConnected();
 
-            // Reset animation when opening
+            // resets animation on open
             if (value) _mpOpenProgress = 0f;
         }
     }
@@ -235,9 +234,9 @@ public static partial class MainMenuUI {
     }
 
     // also localize eventually
-    public static void RenderMP(GameTime gameTime) {
+    public static void RenderMPMenu(GameTime gameTime) {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        // [Safety check from original]
+
         if (Server.ConnectedClients is null) {
             Server.ConnectedClients = new Client[4];
             NetPlay.ServerName = "ServerName";
@@ -320,7 +319,7 @@ public static partial class MainMenuUI {
                 // icon + pulsing
                 var tankTex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
                 var iconPos = new Vector2(animRect.Center.X, animRect.Center.Y);
-                // Pulse effect on tank icon
+
                 float pulse = 1f + 0.05f * (float)Math.Sin(RuntimeData.RunTime * 0.1f + i);
 
                 renderer.Draw(tankTex, iconPos, null, borderColor * alpha, 0f,
