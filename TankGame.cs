@@ -860,7 +860,7 @@ public class TankGame : Game {
 
         DrawGameElements();
 
-        DrawNonInteractiveUI();
+        DrawNonInteractiveUI(gameTime);
 
         DrawInteractiveUI(gameTime);
 
@@ -931,14 +931,14 @@ public class TankGame : Game {
 
         SpriteRenderer.End();
     }
-    public void DrawNonInteractiveUI() {
+    public void DrawNonInteractiveUI(GameTime gameTime) {
         // holy balls this sucks.
         GraphicsDevice.DepthStencilState = RenderGlobals.DefaultStencilState;
         MainMenuUI.RenderModels();
 
         SpriteRenderer.Begin();
 
-        MainMenuUI.Render(SpriteRenderer);
+        MainMenuUI.Render(SpriteRenderer, gameTime);
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
 

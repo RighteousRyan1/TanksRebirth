@@ -326,14 +326,20 @@ public static class ModLoader {
         Error = string.Empty;
 
         // largely refactored from the old one
+
+        // thing that prevents accessing outside of array bounds..es?
+        int dummyLittleIThing = 0;
         for (int i = 0; i < folders.Length; i++) {
+
             var modFolder = folders[i];
             var modName = new DirectoryInfo(modFolder).Name;
             var proj = Path.Combine(modFolder, modName + ".csproj");
 
             // there's no csproj to run dotnet build on, skip (aka: not a mod)
-            if (!File.Exists(proj))
+            if (!File.Exists(proj)) {
+                dummyLittleIThing--;
                 continue;
+            }
 
             // check .NET compatibility
             var lines = File.ReadAllLines(proj);
@@ -348,7 +354,7 @@ public static class ModLoader {
             modNames.Add(modName);
             modEnablement.Add(true);
 
-            if (!modEnablement[i]) {
+            if (!modEnablement[i + dummyLittleIThing]) {
                 TankGame.ClientLog.Write($"Skipping mod {modName}", LogType.Info);
                 continue;
             }

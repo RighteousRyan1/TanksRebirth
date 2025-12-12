@@ -22,9 +22,9 @@ namespace TanksRebirth.GameContent.Systems.AI;
 
 public static class AIManager {
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
-    //public static Dictionary<int, AIParameters> AIParameterDefaults = [];
+    public static Dictionary<int, AIParameters> AIParameterDefaults = [];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
-    //public static Dictionary<int, TankProperties> AIPropertyDefaults = [];
+    public static Dictionary<int, TankProperties> AIPropertyDefaults = [];
     /// <summary>
     /// Fetch the default AI parameters from the given input tank type.
     /// </summary>
@@ -32,6 +32,9 @@ public static class AIManager {
     /// <returns></returns>
     public static AIParameters GetAIParameters(int tankType) {
         var aiParams = new AIParameters();
+
+        if (AIParameterDefaults.TryGetValue(tankType, out AIParameters? value))
+            return value;
 
         /*if (!AIParameterDefaults.TryGetValue(tankType, out AIParameters? value)) {
             var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
@@ -522,10 +525,14 @@ public static class AIManager {
             #endregion 
         }
 
+        AIParameterDefaults.TryAdd(tankType, aiParams);
         return aiParams;
     }
     public static TankProperties GetAITankProperties(int tankType) {
         var properties = new TankProperties();
+
+        if (AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value))
+            return value;
 
         /*if (!AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value)) {
             var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
@@ -879,6 +886,8 @@ public static class AIManager {
 
                 #endregion
         }
+
+        AIPropertyDefaults.TryAdd(tankType, properties);
         return properties;
     }
     /// <summary>

@@ -250,19 +250,19 @@ public static partial class MainMenuUI {
 
     static int _oldwheel;
 
-    public static void Render(SpriteBatch spriteBatch) {
+    public static void Render(SpriteBatch spriteBatch, GameTime gameTime) {
         if (!_initialized || !_diffButtonsInitialized)
             return;
 
         if (IsActive) {
             RenderGeneralUI(spriteBatch);
             if (MenuState == UIState.StatsMenu)
-                RenderStatsMenu();
+                RenderStatsMenu(gameTime);
             else if (ModLoader.IsLoadingMods)
                 ModLoader.DrawModLoading();
 
             if (MenuState == UIState.Mulitplayer)
-                RenderMP();
+                RenderMP(gameTime);
             else if (MenuState == UIState.Campaigns)
                 DrawCampaignsUI();
             else if (MenuState == UIState.Cosmetics)

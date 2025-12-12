@@ -93,11 +93,7 @@ public partial class AITank {
         var checkDist = Parameters.ObstacleAwarenessMovement / 2;
         // var rayNormal = Vector2.Zero;
         // strictly 
-        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist * Speed/*, callback: 
-            (fixture, point, normal, fraction) => {
-                rayNormal = normal;
-                return fraction;
-            }*/);
+        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist * Speed);
 
         // don't bother doing anything else since it's not blocked
         if (!IsTooCloseToObstacle) {
@@ -248,9 +244,12 @@ public partial class AITank {
     }
 
     // makes the tank turn if it happens to run into a block
-    protected static bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
+    protected bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
         if (other.Body.Tag is Block) {
             // contact.Manifold.LocalNormal
+            // var pPos = Physics.Position;
+            var worldNormal = contact.Manifold.LocalNormal;
+            PivotQueue.Enqueue(worldNormal);
         }
 
         return true;

@@ -1,6 +1,7 @@
 using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
@@ -23,6 +24,9 @@ public static partial class MainMenuUI {
     private static float _panelHeaderHeight;
     private static float _panelHeight;
 
+    // Animation state
+    private static float _mpOpenProgress = 0f;
+
     private static bool _ssbbv = true;
     public static bool ShouldServerButtonsBeVisible {
         get => _ssbbv;
@@ -30,13 +34,14 @@ public static partial class MainMenuUI {
             _ssbbv = value;
             ConnectToServerButton.IsVisible = value;
             CreateServerButton.IsVisible = value;
-            ConnectToServerButton.IsVisible = value;
-            CreateServerButton.IsVisible = value;
             UsernameInput.IsVisible = value;
             IPInput.IsVisible = value;
             PasswordInput.IsVisible = value;
             PortInput.IsVisible = value;
             ServerNameInput.IsVisible = value && !Client.IsConnected();
+
+            // Reset animation when opening
+            if (value) _mpOpenProgress = 0f;
         }
     }
 
@@ -51,6 +56,7 @@ public static partial class MainMenuUI {
     public static UITextInput PasswordInput;
     public static UITextInput ServerNameInput;
     public static UITextButton DisconnectButton;
+
     internal static void SetMPButtonsVisibility(bool visible) {
         if (ShouldServerButtonsBeVisible) {
             ConnectToServerButton.IsVisible = visible;
@@ -63,7 +69,11 @@ public static partial class MainMenuUI {
         }
         DisconnectButton.IsVisible = visible && Client.IsConnected();
         StartMPGameButton.IsVisible = visible && Client.IsHost() && Client.IsConnected();
+
+        if (!visible) _mpOpenProgress = 0f;
     }
+
+    // comment bs cleanup
     public static void InitializeMP(SpriteFontBase font) {
         var uiColor = Color.LightGray;
         UsernameInput = new(font, uiColor, 1f, 15) {
@@ -178,16 +188,6 @@ public static partial class MainMenuUI {
             else {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("That is not a valid port.", Color.Red);
-                /*Server.CreateServer();
-
-                Server.StartServer("test_name", 7777, "localhost", string.Empty);
-
-                NetPlay.ServerName = ServerNameInput.GetRealText();
-
-                Client.CreateClient("host");
-                Client.AttemptConnectionTo("localhost", 7777, string.Empty);
-
-                Server.ConnectedClients[0] = NetPlay.CurrentClient;*/
             }
 
         };
@@ -206,6 +206,7 @@ public static partial class MainMenuUI {
             () => _panelPosition + new Vector2(_panelWidth / 3 - DisconnectButton.Size.X / 2, _panelHeaderHeight / 4),
             () => UsernameInput.Size);
     }
+
     public static void UpdateMP() {
         var plrOffset = -10f;
         if (!Client.IsConnected()) {
@@ -214,7 +215,8 @@ public static partial class MainMenuUI {
                 p.Physics.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset)) / Tank.UNITS_PER_METER;
                 p.ChassisRotation = PlayersGraphicRotationOrigin.Z;
                 p.IsDestroyed = false;
-            } else {
+            }
+            else {
                 if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.K))
                     PlayerTank.ClientTank.Remove(true);
             }
@@ -223,9 +225,6 @@ public static partial class MainMenuUI {
         for (int i = 0; i < Server.CurrentClientCount; i++) {
             var client = Server.ConnectedClients[i];
             if (client is null) continue;
-            // TODO: UHHH??????
-            //if (client.IsOperatedByPlayer) continue;
-
             if (GameHandler.AllPlayerTanks[i] is not null) continue;
 
             var p = new PlayerTank(client.Id);
@@ -234,66 +233,120 @@ public static partial class MainMenuUI {
             p.IsDestroyed = false;
         }
     }
-    public static void RenderMP() {
+
+    // also localize eventually
+    public static void RenderMP(GameTime gameTime) {
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        // [Safety check from original]
         if (Server.ConnectedClients is null) {
             Server.ConnectedClients = new Client[4];
             NetPlay.ServerName = "ServerName";
-            for (int i = 0; i < 4; i++) {
-                Server.ConnectedClients[i] = new(i, "Client" + i);
-            }
+            for (int i = 0; i < 4; i++) Server.ConnectedClients[i] = new(i, "Client" + i);
         }
 
+        _mpOpenProgress += dt;
+        _mpOpenProgress = MathHelper.Clamp(_mpOpenProgress, 0f, 1f);
+
+        float alpha = _mpOpenProgress;
+        float slide = Easings.OutQuint(_mpOpenProgress);
+
+        // move up smoooothly
+        float yOffset = (1f - slide) * 50f;
+
+        // dimensions/positioning
         float divisor = 8;
         float initialX = WindowUtils.WindowWidth / divisor;
         _panelWidth = initialX * (divisor - 2);
         _panelHeaderHeight = 50f.ToResolutionY();
-        _panelHeight = 200f.ToResolutionY();
-        _panelPosition = new Vector2(initialX, 50);
+        _panelHeight = 250f.ToResolutionY();
+        _panelPosition = new Vector2(initialX, 50 + yOffset);
 
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition, null,
-            Color.White, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeaderHeight), default, 0f);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition + new Vector2(0, _panelHeaderHeight), null,
-            Color.Gray, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeight), default, 0f);
+        var renderer = TankGame.SpriteRenderer;
+        var whiteTex = TextureGlobals.Pixels[Color.White];
 
+        // bg dimming
+        renderer.Draw(whiteTex, new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight), Color.Black * 0.5f * alpha);
+
+        // header panel
+        var headerRect = new Rectangle((int)_panelPosition.X, (int)_panelPosition.Y, (int)_panelWidth, (int)_panelHeaderHeight);
+        DrawUtils.DrawBoxWithOutline(renderer, headerRect, new Color(30, 30, 30) * alpha, Color.Gray * alpha, 2);
+
+        // body + player list
+        var bodyRect = new Rectangle((int)_panelPosition.X, (int)(_panelPosition.Y + _panelHeaderHeight), (int)_panelWidth, (int)_panelHeight);
+        DrawUtils.DrawBoxWithOutline(renderer, bodyRect, new Color(20, 20, 25) * alpha, Color.Gray * alpha, 2);
+
+        // server name
         Vector2 serverNamePos = new(_panelPosition.X + _panelWidth / 2, _panelPosition.Y + _panelHeaderHeight + 20.ToResolutionY());
+        string sName = Server.CurrentClientCount > 0 ? $"Lobby: \"{NetPlay.ServerName}\"" : "Multiplayer Setup";
 
-        /*DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"Connected Players:", initialPosition + new Vector2(0, 40),
-            Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);*/
+        DrawUtils.DrawStringWithBorder(renderer, FontGlobals.RebirthFontLarge, sName, serverNamePos,
+            Color.Goldenrod * alpha, Color.Black * alpha, new Vector2(0.6f).ToResolution(), 0f, Anchor.Center, 0.8f);
 
-        var divisions = Server.CurrentClientCount + 1;
-        var panelXCut = _panelWidth / divisions;
+        // player slots
+        int maxSlots = GameHandler.MAX_PLAYERS;
+        float slotPadding = 20.ToResolutionX();
+        float totalPadding = slotPadding * (maxSlots + 1);
+        float slotWidth = (_panelWidth - totalPadding) / maxSlots;
+        float slotHeight = _panelHeight * 0.6f;
+        float startY = _panelPosition.Y + _panelHeaderHeight + (_panelHeight - slotHeight) / 2 + 10.ToResolutionY();
 
-        var borderColor = Color.Black;
+        for (int i = 0; i < maxSlots; i++) {
+            // allows for a staggered entry animation based on slot index
+            float cardProgress = Easings.OutElastic(MathHelper.Clamp(_mpOpenProgress * 1.5f - (i * 0.1f), 0f, 1f));
+            float cardScale = cardProgress;
 
-        DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, Server.CurrentClientCount > 0 ? $"\"{NetPlay.ServerName}\"" : "N/A", serverNamePos,
-            Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.Center, 0.8f);
+            // slot positioning per-player
+            float slotX = _panelPosition.X + slotPadding + (i * (slotWidth + slotPadding));
+            var slotRect = new Rectangle((int)slotX, (int)startY, (int)slotWidth, (int)slotHeight);
 
-        for (int i = 0; i < Server.CurrentClientCount; i++) {
-            var client = Server.ConnectedClients[i];
-            // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
-            Color textCol = PlayerID.PlayerTankColors[client.Id];
+            // scale rect from center
+            var animRect = MathUtils.ScaleRect(slotRect, cardScale);
 
-            var clientNamePos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3);
-            var pingPos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3 * 2);
+            bool hasPlayer = i < Server.CurrentClientCount;
+            Client client = hasPlayer ? Server.ConnectedClients[i] : null;
 
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{client.Name}",
-                clientNamePos, textCol, borderColor, new Vector2(0.3f).ToResolution(), 0f, Anchor.Center, 0.8f);
+            // card/slot bg
+            var cardColor = hasPlayer ? new Color(40, 40, 50) : new Color(30, 30, 30);
+            var borderColor = hasPlayer ? PlayerID.PlayerTankColors[client.Id] : Color.DarkGray * 0.5f;
 
-            DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d"),
-                clientNamePos + new Vector2(0, 35).ToResolution(), textCol, borderColor, Vector2.One.ToResolution(), 0f);
+            renderer.Draw(whiteTex, animRect, cardColor * alpha);
+            DrawUtils.DrawBoxWithOutline(renderer, animRect, Color.Transparent, borderColor * alpha, 2);
 
-            // only show ping to the host for now
-            if (!Client.IsHost()) continue;
-            // draw ping
-            var ping = Server.NetManager.ConnectedPeerList[NetPlay.ReversePeerMap[i]].Ping;
-            var badPing = 250;
+            if (hasPlayer) {
+                var namePos = new Vector2(animRect.Center.X, animRect.Y + 20.ToResolutionY());
+                DrawUtils.DrawStringWithBorder(renderer, FontGlobals.RebirthFontLarge, client.Name, namePos,
+                    Color.White * alpha, Color.Black * alpha, new Vector2(0.4f).ToResolution() * cardScale, 0f, Anchor.Center);
 
-            var sColor = new StatisticalColor<int>(Color.Lime, Color.Red, 30, ping, badPing);
+                // icon + pulsing
+                var tankTex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
+                var iconPos = new Vector2(animRect.Center.X, animRect.Center.Y);
+                // Pulse effect on tank icon
+                float pulse = 1f + 0.05f * (float)Math.Sin(RuntimeData.RunTime * 0.1f + i);
 
-            // Color.Lerp(Color.Lime, Color.Red, ((float)ping / badPing))
+                renderer.Draw(tankTex, iconPos, null, borderColor * alpha, 0f,
+                    tankTex.Size() / 2, new Vector2(1.2f).ToResolution() * cardScale * pulse, SpriteEffects.None, 0f);
 
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{ping}ms",
-                pingPos, sColor.FinalColor, Color.Black, new Vector2(0.15f).ToResolution(), 0f, Anchor.Center, 0.8f, 0.5f);
+                // ping, if host
+                if (Client.IsHost()) {
+                    var ping = Server.NetManager.ConnectedPeerList.Count > i ? Server.NetManager.ConnectedPeerList[NetPlay.ReversePeerMap[i]].Ping : 0;
+                    var badPing = 250;
+                    var sColor = new StatisticalColor<int>(Color.Lime, Color.Red, 30, ping, badPing);
+
+                    Vector2 pingPos = new Vector2(animRect.Center.X, animRect.Bottom - 20.ToResolutionY());
+
+                    // ping dot + color coded by horribleness
+                    renderer.Draw(whiteTex, new Rectangle((int)pingPos.X - 30, (int)pingPos.Y - 5, 10, 10), sColor.FinalColor * alpha);
+
+                    DrawUtils.DrawStringWithBorder(renderer, FontGlobals.RebirthFont, $"{ping}ms", pingPos,
+                        Color.LightGray * alpha, Color.Black * alpha, new Vector2(0.6f).ToResolution() * cardScale, 0f, Anchor.Center);
+                }
+            }
+            else {
+                // drawn if it's an empty slot
+                Vector2 textPos = new Vector2(animRect.Center.X, animRect.Center.Y);
+                DrawUtils.DrawStringWithBorder(renderer, FontGlobals.RebirthFont, "Empty", textPos,
+                    Color.Gray * alpha * 0.5f, Color.Black * alpha * 0.5f, new Vector2(0.5f).ToResolution() * cardScale, 0f, Anchor.Center);
+            }
         }
     }
 }

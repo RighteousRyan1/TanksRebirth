@@ -12,6 +12,13 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils
 {
+    /// <summary>Scales from the center of the rectangle provided.</summary>
+    public static Rectangle ScaleRect(Rectangle rect, float scale) {
+        Vector2 center = new Vector2(rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f);
+        float w = rect.Width * scale;
+        float h = rect.Height * scale;
+        return new Rectangle((int)(center.X - w / 2), (int)(center.Y - h / 2), (int)w, (int)h);
+    }
     /// <summary>Performs a Spherical Linear Interpolation on a 2D plane, with vector normalization.</summary>
     public static Vector2 Slerp2DNormalize(Vector2 from, Vector2 to, float t) {
         t = MathHelper.Clamp(t, 0f, 1f);

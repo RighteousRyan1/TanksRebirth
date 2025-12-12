@@ -17,8 +17,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Added a new mods menu!
 	- It appears in the top right of the main menu
 	- It allows you to quickly load/unload/reload mods instead of having to use debug functions or restart the game
-- Added some new commands to assist with chroma keying
+- Added some new commands to assist with chroma keying + video creation
 - Added a new dev console which is accessible from the tilde key (~)
+- Added a new menu for mods you have in the game's Mods folder
 
 # Changes
 
@@ -26,6 +27,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Made mines not destroy everything instantly, but rather grow, similar to the original
 - "Difficulties" now changed to "Modifiers"
 - Severely overhauled the chat box
+- MASSIVE revamps to the game stats menu, multiplayer menu, 
 
 # Changes Important for Modders
 

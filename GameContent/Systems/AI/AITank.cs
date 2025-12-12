@@ -662,12 +662,12 @@ public partial class AITank : Tank {
             effect.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineStrip, vertices, 0, circleResolution);
         }
     }
-    public void DrawAwarenessLine(BasicEffect effect, float distance, Color color, Vector3 offset = default) {
+    public void DrawAwarenessLine(BasicEffect effect, float distance, Color color, Vector3 offset = default, float forwardOffset = default) {
         float heightOffset = 0.2f;
 
         var start = new Vector3(Position.X, heightOffset, Position.Y) + offset;
 
-        var forward = Vector2.UnitY.RotatedBy(ChassisRotation);
+        var forward = Vector2.UnitY.RotatedBy(ChassisRotation + forwardOffset);
 
         // not to game units...?
         var gameUnits = GameUtils.Value_WiiTanksUnits(distance + TNK_WIDTH);
@@ -735,6 +735,7 @@ public partial class AITank : Tank {
             }
 
             DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2 * Speed, Color.Black);
+            // DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2 * Speed, Color.Magenta, forwardOffset: ChassisRotation - DesiredChassisRotation);
 
             drawInfo.Clear();
 

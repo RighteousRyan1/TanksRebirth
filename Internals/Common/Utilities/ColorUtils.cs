@@ -29,6 +29,20 @@ public static class ColorUtils
             ColorsByName.Add(prop.Name, AllColors[i]);
         }
     }
+    /// <summary>Returns black if the luminosity of <paramref name="input"/> is above <paramref name="lumCutoff"/>, otherwise, white.</summary>
+    public static Color WhiteBlack(Color input, float lumCutoff = 0.85f) {
+        if (GetLuminosity(input) > lumCutoff)
+            return Color.Black;
+        else return Color.White;
+    }
+    public static Color Invert(Color input) {
+        return new Color {
+            R = (byte)(255 - input.R),
+            G = (byte)(255 - input.G),
+            B = (byte)(255 - input.B),
+            A = input.A
+        };
+    }
 
     /// <summary>Returns the average color of a given <see cref="Texture2D"/>.</summary>
     public static Color GetAverageColor(Texture2D texture) {

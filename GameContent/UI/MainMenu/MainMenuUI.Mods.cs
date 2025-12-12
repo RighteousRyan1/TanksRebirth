@@ -89,7 +89,7 @@ public partial class MainMenuUI {
             var yOffset = 125 * i;
             btn.SetDimensions(() => new Vector2(uiStartX, uiStartY + yOffset).ToResolution(), () => new Vector2(uiScaleX, uiScaleY).ToResolution());
             btn.UniqueDraw = (a, sb) => {
-
+                // to prevent status changing while mods are loading
                 btn.IsVisible = !ModLoader.IsLoadingMods;
                 var curButton = _buttons[dir];
                 var curTex = _icons[dir];

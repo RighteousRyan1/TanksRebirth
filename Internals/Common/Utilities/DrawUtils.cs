@@ -46,6 +46,28 @@ public static class DrawUtils {
         // right line
         TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitX * (end.X - start.X), null, boxColor, 0f, Vector2.Zero, new Vector2(width, end.Y - start.Y + width), default, 0);
     }
+    /// <summary>
+    /// Draws a filled rectangle with a border.
+    /// </summary>
+    /// <param name="sb">The SpriteBatch to draw with.</param>
+    /// <param name="rectangle">The destination rectangle.</param>
+    /// <param name="color">The fill color of the box.</param>
+    /// <param name="borderCol">The color of the border.</param>
+    /// <param name="borderSize">The thickness of the border in pixels.</param>
+    public static void DrawBoxWithOutline(SpriteBatch sb, Rectangle rectangle, Color color, Color borderCol, int borderSize) {
+        // Draw the inner filled background
+        sb.Draw(TextureGlobals.Pixels[Color.White], rectangle, color);
+
+        // Draw the 4 sides of the border
+        // Top
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.X, rectangle.Y, rectangle.Width, borderSize), borderCol);
+        // Bottom
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.X, rectangle.Bottom - borderSize, rectangle.Width, borderSize), borderCol);
+        // Left
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.X, rectangle.Y, borderSize, rectangle.Height), borderCol);
+        // Right
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.Right - borderSize, rectangle.Y, borderSize, rectangle.Height), borderCol);
+    }
     public static void DrawStringWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
