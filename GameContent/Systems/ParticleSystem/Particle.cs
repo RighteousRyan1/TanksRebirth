@@ -238,6 +238,7 @@ public class Particle
 
     public void Destroy() {
         UniqueBehavior = null;
+        UniqueDraw = null;
 
         if (System.CurrentParticles.Contains(this))
             System.CurrentParticles.RemoveAt(Id);

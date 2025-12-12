@@ -234,7 +234,7 @@ public static partial class MainMenuUI {
     }
 
     // also localize eventually
-    public static void RenderMPMenu(GameTime gameTime) {
+    public static void DrawMPMenu(GameTime gameTime) {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         if (Server.ConnectedClients is null) {

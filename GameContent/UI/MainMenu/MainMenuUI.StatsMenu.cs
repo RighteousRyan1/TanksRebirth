@@ -34,14 +34,14 @@ public static partial class MainMenuUI {
         ];
     }
 
-    public static void RenderStatsMenu(GameTime gameTime) {
+    public static void DrawStatsMenu(GameTime gameTime) {
         _statsOpenProgress += (float)gameTime.ElapsedGameTime.TotalSeconds * 0.5f;
         if (_statsOpenProgress > 1f) _statsOpenProgress = 1f;
 
-        DrawStatsModern();
+        DrawStatsPanel();
     }
 
-    private static void DrawStatsModern() {
+    private static void DrawStatsPanel() {
         var renderer = TankGame.SpriteRenderer;
         var font = FontGlobals.RebirthFont;
         var largeFont = FontGlobals.RebirthFontLarge;

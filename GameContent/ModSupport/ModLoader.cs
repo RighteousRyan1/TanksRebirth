@@ -195,7 +195,7 @@ public static class ModLoader {
             return;
         }
 
-        ChatSystem.SendMessage("Unloading mods...", Color.Yellow);
+        TankGame.ClientLog.Write("Unloading mods...", LogType.Info);
         Status = LoadStatus.Unloading;
         _loadingActions.Clear();
         LoadedMods.ForEach(mod => {
@@ -236,7 +236,7 @@ public static class ModLoader {
         ModTank.unloadOffset = 0;
         ModBlock.unloadOffset = 0;
         ModShell.unloadOffset = 0;
-        ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
+        TankGame.ClientLog.Write("Mod unload successful!", LogType.Info);
         Status = LoadStatus.Complete;
     }
     // doesn't work?
@@ -295,20 +295,29 @@ public static class ModLoader {
 
     /// <summary>Prepare your garbage collector!</summary>
     internal static void LoadMods() {
-        if (Status == LoadStatus.Unloading)
-            ChatSystem.SendMessage("Mods are currently unloading! Unable to load mods.", Color.Red);
-        if (Status == LoadStatus.Loading || Status == LoadStatus.Compiling)
-            ChatSystem.SendMessage("Mods are currently loading! Unable to load mods.", Color.Red);
-        if (LoadedMods.Count > 0)
-            UnloadAll();
+        if (Status == LoadStatus.Unloading) {
+            TankGame.ClientLog.Write("Mods are currently unloading! Unable to load mods.", LogType.Warn);
+            return;
+        }
+        if (IsLoadingMods) {
+            TankGame.ClientLog.Write("Mods are currently loading! Unable to load mods.", LogType.Warn);
+            return;
+        }
 
-        LoadType = Debugger.IsAttached ? "Debug" : "Release";
+        if (LoadedMods.Count > 0) {
+            UnloadAll();
+        }
+        else {
+            TankGame.ClientLog.Write("No mods to unload. Skipping...", LogType.Warn);
+        }
+
+            LoadType = Debugger.IsAttached ? "Debug" : "Release";
 
         ActionsNeeded = 0;
         ActionsComplete = 0;
 
         if (!_firstLoad)
-            ChatSystem.SendMessage("Reloading mods...", Color.Red);
+            TankGame.ClientLog.Write("Reloading mods...", LogType.Info);
         else
             AreCompilesAllowed = CheckIfCompilesAreAllowed();
 
@@ -351,8 +360,10 @@ public static class ModLoader {
                 return;
             }
 
-            modNames.Add(modName);
-            modEnablement.Add(true);
+            if (!modNames.Contains(modName)) {
+                modNames.Add(modName);
+                modEnablement.Add(true);
+            }
 
             if (!modEnablement[i + dummyLittleIThing]) {
                 TankGame.ClientLog.Write($"Skipping mod {modName}", LogType.Info);

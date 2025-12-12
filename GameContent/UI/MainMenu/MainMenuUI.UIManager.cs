@@ -35,7 +35,7 @@ public static partial class MainMenuUI
         $"\nvsjoqvist, Tomat, nakamurash, timweh, Guthen, Vicerix";
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
-    [Flags]
+
     public enum UIState {
         LoadingMods,
         PrimaryMenu,
@@ -227,15 +227,17 @@ public static partial class MainMenuUI
     public static void RenderGeneralUI(SpriteBatch spriteBatch) {
 
         // this is scary to have here... oh well.
-        spriteBatch.End();
 
-        // uhhhhhhh.
-        GameShaders.AnimatedRainbow.Parameters["oMinLum"].SetValue(0.5f);
-        spriteBatch.Begin(effect: GameShaders.AnimatedRainbow);
-        spriteBatch.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
-        spriteBatch.End();
+        if (MenuState != UIState.ModsMenu) {
+            spriteBatch.End();
+            // uhhhhhhh.
+            GameShaders.AnimatedRainbow.Parameters["oMinLum"].SetValue(0.5f);
+            spriteBatch.Begin(effect: GameShaders.AnimatedRainbow);
+            spriteBatch.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
+            spriteBatch.End();
 
-        spriteBatch.Begin();
+            spriteBatch.Begin();
+        }
 
         if (MenuState is UIState.PrimaryMenu or UIState.PlayList) {
             var size = FontGlobals.RebirthFont.MeasureString(TankGame.Instance.MOTD);

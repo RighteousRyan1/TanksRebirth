@@ -236,6 +236,9 @@ public static partial class MainMenuUI {
         UpdateMusic();
         UpdateMP();
 
+        if (MenuState == UIState.ModsMenu)
+            UpdateModsMenu();
+
         if (RuntimeData.RunTime % 60f < RuntimeData.DeltaTime) {
             UpdateGameplay();
         }
@@ -256,17 +259,27 @@ public static partial class MainMenuUI {
 
         if (IsActive) {
             RenderGeneralUI(spriteBatch);
-            if (MenuState == UIState.StatsMenu)
-                RenderStatsMenu(gameTime);
-            else if (ModLoader.IsLoadingMods)
+
+            if (ModLoader.IsLoadingMods)
                 ModLoader.DrawModLoading();
 
-            if (MenuState == UIState.Mulitplayer)
-                RenderMPMenu(gameTime);
-            else if (MenuState == UIState.Campaigns)
-                DrawCampaignsUI();
-            else if (MenuState == UIState.Cosmetics)
-                RenderCosmeticsUI();
+            switch (MenuState) {
+                case UIState.Campaigns:
+                    DrawCampaignsUI();
+                    break;
+                case UIState.Mulitplayer:
+                    DrawMPMenu(gameTime);
+                    break;
+                case UIState.Cosmetics:
+                    DrawCosmeticsUI();
+                    break;
+                case UIState.StatsMenu:
+                    DrawStatsMenu(gameTime);
+                    break;
+                case UIState.ModsMenu:
+                    // DrawModMenu(spriteBatch);
+                    break;
+            }
         }
 
         // why does this need to be here?????????? doesn't work in Update()

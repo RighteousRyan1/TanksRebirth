@@ -28,6 +28,7 @@ public static class CosmeticsUI {
     static Particle _dispPart;
     static List<Particle> _keys = [];
     static Particle _movingKey;
+    static Particle _hoveredKey;
 
     static Animator _keyAnimation;
 
@@ -69,23 +70,26 @@ public static class CosmeticsUI {
 
                 Particle cosPart;
 
-                if (prop is Prop3D p3d)
+                if (prop is Prop3D p3d) {
                     cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel, p3d.ModelTexture);
+                    cosPart.Scale = Vector3.One * prop.Scale;
+                }
                 else {
                     cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, ((Prop2D)prop).Texture);
-                    cosPart.Scale = new(0.3f);
+                    cosPart.Scale = new Vector3(0.4f) * prop.Scale;
                 }
                 
                 // for some reason lighting just... isnt applied. ok. whatever. fix later.
                 cosPart.Alpha = 1f;
-                cosPart.Scale = Vector3.One * prop.Scale;
                 cosPart.HasAdditiveBlending = false;
 
+                // this might just need to be a way to render a cosmetic at a position rather than a particle explicitly
                 cosPart.UniqueBehavior = (p) => {
                     // p.Position.Y += 0.1f * RuntimeData.DeltaTime;
                     p.Position = Chest.ChestPosition + new Vector3(0, 75, 0);
                     if (p.LifeTime > 180)
                         p.Destroy();
+
                 };
             }
 
@@ -97,40 +101,53 @@ public static class CosmeticsUI {
     }
 
     public static void HandleInputs() {
+        // Don't interact if an animation is already playing
+        if (_movingKey is not null || _keys.Count == 0) return;
+
         var ray = RayUtils.GetMouseToWorldRay();
-        var inter = ray.Intersects(_clickSpot);
 
-        if (_keys.Count == 0) return;
-        if (inter.HasValue) {
-            // prevent NaN working lmao
-            if (!float.IsFinite(inter.Value)) return;
-            if (InputUtils.CanDetectClick()) {
-                var ypr = Matrix.CreateFromYawPitchRoll(Chest.Rotation.Z, Chest.Rotation.Y, Chest.Rotation.X);
-                var preSlotPos = Chest.KeySlotPos + Vector3.Transform(new Vector3(0, 0, 50), ypr);
-                var lookAt = MathUtils.GetLookAtEulerAngles(preSlotPos, Chest.KeySlotPos);
+        // Find the key currently under the mouse
+        _hoveredKey = null;
+        float closestDist = float.MaxValue;
 
-                float[] slotRot = [lookAt.Roll, lookAt.Pitch, lookAt.Yaw];
+        foreach (var key in _keys) {
+            // Create a bounding sphere around the key for interaction
+            // Radius 12 fits the visual scale of 40 roughly well
+            var sphere = new BoundingSphere(key.Position, 12f);
+            var inter = ray.Intersects(sphere);
 
-                var rand = Client.ClientRandom.Next(_keys.Count);
-                _movingKey = _keys[rand];
-
-                // i fucking hate this animation system.
-                // keyframe durations should be of the duration that it's GOING TO not the one it's GOING FROM
-                // TODO: fix
-                _keyAnimation = Animator.Create()
-                    .WithFrame(new(_movingKey.Position, Vector3.One, duration: TimeSpan.FromSeconds(1),
-                    easing: EasingFunction.InOutQuad, floats: [_movingKey.Roll, _movingKey.Pitch, _movingKey.Yaw]))
-                    // just x for now
-                    .WithFrame(new(preSlotPos, Vector3.One, easing: EasingFunction.InOutCubic, duration: TimeSpan.FromSeconds(2), floats: slotRot))
-                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(0.5), floats: slotRot, easing: EasingFunction.InOutCubic))
-                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
-                    // what the fuck is this rotational magic??? rotating just one axis doesn't work at all
-                    //.WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(2), floats: [slotRot[0] - MathHelper.PiOver2, slotRot[1] - MathHelper.PiOver2, slotRot[2] + MathHelper.PiOver2]))
-                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
-                    .WithFrame(new(preSlotPos, Vector3.One, floats: slotRot));
-
-                _keyAnimation.Run();
+            if (inter.HasValue && inter.Value < closestDist) {
+                closestDist = inter.Value;
+                _hoveredKey = key;
             }
+        }
+
+        if (InputUtils.CanDetectClick() && _hoveredKey is not null) {
+            var ypr = Matrix.CreateFromYawPitchRoll(Chest.Rotation.Z, Chest.Rotation.Y, Chest.Rotation.X);
+            var preSlotPos = Chest.KeySlotPos + Vector3.Transform(new Vector3(0, 0, 50), ypr);
+            var lookAt = MathUtils.GetLookAtEulerAngles(preSlotPos, Chest.KeySlotPos);
+
+            float[] slotRot = [lookAt.Roll, lookAt.Pitch, lookAt.Yaw];
+
+            // Set the moving key to the one we clicked
+            _movingKey = _hoveredKey;
+
+            // i fucking hate this animation system.
+            // keyframe durations should be of the duration that it's GOING TO not the one it's GOING FROM
+            // TODO: fix
+            _keyAnimation = Animator.Create()
+                .WithFrame(new(_movingKey.Position, Vector3.One, duration: TimeSpan.FromSeconds(1),
+                easing: EasingFunction.InOutQuad, floats: [_movingKey.Roll, _movingKey.Pitch, _movingKey.Yaw]))
+                // just x for now
+                .WithFrame(new(preSlotPos, Vector3.One, easing: EasingFunction.InOutCubic, duration: TimeSpan.FromSeconds(2), floats: slotRot))
+                .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(0.5), floats: slotRot, easing: EasingFunction.InOutCubic))
+                .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
+                // what the fuck is this rotational magic??? rotating just one axis doesn't work at all
+                //.WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(2), floats: [slotRot[0] - MathHelper.PiOver2, slotRot[1] - MathHelper.PiOver2, slotRot[2] + MathHelper.PiOver2]))
+                .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
+                .WithFrame(new(preSlotPos, Vector3.One, floats: slotRot));
+
+            _keyAnimation.Run();
         }
     }
     public static void EnterMenu() {
@@ -251,6 +268,14 @@ public static class CosmeticsUI {
 
                     return;
                 }
+
+                // Hover Effect Logic
+                float baseScale = 40f;
+                float hoverScale = 55f;
+                float targetScale = (p == _hoveredKey) ? hoverScale : baseScale;
+
+                // Smoothly interpolate scale
+                p.Scale = Vector3.Lerp(p.Scale, new Vector3(targetScale), 0.2f * RuntimeData.DeltaTime);
 
                 if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics) {
                     t += moveSpeed * RuntimeData.DeltaTime;
