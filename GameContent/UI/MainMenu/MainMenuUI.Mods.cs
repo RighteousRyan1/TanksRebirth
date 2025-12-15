@@ -24,16 +24,16 @@ public partial class MainMenuUI {
     static List<UITextButton> _buttons = [];
     static List<Color> _averageColors = [];
 
-    // --- Scrolling State ---
+    // scrolling stuff
     private static float _currentScroll = 0f;
     private static float _targetScroll = 0f;
     private static int _previousScrollValue;
 
-    // --- Layout Configuration ---
+    // layout config
     private const float ENTRY_HEIGHT = 125f;
-    private const float LIST_TOP_MARGIN = 150f; // Space for header/buttons
+    private const float LIST_TOP_MARGIN = 150f;
     private const float LIST_BOTTOM_MARGIN = 50f;
-    private static Rectangle _listViewRect; // Calculated view area
+    private static Rectangle _listViewRect;
 
     public static void InitModsMenu(SpriteFontBase font) {
         ModsMenuButton = new(TankGame.GameLanguage.Mods, font, Color.WhiteSmoke) {
@@ -66,37 +66,37 @@ public partial class MainMenuUI {
     }
 
     public static void UpdateModsMenu() {
-        // 1. Handle Scrolling Input
+        // scroll input
         var mouseState = Mouse.GetState();
         int scrollDelta = mouseState.ScrollWheelValue - _previousScrollValue;
         _previousScrollValue = mouseState.ScrollWheelValue;
 
         if (ModLoader.IsLoadingMods) return;
 
-        // Calculate view area
+        // view area
         float screenHeight = WindowUtils.WindowHeight;
         float viewHeight = screenHeight - LIST_TOP_MARGIN.ToResolutionY() - LIST_BOTTOM_MARGIN.ToResolutionY();
         _listViewRect = new Rectangle(0, (int)LIST_TOP_MARGIN.ToResolutionY(), WindowUtils.WindowWidth, (int)viewHeight);
 
-        // Update Scroll Target
+        // scroll target
         float totalContentHeight = _buttons.Count * ENTRY_HEIGHT.ToResolutionY();
         float maxScroll = Math.Max(0, totalContentHeight - viewHeight);
 
         _targetScroll -= scrollDelta * 0.5f; // Sensitivity
         _targetScroll = MathHelper.Clamp(_targetScroll, 0, maxScroll);
 
-        // Smooth Scroll Interpolation
+        // scroll interp
         _currentScroll = MathUtils.SoftStep(_currentScroll, _targetScroll, 0.2f);
 
-        // 2. Update Buttons & Visibility Culling
+        // buttons / visibility
         for (int i = 0; i < _buttons.Count; i++) {
             var btn = _buttons[i];
 
-            // Calculate where this button *would* be drawn
+            // supposed draw pos
             float btnY = (LIST_TOP_MARGIN.ToResolutionY() + (i * ENTRY_HEIGHT.ToResolutionY())) - _currentScroll;
-            float btnHeight = 100f.ToResolutionY(); // Approximate height of the button content
+            float btnHeight = 100f.ToResolutionY();
 
-            // Check if inside the view rect
+            // maybe just use scissors?
             bool isVisible = (btnY + btnHeight > _listViewRect.Top) && (btnY < _listViewRect.Bottom);
 
             btn.IsVisible = isVisible;
@@ -108,7 +108,7 @@ public partial class MainMenuUI {
         float uiScaleX = 400f;
         float uiScaleY = 100f;
 
-        // Reset scroll when opening menu
+        // resets scroll
         _currentScroll = 0;
         _targetScroll = 0;
         _previousScrollValue = Mouse.GetState().ScrollWheelValue;
@@ -116,7 +116,7 @@ public partial class MainMenuUI {
         for (int i = 0; i < ModLoader.modNames.Count; i++) {
             var dir = Path.Combine(ModLoader.ModsPath, ModLoader.modNames[i]);
             var modInternalName = new DirectoryInfo(dir).Name;
-            var iCapture = i; // Capture index for closures
+            var iCapture = i;
 
             var modInfoJson = Path.Combine(dir, "mod_info.json");
             ModInfo info = default;
@@ -143,8 +143,7 @@ public partial class MainMenuUI {
                 HoverColor = Color.CadetBlue
             };
 
-            // Dynamic Positioning Lambda
-            // Takes the base Y and subtracts current scroll
+            // positioning
             btn.SetDimensions(
                 () => {
                     float yPos = LIST_TOP_MARGIN.ToResolutionY() + (iCapture * ENTRY_HEIGHT.ToResolutionY()) - _currentScroll;
@@ -159,18 +158,18 @@ public partial class MainMenuUI {
                 var curButton = _buttons[iCapture];
                 var curTex = _icons[iCapture];
 
-                // Draw Icon
+                // icon
                 sb.Draw(curTex, new Rectangle((int)curButton.Position.X + 5, (int)curButton.Position.Y + 5, (int)90.ToResolutionX(), (int)btn.Size.Y - 10), Color.White);
 
                 var borderColor = ColorUtils.ChangeColorBrightness(_averageColors[iCapture], -0.5f);
                 var textColor = _averageColors[iCapture];
                 var enabled = ModLoader.modEnablement[iCapture];
 
-                // Draw Name
+                // name
                 DrawUtils.DrawStringWithBorderAndShadow(sb, btn.Font, btn.Position + new Vector2(100, 0).ToResolution(), Vector2.One, info.DisplayName,
                     textColor, borderColor, new Vector2(0.75f).ToResolution(), 1f, Anchor.TopLeft, shadowDistScale: 0.5f, borderThickness: 0.5f);
 
-                // Draw Description
+                // desc
                 DrawUtils.DrawStringWithBorder(sb, btn.Font, info.BriefDescription, btn.Position + new Vector2(100, 25).ToResolution(),
                     textColor, borderColor, new Vector2(0.6f).ToResolution(), 0, Anchor.TopLeft, borderThickness: 0.5f);
 
@@ -189,22 +188,21 @@ public partial class MainMenuUI {
         }
     }
 
-    /// <summary>Call this in your main Draw loop when MenuState == UIState.ModsMenu</summary>
     public static void DrawModMenu(SpriteBatch sb) {
         if (ModLoader.IsLoadingMods) return;
 
-        // 1. Draw Background Panel (Glassy look)
+        // bg panel
         var panelRect = new Rectangle(
             (int)25.ToResolutionX(),
             (int)_listViewRect.Top - 10,
-            (int)(450.ToResolutionX()), // Slightly wider than buttons
+            (int)(450.ToResolutionX()),
             (int)_listViewRect.Height + 20
         );
 
         sb.Draw(TextureGlobals.Pixels[Color.White], panelRect, new Color(20, 20, 25) * 0.85f);
         DrawUtils.DrawBoxWithOutline(sb, panelRect, Color.Transparent, Color.Gray, 2);
 
-        // 2. Draw Scrollbar
+        // scrollbar, if applicable
         float totalHeight = _buttons.Count * ENTRY_HEIGHT.ToResolutionY();
         float viewHeight = _listViewRect.Height;
 
@@ -216,8 +214,8 @@ public partial class MainMenuUI {
             var trackRect = new Rectangle(panelRect.Right - 15, (int)_listViewRect.Top, 10, (int)viewHeight);
             var thumbRect = new Rectangle(panelRect.Right - 15, (int)barY, 10, (int)Math.Max(20, barHeight));
 
-            sb.Draw(TextureGlobals.Pixels[Color.White], trackRect, new Color(10, 10, 10) * 0.5f); // Track
-            sb.Draw(TextureGlobals.Pixels[Color.White], thumbRect, Color.Goldenrod); // Thumb
+            sb.Draw(TextureGlobals.Pixels[Color.White], trackRect, new Color(10, 10, 10) * 0.5f);
+            sb.Draw(TextureGlobals.Pixels[Color.White], thumbRect, Color.Goldenrod);
         }
     }
 
@@ -232,6 +230,5 @@ public partial class MainMenuUI {
     public static void SetModsMenuButtonsVisiblity(bool visible) {
         ModsMenuLeave.IsVisible = visible;
         ReloadMods.IsVisible = visible;
-        // Don't toggle list buttons here; UpdateModsMenu handles their culling/visibility
     }
 }

@@ -59,6 +59,7 @@ public class TankGame : Game {
 
     public static bool IsCrashInfoVisible;
     bool _wasActive;
+    internal static bool miceForceDrawOverride = true;
     public static bool MouseUIHover;
 
     // ### STRUCTURES / CLASSES ###
@@ -99,7 +100,7 @@ public class TankGame : Game {
 
     public static RasterizerState _cachedState;
 
-    public static Dictionary<int, RebirthMouse> PlayerMice = [];
+    public static RebirthMouse[] PlayerMice = new RebirthMouse[4];
 
     // ### EVENTS ###
 
@@ -246,7 +247,7 @@ public class TankGame : Game {
             ClientLog.Write("Tank AI Threads started.", LogType.Info);
 
             // add the main player in when loading
-            PlayerMice.Add(PlayerID.Blue, new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue));
+            PlayerMice[0] = new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue);
 
             Client.OnClientStart += UpdateMainClientMouse;
 
@@ -261,14 +262,17 @@ public class TankGame : Game {
     }
 
     private void InputUtils_OnGamePadDisconnected(int player) {
-        ClientLog.Write($"Gamepad disconnected from player {player}.", LogType.Info);
-        PlayerMice.Remove(player + 1);
+        var plrReal = player + 1;
+        ClientLog.Write($"Gamepad disconnected from player {plrReal}.", LogType.Info);
+        PlayerMice[plrReal] = null;
     }
 
     private void InputUtils_OnGamePadConnected(int player) {
+        var plrReal = player + 1;
         ClientLog.Write($"Gamepad connected, controlling player {player}.", LogType.Info);
-        PlayerMice.Add(player + 1, new RebirthMouse(PlayerID.PlayerTankColors[player + 1], PlayerID.PlayerTankColorsBright[player + 1], player + 1));
-        PlayerMice[player + 1].Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * (player + 1);
+        PlayerMice[plrReal] = new RebirthMouse(PlayerID.PlayerTankColors[plrReal], PlayerID.PlayerTankColorsBright[plrReal], plrReal) {
+            Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * (plrReal)
+        };
     }
 
     private void UpdateMainClientMouse(Client client) {
@@ -637,24 +641,6 @@ public class TankGame : Game {
                 }
             }*/
 
-            if (InputUtils.AreKeysJustPressed(Keys.M, Keys.O, Keys.T, Keys.E)) {
-                if (WiimoteSystem.IsConnected) {
-                    bool disconnected = WiimoteSystem.TryDisconnect();
-
-                    if (disconnected)
-                        ChatSystem.SendMessage("Wiimote disconnected.", Color.Lime);
-                    else
-                        ChatSystem.SendMessage("Wiimote cannot disconnect.", Color.Red);
-                }
-                else {
-                    bool connected = WiimoteSystem.TryConnect();
-
-                    if (connected)
-                        ChatSystem.SendMessage("Wiimote connected.", Color.Lime);
-                    else
-                        ChatSystem.SendMessage("Wiimote cannot connect.", Color.Red);
-                }
-            }
             HandleLogic(gameTime);
 
             if (MainThreadTasks.TryDequeue(out var action))
@@ -720,7 +706,8 @@ public class TankGame : Game {
             }
 
             foreach (var elem in PlayerMice) {
-                elem.Value.ShouldRender = !Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
+                if (elem is null) continue;
+                elem.ShouldRender = (!Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride;
             }
 
             UIElement.UpdateElements();
@@ -841,15 +828,15 @@ public class TankGame : Game {
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
         // TankFootprint.PrepareRT(GraphicsDevice);
-
+        // CameraGlobals.GameView.M13 *= 2f;
         GraphicsDevice.DepthStencilState = RenderGlobals.DefaultStencilState;
 
         // so the meshes that need UV wrapping will work
         GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
         RoomScene.Render();
         CosmeticsUI.RenderCrates();
-        GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
         GameHandler.RenderAll();
+        GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
 
         spriteBatch.End();
         // stop drawing the regular game scene
@@ -978,7 +965,7 @@ public class TankGame : Game {
     } 
     public static void DrawCursors() {
         foreach (var elem in PlayerMice) {
-            elem.Value.Draw();
+            elem?.Draw();
         }
     }
 

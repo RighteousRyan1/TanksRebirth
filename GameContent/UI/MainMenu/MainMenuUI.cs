@@ -277,7 +277,7 @@ public static partial class MainMenuUI {
                     DrawStatsMenu(gameTime);
                     break;
                 case UIState.ModsMenu:
-                    // DrawModMenu(spriteBatch);
+                    DrawModMenu(spriteBatch);
                     break;
             }
         }

@@ -12,9 +12,12 @@ using TanksRebirth.Net;
 using TanksRebirth.Graphics.Cameras;
 using System.Linq;
 using System;
+using TanksRebirth.Internals.Common.Framework.Animation;
+using System.Collections.Generic;
 
 namespace TanksRebirth.GameContent.Globals;
 
+#pragma warning disable
 public static class CameraGlobals {
     enum CameraMode {
         Overhead,
@@ -73,6 +76,10 @@ public static class CameraGlobals {
     public static Matrix GameProjection;
 
     public const float POV_CAM_OFFSET_Y = 20f;
+
+    static Animator _povAnimatorTest; // used in debug cam mode to create custom transitions
+    static EasingFunction _povAnimatorFunction;
+    static List<KeyFrame> _povAnimatorKeyframeBuilder;
 
     public static void Initialize(GraphicsDevice device) {
         RebirthFreecam = new(device) {

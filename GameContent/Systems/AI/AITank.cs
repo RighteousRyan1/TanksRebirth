@@ -13,6 +13,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -599,6 +600,8 @@ public partial class AITank : Tank {
                             return;
 
                     if (mesh.Name == "Shadow") {
+                        if (!CommandGlobals.DrawMeshShadows)
+                            continue;
                         if (!Lighting.AccurateShadows) {
                             effect.Texture = DrawParamsTank.ShadowTexture;
                             effect.Alpha = DrawParamsTank.ShadowAlpha;

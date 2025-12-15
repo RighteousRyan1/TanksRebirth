@@ -220,14 +220,14 @@ public static class GameScene {
             SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
             SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
             SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
-            SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
-            SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
+            SetBlockTexture(BoundaryModel.Meshes["shadow_interior_vertical"], BoundaryTextureContext.block_shadow_b); // polygon7
+            SetBlockTexture(BoundaryModel.Meshes["shadow_7"], BoundaryTextureContext.block_shadow_b); // polygon15
 
             SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
 
-            SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
+            SetBlockTexture(BoundaryModel.Meshes["shadow_interior_upper"], BoundaryTextureContext.block_shadow_d);
 
-            SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
+            SetBlockTexture(BoundaryModel.Meshes["shadow_corner"], BoundaryTextureContext.block_shadow_b);
         }
 
         public static void RenderBounds() {
@@ -235,11 +235,14 @@ public static class GameScene {
             switch (Theme) {
                 case MapTheme.Vanilla:
                     foreach (var mesh in BoundaryModel.Meshes) {
-                        foreach (BasicEffect effect in mesh.Effects) {
+                        if (mesh.Name.Contains("outer", StringComparison.InvariantCultureIgnoreCase)) {
+                            continue;
+                        }
+                        else if (mesh.Name.Contains("shadow", StringComparison.InvariantCultureIgnoreCase)) {
+                            TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
+                        }
 
-                            if (mesh.Name.Contains("outer", StringComparison.InvariantCultureIgnoreCase)) {
-                                continue;
-                            }
+                        foreach (BasicEffect effect in mesh.Effects) {
 
                             effect.View = DrawParams.View;
                             effect.Projection = DrawParams.Projection;
@@ -262,6 +265,8 @@ public static class GameScene {
                         }
 
                         mesh.Draw();
+
+                        TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
                     }
                     break;
                 case MapTheme.Christmas:

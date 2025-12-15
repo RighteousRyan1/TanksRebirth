@@ -245,6 +245,9 @@ public partial class AITank {
 
     // makes the tank turn if it happens to run into a block
     protected bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
+
+        return true;
+
         if (other.Body.Tag is Block) {
             // contact.Manifold.LocalNormal
             // var pPos = Physics.Position;

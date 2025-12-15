@@ -19,11 +19,11 @@ public static class RenderGlobals {
 
     public static readonly DepthStencilState DefaultStencilState = DepthStencilState.Default;
 
-    public static readonly SamplerState WrappingSampler = new() {
+    public static SamplerState WrappingSampler { get; } = new() {
         AddressU = TextureAddressMode.Wrap,
         AddressV = TextureAddressMode.Wrap,
     };
-    public static readonly SamplerState ClampingSampler = new() {
+    public static SamplerState ClampingSampler { get; } = new() {
         AddressU = TextureAddressMode.Clamp,
         AddressV = TextureAddressMode.Clamp,
     };

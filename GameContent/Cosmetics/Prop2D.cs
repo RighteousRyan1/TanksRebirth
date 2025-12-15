@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.Internals.Common.Framework.Interfaces;
 
 namespace TanksRebirth.GameContent.Cosmetics;
 
@@ -18,7 +17,15 @@ public class Prop2D(string name, Texture2D texture, Vector3 position, PropLockOp
     /// <summary>The rotation of this <see cref="Prop2D"/></summary>
     public Vector3 Rotation { get; set; } = Vector3.Zero;
     /// <summary>Change the properties of this <see cref="Prop2D"/> every game tick.</summary>
-    public Action<IProp, Tank> UniqueBehavior { get; set; } = null;
+    public CosmeticUpdateCallback UniqueBehavior { get; set; } = null;
     /// <summary>The rotation of this <see cref="Prop3D"/>.</summary>
     public Vector3 Scale { get; set; } = Vector3.One;
+
+    public object Clone() {
+        return new Prop2D(Name, Texture, RelativePosition, LockOptions) {
+            Scale = this.Scale,
+            UniqueBehavior = this.UniqueBehavior,
+            Rotation = this.Rotation
+        };
+    }
 }

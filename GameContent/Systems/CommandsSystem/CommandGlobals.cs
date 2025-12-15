@@ -35,6 +35,8 @@ public static class CommandGlobals {
 
     public static bool IsUpdatePending;
 
+    public static bool DrawMeshShadows = true;
+
     /// <summary>The expected prefix to prepend before writing down a command.</summary>
     public const char ExpectedPrefix = '/';
     /// <summary>Commands for the chat. Feel free to add your own here.</summary>
@@ -60,6 +62,32 @@ public static class CommandGlobals {
             if (isGoodColor) {
                 TankGame.IngameConsole.ConsoleBaseColor = ColorUtils.ColorsByName[color];
             }
+        }),
+
+        [new CommandInput(name: "wiimote_toggle", description: "Attempt to connect a Wiimote if none are present, otherwise, disconnect.")] = new CommandOutput(netSync: false, false, (args) => {
+            if (WiimoteSystem.IsConnected) {
+                bool disconnected = WiimoteSystem.TryDisconnect();
+
+                if (disconnected)
+                    TankGame.ClientLog.Write("Wiimote disconnected.", LogType.Info);
+                else
+                    TankGame.ClientLog.Write("Wiimote cannot disconnect.", LogType.Warn);
+            }
+            else {
+                bool connected = WiimoteSystem.TryConnect();
+
+                if (connected)
+                    TankGame.ClientLog.Write("Wiimote connected.", LogType.Info);
+                else
+                    TankGame.ClientLog.Write("Wiimote cannot connect.", LogType.Warn);
+            }
+        }),
+
+        [new CommandInput(name: "mouse_draw_enabled", description: "Enable/disable drawing for mice.")] = new CommandOutput(netSync: false, false, (args) => {
+            var enabled = bool.Parse(args[0]);
+            TankGame.miceForceDrawOverride = enabled;
+
+            TankGame.IngameConsole.Log($"Mouse drawing is now: {enabled}", enabled ? Color.Lime : Color.Red);
         }),
 
         // mods
@@ -148,8 +176,11 @@ public static class CommandGlobals {
         [new CommandInput(name: "r_gp_ui", description: "Disable/enable drawing gameplay UI.")] = new CommandOutput(netSync: false, false, (args) => {
             GameScene.ShouldRenderAll = bool.Parse(args[0]);
         }),
-        [new CommandInput(name: "r_chromakey_enable", description: "Enables/disables chroma key rendering.")] = new CommandOutput(netSync: false, false, (args) => {
+        [new CommandInput(name: "r_chromakey_enabled", description: "Enables/disables chroma key rendering.")] = new CommandOutput(netSync: false, false, (args) => {
             GameScene.UseCustomSceneColor = bool.Parse(args[0]);
+        }),
+        [new CommandInput(name: "r_mesh_shadows", description: "Whether or not mesh shadows are drawn.")] = new CommandOutput(netSync: false, false, (args) => {
+            DrawMeshShadows = bool.Parse(args[0]);
         }),
         [new CommandInput(name: "r_chromakey", description: "Change the game scene to a custom color.")] = new CommandOutput(netSync: false, false, (args) => {
             var color = args[0];

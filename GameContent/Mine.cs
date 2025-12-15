@@ -8,14 +8,15 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
-using TanksRebirth.Graphics.Drawing;
 
 namespace TanksRebirth.GameContent;
 
@@ -248,9 +249,9 @@ public sealed class Mine : IAITankDanger {
                     effect.Texture = DrawParamsMine.MineTexture;
                     effect.Alpha = 1f;
 
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                     mesh.Draw();
                 }
-                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
             }
         }
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
@@ -263,11 +264,13 @@ public sealed class Mine : IAITankDanger {
                 effect.TextureEnabled = true;
 
                 if (mesh == _envMesh) {
+                    if (!CommandGlobals.DrawMeshShadows)
+                        continue;
                     effect.Texture = DrawParamsMine.ShadowTexture;
                     effect.Alpha = 0.6f;
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                     mesh.Draw();
                 }
-                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
             }
         }
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
@@ -292,6 +295,8 @@ public sealed class Mine : IAITankDanger {
                         mesh.Draw();
                     }
                     else {
+                        if (!CommandGlobals.DrawMeshShadows)
+                            continue;
                         if (!Lighting.AccurateShadows) {
                             //effect.Texture = _envTexture;
                             effect.Alpha = 0.6f;

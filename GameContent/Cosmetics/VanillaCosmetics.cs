@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
@@ -14,25 +15,21 @@ namespace TanksRebirth.GameContent.Cosmetics;
 public static class VanillaCosmetics {
     public static Prop2D Anger = new("Anger!", GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/anger_symbol"), new(8, 20, 8), PropLockOptions.None) {
         UniqueBehavior = (cos, tnk) => {
-            var sin = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 500) / 8;
+            // make different amongst tanks
+            var sin = MathF.Sin((float)(TankGame.LastGameTime.TotalGameTime.TotalMilliseconds) / 500) / 8;
             cos.Scale = new Vector3(MathF.Abs(sin) + 0.15f) * 1.25f;
             // apparently this stuff aint updating or sum.
         }
     };
-    public static Prop3D BlenderCube = new("Default Blender Cube", ModelGlobals.BlenderDefaultCube.Asset,
-        TextureGlobals.Pixels[Color.White], new(0, 100, 0), PropLockOptions.None) {
+    public static Prop3D BlenderCube = new("Default Blender Cube", ModelGlobals.BlenderDefaultCube,
+        TextureGlobals.Pixels[Color.White], new(0, 100, 0), PropLockOptions.ToTurret) {
         Rotation = new(-MathHelper.PiOver2, 0, 0),
-        UniqueBehavior = (cos, tnk) => {
-            cos.LockOptions = PropLockOptions.ToTurret;
-            cos.Scale = new(5f);
-            cos.RelativePosition = new Vector3(0, 20, 0); // + new Vector3(20, 0, 0).RotateXZ(RuntimeData.RunTime / 10);
-            cos.Rotation = Vector3.Zero; //new Vector3(0.0102f, 0.034f, 0.075f) * RuntimeData.DeltaTime;
-        },
-        Scale = new(10f)
+        RelativePosition = new Vector3(0, 20, 0),
+        Scale = new(5f)
     };
     // cosmetics like this block the first person camera. fix it by either changing camera position or changing cosmetic location/rotation anchor
-    public static Prop3D KingsCrown = new("King's Crown", ModelGlobals.Crown.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/crown_tex"), new(0, 21, 0), PropLockOptions.ToTurret) {
-        UniqueBehavior = (cos, tnk) => {
+    public static Prop3D KingsCrown = new("King's Crown", ModelGlobals.KingsCrown, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/crown_tex"), new(0, 21, 0), PropLockOptions.ToTurret) {
+        //UniqueBehavior = (cos, tnk) => {
             // corner follow
             /*cos.LockOptions = CosmeticLockOptions.None;
             cos.Rotation = new(-MathHelper.PiOver2 - 0.3f, 0, -MathHelper.PiOver4 / 2);
@@ -47,15 +44,25 @@ public static class VanillaCosmetics {
             //cos.LockOptions = PropLockOptions.ToTurretCentered;
             //cos.RelativePosition = new(0, 19.9f, -5f);
             //cos.Rotation = new Vector3(MathHelper.PiOver2 + MathHelper.PiOver4 * 3 + MathHelper.PiOver4 / 2, tnk.TurretRotation, 0);
-        },
+            //cos.Rotation = new(-MathHelper.PiOver2, 0, 0);
+        //},
         Rotation = new(-MathHelper.PiOver2, 0, 0),
         Scale = new(3.5f)
     };
-    public static Prop3D DevilsHorns = new("Devil Horns", ModelGlobals.Horns.Asset, TextureGlobals.Pixels[Color.White], new(0, 11, 0), PropLockOptions.ToTurret) {
-        Rotation = new(MathHelper.Pi, 0, 0),
-        Scale = new(100f)
+    public static Prop3D KingsRobe = new("King's Robe", ModelGlobals.KingsRobe, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/robe_tex"), Vector3.Zero, PropLockOptions.ToTank) {
+        UniqueBehavior = (cos, tnk) => {
+            cos.RelativePosition = Vector3.Zero;
+            cos.Rotation = new(-MathHelper.PiOver2, tnk.Flip ? 0 : MathHelper.Pi, 0);
+            cos.Scale = new(100f);
+        },
+        Rotation = new(-MathHelper.PiOver2, 0, 0),
+        Scale = new(100)
     };
-    public static Prop3D AngelHalo = new("Angel Halo", ModelGlobals.Halo.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/halo_tex"), new(0, 20, 0), PropLockOptions.ToTurret) {
+    public static Prop3D DevilsHorns = new("Devil Horns", ModelGlobals.Horns, TextureGlobals.Pixels[Color.White], new(0, 11, 0), PropLockOptions.ToTurret) {
+        Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
+        Scale = new(100f),
+    };
+    public static Prop3D AngelHalo = new("Angel Halo", ModelGlobals.Halo, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/halo_tex"), new(0, 20, 0), PropLockOptions.ToTurret) {
         Rotation = new(MathHelper.PiOver2, 0, 0),
         Scale = new(5f, 2f, 5f),
 
@@ -75,15 +82,15 @@ public static class VanillaCosmetics {
             }
         }
     };
-    public static Prop3D ArmyHat = new("Army Hat", ModelGlobals.ArmyHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/army_hat_tex"), new(0, 13.5f, 0), PropLockOptions.ToTurret) {
+    public static Prop3D ArmyHat = new("Army Hat", ModelGlobals.ArmyHat, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/army_hat_tex"), new(0, 13.5f, 0), PropLockOptions.ToTurret) {
         Rotation = new(-MathHelper.PiOver2, 0, 0),
-        Scale = new(10f)
+        Scale = new(10f),
     };
-    public static Prop3D SantaHat = new("Santa Hat", ModelGlobals.SantaHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/santa_hat_tex"), new(0, 12.5f, 0), PropLockOptions.ToTurret) {
+    public static Prop3D SantaHat = new("Santa Hat", ModelGlobals.SantaHat, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/santa_hat_tex"), new(0, 12.5f, 0), PropLockOptions.ToTurret) {
         Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
-        Scale = new(100f)
+        Scale = new(100f),
     };
-    public static Prop3D WitchHat = new("Witch Hat", ModelGlobals.WitchHat.Asset,
+    public static Prop3D WitchHat = new("Witch Hat", ModelGlobals.WitchHat,
         GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras"), new(0, 15f, 0), PropLockOptions.None) {
         Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
         Scale = new(100f),
@@ -101,9 +108,19 @@ public static class VanillaCosmetics {
             GameHandler.Particles.MakeShineSpot(newPos, Color.Red, 0.5f);*/
         }
     };
-
+    public static Prop3D TopHat = new("Top Hat", ModelGlobals.TopHat,
+        GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/top_hat_tex"), new(0, 100, 0), PropLockOptions.ToTurret) {
+        Rotation = new(-MathHelper.PiOver2, 0, 0),
+        RelativePosition = new Vector3(0, 14, 0),
+        Scale = new(100f)
+    };
+    public static Prop3D StrawHat = new("Top Hat", ModelGlobals.StrawHat,
+    GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/straw_hat_tex"), new(0, 100, 0), PropLockOptions.ToTurret) {
+        Rotation = new(-MathHelper.PiOver2, 0, 0),
+        RelativePosition = new Vector3(0, 13, 0),
+        Scale = new(100f)
+    };
     // definitions
-
     static VanillaCosmetics() {
         rarityMakeup = new() {
             [LootBoxRarity.Common] = .50f, // 50% makeup for common
@@ -120,14 +137,17 @@ public static class VanillaCosmetics {
             [BlenderCube] = LootBoxRarity.Common,
 
             [ArmyHat]     = LootBoxRarity.Uncommon,
+            [StrawHat]    = LootBoxRarity.Uncommon,
 
             [DevilsHorns] = LootBoxRarity.Rare,
+            [TopHat]      = LootBoxRarity.Rare,
 
             [SantaHat]    = LootBoxRarity.Epic,
 
             [AngelHalo]   = LootBoxRarity.Legendary,
 
             [KingsCrown]  = LootBoxRarity.Mythical,
+            [KingsRobe]   = LootBoxRarity.Mythical,
 
             [WitchHat]    = LootBoxRarity.Godly,
         });
@@ -139,22 +159,17 @@ public static class VanillaCosmetics {
     public static LootBox<IProp> LootPool;
 
     // may need changing with updating 
-    public static LootBoxRarity GetRarityFromFloat(float flt) {
-        if (flt > rarityMakeup[0])
-            return LootBoxRarity.Common;
-        else if (flt < rarityMakeup[(LootBoxRarity)(rarityMakeup.Count - 1)])
-            return LootBoxRarity.Godly;
+    public static LootBoxRarity GetRarityFromFloat(float roll) {
+        float cumulative = 0f;
 
-        // second rarity to second to last rarity
-        for (int i = 1; i < rarityMakeup.Count; i++) {
-            var thisRarity = (LootBoxRarity)i;
-            var prevRarity = (LootBoxRarity)(i - 1);
+        foreach (var rarity in Enum.GetValues<LootBoxRarity>()) {
+            cumulative += rarityMakeup[rarity];
 
-            if (flt >= rarityMakeup[thisRarity] && flt < rarityMakeup[prevRarity]) {
-                return thisRarity;
-            }
+            if (roll < cumulative)
+                return rarity;
         }
 
-        throw new ArgumentOutOfRangeException($"'{nameof(flt)}' must be within 0 to 1.");
+        // safety fallback due to floating point precision
+        return LootBoxRarity.Godly;
     }
 }

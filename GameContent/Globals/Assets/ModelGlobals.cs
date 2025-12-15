@@ -44,11 +44,14 @@ public static class ModelGlobals {
     // cosmetics
     public static Resource<Model> ArmyHat = new(PathGlobals.COSMETICS_PATH, "army_hat");
     public static Resource<Model> BlenderDefaultCube = new(PathGlobals.COSMETICS_PATH, "blender_default_cube");
-    public static Resource<Model> Crown = new(PathGlobals.COSMETICS_PATH, "crown");
+    public static Resource<Model> KingsCrown = new(PathGlobals.COSMETICS_PATH, "crown");
     public static Resource<Model> Halo = new(PathGlobals.COSMETICS_PATH, "halo");
     public static Resource<Model> Horns = new(PathGlobals.COSMETICS_PATH, "horns");
     public static Resource<Model> SantaHat = new(PathGlobals.COSMETICS_PATH, "santa_hat");
     public static Resource<Model> WitchHat = new(PathGlobals.COSMETICS_PATH, "witch_hat");
+    public static Resource<Model> TopHat = new(PathGlobals.COSMETICS_PATH, "top_hat");
+    public static Resource<Model> StrawHat = new(PathGlobals.COSMETICS_PATH, "straw_hat");
+    public static Resource<Model> KingsRobe = new(PathGlobals.COSMETICS_PATH, "robe");
 
     // misc
     public static Resource<Model> Logo = new(PathGlobals.MODEL_PATH + "/logo", "logo");

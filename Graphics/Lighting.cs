@@ -11,24 +11,15 @@ namespace TanksRebirth.Graphics;
 public static class Lighting
 {
     /// <summary>A custom time of day for the lighting and brightness.</summary>
-    public struct LightProfile
-    {
-        public float Brightness;
-        public Color Color;
+    public struct LightProfile(float brightness, Color color) {
+        public float Brightness = brightness;
+        public Color Color = color;
 
-        public bool IsNight;
+        public bool IsNight = true;
 
-        public float SunPower;
-        public LightProfile(float brightness, Color color) {
-            Brightness = brightness;
-            Color = color;
+        public float SunPower = 0f;
 
-            IsNight = true;
-
-            SunPower = 0f;
-        }
-
-        public void Apply(bool applySunPower) {
+        public readonly void Apply(bool applySunPower) {
             LightColor = Color;
             ColorBrightness = Brightness;
 
@@ -41,6 +32,7 @@ public static class Lighting
         }
     }
 
+    // probably gonna remove this dogshit
     public static bool AccurateShadows = false;
 
     public static readonly Vector3 AccurateLightingDirection = new(0.25f, 1, -0.5f);

@@ -12,6 +12,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
@@ -312,28 +313,32 @@ public class PlayerTank : Tank {
     void ProcessPlayerMouse() {
         if (!NetPlay.IsClientMatched(PlayerId)) return;
 
-        if (TankGame.PlayerMice.Count <= PlayerId) return;
+        if (TankGame.PlayerMice.Length <= PlayerId) return;
 
         if (UsesKeyboard)
             AimTargets[PlayerId] = MouseUtils.MousePosition;
 
-        var shouldAimingHappen = !Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive;
-        if (shouldAimingHappen) {
+        var denyFpsAiming = !Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive;
+        if (denyFpsAiming) {
             //int padIndex = GamepadIndex;
             //if (padIndex < 0)
             //    return; // KBM player will use actual mouse
 
             var cursorToAimAt = TankGame.PlayerMice[PlayerId];
 
-            var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position, -11f);
-            if (!LevelEditorUI.IsActive)
-                TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
-            else
-                TurretRotation = ChassisRotation;
+            if (cursorToAimAt != null) {
+                var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position, -11f); 
+                if (!LevelEditorUI.IsActive)
+                    TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
+                else
+                    TurretRotation = ChassisRotation;
+            }
         }
+        if (InputUtils.KeyJustPressed(Keys.K))
+            System.Diagnostics.Debugger.Break();
         // handle POV mode aiming
         // also pov mode should not be used in local games for now (i do not want to make splitscreen pls)
-        else if (!GameUI.Paused) { 
+        else if (!GameUI.Paused) {
             if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !PlaceMine.JustPressed) {
                 var mouseState = Mouse.GetState();
                 var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
@@ -632,6 +637,8 @@ public class PlayerTank : Tank {
                             return;
 
                     if (mesh.Name == "Shadow") {
+                        if (!CommandGlobals.DrawMeshShadows)
+                            continue;
                         if (!Lighting.AccurateShadows) {
                             effect.Alpha = DrawParamsTank.ShadowAlpha;
                             effect.Texture = DrawParamsTank.ShadowTexture;

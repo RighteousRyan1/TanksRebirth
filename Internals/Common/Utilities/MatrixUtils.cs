@@ -8,10 +8,8 @@ using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class MatrixUtils
-{
-    public static Vector2 ConvertWorldToScreen(Vector3 position, Matrix world, Matrix view, Matrix projection)
-    {
+public static class MatrixUtils {
+    public static Vector2 ConvertWorldToScreen(Vector3 position, Matrix world, Matrix view, Matrix projection) {
         var viewport = TankGame.Instance.GraphicsDevice.Viewport;
 
         var proj = viewport.Project(position, projection, view, world);
@@ -23,17 +21,13 @@ public static class MatrixUtils
         // if i replace proj.Y with proj.Z it could be an indicator something is offscreen...?
         return new(proj.X, proj.Y);
     }
-    public static Vector3 ConvertScreenToWorld(Vector3 position, Matrix world, Matrix view, Matrix projection)
-    {
+    public static Vector3 ConvertScreenToWorld(Vector3 position, Matrix world, Matrix view, Matrix projection) {
         var viewport = TankGame.Instance.GraphicsDevice.Viewport;
-
         var proj = viewport.Unproject(position, projection, view, world);
-
         return proj;
     }
 
-    public static Vector3 GetWorldPosition(Vector2 screenCoords, float offset = 0f)
-    {
+    public static Vector3 GetWorldPosition(Vector2 screenCoords, float offset = 0f) {
         Plane gamePlane = new(Vector3.UnitY, offset);
 
         var nearPlane = ConvertScreenToWorld(new Vector3(screenCoords, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
@@ -49,8 +43,7 @@ public static class MatrixUtils
         return mouseRay.Position + mouseRay.Direction * distance.Value;
     }
 
-    public static Ray GetMouseToWorldRay()
-    {
+    public static Ray GetMouseToWorldRay() {
         var nearPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
         var farPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
@@ -62,12 +55,10 @@ public static class MatrixUtils
     public static EulerAngles GetRotationFromView(Matrix view) {
         Matrix camWorld = Matrix.Invert(view);
 
-        // Get a quaternion that represents the rotation part of the matrix.
-        Quaternion q = Quaternion.CreateFromRotationMatrix(camWorld);
+        // quat that represents the rotation
+        var q = Quaternion.CreateFromRotationMatrix(camWorld);
 
         float pitch, yaw, roll;
-
-        // --- Quaternion -> Euler (pitch, yaw, roll) ---
 
         // pitch
         float sinr_cosp = 2f * (q.W * q.X + q.Y * q.Z);

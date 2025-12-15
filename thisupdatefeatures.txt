@@ -17,7 +17,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Added a new mods menu!
 	- It appears in the top right of the main menu
 	- It allows you to quickly load/unload/reload mods instead of having to use debug functions or restart the game
-- Added some new commands to assist with chroma keying + video creation
 - Added a new dev console which is accessible from the tilde key (~)
 
 # Changes
@@ -52,7 +51,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - `Difficulties.Types` -> `Modifiers.Map`
 - All string identifiers in `Modifiers` are now constants so they can be easily identified- and yes, you'll have to use them
 
-
 # Fixes
 
 - Fixed nametags showing for non-host clients after the game has started if the host started the game with the client being in the multiplayer menu
@@ -67,7 +65,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - [ ] Campaign fail/success display
 - [ ] Tank tread hyper-optimization (and visual re-haul)
 - [ ] Real-time multiplayer stats
-- [ ] Local Multiplayer (v1.9!)
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.

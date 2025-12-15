@@ -71,7 +71,7 @@ public static class CosmeticsUI {
                 Particle cosPart;
 
                 if (prop is Prop3D p3d) {
-                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel, p3d.ModelTexture);
+                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel.Duplicate(), p3d.ModelTexture);
                     cosPart.Scale = Vector3.One * prop.Scale;
                 }
                 else {
@@ -180,7 +180,7 @@ public static class CosmeticsUI {
     public static IProp FuckingGamble(LootBox<IProp> lootPool, out float percent) {
         var result = lootPool.Roll(out percent);
 
-        return result;
+        return (IProp)result.Clone();
     }
 
     static void SpawnKeys() {

@@ -156,6 +156,7 @@ public abstract class Tank {
     /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="IProp"/>s.</summary>
     public List<IProp> Props = [];
     readonly List<Particle> _propParticles = [];
+    readonly Dictionary<Prop3D, Model> _duplicatedModels = [];
     #region Fields / Properties
     float _oldRotation;
     public Body Physics { get; set; } = new();
@@ -406,11 +407,13 @@ public abstract class Tank {
                 var recieved = VanillaCosmetics.LootPool.Roll(out _);
 
                 if (recieved is Prop3D cosmetic1)
-                    Props.Add(cosmetic1);
+                    Props.Add((Prop3D)cosmetic1.Clone());
                 else if (recieved is Prop2D cosmetic2)
                     AddProp2D(cosmetic2);
             }
         }
+
+        // deep clone the props...
 
         DrawParamsTank.ShadowAlpha = 0.5f;
         DrawParamsTank.TankAlpha = 1f;
@@ -945,8 +948,13 @@ public abstract class Tank {
             if (cosmetic is not Prop3D cos3d)
                 continue;
 
+            if (!_duplicatedModels.ContainsKey(cos3d)) {
+                _duplicatedModels.Add(cos3d, cos3d.PropModel.Duplicate());
+            }
+            // _duplicatedModels[cos3d].Meshes
+
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-                foreach (var mesh in cos3d.PropModel.Meshes) {
+                foreach (var mesh in _duplicatedModels[cos3d].Meshes) {
                     if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
                         continue;
 
@@ -955,12 +963,12 @@ public abstract class Tank {
                         if (cosmetic.LockOptions == PropLockOptions.ToTurret)
                             rotY = cosmetic.Rotation.Y + TurretRotation;
                         else if (cosmetic.LockOptions == PropLockOptions.ToTank)
-                            rotY = cosmetic.Rotation.Y + ChassisRotation;
+                            rotY = cosmetic.Rotation.Y + -ChassisRotation;
                         else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
                             cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
 
-                        effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
-                            : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        var baseMatrix = Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition);
+                        effect.World = i == 0 ? baseMatrix:baseMatrix * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                         effect.View = DrawParams.View;
                         effect.Projection = DrawParams.Projection;
 
