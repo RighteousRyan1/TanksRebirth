@@ -83,7 +83,7 @@ public static partial class MainMenuUI {
 
         float spacing = 35.ToResolutionY();
         for (int i = 0; i < _info.Length; i++) {
-            // Staggered animation for list items
+            // staggered animation for list items
             float itemProgress = Easings.OutCubic(MathHelper.Clamp(_statsOpenProgress * 2f - (i * 0.05f), 0f, 1f));
             if (itemProgress <= 0f) continue;
 

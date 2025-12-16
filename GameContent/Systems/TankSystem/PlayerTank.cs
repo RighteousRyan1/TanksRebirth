@@ -334,8 +334,6 @@ public class PlayerTank : Tank {
                     TurretRotation = ChassisRotation;
             }
         }
-        if (InputUtils.KeyJustPressed(Keys.K))
-            System.Diagnostics.Debugger.Break();
         // handle POV mode aiming
         // also pov mode should not be used in local games for now (i do not want to make splitscreen pls)
         else if (!GameUI.Paused) {
@@ -622,37 +620,31 @@ public class PlayerTank : Tank {
         DrawExtras();
         if (Properties.Invisible && CampaignGlobals.InMission)
             return;
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? boneTransforms[mesh.ParentBone.Index] : 
-                        boneTransforms[mesh.ParentBone.Index] 
-                        * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
-                    effect.TextureEnabled = true;
+        foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = boneTransforms[mesh.ParentBone.Index];
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Projection;
+                effect.TextureEnabled = true;
 
-                    if (!Properties.HasTurret)
-                        if (mesh.Name == "Cannon")
-                            return;
+                if (!Properties.HasTurret)
+                    if (mesh.Name == "Cannon")
+                        return;
 
-                    if (mesh.Name == "Shadow") {
-                        if (!CommandGlobals.DrawMeshShadows)
-                            continue;
-                        if (!Lighting.AccurateShadows) {
-                            effect.Alpha = DrawParamsTank.ShadowAlpha;
-                            effect.Texture = DrawParamsTank.ShadowTexture;
-                            mesh.Draw();
-                        }
+                if (mesh.Name == "Shadow") {
+                    if (!CommandGlobals.DrawMeshShadows)
                         continue;
-                    }
-
-                    effect.Alpha = DrawParamsTank.TankAlpha;
-                    effect.Texture = DrawParamsTank.TankTexture;
-
-                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                    effect.Alpha = DrawParamsTank.ShadowAlpha;
+                    effect.Texture = DrawParamsTank.ShadowTexture;
                     mesh.Draw();
+                    continue;
                 }
+
+                effect.Alpha = DrawParamsTank.TankAlpha;
+                effect.Texture = DrawParamsTank.TankTexture;
+
+                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                mesh.Draw();
             }
         }
     }

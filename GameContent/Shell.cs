@@ -670,22 +670,16 @@ public class Shell : IAITankDanger {
                 $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
                 centered: true);
-
-        for (var i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            DrawShellMesh(i);
-        }
+        DrawShellMesh();
         ModdedData?.PostRender();
         OnPostRender?.Invoke(this);
     }
 
-    void DrawShellMesh(int currentIteration) {
-        void RenderMeshEffects(int i, ModelMesh mesh) {
+    void DrawShellMesh() {
+        void RenderMeshEffects(ModelMesh mesh) {
             for (var j = 0; j < mesh.Effects.Count; j++) {
                 var effect = (BasicEffect)mesh.Effects[j];
-                effect.World = i == 0
-                    ? DrawParams.World
-                    : DrawParams.World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) *
-                      Matrix.CreateTranslation(0, 0.2f, 0);
+                effect.World = DrawParams.World;
 
                 effect.View = DrawParams.View;
                 effect.Projection = DrawParams.Projection;
@@ -699,7 +693,7 @@ public class Shell : IAITankDanger {
 
         for (var i = 0; i < DrawParamsShell.Model.Meshes.Count; i++) {
             var mesh = DrawParamsShell.Model.Meshes[i];
-            RenderMeshEffects(currentIteration, mesh);
+            RenderMeshEffects(mesh);
             mesh.Draw();
         }
     }

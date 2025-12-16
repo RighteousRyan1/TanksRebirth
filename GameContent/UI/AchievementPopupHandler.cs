@@ -1,13 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Achievements;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -28,6 +24,8 @@ public class AchievementPopupHandler(AchievementRepository repo) {
 
     public AchievementRepository Repo = repo;
 
+    // question to self: why am i so addicted to asynchronous execution for things that don't need it?
+    // TODO: change a lot. also implement achievements menu
     public void SummonOrQueue(int achievementId) {
         if (_isCurrentlyActive) {
             Task.Run(async () => {
@@ -60,7 +58,7 @@ public class AchievementPopupHandler(AchievementRepository repo) {
                 _popupDims = ach.Texture.Size() + biggerFloat + new Vector2(100, 0);
                 float interp = 0f;
                 bool opening = true;
-                var easingDelta = 0.02f;
+                var easingDelta = 0.02f * RuntimeData.DeltaTime;
                 _isCurrentlyActive = true;
                 Task.Run(async () => {
                     while (interp < 1f && opening) {

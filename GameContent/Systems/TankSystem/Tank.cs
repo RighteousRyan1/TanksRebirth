@@ -953,49 +953,47 @@ public abstract class Tank {
             }
             // _duplicatedModels[cos3d].Meshes
 
-            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-                foreach (var mesh in _duplicatedModels[cos3d].Meshes) {
-                    if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
-                        continue;
+            foreach (var mesh in _duplicatedModels[cos3d].Meshes) {
+                if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
+                    continue;
 
-                    foreach (BasicEffect effect in mesh.Effects) {
-                        float rotY = TurretRotation;
-                        if (cosmetic.LockOptions == PropLockOptions.ToTurret)
-                            rotY = cosmetic.Rotation.Y + TurretRotation;
-                        else if (cosmetic.LockOptions == PropLockOptions.ToTank)
-                            rotY = cosmetic.Rotation.Y + -ChassisRotation;
-                        else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
-                            cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
+                foreach (BasicEffect effect in mesh.Effects) {
+                    float rotY = TurretRotation;
+                    if (cosmetic.LockOptions == PropLockOptions.ToTurret)
+                        rotY = cosmetic.Rotation.Y + TurretRotation;
+                    else if (cosmetic.LockOptions == PropLockOptions.ToTank)
+                        rotY = cosmetic.Rotation.Y + -ChassisRotation;
+                    else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
+                        cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
 
-                        var baseMatrix = Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition);
-                        effect.World = i == 0 ? baseMatrix:baseMatrix * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                        effect.View = DrawParams.View;
-                        effect.Projection = DrawParams.Projection;
+                    var baseMatrix = Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition);
+                    effect.World = baseMatrix;
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
 
-                        // hover highlight
-                        if (IsHoveredByMouse)
-                            effect.EmissiveColor = Color.White.ToVector3();
-                        else
-                            effect.EmissiveColor = Color.Black.ToVector3();
+                    // hover highlight
+                    if (IsHoveredByMouse)
+                        effect.EmissiveColor = Color.White.ToVector3();
+                    else
+                        effect.EmissiveColor = Color.Black.ToVector3();
 
-                        if (ShowTeamVisuals) {
-                            if (Team != TeamID.NoTeam) {
-                                var ex = new Color[1024];
+                    if (ShowTeamVisuals) {
+                        if (Team != TeamID.NoTeam) {
+                            var ex = new Color[1024];
 
-                                Array.Fill(ex, TeamID.TeamColors[Team]);
+                            Array.Fill(ex, TeamID.TeamColors[Team]);
 
-                                effect.Texture?.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                                effect.Texture?.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                            }
+                            effect.Texture?.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                            effect.Texture?.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
                         }
-
-                        effect.TextureEnabled = true;
-                        effect.Texture = i == 0 ? cos3d.ModelTexture : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
-                        effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                     }
 
-                    mesh.Draw();
+                    effect.TextureEnabled = true;
+                    effect.Texture = cos3d.ModelTexture;
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                 }
+
+                mesh.Draw();
             }
         }
     }

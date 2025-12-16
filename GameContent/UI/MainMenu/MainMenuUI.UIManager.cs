@@ -56,20 +56,20 @@ public static partial class MainMenuUI
 
             if (MenuCameraManipulations.ContainsKey(value)) {
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position: MenuCameraManipulations[value].Position));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position))
+                    .WithFrame(new(position: MenuCameraManipulations[value].Position, duration: CameraTransitionTime, easing: CameraEasingFunction));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position: MenuCameraManipulations[value].Rotation));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation))
+                    .WithFrame(new(position: MenuCameraManipulations[value].Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
             }
             // if it doesn't have a proper camera position, just go to the regular one.
             else {
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position: CamPosMain));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position))
+                    .WithFrame(new(position: CamPosMain, duration: CameraTransitionTime, easing: CameraEasingFunction));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position: CamPosMainRotation));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation))
+                    .WithFrame(new(position: CamPosMainRotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
             }
             CameraPositionAnimator.Restart();
             CameraPositionAnimator.Run();

@@ -77,10 +77,6 @@ public static class CameraGlobals {
 
     public const float POV_CAM_OFFSET_Y = 20f;
 
-    static Animator _povAnimatorTest; // used in debug cam mode to create custom transitions
-    static EasingFunction _povAnimatorFunction;
-    static List<KeyFrame> _povAnimatorKeyframeBuilder;
-
     public static void Initialize(GraphicsDevice device) {
         RebirthFreecam = new(device) {
             Position = MainMenuUI.MenuCameraManipulations[MainMenuUI.UIState.LoadingMods].Position
@@ -261,15 +257,12 @@ public static class CameraGlobals {
             POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ() + offsetVector;
             POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
         }
-
-        if (IntermissionHandler.ThirdPersonTransition is not null && PlayerTank.ClientTank is not null) {
-            IntermissionHandler.ThirdPersonTransition.KeyFrames[1] = new(
-                position: plOffset
-            );
-            IntermissionHandler.ThirdPersonTransition.ModifyFloat(0, -clientTank.TurretRotation);
+        var anim = IntermissionHandler.ThirdPersonTransition;
+        if (anim is not null && clientTank is not null) {
+            // keeps the animation updated
+            anim.ModifyFloat(0, -clientTank.TurretRotation);
         }
 
-        var anim = IntermissionHandler.ThirdPersonTransition;
         var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
             // the current anim rotation to meet the tank turret rotation
             -clientTank.TurretRotation : POVCameraRotation;

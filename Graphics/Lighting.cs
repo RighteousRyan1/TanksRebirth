@@ -32,9 +32,6 @@ public static class Lighting
         }
     }
 
-    // probably gonna remove this dogshit
-    public static bool AccurateShadows = false;
-
     public static readonly Vector3 AccurateLightingDirection = new(0.25f, 1, -0.5f);
 
     private static Color LightColor = DefaultLightingColor;

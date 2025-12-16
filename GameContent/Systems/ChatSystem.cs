@@ -160,7 +160,7 @@ public sealed record ChatSystem {
         if (string.IsNullOrEmpty(text)) return "";
 
         string[] words = text.Split(' ');
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         float lineWidth = 0f;
         float spaceWidth = font.MeasureString(" ").X * scale;
 
@@ -183,14 +183,14 @@ public sealed record ChatSystem {
         var lines = new List<List<TextSection>>();
         var currentLine = new List<TextSection>();
         float currentLineWidth = 0f;
-        float spaceWidth = font.MeasureString(" ").X * scale;
+        // float spaceWidth = font.MeasureString(" ").X * scale;
 
         foreach (var section in sections) {
             var words = section.Text.Split(' ');
             for (int i = 0; i < words.Length; i++) {
                 string word = words[i];
                 // preserve space unless it's the very last word of the section which might not have had one
-                // simplified: just add space to all
+                // just add space to all... i guess
                 string wordWithSpace = word + " ";
                 float wordWidth = font.MeasureString(wordWithSpace).X * scale;
 
@@ -236,7 +236,6 @@ public sealed record ChatSystem {
 
         sb.Begin();
 
-        // Pass the smoothed value to calculate position
         DrawChatBox(smoothOpen, out var chatRect, out var typeRect, inputSize.Y);
 
         var mousePos = MouseUtils.MousePosition;

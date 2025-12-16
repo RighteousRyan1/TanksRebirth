@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using tainicom.Aether.Physics2D;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ModSupport;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
@@ -275,6 +276,20 @@ public static class CommandGlobals {
                 TankGame.IngameConsole.Log($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
                 TankGame.ClientLog.Write(targetInvex.ToString(), LogType.ErrorFatal, false);
             }
-        })
+        }),
+
+        // funny dev stuff
+
+        [new CommandInput(name: "s_control_tanks", description: "Host only: lets the host control a tank's movement with their mouse")] = new CommandOutput(netSync: false, true, (args) => {
+            var enable = bool.Parse(args[0]);
+            
+            DebugManager.SuperSecretDevOption = enable;
+        }),
+        [new CommandInput(name: "s_rand_cosmetics", description: "Host only: lets the host control a tank's movement with their mouse")] = new CommandOutput(netSync: false, true, (args) => {
+            var enable = bool.Parse(args[0]);
+
+            DebugManager.SecretCosmeticSetting = enable;
+            ChatSystem.SendMessage($"Random cosmetics: {DebugManager.SecretCosmeticSetting}", DebugManager.SecretCosmeticSetting ? Color.Lime : Color.Red);
+        }),
     };
 }

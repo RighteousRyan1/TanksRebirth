@@ -277,50 +277,47 @@ public class Airplane {
         if (!GameScene.ShouldRenderAll)
             return;
         World = Matrix.CreateScale(0.6f)
-            * Matrix.CreateRotationY(Rotation) 
-            * Matrix.CreateTranslation(Position);    
+            * Matrix.CreateRotationY(Rotation)
+            * Matrix.CreateTranslation(Position);
         Projection = CameraGlobals.GameProjection;
         View = CameraGlobals.GameView;
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         Model!.Root.Transform = World;
 
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (var mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.View = View;
-                    effect.World = i == 0 ? _boneTransforms[mesh.ParentBone.Index] : _boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0))
-                        * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.Projection = Projection;
+        foreach (var mesh in Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.View = View;
+                effect.World = _boneTransforms[mesh.ParentBone.Index];
+                effect.Projection = Projection;
 
-                    effect.TextureEnabled = true;
+                effect.TextureEnabled = true;
 
-                    switch (mesh.Name) {
-                        // chassis/body exterior
-                        case "Plane_Wood1":
-                            effect.Texture = BodyTexture;
-                            break;
-                        // wings/propellers
-                        case "Plane_Wood2":
-                        case "Plane_Door1":
-                        case "Plane_Door2":
-                        case "Plane_Prop1":
-                        case "Plane_Prop2":
-                            effect.Texture = WingTexture;
-                            break;
-                        // interior... duh.
-                        case "Plane_Interior":
-                            effect.Texture = InteriorTexture;
-                            break;
-                    }
-
-
-                    effect.SetDefaultGameLighting_IngameEntities(2f);
-
-                    effect.Alpha = 1f;
+                switch (mesh.Name) {
+                    // chassis/body exterior
+                    case "Plane_Wood1":
+                        effect.Texture = BodyTexture;
+                        break;
+                    // wings/propellers
+                    case "Plane_Wood2":
+                    case "Plane_Door1":
+                    case "Plane_Door2":
+                    case "Plane_Prop1":
+                    case "Plane_Prop2":
+                        effect.Texture = WingTexture;
+                        break;
+                    // interior... duh.
+                    case "Plane_Interior":
+                        effect.Texture = InteriorTexture;
+                        break;
                 }
-                mesh.Draw();
+
+
+                effect.SetDefaultGameLighting_IngameEntities(2f);
+
+                effect.Alpha = 1f;
             }
+            mesh.Draw();
         }
     }
 }

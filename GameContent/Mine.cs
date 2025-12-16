@@ -56,7 +56,7 @@ public sealed class Mine : IAITankDanger {
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     readonly ModelMesh? _mineMesh;
-    readonly ModelMesh? _envMesh;
+    readonly ModelMesh? _shadowMesh;
 
     public OggAudio? TickingNoise;
 
@@ -118,8 +118,8 @@ public sealed class Mine : IAITankDanger {
         DrawParamsMine.MineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
         DrawParamsMine.ShadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow").Duplicate(TankGame.Instance.GraphicsDevice);
 
-        _mineMesh = DrawParamsMine.Model.Meshes["polygon1"];
-        _envMesh = DrawParamsMine.Model.Meshes["polygon0"];
+        _mineMesh = DrawParamsMine.Model.Meshes["mine"];
+        _shadowMesh = DrawParamsMine.Model.Meshes["shadow"];
 
         MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits;
 
@@ -227,7 +227,7 @@ public sealed class Mine : IAITankDanger {
 
         DrawParams.View = CameraGlobals.GameView;
         DrawParams.Projection = CameraGlobals.GameProjection;
-        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", 
+        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",
             MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1, centered: true);
 
         // this is horrendous but it looks better
@@ -263,7 +263,7 @@ public sealed class Mine : IAITankDanger {
 
                 effect.TextureEnabled = true;
 
-                if (mesh == _envMesh) {
+                if (mesh == _shadowMesh) {
                     if (!CommandGlobals.DrawMeshShadows)
                         continue;
                     effect.Texture = DrawParamsMine.ShadowTexture;
@@ -273,38 +273,32 @@ public sealed class Mine : IAITankDanger {
                 }
             }
         }
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? DrawParams.World : DrawParams.World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+        foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = DrawParams.World;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Projection;
 
-                    effect.TextureEnabled = false;
+                effect.TextureEnabled = false;
 
-                    ActiveColor = new Color(231, 62, 99);
-                    InactiveColor = new Color(219, 228, 64);
-                    if (mesh == _mineMesh) {
-                        effect.EmissiveColor = (_tickRed ? 
-                            ActiveColor.ToVector3() : InactiveColor.ToVector3())
-                            * SceneManager.GameLight.Brightness;
-                        effect.DiffuseColor *= 0.5f;
-                        //effect.Texture = _mineTexture;
-                        effect.Alpha = 1f;
+                ActiveColor = new Color(231, 62, 99);
+                InactiveColor = new Color(219, 228, 64);
+                if (mesh == _mineMesh) {
+                    effect.EmissiveColor = (_tickRed ?
+                        ActiveColor.ToVector3() : InactiveColor.ToVector3())
+                        * SceneManager.GameLight.Brightness;
+                    effect.DiffuseColor *= 0.5f;
+                    //effect.Texture = _mineTexture;
+                    effect.Alpha = 1f;
 
-                        mesh.Draw();
-                    }
-                    else {
-                        if (!CommandGlobals.DrawMeshShadows)
-                            continue;
-                        if (!Lighting.AccurateShadows) {
-                            //effect.Texture = _envTexture;
-                            effect.Alpha = 0.6f;
-                            //mesh.Draw();
-                        }
-                    }
-                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                    mesh.Draw();
                 }
+                else {
+                    if (!CommandGlobals.DrawMeshShadows)
+                        continue;
+                    effect.Alpha = 0.6f;
+                }
+                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
             }
         }
         OnPostRender?.Invoke(this);

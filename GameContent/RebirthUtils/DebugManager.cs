@@ -17,9 +17,9 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.IO;
@@ -27,6 +27,7 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
+#pragma warning disable 
 public static class DebugManager {
     public readonly struct Id
     {
@@ -87,6 +88,15 @@ public static class DebugManager {
     public static UITextButton LoadCampaign;
 
     private static readonly PowerupTemplate[] powerups = [Powerup.Speed, Powerup.ShellHome, Powerup.Invisibility];
+
+    static Animator _povAnimatorTest; // used in debug cam mode to create custom transitions
+    static EasingFunction _povAnimatorFunction;
+    static List<KeyFrame> _povAnimatorKeyframeBuilder = [];
+    static double _povAnimatorDuration = 1.00;
+
+    static bool _hideUi;
+
+    // this method seems like stack hell. i probably should remove it
     public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
@@ -245,10 +255,16 @@ public static class DebugManager {
             SaveMission.IsVisible = DebuggingEnabled && DebugLevel == 3;
             LoadCampaign.IsVisible = DebuggingEnabled && DebugLevel == 3;
             CampaignName.IsVisible = DebuggingEnabled && DebugLevel == 3;
+            // wtf was this
         }
 
         if (!DebuggingEnabled)
             return; // won't update debug if debugging is not currently enabled.
+
+        if (InputUtils.KeyJustPressed(Keys.H)) {
+            _hideUi = !_hideUi;
+            TankGame.gameUiDraw = !TankGame.gameUiDraw;
+        }
 
         if (SuperSecretDevOption) {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.IsDestroyed && !x.Properties.Stationary);
@@ -259,7 +275,7 @@ public static class DebugManager {
         }
 
         if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
-            RuntimeData.MemoryUsageInBytes = (ulong)RuntimeData.ProcessMemory;
+            RuntimeData.MemoryUsageInBytes = RuntimeData.ProcessMemory;
         }
         if (DebugLevel == Id.SceneMetrics) {
             RuntimeData.RenderFpsGraph.Update();
@@ -287,94 +303,126 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.OemPipe)) {
             new Explosion(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 5f);
         }
-        if (InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
-            Lighting.AccurateShadows = !Lighting.AccurateShadows;
+
         if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
             RenderWireframe = !RenderWireframe;
-        if (InputUtils.AreKeysJustPressed(Keys.O, Keys.P)) {
-            ModLoader.LoadMods();
-        }
-        if (DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.U, Keys.I))
-            ModLoader.UnloadAll();
-
-        if (InputUtils.AreKeysJustPressed(Keys.S, Keys.U, Keys.P, Keys.E, Keys.R)) {
-            if (!SuperSecretDevOption)
-                ChatSystem.SendMessage("You're a devious young one, aren't you?", Color.Orange, "DEBUG", true);
-            else
-                ChatSystem.SendMessage("I guess you aren't a devious one.", Color.Orange, "DEBUG", true);
-            SuperSecretDevOption = !SuperSecretDevOption;
-        }
-
-        if (InputUtils.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down)) {
-            SecretCosmeticSetting = !SecretCosmeticSetting;
-            ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics.", SecretCosmeticSetting ? Color.Lime : Color.Red);
-        }
 
         if (InputUtils.KeyJustPressed(Keys.F6))
             DebugLevel++;
         if (InputUtils.KeyJustPressed(Keys.F5))
             DebugLevel--;
-        if (!MainMenuUI.IsActive) {
-            if (InputUtils.KeyJustPressed(Keys.Z))
-                blockType--;
-            if (InputUtils.KeyJustPressed(Keys.X))
-                blockType++;
-            if (InputUtils.KeyJustPressed(Keys.J))
-                CameraGlobals.OverheadView = !CameraGlobals.OverheadView;
-            if (DebugLevel != Id.FreeCamTest) {
-                if (InputUtils.MouseRight)
-                    CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
-                if (InputUtils.MouseRight && InputUtils.MouseLeft) {
-                    CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
-                    CameraGlobals.AddativeZoom = LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
-                    CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
-                }
+        if (MainMenuUI.IsActive) return;
+        if (InputUtils.KeyJustPressed(Keys.Z))
+            blockType--;
+        if (InputUtils.KeyJustPressed(Keys.X))
+            blockType++;
+        if (InputUtils.KeyJustPressed(Keys.J))
+            CameraGlobals.OverheadView = !CameraGlobals.OverheadView;
 
-                if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
-                    CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaTime;
-                if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
-                    CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaTime;
+        if (DebugLevel != Id.FreeCamTest) {
+            if (InputUtils.MouseRight)
+                CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
-                if (InputUtils.MouseMiddle)
-                    CameraGlobals.CameraFocusOffset += MouseUtils.MouseVelocity;
+            if (InputUtils.MouseRight && InputUtils.MouseLeft) {
+                CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
+                CameraGlobals.AddativeZoom = LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
+                CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
             }
-            if (InputUtils.KeyJustPressed(Keys.NumPad7))
-                tankToSpawnType--;
-            if (InputUtils.KeyJustPressed(Keys.NumPad9))
-                tankToSpawnType++;
 
-            if (InputUtils.KeyJustPressed(Keys.NumPad1))
-                tankToSpawnTeam--;
-            if (InputUtils.KeyJustPressed(Keys.NumPad3))
-                tankToSpawnTeam++;
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
+                CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaTime;
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
+                CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaTime;
 
-            if (InputUtils.KeyJustPressed(Keys.OemPeriod))
-                blockHeight++;
-            if (InputUtils.KeyJustPressed(Keys.OemComma))
-                blockHeight--;
-
-
-            if (InputUtils.KeyJustPressed(Keys.PageUp))
-                SpawnTankPlethorae(true);
-            if (InputUtils.KeyJustPressed(Keys.PageDown))
-                SpawnMe(Client.ClientRandom.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
-            if (InputUtils.KeyJustPressed(Keys.Home))
-                SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
-
-            if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
-                new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
-            if (InputUtils.KeyJustPressed(Keys.OemQuotes))
-                new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Rocket, null!, 0);
-            if (InputUtils.KeyJustPressed(Keys.End))
-                SpawnCrateAtMouse();
-
-            if (InputUtils.KeyJustPressed(Keys.OemQuestion))
-                new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
-
-            if (InputUtils.KeyJustPressed(Keys.I) && DebugLevel == 4)
-                new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };
+            if (InputUtils.MouseMiddle)
+                CameraGlobals.CameraFocusOffset += MouseUtils.MouseVelocity;
         }
+        else {
+            var fc = CameraGlobals.RebirthFreecam;
+            if (InputUtils.KeyJustPressed(Keys.Enter)) {
+                _povAnimatorKeyframeBuilder.Add(new(
+                    position: fc.Position,
+                    fc.Rotation, 
+                    duration: TimeSpan.FromSeconds(_povAnimatorDuration), easing: _povAnimatorFunction,
+                    floats: [fc.FieldOfView]));
+            }
+            if (InputUtils.KeyJustPressed(Keys.OemPlus)) {
+                _povAnimatorFunction++;
+                if (_povAnimatorFunction > EasingFunction.InOutBounce)
+                    _povAnimatorFunction = EasingFunction.Linear;
+            }
+            else if (InputUtils.KeyJustPressed(Keys.OemMinus)) {
+                _povAnimatorFunction--;
+                if (_povAnimatorFunction < EasingFunction.Linear)
+                    _povAnimatorFunction = EasingFunction.InOutBounce;
+            }
+            if (InputUtils.KeyJustPressed(Keys.D7)) {
+                _povAnimatorDuration -= 0.25;
+            }
+            else if (InputUtils.KeyJustPressed(Keys.D8)) {
+                _povAnimatorDuration += 0.25;
+            }
+            if (InputUtils.AreKeysJustPressed(Keys.D0, Keys.D9)) {
+                if (_povAnimatorKeyframeBuilder.Count > 0) {
+
+                    _povAnimatorTest = Animator.Create();
+
+                    for (int i = 0; i < _povAnimatorKeyframeBuilder.Count; i++) {
+                        _povAnimatorTest.WithFrame(_povAnimatorKeyframeBuilder[i]);
+                    }
+                    _povAnimatorTest.Restart();
+                    _povAnimatorTest.Run();
+                }
+            }
+
+            if (InputUtils.KeyJustPressed(Keys.Delete)) {
+                if (_povAnimatorKeyframeBuilder.Count > 0)
+                    _povAnimatorKeyframeBuilder.RemoveAt(_povAnimatorKeyframeBuilder.Count - 1);
+            }
+
+            if (_povAnimatorTest != null && _povAnimatorTest.IsPlaying) {
+                fc.Position = _povAnimatorTest.CurrentPosition;
+                // ehhh. whatever. it's okay
+                fc.Rotation = _povAnimatorTest.CurrentScale;
+                fc.FieldOfView = _povAnimatorTest.CurrentFloats[0];
+            }
+
+            if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.X)) {
+                fc.Position = new(0, fc.Position.Y, fc.Position.Z);
+            }
+            else if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.Y)) {
+                fc.Position = new(fc.Position.X, 0, fc.Position.Z);
+            }
+            else if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.Z)) {
+                fc.Position = new(fc.Position.X, fc.Position.Y, 0);
+            }
+        }
+
+        if (InputUtils.KeyJustPressed(Keys.NumPad7)) tankToSpawnType--;
+        if (InputUtils.KeyJustPressed(Keys.NumPad9)) tankToSpawnType++;
+
+        if (InputUtils.KeyJustPressed(Keys.NumPad1)) tankToSpawnTeam--;
+        if (InputUtils.KeyJustPressed(Keys.NumPad3)) tankToSpawnTeam++;
+
+        if (InputUtils.KeyJustPressed(Keys.OemPeriod)) blockHeight++;
+        if (InputUtils.KeyJustPressed(Keys.OemComma)) blockHeight--;
+
+
+        if (InputUtils.KeyJustPressed(Keys.PageUp)) SpawnTankPlethorae(true);
+        if (InputUtils.KeyJustPressed(Keys.PageDown)) SpawnMe(Client.ClientRandom.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
+        if (InputUtils.KeyJustPressed(Keys.Home))
+            SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
+
+        if (InputUtils.KeyJustPressed(Keys.OemSemicolon)) new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
+        if (InputUtils.KeyJustPressed(Keys.OemQuotes)) new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Rocket, null!, 0);
+        if (InputUtils.KeyJustPressed(Keys.End)) SpawnCrateAtMouse();
+
+        if (InputUtils.KeyJustPressed(Keys.OemQuestion)) new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
+
+        // someday these will be implemented lol
+        if (InputUtils.KeyJustPressed(Keys.I) && DebugLevel == 4) new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };
+        
         blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
@@ -401,6 +449,7 @@ public static class DebugManager {
         }
 
         if (!DebuggingEnabled) return;
+        if (_hideUi) return;
 
         DrawAxes();
 
@@ -500,7 +549,10 @@ public static class DebugManager {
                 level: Id.AchievementData,
                 centered: false);
         }
-        DrawDebugString(spriteBatch, $"Position: {CameraGlobals.RebirthFreecam.Position}" +
+
+        if (DebugLevel == Id.FreeCamTest) {
+            spriteBatch.DrawString(FontGlobals.RebirthFont,
+               $"Position: {CameraGlobals.RebirthFreecam.Position}" +
             $"\nVelocity: {CameraGlobals.RebirthFreecam.Velocity}" +
             $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
             $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}�" +
@@ -509,7 +561,16 @@ public static class DebugManager {
             $"\nLeft: {CameraGlobals.GameView.Left}" +
             $"\nRight: {CameraGlobals.GameView.Right}" +
             $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})" +
-            $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors", new Vector2(10, 80), Id.FreeCamTest);
+            $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors" +
+            $"\nPress 9 + 0 to play camera animation with keyframes" +
+            $"\n\ncurrent easing type: {_povAnimatorFunction}" +
+            $"\ncurrent frame timespan: {_povAnimatorDuration}" +
+            $"\nCamera keyframes:" +
+            $"\n{string.Join("\n", _povAnimatorKeyframeBuilder)}",
+                new Vector2(0, 50),
+                Color.White,
+                Vector2.One * 0.75f);
+        }
 
         if (DebugLevel == Id.SceneMetrics) {
             RuntimeData.RenderFpsGraph.Draw(spriteBatch, new Vector2(100, 400), 2);
@@ -616,12 +677,11 @@ public static class DebugManager {
         };
     }
 
-    // Optional: make the length configurable
     const float AXIS_DRAW_LEN = 5f;
 
     static BasicEffect _debugEff;
 
-    private static void EnsureBboxEffect() {
+    static void EnsureBboxEffect() {
         _debugEff ??= new BasicEffect(TankGame.Instance.GraphicsDevice) {
                 VertexColorEnabled = true
             };

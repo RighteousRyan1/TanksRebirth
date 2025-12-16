@@ -17,6 +17,8 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
+
+// todo: remake for a good visual polish?
 public static partial class MainMenuUI {
 
     private static bool _diffButtonsInitialized;

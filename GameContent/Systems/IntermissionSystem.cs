@@ -92,7 +92,7 @@ public static class IntermissionSystem {
 
         IntermissionHandler.Initialize();
         // should this be where the animator is re-instantiated?
-        TextAnimatorSmall = Animator.Create()
+        /*TextAnimatorSmall = Animator.Create()
             .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack))
             .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
         TextAnimatorLarge = Animator.Create()
@@ -127,7 +127,78 @@ public static class IntermissionSystem {
             // opacity will be handled in the mid-frame actions
             .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
             // dummy frame :(
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));*/
+
+    TextAnimatorSmall = Animator.Create()
+        // Start State
+        .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero))
+        // Transition to 0.4 scale over 0.25s
+        .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
+
+        TextAnimatorLarge = Animator.Create()
+            // Start State
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero))
+            // Transition to 1.2 scale over 0.35s
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 1.2f, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack));
+
+        IntermissionAnimator = Animator.Create()
+            // Start State (Dummy)
+            .WithFrame(new(duration: TimeSpan.Zero))
+            // Was Frame 0: time before banner drops in
+            .WithFrame(new(duration: TimeSpan.FromSeconds(3), easing: EasingFunction.Linear))
+            // Was Frame 1: this frame does not affect the timeline but instead what happens for loading
+            .WithFrame(new(duration: TimeSpan.FromSeconds(1), easing: EasingFunction.Linear))
+            // Was Frame 2
+            .WithFrame(new(duration: TimeSpan.FromSeconds(4), easing: EasingFunction.Linear))
+            // Was Frame 3: 3.66?... also i just realized this number doesn't even fucking matter
+            .WithFrame(new(duration: TimeSpan.FromSeconds(3.16), easing: EasingFunction.Linear))
+            // Was Frame 4
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0), easing: EasingFunction.Linear));
+
+        // this needs a huge fixing.
+        // only use position2d.Y when referencing!!!
+        BonusLifeAnimator = Animator.Create()
+            // Start State: Banner is at -200
+            .WithFrame(new(scale: Vector3.One, position: Vector3.UnitY * -200))
+
+            // Was Frame 0: elastic animation where the banner drops from the top
+            // Target: 40% height. Duration: 0.5s (from old Frame 0)
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.UnitY * WindowUtils.WindowHeight * 0.4f, 
+            easing: EasingFunction.OutElastic))
+
+            // Was Frame 1: after this frame, force drawing to 40% of window height (Wait/Drift to Zero?)
+            // Target: Zero position. Duration: 1s (from old Frame 1)
+            // .WithFrame(new(duration: TimeSpan.FromSeconds(1), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
+
+            // Was Frame 2: text gets brighter and slightly scales up (Grow to 1.25?)
+            // NOTE: Old comments imply this *starts* the glow. The transition *to* here takes 0.2s.
+            // Target: Scale 1.25 (Grows). Duration: 0.2s (from old Frame 2)
+            // Wait, old Frame 3 is Scale 1.25. Old Frame 2 says "Scale One -> Zero Position". 
+            // Re-reading logic: Old Frame 2 (OutBack) transitioned TO Frame 3 (Scale 1.25). 
+            // So Frame 3 below is the target of the OutBack animation.
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.OutBack))
+
+            // Was Frame 3: text shrinks back to original size
+            // Target: Scale 1.25 (Wait, the comment says shrinks BACK. Old Frame 3 was 1.25. Old Frame 4 was 1.0)
+            // So this frame is the peak of the grow.
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector3.One * 1.25f, position: Vector3.Zero, easing: EasingFunction.OutBack))
+
+            // Was Frame 4: time before banner fades out of existence
+            // Target: Scale 1 (Shrunk back). Duration: 2.5s (from old Frame 4? No, Frame 4 was the wait).
+            // Let's align: 
+            // Transition TO Scale 1. Takes 0.2s (from old Frame 3).
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
+
+            // Was Frame 5: banner actually fades from existence
+            // Target: Pos Zero (Wait state). Duration: 2.5s (from old Frame 4).
+            .WithFrame(new(duration: TimeSpan.FromSeconds(2.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
+
+            // Was Frame 6: dummy frame :(
+            // Target: Pos Zero (Fade out state). Duration: 0.5s (from old Frame 5).
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));
+
+            // Final Dummy to close it out
+            // .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));
 
         BonusLifeAnimator?.Restart();
         BonusLifeAnimator?.Stop(); // to ensure brightness calculations are proper
@@ -167,31 +238,106 @@ public static class IntermissionSystem {
         TryPauseAll();
     }
 
-    private static void DoActionsForBonusLife(KeyFrame frame) {
-        var frameId = BonusLifeAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
-
-        if (frameId == 0) {
+    private static void DoActionsForBonusLife(int frameIndex) {
+        if (frameIndex == -1) {
             var lifeget = "Assets/music/fanfares/life_get.ogg";
             _bonusLifeGet = SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
+        }
+        else if (frameIndex == 0) {
             _forceBonusDrawToHeight = true;
-        } 
-        else if (frameId == 1) {
+        }
+        else if (frameIndex == 1) {
             PlayerTank.AddLives(1);
         }
-        else if (frameId == 2) {
+        else if (frameIndex == 2) {
 
         }
-        else if (frameId == 3) {
+        else if (frameIndex == 3) {
 
         }
-        else if (frameId == 4) {
+        else if (frameIndex == 4) {
             ShouldDrawBonusBanner = false;
             MissionSetup();
         }
-        else if (frameId == 5) {
-            
+        else if (frameIndex == 5) {
+
         }
         // FIXME: frameId 6 doesn't get called because of some stupid ahh code
+    }
+    static void DoMidAnimationActions(int frameIndex) {
+        if (MainMenuUI.IsActive) {
+            IntermissionAnimator?.Restart();
+            IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
+            BonusLifeAnimator?.Restart();
+            BonusLifeAnimator?.Stop();
+            ShouldDrawBanner = true;
+            _forceBonusDrawToHeight = false;
+            return;
+        }
+
+        // happens as soon as the intermission is fully opaque
+        if (frameIndex == 0) {
+            // tell the game to fade the intermission screen into view
+            ShouldFade = true;
+            ShouldFadeIn = true;
+            SceneManager.CleanupScene();
+
+            // ShouldDrawBanner indicates there wasn't a bonus life to be had
+            if (ShouldDrawBanner) {
+                PlayOpeningFanfare();
+
+                ReplayTextAnimations();
+            }
+            // ensures it isnt the first load. hacky asf but whatever
+            // how can i de-hackify this?
+            else if (PlayerTank.KillCounts[0] > 0) {
+                _forceBonusDrawToHeight = false;
+                ShouldDrawBonusBanner = true;
+                BonusLifeAnimator?.Restart();
+                BonusLifeAnimator?.Run();
+            }
+        }
+        // happens in the middle of full opaque-ness
+        else if (frameIndex == 1) {
+            // tell the game to not fade at all
+            ShouldFade = false;
+            ShouldFadeIn = false;
+
+            if (!ShouldDrawBonusBanner)
+                MissionSetup();
+        }
+        else if (frameIndex == 2 && !ShouldDrawBanner) {
+            ShouldDrawBanner = true;
+
+            ReplayTextAnimations();
+
+            // only plays if the banner is fading in
+            PlayOpeningFanfare();
+        }
+        // as the intermission is beginning to fade to fully transparent
+        else if (frameIndex == 3) {
+            // tell the game to fade out to enter game scene view
+            IsAwaitingNewMission = false;
+            ShouldFade = true;
+
+            // TODO: fix float interp
+            if (PlayerTank.ClientTank is not null) {
+                // hacky using vectors for now.
+                IntermissionHandler.ThirdPersonTransition = Animator.Create()
+                    // ported :)
+                    .WithFrame(new(floats: [0], position: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0)))
+                    .WithFrame(new(floats: [-PlayerTank.ClientTank.TurretRotation], position: PlayerTank.ClientTank.Position3D + new Vector3(0, 20, 0), duration: TimeSpan.FromSeconds(3), easing: EasingFunction.InOutQuad));
+                IntermissionHandler.ThirdPersonTransition?.Restart();
+                IntermissionHandler.ThirdPersonTransition?.Run();
+            }
+            IntermissionHandler.BeginIntroSequence();
+            
+            IntermissionHandler.CountdownAnimator?.Restart();
+            IntermissionHandler.CountdownAnimator?.Run();
+
+            // just in case.
+            _forceBonusDrawToHeight = false;
+        }
     }
 
     public static void InitializeCountdowns(bool oneUp = false) {
@@ -212,93 +358,18 @@ public static class IntermissionSystem {
             secs1 = 4;
             secs3 = 3;
         }
-        IntermissionAnimator.KeyFrames[0] = new(duration: TimeSpan.FromSeconds(secs1), easing: EasingFunction.Linear);
-        // to allow for the bonus life animation
-        IntermissionAnimator.KeyFrames[2] = new(duration: TimeSpan.FromSeconds(secs2), easing: EasingFunction.Linear);
-        IntermissionAnimator.KeyFrames[3] = new(duration: TimeSpan.FromSeconds(secs3), easing: EasingFunction.Linear);
+        IntermissionAnimator.KeyFrames[1] = new(duration: TimeSpan.FromSeconds(secs1), easing: EasingFunction.Linear);
+
+        // bonus life adjustment
+        IntermissionAnimator.KeyFrames[3] = new(duration: TimeSpan.FromSeconds(secs2), easing: EasingFunction.Linear);
+
+        IntermissionAnimator.KeyFrames[4] = new(duration: TimeSpan.FromSeconds(secs3), easing: EasingFunction.Linear);
 
         BonusLifeAnimator.KeyFrames[1] = new(duration: TimeSpan.FromSeconds(1), scale: Vector3.One, position: Vector3.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.OutElastic);
-
 
         // the last frame is filler because i dunno how to fix the last frame finish event firing bug
         // ignore the last frame
         // TODO: fix this fuckery above
-    }
-    private static void DoMidAnimationActions(KeyFrame frame) {
-        var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
-
-        if (MainMenuUI.IsActive) {
-            IntermissionAnimator?.Restart();
-            IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
-            BonusLifeAnimator?.Restart();
-            BonusLifeAnimator?.Stop();
-            ShouldDrawBanner = true;
-            _forceBonusDrawToHeight = false;
-            return;
-        }
-
-        // happens as soon as the intermission is fully opaque
-        if (frameId == 0) {
-            // tell the game to fade the intermission screen into view
-            ShouldFade = true;
-            ShouldFadeIn = true;
-            SceneManager.CleanupScene();
-
-            // ShouldDrawBanner indicates there wasn't a bonus life to be had
-            if (ShouldDrawBanner) {
-                PlayOpeningFanfare();
-
-                ReplayTextAnimations();
-            }
-            // ensures it isnt the first load. hacky asf but whatever
-            else if (PlayerTank.KillCounts[0] > 0) {
-                _forceBonusDrawToHeight = false;
-                ShouldDrawBonusBanner = true;
-                BonusLifeAnimator?.Restart();
-                BonusLifeAnimator?.Run();
-            }
-        }
-        // happens in the middle of full opaque-ness
-        else if (frameId == 1) {
-            // tell the game to not fade at all
-            ShouldFade = false;
-            ShouldFadeIn = false;
-
-            if (!ShouldDrawBonusBanner)
-                MissionSetup();
-        }
-        else if (frameId == 2 && !ShouldDrawBanner) {
-            ShouldDrawBanner = true;
-
-            ReplayTextAnimations();
-
-            // only plays if the banner is fading in
-            PlayOpeningFanfare();
-        }
-        // as the intermission is beginning to fade to fully transparent
-        else if (frameId == 3) {
-            // tell the game to fade out to enter game scene view
-            IsAwaitingNewMission = false;
-            ShouldFade = true;
-
-            // TODO: fix float interp
-            if (PlayerTank.ClientTank is not null) {
-                // hacky using vectors for now.
-                IntermissionHandler.ThirdPersonTransition = Animator.Create()
-                    //.WithFrame(new(position2d: Vector2.Zero, position3d: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0), duration: TimeSpan.FromSeconds(2)))
-                    .WithFrame(new(floats: [0], position: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0), duration: TimeSpan.FromSeconds(3), easing: EasingFunction.InOutQuad))
-                    .WithFrame(new(floats: [-PlayerTank.ClientTank.TurretRotation], position: PlayerTank.ClientTank.Position3D));
-                IntermissionHandler.ThirdPersonTransition?.Restart();
-                IntermissionHandler.ThirdPersonTransition?.Run();
-            }
-            IntermissionHandler.BeginIntroSequence();
-            
-            IntermissionHandler.CountdownAnimator?.Restart();
-            IntermissionHandler.CountdownAnimator?.Run();
-
-            // just in case.
-            _forceBonusDrawToHeight = false;
-        }
     }
     public static void MissionSetup() {
         if (Modifiers.Map[Modifiers.RANDOM_ENEMY]) {
@@ -312,7 +383,7 @@ public static class IntermissionSystem {
     }
     public static void SetMusic() {
         var tune = "Assets/music/fanfares/mission_snare.ogg";
-        _snareDrums = SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
+        _snareDrums = SoundPlayer.PlaySoundInstance(tune, SoundContext.Effect, 1f);
     }
     public static void PrepareBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
         RenderGlobals.EnsureRenderTargetOK(ref BackgroundBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight);

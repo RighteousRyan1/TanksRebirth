@@ -105,10 +105,10 @@ public static class IntermissionHandler {
             }
         }
 
-        if (CampaignCompleteUI.FanfaresAndDurations.ContainsKey(context)) {
-            CampaignCompleteUI.FanfaresAndDurations[context].Item1.Instance?.Play();
-            CampaignCompleteUI.FanfaresAndDurations[context].Item1.Instance.Volume = TankGame.Settings.MusicVolume;
-            SceneManager.DoEndScene(CampaignCompleteUI.FanfaresAndDurations[context].Item2, context);
+        if (CampaignCompleteUI.FanfaresAndDurations.TryGetValue(context, out (OggAudio, TimeSpan) value)) {
+            value.Item1.Instance?.Play();
+            value.Item1.Instance.Volume = TankGame.Settings.MusicVolume;
+            SceneManager.DoEndScene(value.Item2, context);
         }
         else
             IntermissionSystem.BeginOperation(delay);
@@ -295,29 +295,27 @@ public static class IntermissionHandler {
 
     public static Animator CountdownAnimator = null;
 
-    private static EasingFunction _ez = EasingFunction.InOutQuad;
+    readonly static EasingFunction _ez = EasingFunction.InOutQuad;
     public static void Initialize() {
         CountdownAnimator = Animator.Create()
-            // id = 0
-            .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // ready 
-            .WithFrame(new(scale: Vector3.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // ready 
-            .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // set
-            .WithFrame(new(scale: Vector3.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // set
-            .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(1), easing: _ez))  // start 
-            .WithFrame(new(scale: new Vector3(2, 0, 0), duration: TimeSpan.FromSeconds(1), easing: _ez));
+                    .WithFrame(new(scale: Vector3.One * 2)) // ready 
+                    .WithFrame(new(scale: Vector3.One * 1, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // ready 
+                    .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(0), easing: _ez))  // set
+                    .WithFrame(new(scale: Vector3.One * 1, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // set
+                    .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(0), easing: _ez))  // start 
+                    .WithFrame(new(scale: new Vector3(2, 0, 0), duration: TimeSpan.FromSeconds(1), easing: _ez));
         CountdownAnimator.OnKeyFrameFinish += CountdownAnimator_OnKeyFrameFinish;
-
-        // TODO: localize!
-        CountdownAnimator.OnAnimationRun += () => PrepareDisplay = "Ready?";
     }
-
-    private static void CountdownAnimator_OnKeyFrameFinish(KeyFrame frame) {
-        var frameId = CountdownAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
-
-        if (frameId == 1) {
+    // ported
+    static void CountdownAnimator_OnKeyFrameFinish(int frameIndex) {
+        // just started, also localize
+        if (frameIndex == -1) {
+            PrepareDisplay = "Ready?";
+        }
+        if (frameIndex == 1) {
             PrepareDisplay = "Set...";
         }
-        else if (frameId == 3) {
+        else if (frameIndex == 3) {
             PrepareDisplay = "Start!";
         }
     }

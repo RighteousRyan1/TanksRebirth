@@ -584,49 +584,43 @@ public partial class AITank : Tank {
         if (MainMenuUI.IsActive && Properties.Invisible || Properties.Invisible && CampaignGlobals.InMission)
             return;
 
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ?  boneTransforms[mesh.ParentBone.Index] : 
-                        boneTransforms[mesh.ParentBone.Index] * 
-                        Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+        foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = boneTransforms[mesh.ParentBone.Index];
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Projection;
 
-                    effect.TextureEnabled = true;
+                effect.TextureEnabled = true;
 
-                    if (!Properties.HasTurret)
-                        if (mesh.Name == "Cannon")
-                            return;
+                if (!Properties.HasTurret)
+                    if (mesh.Name == "Cannon")
+                        return;
 
-                    if (mesh.Name == "Shadow") {
-                        if (!CommandGlobals.DrawMeshShadows)
-                            continue;
-                        if (!Lighting.AccurateShadows) {
-                            effect.Texture = DrawParamsTank.ShadowTexture;
-                            effect.Alpha = DrawParamsTank.ShadowAlpha;
-                            mesh.Draw();
-                        }
+                if (mesh.Name == "Shadow") {
+                    if (!CommandGlobals.DrawMeshShadows)
                         continue;
-                    }
-
-                    /*if (mesh.Name is "Cannon" or "Chassis") {
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
-                    }
-                    else if (mesh.Name is "Cloak" or "Jewel") {
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras");
-                    }
-                    else if (mesh.Name is "Skulls") {
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
-                    }*/
-                    // ^ old testing stuff
-
-                    effect.Alpha = DrawParamsTank.TankAlpha;
-                    effect.Texture = DrawParamsTank.TankTexture;
-
-                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                    effect.Texture = DrawParamsTank.ShadowTexture;
+                    effect.Alpha = DrawParamsTank.ShadowAlpha;
                     mesh.Draw();
+                    continue;
                 }
+
+                /*if (mesh.Name is "Cannon" or "Chassis") {
+                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
+                }
+                else if (mesh.Name is "Cloak" or "Jewel") {
+                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras");
+                }
+                else if (mesh.Name is "Skulls") {
+                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
+                }*/
+                // ^ old testing stuff
+
+                effect.Alpha = DrawParamsTank.TankAlpha;
+                effect.Texture = DrawParamsTank.TankTexture;
+
+                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                mesh.Draw();
             }
         }
     }

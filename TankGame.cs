@@ -59,6 +59,7 @@ public class TankGame : Game {
 
     public static bool IsCrashInfoVisible;
     bool _wasActive;
+    internal static bool gameUiDraw = true;
     internal static bool miceForceDrawOverride = true;
     public static bool MouseUIHover;
 
@@ -847,9 +848,11 @@ public class TankGame : Game {
 
         DrawGameElements();
 
-        DrawNonInteractiveUI(gameTime);
+        if (gameUiDraw) {
+            DrawNonInteractiveUI(gameTime);
 
-        DrawInteractiveUI(gameTime);
+            DrawInteractiveUI(gameTime);
+        }
 
         IngameConsole.Draw(SpriteRenderer);
 
@@ -940,7 +943,7 @@ public class TankGame : Game {
         DebugManager.DrawDebugMetrics();
         Speedrun.DrawSpeedrunHUD(SpriteRenderer);
 
-        var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults;
+        var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults && gameUiDraw;
         if (shouldSeeInfo) {
             GameSceneUI.DrawAll();
         }

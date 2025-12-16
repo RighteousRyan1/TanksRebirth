@@ -150,25 +150,22 @@ public class Particle
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateTranslation(Position);
         }
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? world : world * 
-                        Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = System.SystemView;
-                    effect.Projection = System.SystemProjection;
+        foreach (ModelMesh mesh in Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = world;
+                effect.View = System.SystemView;
+                effect.Projection = System.SystemProjection;
 
-                    effect.TextureEnabled = true;
-                    effect.Texture = Texture;
+                effect.TextureEnabled = true;
+                effect.Texture = Texture;
 
-                    effect.Alpha = Alpha;
+                effect.Alpha = Alpha;
 
-                    effect.EmissiveColor = Color.ToVector3()  * SceneManager.GameLight.Brightness;
+                effect.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
 
-                    effect.SetDefaultGameLighting_IngameEntities(LightPower);
-                }
-                mesh.Draw();
+                effect.SetDefaultGameLighting_IngameEntities(LightPower);
             }
+            mesh.Draw();
         }
         // same here
         //TankGame.SpriteRenderer.End();

@@ -23,6 +23,8 @@ public class Animator {
 
     /// <summary>Whether or not this Animator shall loop itself upon completion.</summary>
     public bool IsLooped { get; set; }
+    /// <summary>Whether or not this animator is playing its animation currently.</summary>
+    public bool IsPlaying => _isRunning;
     /// <summary>Total time elapsed in the animation.</summary>
     public TimeSpan ElapsedTime => _elapsedInternal + _elapsedOffset;
     /// <summary>The time left before the animation is complete.</summary>
@@ -31,7 +33,8 @@ public class Animator {
     public TimeSpan EstimatedCompletionTime {
         get {
             var returned = TimeSpan.Zero;
-            for (int i = 0; i < KeyFrames.Count; i++) {
+            // only includes frames after frame 0 because the first one does not matter
+            for (int i = 1; i < KeyFrames.Count; i++) {
                 returned += KeyFrames[i].Duration;
             }
             return returned;
@@ -56,14 +59,11 @@ public class Animator {
     /// <summary>The interpolated value from 0 to 1 representing the total percent completion of the entire animation stored in this <see cref="Animator"/>.</summary>
     public float TotalProgress { get; private set; }
     /// <summary>Perform actions once a <see cref="KeyFrame"/> finishes elapsing.</summary>
-    /// <param name="frame">The frame that was just completed.</param>
-    public delegate void OnKeyFrameEnd(KeyFrame frame);
+    /// <param name="frameIndex">The index of the frame that was just completed. -1 Indicates the very start of the animation.</param>
+    public delegate void OnKeyFrameEnd(int frameIndex);
     /// <summary>Invoked once a <see cref="KeyFrame"/> finishes playing in this animation.</summary>
     public event OnKeyFrameEnd? OnKeyFrameFinish;
-    public delegate void OnRun();
-    /// <summary>Invocated once a keyframe finishes playing in this animation.</summary>
-    public event OnRun? OnAnimationRun;
-    /// <summary>The last frame does not require a <see cref="KeyFrame.Duration"/> or <see cref="EasingFunction"/>. Easing defaults to <see cref="EasingFunction.Linear"/>.
+    /// <summary>The first frame does not require a <see cref="KeyFrame.Duration"/> or <see cref="EasingFunction"/>. Easing defaults to <see cref="EasingFunction.Linear"/>.
     /// <para>
     /// Construct your animation by appending <c>.WithFrame(KeyFrame frame)</c> to this method. This can be chained.
     /// </para></summary>
@@ -82,13 +82,16 @@ public class Animator {
         CurrentScale = KeyFrames[0].Scale;
         CurrentFloats = KeyFrames[0].Floats;
         RestartInternal();
+        // again, the animation has just begun
+        // OnKeyFrameFinish?.Invoke(-1);
     }
     /// <summary>Run this animation from where it is located.</summary>
     public void Run() {
         if (CurrentId == KeyFrames.Count - 1)
             return;
 
-        OnAnimationRun?.Invoke();
+        // -1 indicates the animation has just started
+        OnKeyFrameFinish?.Invoke(-1);
         _isRunning = true;
 
         PrepareFloatBuffers();
@@ -112,7 +115,7 @@ public class Animator {
     }
     /// <summary>Advances this <see cref="Animator"/> by one frame.</summary>
     public void Step(int steps) {
-        OnKeyFrameFinish?.Invoke(Current);
+        OnKeyFrameFinish?.Invoke(CurrentId);
         //_elapsedInternal += Current.Duration;
         CurrentId += steps;
         PrepareFloatBuffers();
@@ -125,7 +128,7 @@ public class Animator {
         PrepareFloatBuffers();
     }
     /// <summary>
-    /// Currently unimplemented.
+    /// Seeks to an exact point in the animation timeline, with a percentage of completion.
     /// </summary>
     /// <param name="percent">The percentage of completion to seek.</param>
     public void SeekExact(float percent) {
@@ -135,13 +138,12 @@ public class Animator {
         SeekExact(target);
     }
     /// <summary>
-    /// Seek an exact position
+    /// Seek an exact position.
     /// </summary>
     /// <param name="timeInTimeline">At what time during the timeline of the animation to jump to.</param>
     /// <summary>
     /// Seek an exact position
     /// </summary>
-    /// <param name="timeInTimeline">At what time during the timeline of the animation to jump to.</param>
     public void SeekExact(TimeSpan timeInTimeline) {
         if (KeyFrames.Count == 0)
             return;
@@ -159,16 +161,19 @@ public class Animator {
 
         _elapsedOffset = offset;
 
+        // global interpolation across the whole animation
+        var total = EstimatedCompletionTime.TotalSeconds;
         // _elapsedInternal is how far into the current segment we are
-        var segDur = KeyFrames[Math.Clamp(segIndex, 0, KeyFrames.Count - 2)].Duration;
+        // Note: Using next frame duration as requested
+        var nextFrameIdx = Math.Clamp(segIndex + 1, 0, KeyFrames.Count - 1);
+        var segDur = KeyFrames[nextFrameIdx].Duration;
+
         _elapsedInternal = segDur > TimeSpan.Zero
             ? TimeSpan.FromSeconds(segDur.TotalSeconds * localT)
             : TimeSpan.Zero;
 
         CurrentProgress = localT;
 
-        // global interpolation across the whole animation
-        var total = EstimatedCompletionTime.TotalSeconds;
         TotalProgress = (float)((_elapsedOffset + _elapsedInternal).TotalSeconds / (total <= 0 ? 1 : total));
 
         var current = KeyFrames[segIndex];
@@ -184,7 +189,8 @@ public class Animator {
         var next = KeyFrames[segIndex + 1];
 
         // applies the segment's easing for accurate positioning
-        float eased = Easings.ComputeEase(current.Easing, CurrentProgress);
+        // Note: Using next frame's easing as requested
+        float eased = Easings.ComputeEase(next.Easing, CurrentProgress);
 
         bool hasBezier = current.BezierPoints is not null && current.BezierPoints.Count > 2;
         CurrentPosition = hasBezier
@@ -211,17 +217,19 @@ public class Animator {
 
         var dt = TimeSpan.FromSeconds(1f / fps);
 
-        float next = CurrentProgress + (float)(dt.TotalSeconds / Current.Duration.TotalSeconds);
+        var nextId = NextKeyFrame > -1 ? NextKeyFrame : CurrentId + 1;
+        var futureFrame = KeyFrames[nextId];
+
+        // Note: Using futureFrame duration as requested
+        float next = CurrentProgress + (float)(dt.TotalSeconds / futureFrame.Duration.TotalSeconds);
         if (next > 1f) next = 1f;
 
         _elapsedInternal += dt;
         TotalProgress = (float)((_elapsedOffset + _elapsedInternal).TotalSeconds / EstimatedCompletionTime.TotalSeconds);
 
-        var nextId = NextKeyFrame > -1 ? NextKeyFrame : CurrentId + 1;
-        var futureFrame = KeyFrames[nextId];
-
         // easing + positioning + scaling
-        float ease = Easings.ComputeEase(Current.Easing, next);
+        // Note: Using futureFrame easing as requested
+        float ease = Easings.ComputeEase(futureFrame.Easing, next);
 
         if (Current.BezierPoints.Count > 2)
             CurrentPosition = MathUtils.Bezier3D(ease, Current.BezierPoints.ToArray());
@@ -246,7 +254,7 @@ public class Animator {
             _elapsedInternal = TimeSpan.Zero;
 
             CurrentProgress = 0f;
-            OnKeyFrameFinish?.Invoke(Current);
+            OnKeyFrameFinish?.Invoke(CurrentId);
 
             Step(1);
 
@@ -288,16 +296,18 @@ public class Animator {
 
         var futureFrame = KeyFrames[NextKeyFrame > -1 ? NextKeyFrame : CurrentId + 1];
 
-        CurrentProgress += (float)(gameTime.ElapsedGameTime.TotalSeconds / Current.Duration.TotalSeconds);
+        // Note: Using futureFrame duration as requested
+        CurrentProgress += (float)(gameTime.ElapsedGameTime.TotalSeconds / futureFrame.Duration.TotalSeconds);
         _elapsedInternal += gameTime.ElapsedGameTime;
 
-        var ease = Easings.ComputeEase(Current.Easing, CurrentProgress);
+        // Note: Using futureFrame easing as requested
+        var ease = Easings.ComputeEase(futureFrame.Easing, CurrentProgress);
 
         var hasBezier = Current.BezierPoints.Count > 2;
         CurrentPosition = hasBezier ? MathUtils.Bezier3D(ease, Current.BezierPoints.ToArray()) :
             Current.Position + (futureFrame.Position - Current.Position) * ease;
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
-        CurrentPosition = Current.Position + (futureFrame.Position - Current.Position) * ease;
+        // CurrentPosition = Current.Position + (futureFrame.Position - Current.Position) * ease;
 
         // TODO: fix, floats array goes by way faster than it should, skips animation basically
         if (CurrentFloats != null && _startFloats.Length > 0) {
@@ -309,8 +319,7 @@ public class Animator {
          * current scale into future scale
          * current time is the time it takes to get to the next frame, final frame time will not matter
          * current scale blends into future scale
-         * 
-         */
+         * */
         // code below is in case the code above fails.
 
         if (CurrentProgress >= 1 && CurrentId < KeyFrames.Count - 1) {
@@ -422,4 +431,8 @@ public class Animator {
         localT = 1f;
         return true;
     }
+
+
+    public override string ToString()
+        => $"keyfc: {KeyFrames.Count} | cprog: {CurrentProgress} | tprog: {TotalProgress} | eta: {EstimatedCompletionTime}";
 }

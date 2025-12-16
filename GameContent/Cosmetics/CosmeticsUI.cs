@@ -132,20 +132,18 @@ public static class CosmeticsUI {
             // Set the moving key to the one we clicked
             _movingKey = _hoveredKey;
 
-            // i fucking hate this animation system.
-            // keyframe durations should be of the duration that it's GOING TO not the one it's GOING FROM
-            // TODO: fix
             _keyAnimation = Animator.Create()
-                .WithFrame(new(_movingKey.Position, Vector3.One, duration: TimeSpan.FromSeconds(1),
-                easing: EasingFunction.InOutQuad, floats: [_movingKey.Roll, _movingKey.Pitch, _movingKey.Yaw]))
-                // just x for now
-                .WithFrame(new(preSlotPos, Vector3.One, easing: EasingFunction.InOutCubic, duration: TimeSpan.FromSeconds(2), floats: slotRot))
+                // start
+                .WithFrame(new(_movingKey.Position, Vector3.One, floats: [_movingKey.Roll, _movingKey.Pitch, _movingKey.Yaw]))
+                .WithFrame(new(preSlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), easing: EasingFunction.InOutQuad, floats: slotRot))
+                .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(2), floats: slotRot, easing: EasingFunction.InOutCubic))
                 .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(0.5), floats: slotRot, easing: EasingFunction.InOutCubic))
-                .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
                 // what the fuck is this rotational magic??? rotating just one axis doesn't work at all
                 //.WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(2), floats: [slotRot[0] - MathHelper.PiOver2, slotRot[1] - MathHelper.PiOver2, slotRot[2] + MathHelper.PiOver2]))
                 .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
-                .WithFrame(new(preSlotPos, Vector3.One, floats: slotRot));
+
+                // exit
+                .WithFrame(new(preSlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic));
 
             _keyAnimation.Run();
         }
