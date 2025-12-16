@@ -110,7 +110,7 @@ public static class CameraGlobals {
         if (isMainMenu)
             return CameraMode.MainMenu;
 
-        if (isFreecamFlag && !GameUI.Paused && DebugManager.DebuggingEnabled)
+        if (isFreecamFlag && DebugManager.DebuggingEnabled)
             return CameraMode.Freecam;
 
         if (isPOV)

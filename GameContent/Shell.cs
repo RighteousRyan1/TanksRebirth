@@ -90,7 +90,7 @@ public class Shell : IAITankDanger {
     public Tank? Owner;
     public ModShell? ModdedData { get; private set; }
 
-    public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, 11, 0);
+    public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, Tank.TNK_DMG_COLL_Y, 0);
     public Vector3 Velocity3D => Velocity.ExpandZ();
 
     /// <summary>Maximum amount of times this <see cref="Shell"/> can bounce off walls.</summary>
@@ -665,11 +665,15 @@ public class Shell : IAITankDanger {
         // TODO: wtf? DoRaycast failing?
         //if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.HomeProperties.Speed > 0)
         //    Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius, true);
-        if (DebugManager.DebuggingEnabled)
+        if (DebugManager.DebuggingEnabled) {
             DebugManager.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
                 centered: true);
+
+            var bs = new BoundingSphere(Position3D, HitCircle.Radius);
+            DebugManager.DrawBoundingSphere(bs, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        }
         DrawShellMesh();
         ModdedData?.PostRender();
         OnPostRender?.Invoke(this);
@@ -700,7 +704,7 @@ public class Shell : IAITankDanger {
     /// <summary>Check if this <see cref="Shell"/> is heading towards <paramref name="targetPosition"/>, based on <paramref name="arc"/>.</summary>
     /// <param name="targetPosition">The position to check whether or not this <see cref="Shell"/> is on a collision path with.</param>
     /// <param name="distance">The distance the target must be from this <see cref="Shell"/>.</param>
-    /// <param name="arc">The arc length (from the angular rotation of <see cref="Velocity"/> to <c>arc / 2</c> to check.</param>
+    /// <param name="arc">The arc length (from the angular rotation) of <see cref="Velocity"/> to <c>arc / 2</c> to check.</param>
     /// <returns></returns>
     public bool IsHeadingTowards(Vector2 targetPosition, float distance, float arc) {
         var rotation = Velocity != Vector2.Zero ? Velocity.ToRotation() : Vector2.UnitX.ToRotation();

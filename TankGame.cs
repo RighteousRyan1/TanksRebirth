@@ -777,6 +777,8 @@ public class TankGame : Game {
         InputUtils.PollKBM();
         InputUtils.Watch();
 
+        RoomScene.Update();
+
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {
             if (shouldUpdate) {

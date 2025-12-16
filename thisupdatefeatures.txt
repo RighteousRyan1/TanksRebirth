@@ -61,6 +61,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Fixed bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
 - Fixed clock pendulum not accurately tracking seconds (there was some margin of error before)
 - The mission intro sequence/fanfare is now controlled by the sound effects slider
+- Fixed the room scene not being updated while in pause
 
 # TODO
 

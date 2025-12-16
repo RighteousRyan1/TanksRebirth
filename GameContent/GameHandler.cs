@@ -106,7 +106,6 @@ public class GameHandler {
         ExpBar.Update();
 
         CosmeticsUI.Update();
-        RoomScene.Update();
 
         Modifiers.GlobalManage();
 

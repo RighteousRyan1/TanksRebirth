@@ -327,7 +327,11 @@ public class PlayerTank : Tank {
             var cursorToAimAt = TankGame.PlayerMice[PlayerId];
 
             if (cursorToAimAt != null) {
-                var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position, -11f); 
+                var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position, -11f);
+
+                // hacky ass fix
+                if (float.IsNaN(mouseWorldPos.X)) return;
+                // if (float.IsNaN(mouseWorldPos.X)) mouseWorldPos = Vector3.Zero;
                 if (!LevelEditorUI.IsActive)
                     TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
                 else

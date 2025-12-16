@@ -152,6 +152,7 @@ public abstract class Tank {
 
     public const float TNK_WIDTH = 25;
     public const float TNK_HEIGHT = 25;
+    public const float TNK_DMG_COLL_Y = 11.0f;
 
     /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="IProp"/>s.</summary>
     public List<IProp> Props = [];
@@ -187,7 +188,7 @@ public abstract class Tank {
     public BasicDrawParams DrawParams = new();
     public TankDrawParams DrawParamsTank;
     public Vector2 TurretPosition => Position + new Vector2(0, TurretLength).RotatedBy(-TurretRotation);
-    public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
+    public Vector3 TurretPosition3D => new(TurretPosition.X, TNK_DMG_COLL_Y, TurretPosition.Y);
     public Vector2 Position {
         get => Physics.Position * UNITS_PER_METER;
         set => Physics.Position = value / UNITS_PER_METER;
@@ -922,6 +923,9 @@ public abstract class Tank {
             $"OwnedShells/ShellsLeft: {OwnedShellCount}/{Properties.ShellLimit - OwnedShellCount}",
             $"{TanksSpotted.Length} tank(s) spotted"
         };
+
+        var bs = new BoundingSphere(Position3D + new Vector3(0, TNK_DMG_COLL_Y, 0), CollisionCircle.Radius);
+        DebugManager.DrawBoundingSphere(bs, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 

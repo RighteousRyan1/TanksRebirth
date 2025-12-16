@@ -227,6 +227,13 @@ public sealed class Mine : IAITankDanger {
 
         DrawParams.View = CameraGlobals.GameView;
         DrawParams.Projection = CameraGlobals.GameProjection;
+
+        if (DebugManager.DebuggingEnabled) {
+            var bb = new BoundingBox(Position3D - new Vector3(Hitbox.Width / 2, Hitbox.Height / 2, Hitbox.Width / 2), 
+                Position3D + new Vector3(Hitbox.Width / 2, Hitbox.Height / 2, Hitbox.Width / 2));
+            DebugManager.DrawBoundingBox(bb, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        }
+
         DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",
             MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1, centered: true);
 
