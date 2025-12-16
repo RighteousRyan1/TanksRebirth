@@ -198,12 +198,13 @@ public abstract class Tank {
     public Vector2 KnockbackVelocity;
     public BoundingBox Worldbox { get; set; }
 
+    public BoundingBox Hurtbox;
     /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
-    public Circle CollisionCircle => new() { Center = Position, Radius = TNK_WIDTH / 2 };
+    // public Circle CollCircle => new() { Center = Position, Radius = TNK_WIDTH / 2 };
 
     /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
-    public Rectangle CollisionBox => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2),
-        (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
+    //public Rectangle CollRect => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2),
+    //    (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
 
     /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> owns.</summary>
     public int OwnedShellCount => OwnedShells.Count(x => x is not null);
@@ -468,6 +469,15 @@ public abstract class Tank {
         PreUpdate();
 
         DecrementTimers();
+
+        // old boundingsphere impl
+        // Hurtbox = new(Position3D + new Vector3(0, TNK_DMG_COLL_Y, 0), TNK_WIDTH * 0.4f);
+
+        // * 0.8f because we already divide by 2 in our calculations
+        // but maybe it needs a little shrink...?
+        float hurtBoxSize = TNK_WIDTH * 0.7f;
+        Hurtbox = new(Position3D - new Vector3(hurtBoxSize / 2, hurtBoxSize / 2, hurtBoxSize / 2),
+                Position3D + new Vector3(hurtBoxSize / 2, hurtBoxSize / 2, hurtBoxSize / 2));
 
         if (IsDestroyed) return;
 
@@ -924,8 +934,7 @@ public abstract class Tank {
             $"{TanksSpotted.Length} tank(s) spotted"
         };
 
-        var bs = new BoundingSphere(Position3D + new Vector3(0, TNK_DMG_COLL_Y, 0), CollisionCircle.Radius);
-        DebugManager.DrawBoundingSphere(bs, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        DebugManager.DrawBoundingBox(Hurtbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 

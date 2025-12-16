@@ -428,7 +428,7 @@ public partial class AITank {
     }
 
     // TODO: literally fix everything about these turret rotation values.
-    private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
+    List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
         bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
         const int MAX_PATH_UNITS = 1000;
         const int PATH_UNIT_LENGTH = 8;
@@ -527,6 +527,7 @@ public partial class AITank {
             foreach (var enemy in GameHandler.AllTanks) {
                 if (enemy is null || enemy.IsDestroyed || _tanksInPathBuffer.Contains(enemy)) continue;
 
+                // 15 is just an eensy weensy magical number.
                 if (i > 15 && GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss) {
                     var pathAngle = pathDir.ToRotation();
                     var toEnemy = pathPos.DirectionTo(enemy.Position).ToRotation();
@@ -535,8 +536,9 @@ public partial class AITank {
                         _tanksInPathBuffer.Add(enemy);
                 }
 
-                var pathCircle = new Circle { Center = pathPos, Radius = 4 };
-                if (enemy.CollisionCircle.Intersects(pathCircle)) {
+                // this used to be a circle check, but it was probably overkill? we'll see
+                var closeEnough = GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= 8f; // realMiss;
+                if (closeEnough) {
                     _tankPointsBuffer.Add(pathPos);
                     _tanksInPathBuffer.Add(enemy);
                 }

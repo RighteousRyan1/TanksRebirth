@@ -109,11 +109,13 @@ public class Shell : IAITankDanger {
     public OggAudio? ShootSound;
     public OggAudio? TrailSound;
 
-    /// <summary>The hitbox on the 2D backing map for the game.</summary>
-    public Rectangle Hitbox => new((int)(Position.X - 2), (int)(Position.Y - 2), 4, 4);
+    /// <summary>Used primarily for collisions with blocks. This may be replaced in the future with 3D calculations.</summary>
+    public Rectangle CollHitbox => new((int)(Position.X - 2), (int)(Position.Y - 2), 4, 4);
 
+    public float HitSphereSize = 4.0f;
+    public BoundingSphere Hitbox;
     /// <summary>The hit-circle on the 2D backing map for the game.</summary>
-    public Circle HitCircle => new() { Center = Position, Radius = 5 }; // original is moreso a radius of 7, but 5 is good, since it isnt 480p
+    // public Circle HitCircle => new() { Center = Position, Radius = 5 }; // original is moreso a radius of 7, but 5 is good, since it isnt 480p
     public int Team => Owner?.Team ?? TeamID.NoTeam;
     /// <summary>
     /// Represents the ID of this shell in the array. Useful for local operations relating to collisions and such.
@@ -272,6 +274,8 @@ public class Shell : IAITankDanger {
         if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
             return;
 
+        Hitbox = new(Position3D, HitSphereSize);
+
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
         Position += Velocity * 0.62f * RuntimeData.DeltaTime;
         DrawParams.World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
@@ -306,7 +310,7 @@ public class Shell : IAITankDanger {
 
         var dummy = Vector2.Zero;
 
-        Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity, ref dummy, out var dir, out var block,
+        Collision.HandleCollisionSimple_ForBlocks(CollHitbox, Velocity, ref dummy, out var dir, out var block,
             out bool corner, false, (c) => c.Properties.IsSolid);
 
         if (LifeTime <= 5 && (dir != CollisionDirection.None || corner))
@@ -558,7 +562,7 @@ public class Shell : IAITankDanger {
             var tank = Unsafe.Add(ref tankSSpace, i);
             if (tank == null || tank.IsDestroyed) continue;
 
-            if (!tank.CollisionCircle.Intersects(HitCircle)) continue;
+            if (!tank.Hurtbox.Intersects(Hitbox)) continue;
 
             if (!Properties.CanFriendlyFire) {
                 if (tank.Team == Owner?.Team && tank != Owner && tank.Team != TeamID.NoTeam)
@@ -581,7 +585,8 @@ public class Shell : IAITankDanger {
         for (var i = 0; i < AllShells.Length; i++) {
             ref var bullet = ref Unsafe.Add(ref bulletSSpace, i);
             if (bullet == null || bullet == this) continue;
-            if (!bullet.HitCircle.Intersects(HitCircle)) continue;
+            // if (!bullet.HitCircle.Intersects(HitCircle)) continue;
+            if (!bullet.Hitbox.Intersects(Hitbox)) continue;
 
             if (bullet.Properties.IsDestructible)
                 bullet.Destroy(DestructionContext.WithShell);
@@ -671,8 +676,7 @@ public class Shell : IAITankDanger {
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
                 centered: true);
 
-            var bs = new BoundingSphere(Position3D, HitCircle.Radius);
-            DebugManager.DrawBoundingSphere(bs, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+            DebugManager.DrawBoundingSphere(Hitbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
         DrawShellMesh();
         ModdedData?.PostRender();

@@ -482,7 +482,7 @@ public static class DebugManager {
 
         spriteBatch.DrawString(FontGlobals.RebirthFont,
                 "Debug Level: " + CurDebugLabel,
-                WindowUtils.WindowBottom - new Vector2(0, 15),
+                WindowUtils.WindowBottom - new Vector2(0, 30),
                 Color.White,
                 new Vector2(0.6f),
                 origin: FontGlobals.RebirthFont.MeasureString("Debug Level: " + CurDebugLabel) / 2);

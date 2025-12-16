@@ -60,7 +60,8 @@ public sealed class Mine : IAITankDanger {
 
     public OggAudio? TickingNoise;
 
-    public Rectangle Hitbox;
+    public float HitBoxSize = 18.0f;
+    public BoundingBox HitBox;
 
     float _oldDetonateTime;
     /// <summary>The time left (in ticks) until detonation.</summary>
@@ -158,8 +159,12 @@ public sealed class Mine : IAITankDanger {
 
         DrawParams.World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
 
-        Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
+        // this might need offsetting due to the nature of the orthographic camera
+        HitBoxSize = 18;
+        HitBox = new(Position3D - new Vector3(HitBoxSize / 2, HitBoxSize / 2, HitBoxSize / 2),
+                Position3D + new Vector3(HitBoxSize / 2, HitBoxSize / 2, HitBoxSize / 2));
 
+        // only decrements mine timing if the host
         if (Server.NetManager != null || !Client.IsConnected()) {
             DetonateTime -= RuntimeData.DeltaTime;
 
@@ -182,7 +187,7 @@ public sealed class Mine : IAITankDanger {
                 Detonate();
 
             foreach (var shell in Shell.AllShells) {
-                if (shell is not null && shell.Hitbox.Intersects(Hitbox)) {
+                if (shell is not null && shell.Hitbox.Intersects(HitBox)) {
                     shell.Destroy(Shell.DestructionContext.WithMine);
                     Detonate();
                 }
@@ -229,9 +234,7 @@ public sealed class Mine : IAITankDanger {
         DrawParams.Projection = CameraGlobals.GameProjection;
 
         if (DebugManager.DebuggingEnabled) {
-            var bb = new BoundingBox(Position3D - new Vector3(Hitbox.Width / 2, Hitbox.Height / 2, Hitbox.Width / 2), 
-                Position3D + new Vector3(Hitbox.Width / 2, Hitbox.Height / 2, Hitbox.Width / 2));
-            DebugManager.DrawBoundingBox(bb, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+            DebugManager.DrawBoundingBox(HitBox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
 
         DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",

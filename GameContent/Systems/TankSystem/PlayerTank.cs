@@ -548,6 +548,8 @@ public class PlayerTank : Tank {
             TankGame.SaveFile.Deaths++;
         }
     }
+
+    // this should probably be voided lol
     void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;
 
@@ -598,8 +600,10 @@ public class PlayerTank : Tank {
 
             var cannotBounce = pathRicochetCount > Properties.RicochetCount;
             if (cannotBounce) return;
+
+            // final check used to be: tnk.CollCircle.Intersects(new Circle { Center = pathPos, Radius = 4 })
             var tankInPath = GameHandler.AllTanks.FirstOrDefault(
-                tnk => tnk is not null && !tnk.IsDestroyed && tnk.CollisionCircle.Intersects(new Circle { Center = pathPos, Radius = 4 }));
+                tnk => tnk is not null && !tnk.IsDestroyed && GameUtils.Distance_WiiTanksUnits(tnk.Position, pathPos) <= 8);
             if (Array.IndexOf(GameHandler.AllTanks, tankInPath) > -1 && tankInPath is not null) {
                 TanksSpotted = [tankInPath!];
                 return;
