@@ -14,7 +14,7 @@ public readonly struct KeyFrame(Vector3 position = default, Vector3 scale = defa
     public Vector3 Scale { get;} = scale;
     public TimeSpan Duration { get; } = duration;
     public float[] Floats { get; } = floats;
-    public List<Vector3> BezierPoints { get; } = [];
+    public List<Vector3>? BezierPoints { get; }
 
     public override readonly string ToString() => $"ease: {Easing} | pos: {Position} | scl: {Scale:0.00} | dur: {Duration:c} | flts: {(Floats is null ? 0 : Floats.Length)}";
 }

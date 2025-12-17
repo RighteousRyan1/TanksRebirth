@@ -3,10 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.Graphics.Cameras;
 
-public class Freecam(GraphicsDevice device)
-{
+public class Freecam(GraphicsDevice device) {
     public readonly GraphicsDevice Device = device;
-    private float _minPitch;
+    float _minPitch;
     public float MinPitch {
         get => _minPitch;
         set {
@@ -16,7 +15,7 @@ public class Freecam(GraphicsDevice device)
             _minPitch = value;
         }
     }
-    private float _maxPitch;
+    float _maxPitch;
     public float MaxPitch {
         get => _maxPitch;
         set {
@@ -25,8 +24,9 @@ public class Freecam(GraphicsDevice device)
             //}
         }
     }
+    // this is a precarious property
     public Vector3 Velocity { get; private set; }
-    private Vector3 _position;
+    Vector3 _position;
     public Vector3 Position {
         get => _position;
         set {
@@ -35,7 +35,7 @@ public class Freecam(GraphicsDevice device)
             ChangeViewWorld();
         }
     }
-    private Vector3 _rotation;
+    Vector3 _rotation;
     public Vector3 Rotation {
         get => _rotation;
         set {
@@ -43,7 +43,7 @@ public class Freecam(GraphicsDevice device)
             ChangeViewWorld();
         }
     }
-    private float _fov = 90;
+    float _fov = 90;
     /// <summary>Degrees -> Radians</summary>
     public float FieldOfView {
         get => _fov;
@@ -54,7 +54,7 @@ public class Freecam(GraphicsDevice device)
             ChangeProjection();
         }
     }
-    private Vector3 _lookAt;
+    Vector3 _lookAt;
     public Vector3 LookAt {
         get => _lookAt;
         set {
@@ -91,12 +91,12 @@ public class Freecam(GraphicsDevice device)
         Position += moveAmount;
     }
 
-    private void ChangeViewWorld() {
+    void ChangeViewWorld() {
         var lookAt = HasLookAt ? Matrix.CreateLookAt(Position, LookAt, Vector3.Up) : Matrix.Identity;
         World = Matrix.CreateFromYawPitchRoll(_rotation.Z, _rotation.Y, _rotation.X) * Matrix.CreateWorld(_position, Vector3.Forward, Vector3.Up);
         View = Matrix.Invert(World) * lookAt;
     }
-    private void ChangeProjection() {
+    void ChangeProjection() {
         Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(_fov), Device.Viewport.AspectRatio, _near, _far);
     }
 }

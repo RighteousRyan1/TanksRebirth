@@ -201,19 +201,23 @@ public static class CameraGlobals {
         Keys keyL = editorOrNoPlayer ? Keys.A : Keys.Left;
         Keys keyR = editorOrNoPlayer ? Keys.D : Keys.Right;
 
+        // smooths movement based on zoom/low fov
+        var mul = CameraGlobals.RebirthFreecam.FieldOfView / 90;
         if (InputUtils.MouseRight) {
-            RebirthFreecam.Rotation -= new Vector3(
+            var subPos = new Vector3(
                 0f,
                 MouseUtils.MouseVelocity.Y * rotationSpeed,
                 MouseUtils.MouseVelocity.X * rotationSpeed);
+            RebirthFreecam.Rotation -= subPos * mul;
 
-            RebirthFreecam.Rotation = new Vector3(
+            var clamped = new Vector3(
                 0f,
                 MathHelper.Clamp(
                     RebirthFreecam.Rotation.Y,
                     -MathHelper.PiOver2,
                     MathHelper.PiOver2),
                 RebirthFreecam.Rotation.Z);
+            RebirthFreecam.Rotation = clamped;
         }
 
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))

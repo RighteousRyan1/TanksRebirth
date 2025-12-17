@@ -343,7 +343,7 @@ public static class DebugManager {
             if (InputUtils.KeyJustPressed(Keys.Enter)) {
                 _povAnimatorKeyframeBuilder.Add(new(
                     position: fc.Position,
-                    fc.Rotation, 
+                    scale: fc.Rotation,
                     duration: TimeSpan.FromSeconds(_povAnimatorDuration), easing: _povAnimatorFunction,
                     floats: [fc.FieldOfView]));
             }
@@ -365,6 +365,7 @@ public static class DebugManager {
             }
             if (InputUtils.AreKeysJustPressed(Keys.D0, Keys.D9)) {
                 if (_povAnimatorKeyframeBuilder.Count > 0) {
+                    _povAnimatorTest?.Stop();
 
                     _povAnimatorTest = Animator.Create();
 
@@ -563,6 +564,9 @@ public static class DebugManager {
             $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})" +
             $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors" +
             $"\nPress 9 + 0 to play camera animation with keyframes" +
+            $"\nIncrease/Decrease keyframe timespan: 7/8" +
+            $"\nChange easing type: -/+" +
+            $"\nDelete latest: DELETE" +
             $"\n\ncurrent easing type: {_povAnimatorFunction}" +
             $"\ncurrent frame timespan: {_povAnimatorDuration}" +
             $"\nCamera keyframes:" +

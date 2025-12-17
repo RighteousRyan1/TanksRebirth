@@ -26,6 +26,7 @@ public class ParticleManager
     private readonly Func<Matrix> _viewFunc;
     private readonly Func<Matrix> _projFunc;
 
+    // apparently maxparticles is useless
     public ParticleManager(int maxParticles, Func<Matrix> view, Func<Matrix> proj) {
         CurrentParticles = [];
         _viewFunc = view;

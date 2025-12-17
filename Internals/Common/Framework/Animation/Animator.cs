@@ -101,13 +101,15 @@ public class Animator {
     }
     /// <summary>The animator will interpolate between these values to the next frame's values.</summary><param name="frame"></param>
     public Animator WithFrame(KeyFrame frame) {
-        if (KeyFrames.Count > 0) {
-            if (KeyFrames[^1].BezierPoints.Count > 2) {
-                KeyFrames[^1].BezierPoints.Add(frame.Position);
+        if (frame.BezierPoints != null && frame.BezierPoints.Count > 0) {
+            if (KeyFrames.Count > 0) {
+                if (KeyFrames[^1].BezierPoints.Count > 2) {
+                    KeyFrames[^1].BezierPoints.Add(frame.Position);
+                }
             }
-        }
-        else {
-            frame.BezierPoints?.Insert(0, frame.Position);
+            else {
+                frame.BezierPoints?.Insert(0, frame.Position);
+            }
         }
         KeyFrames.Add(frame);
         CurrentFloats = KeyFrames[0].Floats;
@@ -303,7 +305,7 @@ public class Animator {
         // Note: Using futureFrame easing as requested
         var ease = Easings.ComputeEase(futureFrame.Easing, CurrentProgress);
 
-        var hasBezier = Current.BezierPoints.Count > 2;
+        var hasBezier = Current.BezierPoints != null && Current.BezierPoints.Count > 2;
         CurrentPosition = hasBezier ? MathUtils.Bezier3D(ease, Current.BezierPoints.ToArray()) :
             Current.Position + (futureFrame.Position - Current.Position) * ease;
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
