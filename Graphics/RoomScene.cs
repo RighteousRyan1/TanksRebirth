@@ -17,7 +17,8 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.Graphics;
 
-// when the room is added!
+#pragma warning disable
+
 // TODO: texture pack support
 public static class RoomScene {
     public static readonly Vector3 TableScenePos = new(-350f, -61.7f, 330f);
@@ -35,7 +36,7 @@ public static class RoomScene {
 
     public static Dictionary<string, Texture2D> RoomSkyboxTextures = [];
     public static Dictionary<string, Color> BookColors = [];
-    private static List<ModelMesh> _transparentFaces = [];
+    static List<ModelMesh> _transparentFaces = [];
 
     public static float Scale;
     public static Vector3 Rotation;
@@ -46,13 +47,13 @@ public static class RoomScene {
     public static Matrix View;
     public static Matrix Projection;
 
-    private static Matrix[] _boneTransforms;
+    static Matrix[] _boneTransforms;
 
-    private static Matrix _baseMinuteTransform;
-    private static Matrix _baseHourTransform;
-    private static Matrix _basePendulumTransform;
-    public static void Initialize() {
-        //return; // return for now, since .png breaks the UVs vs .jpg
+    static Matrix _baseMinuteTransform;
+    static Matrix _baseHourTransform;
+    static Matrix _basePendulumTransform;
+    static RoomScene() {
+        // .png breaks the UVs vs .jpg
         RoomSkyboxScene = ModelGlobals.Room.Asset;
         _boneTransforms = new Matrix[RoomSkyboxScene.Bones.Count];
         HandHour = RoomSkyboxScene.Meshes["Clock_Hand_Hour"];
@@ -67,8 +68,17 @@ public static class RoomScene {
         _basePendulumTransform = Pendulum.ParentBone.Transform;
 
         InitializeTextures();
-        InitializeAudio();
+
+        ChimeS1 = GetClockSfx("chime_seq1");
+        ChimeS2 = GetClockSfx("chime_seq2");
+        ChimeS3 = GetClockSfx("chime_seq3");
+        ChimeS4 = GetClockSfx("chime_seq4");
+        ChimeS5 = GetClockSfx("chime_seq5");
+        ChimeHour = GetClockSfx("chime_hour");
+
+        PopulateAlphaDict();
     }
+    public static OggAudio GetClockSfx(string asset) => new($"Content/Assets/sounds/roomscene/{asset}.ogg");
     public static void InitializeTextures() {
         foreach (var file in Directory.GetFiles(Path.Combine("Content", "Assets", "models", "scene", "skybox", "textures"))) {
             var fileName = Path.GetFileNameWithoutExtension(file);
@@ -87,7 +97,7 @@ public static class RoomScene {
         }
     }
 
-    private static readonly Dictionary<string, string> MeshToTexture = new() {
+    static readonly Dictionary<string, string> MeshToTexture = new() {
         // ceiling
         ["Ceiling"] = "ceiling",
 
@@ -159,16 +169,23 @@ public static class RoomScene {
         ["Shelf"] = "wood_dark"
     };
 
+    static List<ModelMesh> GlassMeshes = [];
+    static List<ModelMesh> OpaqueMeshes = [];
+
     public static string GetMeshTexture(ModelMesh mesh) {
         return MeshToTexture.TryGetValue(mesh.Name, out var textureName)
             ? textureName
             : "metal"; // fallback default
     }
-    public static float GetMeshAlpha(ModelMesh mesh) {
-        return mesh.Name switch {
-            _ when mesh.Name.Contains("glass", StringComparison.InvariantCultureIgnoreCase) => 0.99f,
-            _ => 1f
-        };
+    static void PopulateAlphaDict() {
+        for (int i = 0; i < RoomSkyboxScene.Meshes.Count; i++) {
+            var mesh = RoomSkyboxScene.Meshes[i];
+
+            if (mesh.Name.Contains("glass", StringComparison.InvariantCultureIgnoreCase))
+                GlassMeshes.Add(mesh);
+            else
+                OpaqueMeshes.Add(mesh);
+        }
     }
     public static OggAudio ChimeS1;
     public static OggAudio ChimeS2;
@@ -184,20 +201,8 @@ public static class RoomScene {
     public static float PendulumRotation;
     public static int Hour;
     public static int Minute;
-    private static int _oldHour;
-    private static int _oldMin;
-
-    public static void InitializeAudio() {
-        ChimeS1 = GetClockSfx("chime_seq1");
-        ChimeS2 = GetClockSfx("chime_seq2");
-        ChimeS3 = GetClockSfx("chime_seq3");
-        ChimeS4 = GetClockSfx("chime_seq4");
-        ChimeS5 = GetClockSfx("chime_seq5");
-        ChimeHour = GetClockSfx("chime_hour");
-    }
-    public static OggAudio GetClockSfx(string asset) {
-        return new($"Content/Assets/sounds/roomscene/{asset}.ogg");
-    }
+    static int _oldHour;
+    static int _oldMin;
     /* q1 = seq1
      * q2 = seq2, seq3
      * q3 = seq4, seq5, seq1
@@ -279,7 +284,7 @@ public static class RoomScene {
         // hacky way to prevent chiming on game boot. 
         if (RuntimeData.RunTime > 60f) {
             if (Hour != _oldHour) {
-                Console.WriteLine($"Attempting chime at hour {Hour % 12}");
+                // Console.WriteLine($"Attempting chime at hour {Hour % 12}");
                 ChimeHourly(Hour % 12);
             }
             // this will not run if the hour changes since this is an 'else if' branch.
@@ -290,7 +295,7 @@ public static class RoomScene {
 
 
                 if (Minute % 15 == 0) {
-                    Console.WriteLine($"Attempting chime at quarter {Minute / 15}");
+                    // Console.WriteLine($"Attempting chime at quarter {Minute / 15}");
                     ChimeQuarterly(Minute / 15);
                 }
             }
@@ -303,7 +308,9 @@ public static class RoomScene {
     // render
 
     public static void Render() {
-        _transparentFaces.Clear();
+
+        // don't cull backfaces
+        TankGame.Instance.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         World = Matrix.CreateScale(Scale)
             * Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X)
             * Matrix.CreateTranslation(Position);
@@ -315,46 +322,39 @@ public static class RoomScene {
         RoomSkyboxScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         RoomSkyboxScene!.Root.Transform = World;
 
-        foreach (var mesh in RoomSkyboxScene.Meshes) {
-            bool drawMe = true;
+        foreach (var mesh in OpaqueMeshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = _boneTransforms[mesh.ParentBone.Index];
-
-                effect.View = View;
-                effect.Projection = Projection;
-
-                effect.TextureEnabled = true;
-                if (!mesh.Name.Contains("Shelf_Book") || mesh.Name.Contains("Side"))
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/scene/skybox/textures/" + GetMeshTexture(mesh));
-                else
-                    effect.Texture = TextureGlobals.Pixels[BookColors[mesh.Name]];
-                effect.Alpha = GetMeshAlpha(mesh);
-
-                if (effect.Alpha < 1f) {
-                    _transparentFaces.Add(mesh);
-                    drawMe = false;
-                }
-                effect.SetDefaultGameLighting();
-                // higher specular power means less glowy stuff.
-                effect.SpecularPower = 32f;
-                /*effect.EnableDefaultLighting();
-                effect.DirectionalLight0.SpecularColor = Color.Red.ToVector3();
-                effect.DirectionalLight1.SpecularColor = Color.Green.ToVector3();
-                effect.DirectionalLight2.SpecularColor = Color.Blue.ToVector3();*/
-                //effect.SetDefaultGameLighting_Room(new Vector3(0, 0, 1));
-                //effect.EnableDefaultLighting();
-                /*effect.DirectionalLight0.Direction = Vector3.Down;
-                effect.DirectionalLight1.Direction = Vector3.Down.RotateXY(MathHelper.PiOver4);
-                effect.DirectionalLight2.Direction = Vector3.Down.RotateXY(-MathHelper.PiOver4);*/
+                MeshEffectSet(mesh, effect);
+                effect.Alpha = 1f;
             }
-            if (drawMe)
-                mesh.Draw();
+            mesh.Draw();
         }
-        //SceneManager.GameLight.Color = Color.Gray * 0.2f;
-        //SceneManager.GameLight.Apply(true);
-        /*_transparentFaces.Sort((x, y) =>
-        Vector3.Distance(x.ParentBone.Transform.Translation, TankGame.RebirthFreecam.Position)
-        .CompareTo(Vector3.Distance(y.ParentBone.Transform.Translation, TankGame.RebirthFreecam.Position)));
-        _transparentFaces.ForEach(m => m.Draw());*/
+
+        // particularly expensive i think
+        //GlassMeshes.Sort((x, y) =>
+        //Vector3.Distance(x.ParentBone.Transform.Translation, CameraGlobals.RebirthFreecam.Position)
+        //.CompareTo(Vector3.Distance(y.ParentBone.Transform.Translation, CameraGlobals.RebirthFreecam.Position)));
+
+        foreach (var mesh in GlassMeshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                MeshEffectSet(mesh, effect);
+
+                effect.Alpha = 0.15f;
+            }
+            mesh.Draw();
+        }
+    }
+    static void MeshEffectSet(ModelMesh mesh, BasicEffect effect) {
+        effect.World = _boneTransforms[mesh.ParentBone.Index];
+        effect.View = View;
+        effect.Projection = Projection;
+
+        effect.TextureEnabled = true;
+        if (!mesh.Name.Contains("Shelf_Book") || mesh.Name.Contains("Side"))
+            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/scene/skybox/textures/" + GetMeshTexture(mesh));
+        else
+            effect.Texture = TextureGlobals.Pixels[BookColors[mesh.Name]];
+        effect.SetDefaultGameLighting();
+        effect.SpecularPower = 32f;
     }
 }

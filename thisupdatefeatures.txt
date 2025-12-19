@@ -51,6 +51,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - `Difficulties.Types` -> `Modifiers.Map`
 - All string indices in `Modifiers` are now constants so they can be easily identified- and yes, you'll have to use them
 - Animators have been made less archaic- instead of the final frame not needing a duration or easing function, it is now the first one
+- Added a really neat camera animation system to the freecam debug menu
+	- You can see controls on the left
 
 # Fixes
 
@@ -62,6 +64,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Fixed clock pendulum not accurately tracking seconds (there was some margin of error before)
 - The mission intro sequence/fanfare is now controlled by the sound effects slider
 - Fixed the room scene not being updated while in pause
+- Places in the room where glass would before not render properly now renders
 
 # TODO
 

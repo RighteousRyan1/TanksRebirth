@@ -66,7 +66,7 @@ public class Freecam(GraphicsDevice device) {
 
     public bool HasLookAt { get; set; }
 
-    private float _near = 0.1f;
+    float _near = 1f;
     public float NearViewDistance {
         get => _near;
         set {
@@ -74,7 +74,7 @@ public class Freecam(GraphicsDevice device) {
             ChangeProjection();
         }
     }
-    private float _far = 0.2f;
+    float _far = 50000f;
     public float FarViewDistance {
         get => _far;
         set {

@@ -349,7 +349,6 @@ public static class GameScene {
     public static void InitializeRenderers() {
         FloorRenderer.LoadFloor();
         BoundsRenderer.LoadBounds();
-        RoomScene.Initialize();
     }
 
     public static float Scale = 0.62f;

@@ -29,8 +29,7 @@ namespace TanksRebirth.GameContent.RebirthUtils;
 
 #pragma warning disable 
 public static class DebugManager {
-    public readonly struct Id
-    {
+    public readonly struct Id {
         public const int FreeCamTest = -3;
         public const int AirplaneTest = -2;
         public const int SceneMetrics = -1;
@@ -93,6 +92,7 @@ public static class DebugManager {
     static EasingFunction _povAnimatorFunction;
     static List<KeyFrame> _povAnimatorKeyframeBuilder = [];
     static double _povAnimatorDuration = 1.00;
+    static List<Vector3> _bezierPts = [];
 
     static bool _hideUi;
 
@@ -341,29 +341,37 @@ public static class DebugManager {
         else {
             var fc = CameraGlobals.RebirthFreecam;
             if (InputUtils.KeyJustPressed(Keys.Enter)) {
+                List<Vector3> pts = [];
+
+                for (int i = 0; i < _bezierPts.Count; i++)
+                    pts.Add(_bezierPts[i]);
                 _povAnimatorKeyframeBuilder.Add(new(
                     position: fc.Position,
                     scale: fc.Rotation,
                     duration: TimeSpan.FromSeconds(_povAnimatorDuration), easing: _povAnimatorFunction,
-                    floats: [fc.FieldOfView]));
+                    floats: [fc.FieldOfView],
+                    bezierPoints: pts));
+
+                _bezierPts.Clear();
             }
-            if (InputUtils.KeyJustPressed(Keys.OemPlus)) {
+            if (InputUtils.KeyJustPressed(Keys.LeftAlt)) {
+                _bezierPts.Add(fc.Position);
+            }
+            if (InputUtils.AreKeysJustPressed(Keys.K, Keys.OemPlus)) {
                 _povAnimatorFunction++;
                 if (_povAnimatorFunction > EasingFunction.InOutBounce)
                     _povAnimatorFunction = EasingFunction.Linear;
             }
-            else if (InputUtils.KeyJustPressed(Keys.OemMinus)) {
+            else if (InputUtils.AreKeysJustPressed(Keys.K, Keys.OemMinus)) {
                 _povAnimatorFunction--;
                 if (_povAnimatorFunction < EasingFunction.Linear)
                     _povAnimatorFunction = EasingFunction.InOutBounce;
             }
-            if (InputUtils.KeyJustPressed(Keys.D7)) {
+            if (InputUtils.AreKeysJustPressed(Keys.T, Keys.OemMinus))
                 _povAnimatorDuration -= 0.25;
-            }
-            else if (InputUtils.KeyJustPressed(Keys.D8)) {
+            else if (InputUtils.AreKeysJustPressed(Keys.T, Keys.OemPlus))
                 _povAnimatorDuration += 0.25;
-            }
-            if (InputUtils.AreKeysJustPressed(Keys.D0, Keys.D9)) {
+            if (InputUtils.AreKeysJustPressed(Keys.OemMinus, Keys.OemPlus)) {
                 if (_povAnimatorKeyframeBuilder.Count > 0) {
                     _povAnimatorTest?.Stop();
 
@@ -398,6 +406,13 @@ public static class DebugManager {
             else if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.Z)) {
                 fc.Position = new(fc.Position.X, fc.Position.Y, 0);
             }
+            
+            if (InputUtils.AreKeysJustPressed(Keys.RightShift, Keys.Y)) {
+                fc.Rotation = new(0, SnapToQuarterCircle(fc.Rotation.Y), fc.Rotation.Z);
+            }
+            else if (InputUtils.AreKeysJustPressed(Keys.RightShift, Keys.Z)) {
+                fc.Rotation = new(0, fc.Rotation.Y, SnapToQuarterCircle(fc.Rotation.Z));
+            }
         }
 
         if (InputUtils.KeyJustPressed(Keys.NumPad7)) tankToSpawnType--;
@@ -423,10 +438,12 @@ public static class DebugManager {
 
         // someday these will be implemented lol
         if (InputUtils.KeyJustPressed(Keys.I) && DebugLevel == 4) new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };
-        
+
         blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
+
+    public static float SnapToQuarterCircle(float radians) => MathF.Round(radians / MathHelper.PiOver2) * MathHelper.PiOver2;
     public static void DrawDebug(SpriteBatch spriteBatch) {
         if (Client.IsConnected()) {
             var myClient = Client.NetClient;
@@ -452,7 +469,7 @@ public static class DebugManager {
         if (!DebuggingEnabled) return;
         if (_hideUi) return;
 
-        DrawAxes();
+        DrawUtils.DrawAxes();
 
         var posOffset = new Vector2(0, 80);
 
@@ -536,7 +553,7 @@ public static class DebugManager {
                     body.Position.Y * Tank.UNITS_PER_METER),
                     CameraGlobals.GameView, CameraGlobals.GameProjection);
 
-                DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "BODY", position, drawColor, 
+                DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "BODY", position, drawColor,
                     Color.White, Vector2.One * 0.5f, 0f, borderThickness: 0.5f);
             }
         }
@@ -563,10 +580,13 @@ public static class DebugManager {
             $"\nRight: {CameraGlobals.GameView.Right}" +
             $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})" +
             $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors" +
-            $"\nPress 9 + 0 to play camera animation with keyframes" +
-            $"\nIncrease/Decrease keyframe timespan: 7/8" +
-            $"\nChange easing type: -/+" +
+            $"\nPress + & - to play camera animation with keyframes" +
+            $"\nIncrease/Decrease keyframe timespan: T & -/+" +
+            $"\nChange easing type: K & -/+" +
             $"\nDelete latest: DELETE" +
+            "\nAdd bezier point: LeftAlt" +
+            "\nSnap to axis origin: LeftShift + AxisKey" +
+            "\nSnap to rotational quarter-circle: RightShift + AxisKey (Y+Z only)" + 
             $"\n\ncurrent easing type: {_povAnimatorFunction}" +
             $"\ncurrent frame timespan: {_povAnimatorDuration}" +
             $"\nCamera keyframes:" +
@@ -574,6 +594,8 @@ public static class DebugManager {
                 new Vector2(0, 50),
                 Color.White,
                 Vector2.One * 0.75f);
+
+            AnimDebug.DrawPath(TankGame.Instance.GraphicsDevice, _povAnimatorKeyframeBuilder, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
 
         if (DebugLevel == Id.SceneMetrics) {
@@ -680,55 +702,7 @@ public static class DebugManager {
             Team = teamOverride == default ? Client.ClientRandom.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride
         };
     }
-
-    const float AXIS_DRAW_LEN = 5f;
-
-    static BasicEffect _debugEff;
-
-    static void EnsureBboxEffect() {
-        _debugEff ??= new BasicEffect(TankGame.Instance.GraphicsDevice) {
-                VertexColorEnabled = true
-            };
-
-        _debugEff.World = Matrix.Identity;
-        _debugEff.View = CameraGlobals.GameView;
-        _debugEff.Projection = CameraGlobals.GameProjection;
-    }
-
-    public static void DrawAxes() {
-        if (!DebuggingEnabled)
-            return;
-
-        var gd = TankGame.Instance.GraphicsDevice;
-
-        var cam = CameraGlobals.RebirthFreecam;
-
-        Vector3 origin = Vector3.Zero;
-        if (CameraGlobals.IsUsingFirstPersonCamera)
-            origin = cam.Position + cam.World.Forward * 100;
-
-        var vertices = new VertexPositionColor[6];
-
-        // X+ = red
-        vertices[0] = new VertexPositionColor(origin, Color.Red);
-        vertices[1] = new VertexPositionColor(origin + Vector3.UnitX * AXIS_DRAW_LEN, Color.Red);
-
-        // Y+ green
-        vertices[2] = new VertexPositionColor(origin, Color.Green);
-        vertices[3] = new VertexPositionColor(origin + Vector3.UnitY * AXIS_DRAW_LEN, Color.Green);
-
-        // Z+ blue
-        vertices[4] = new VertexPositionColor(origin, Color.Blue);
-        vertices[5] = new VertexPositionColor(origin + Vector3.UnitZ * AXIS_DRAW_LEN, Color.Blue);
-
-        EnsureBboxEffect();
-
-        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
-            pass.Apply();
-            gd.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 3);
-        }
-    }
-    static readonly VertexPositionColor[] _bboxVertices = new VertexPositionColor[24];
+    
     public static void DrawBoundingBox(
          BoundingBox box,
          Color color,
@@ -736,57 +710,9 @@ public static class DebugManager {
          Matrix projection,
          Matrix? world = null) {
 
-        if (!DebuggingEnabled)
-            return;
+        if (!DebuggingEnabled || _hideUi) return;
 
-        EnsureBboxEffect();
-
-        var gd = TankGame.Instance.GraphicsDevice;
-
-        _debugEff.World = world ?? Matrix.Identity;
-        _debugEff.View = view;
-        _debugEff.Projection = projection;
-
-        Vector3[] corners = box.GetCorners();
-
-        int v = 0;
-        void AddEdge(int i0, int i1) {
-            _bboxVertices[v++] = new VertexPositionColor(corners[i0], color);
-            _bboxVertices[v++] = new VertexPositionColor(corners[i1], color);
-        }
-
-        // corner order:
-        // 0: near Bottom Left
-        // 1: near Top Left
-        // 2: near Top Right
-        // 3: near Bottom Right
-        // 4: nar Bottom Left
-        // 5: nar Top Left
-        // 6: nar Top Right
-        // 7: nar Bottom Right
-
-        // near face
-        AddEdge(0, 1);
-        AddEdge(1, 2);
-        AddEdge(2, 3);
-        AddEdge(3, 0);
-
-        // far face
-        AddEdge(4, 5);
-        AddEdge(5, 6);
-        AddEdge(6, 7);
-        AddEdge(7, 4);
-
-        // connect near & far
-        AddEdge(0, 4);
-        AddEdge(1, 5);
-        AddEdge(2, 6);
-        AddEdge(3, 7);
-
-        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
-            pass.Apply();
-            gd.DrawUserPrimitives(PrimitiveType.LineList, _bboxVertices, 0, 12);
-        }
+        DrawUtils.DrawBoundingBox(box, color, view, projection, world);
     }
 
     // eensy weensy bit of ai help cuz i was programming this at 3am
@@ -794,81 +720,8 @@ public static class DebugManager {
     public static void DrawBoundingSphere(BoundingSphere sphere, Color color, Matrix view,
         Matrix projection, Matrix? world = null, int segments = 32) {
 
-        if (!DebuggingEnabled) return;
+        if (!DebuggingEnabled || _hideUi) return;
 
-        if (segments < 4) segments = 4;
-
-        EnsureBboxEffect();
-
-        var gd = TankGame.Instance.GraphicsDevice;
-
-        _debugEff.World = world ?? Matrix.Identity;
-        _debugEff.View = view;
-        _debugEff.Projection = projection;
-
-        float radius = sphere.Radius;
-        Vector3 center = sphere.Center;
-
-        // latitudes and longitudes to draw
-        int latitudeCount = segments / 2; // around y
-        int meridianCount = segments / 2; // around x
-        int circleSegments = segments;
-
-        // should i make this publicly accessible?
-        void CircleDraw(Func<float, Vector3> pointOnCircle) {
-            var verts = new VertexPositionColor[circleSegments + 1];
-
-            for (int i = 0; i <= circleSegments; i++) {
-                float t = (float)i / circleSegments; // 0 -> 1
-                float angle = t * MathHelper.TwoPi; // 0 -> 2pi
-                verts[i] = new VertexPositionColor(
-                    center + pointOnCircle(angle),
-                    color);
-            }
-
-            gd.DrawUserPrimitives(
-                PrimitiveType.LineStrip,
-                verts,
-                0,
-                circleSegments);
-        }
-
-        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
-            pass.Apply();
-
-            // latitudes w/o poles
-            for (int lat = 1; lat < latitudeCount; lat++) {
-                float v = (float)lat / latitudeCount;
-                float elev = (v - 0.5f) * MathHelper.Pi;
-
-                float y = radius * MathF.Sin(elev);
-                float r = radius * MathF.Cos(elev); // radius at given y
-
-                CircleDraw(angle => new Vector3(
-                    MathF.Cos(angle) * r,
-                    y,
-                    MathF.Sin(angle) * r));
-            }
-
-            // meridians
-            for (int m = 0; m < meridianCount; m++) {
-                float phi = (float)m / meridianCount * MathHelper.TwoPi; 
-
-                CircleDraw(theta => {
-                    float cosT = MathF.Cos(theta);
-                    float sinT = MathF.Sin(theta);
-                    float y = radius * cosT;
-                    float z = radius * sinT;
-
-                    float sinPhi = MathF.Sin(phi);
-                    float cosPhi = MathF.Cos(phi);
-
-                    float x = z * sinPhi;
-                    float zRot = z * cosPhi;
-
-                    return new Vector3(x, y, zRot);
-                });
-            }
-        }
+        DrawUtils.DrawBoundingSphere(sphere, color, view, projection, world, segments);
     }
 }

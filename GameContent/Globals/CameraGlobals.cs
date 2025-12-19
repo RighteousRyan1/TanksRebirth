@@ -34,9 +34,8 @@ public static class CameraGlobals {
     public static Matrix ScreenProjPerspective;
 
     public static void SetMatrices() {
-        // old = Matrix.CreateOrthographicOffCenter(0f, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.1f, 100000f); 
-        ScreenProjOrthographic = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
-        ScreenProjPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000f);
+        ScreenProjOrthographic = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -5000, 5000f);
+        ScreenProjPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 1f, 10000f);
         
         // still dont know why i offset z by -500
         ScreenView = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(0, 0, -500);
@@ -154,7 +153,7 @@ public static class CameraGlobals {
             Matrix.CreateRotationY(OrthoRotationVector.X) *
             Matrix.CreateRotationX(OrthoRotationVector.Y);
 
-        GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000f, 5000f);
+        GameProjection = Matrix.CreateOrthographic(1920, 1080, -5000, 75000f);
     }
 
     static void UpdateMainMenuCamera() {
@@ -165,8 +164,6 @@ public static class CameraGlobals {
 
         RebirthFreecam.HasLookAt = false;
         RebirthFreecam.FieldOfView = 100f;
-        RebirthFreecam.NearViewDistance = 0.1f;
-        RebirthFreecam.FarViewDistance = 100000f;
 
         GameView = RebirthFreecam.View;
         GameProjection = RebirthFreecam.Projection;
@@ -180,8 +177,7 @@ public static class CameraGlobals {
         const float rotationSpeed = 0.01f;
 
         RebirthFreecam.HasLookAt = false;
-        RebirthFreecam.NearViewDistance = 0.1f;
-        RebirthFreecam.FarViewDistance = 1_000_000f;
+        RebirthFreecam.FarViewDistance = 75000;
         RebirthFreecam.MinPitch = -180f;
         RebirthFreecam.MaxPitch = 180f;
 
@@ -200,6 +196,8 @@ public static class CameraGlobals {
         Keys keyB = editorOrNoPlayer ? Keys.S : Keys.Down;
         Keys keyL = editorOrNoPlayer ? Keys.A : Keys.Left;
         Keys keyR = editorOrNoPlayer ? Keys.D : Keys.Right;
+        Keys keyU = Keys.E;
+        Keys keyD = Keys.Q;
 
         // smooths movement based on zoom/low fov
         var mul = CameraGlobals.RebirthFreecam.FieldOfView / 90;
@@ -235,9 +233,16 @@ public static class CameraGlobals {
             RebirthFreecam.Move(RebirthFreecam.World.Left * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyR))
             RebirthFreecam.Move(RebirthFreecam.World.Right * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyU))
+            RebirthFreecam.Move(RebirthFreecam.World.Up * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyD))
+            RebirthFreecam.Move(RebirthFreecam.World.Down * realMoveSpeed);
 
         GameView = RebirthFreecam.View;
         GameProjection = RebirthFreecam.Projection;
+
+        // ensures rotation doesn't just... go haywire.
+        RebirthFreecam.Rotation = new(RebirthFreecam.Rotation.X, RebirthFreecam.Rotation.Y, RebirthFreecam.Rotation.Z % MathHelper.Tau);
     }
 
     public static void ManagePOV() {

@@ -1,6 +1,7 @@
 using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Utilities;
@@ -167,4 +168,185 @@ public static class DrawUtils {
     }
 
     public static Rectangle GetOffset(this Rectangle rect, int x, int y) => new Rectangle(rect.X + x, rect.Y + y, rect.Width, rect.Height);
+
+    public static void DrawBoundingBox(
+         BoundingBox box,
+         Color color,
+         Matrix view,
+         Matrix projection,
+         Matrix? world = null) {
+
+        EnsureBboxEffect();
+
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        _debugEff.World = world ?? Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        Vector3[] corners = box.GetCorners();
+
+        int v = 0;
+        void AddEdge(int i0, int i1) {
+            _bboxVertices[v++] = new VertexPositionColor(corners[i0], color);
+            _bboxVertices[v++] = new VertexPositionColor(corners[i1], color);
+        }
+
+        // corner order:
+        // 0: near Bottom Left
+        // 1: near Top Left
+        // 2: near Top Right
+        // 3: near Bottom Right
+        // 4: nar Bottom Left
+        // 5: nar Top Left
+        // 6: nar Top Right
+        // 7: nar Bottom Right
+
+        // near face
+        AddEdge(0, 1);
+        AddEdge(1, 2);
+        AddEdge(2, 3);
+        AddEdge(3, 0);
+
+        // far face
+        AddEdge(4, 5);
+        AddEdge(5, 6);
+        AddEdge(6, 7);
+        AddEdge(7, 4);
+
+        // connect near & far
+        AddEdge(0, 4);
+        AddEdge(1, 5);
+        AddEdge(2, 6);
+        AddEdge(3, 7);
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            gd.DrawUserPrimitives(PrimitiveType.LineList, _bboxVertices, 0, 12);
+        }
+    }
+
+    static BasicEffect _debugEff;
+    static readonly VertexPositionColor[] _bboxVertices = new VertexPositionColor[24];
+    static void EnsureBboxEffect() {
+        _debugEff ??= new BasicEffect(TankGame.Instance.GraphicsDevice) {
+            VertexColorEnabled = true
+        };
+
+        _debugEff.World = Matrix.Identity;
+        _debugEff.View = CameraGlobals.GameView;
+        _debugEff.Projection = CameraGlobals.GameProjection;
+    }
+    const float AXIS_DRAW_LEN = 5f;
+    public static void DrawAxes() {
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        var cam = CameraGlobals.RebirthFreecam;
+
+        Vector3 origin = Vector3.Zero;
+        if (CameraGlobals.IsUsingFirstPersonCamera)
+            origin = cam.Position + cam.World.Forward * 100;
+
+        var vertices = new VertexPositionColor[6];
+
+        // X+ = red
+        vertices[0] = new VertexPositionColor(origin, Color.Red);
+        vertices[1] = new VertexPositionColor(origin + Vector3.UnitX * AXIS_DRAW_LEN, Color.Red);
+
+        // Y+ green
+        vertices[2] = new VertexPositionColor(origin, Color.Green);
+        vertices[3] = new VertexPositionColor(origin + Vector3.UnitY * AXIS_DRAW_LEN, Color.Green);
+
+        // Z+ blue
+        vertices[4] = new VertexPositionColor(origin, Color.Blue);
+        vertices[5] = new VertexPositionColor(origin + Vector3.UnitZ * AXIS_DRAW_LEN, Color.Blue);
+
+        EnsureBboxEffect();
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            gd.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 3);
+        }
+    }
+
+    // eensy weensy bit of ai help cuz i was programming this at 3am
+    /// <summary>Draws a wireframe 3D bounding sphere.</summary>
+    public static void DrawBoundingSphere(BoundingSphere sphere, Color color, Matrix view,
+        Matrix projection, Matrix? world = null, int segments = 32) {
+
+        if (segments < 4) segments = 4;
+
+        EnsureBboxEffect();
+
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        _debugEff.World = world ?? Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        float radius = sphere.Radius;
+        Vector3 center = sphere.Center;
+
+        // latitudes and longitudes to draw
+        int latitudeCount = segments / 2; // around y
+        int meridianCount = segments / 2; // around x
+        int circleSegments = segments;
+
+        // should i make this publicly accessible?
+        void CircleDraw(Func<float, Vector3> pointOnCircle) {
+            var verts = new VertexPositionColor[circleSegments + 1];
+
+            for (int i = 0; i <= circleSegments; i++) {
+                float t = (float)i / circleSegments; // 0 -> 1
+                float angle = t * MathHelper.TwoPi; // 0 -> 2pi
+                verts[i] = new VertexPositionColor(
+                    center + pointOnCircle(angle),
+                    color);
+            }
+
+            gd.DrawUserPrimitives(
+                PrimitiveType.LineStrip,
+                verts,
+                0,
+                circleSegments);
+        }
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+
+            // latitudes w/o poles
+            for (int lat = 1; lat < latitudeCount; lat++) {
+                float v = (float)lat / latitudeCount;
+                float elev = (v - 0.5f) * MathHelper.Pi;
+
+                float y = radius * MathF.Sin(elev);
+                float r = radius * MathF.Cos(elev); // radius at given y
+
+                CircleDraw(angle => new Vector3(
+                    MathF.Cos(angle) * r,
+                    y,
+                    MathF.Sin(angle) * r));
+            }
+
+            // meridians
+            for (int m = 0; m < meridianCount; m++) {
+                float phi = (float)m / meridianCount * MathHelper.TwoPi;
+
+                CircleDraw(theta => {
+                    float cosT = MathF.Cos(theta);
+                    float sinT = MathF.Sin(theta);
+                    float y = radius * cosT;
+                    float z = radius * sinT;
+
+                    float sinPhi = MathF.Sin(phi);
+                    float cosPhi = MathF.Cos(phi);
+
+                    float x = z * sinPhi;
+                    float zRot = z * cosPhi;
+
+                    return new Vector3(x, y, zRot);
+                });
+            }
+        }
+    }
 }

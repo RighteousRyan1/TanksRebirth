@@ -188,26 +188,26 @@ public class Animator {
             return;
         }
 
-        var next = KeyFrames[segIndex + 1];
+        var futureFrame = KeyFrames[segIndex + 1];
 
         // applies the segment's easing for accurate positioning
         // Note: Using next frame's easing as requested
-        float eased = Easings.ComputeEase(next.Easing, CurrentProgress);
+        float ease = Easings.ComputeEase(futureFrame.Easing, CurrentProgress);
 
-        bool hasBezier = current.BezierPoints is not null && current.BezierPoints.Count > 2;
+        bool hasBezier = futureFrame.BezierPoints != null && futureFrame.BezierPoints.Count > 0;
         CurrentPosition = hasBezier
-            ? MathUtils.Bezier3D(eased, current.BezierPoints.ToArray())
-            : current.Position + (next.Position - current.Position) * eased;
+            ? GetBezierPos(ease, Current, futureFrame)
+            : Current.Position + (futureFrame.Position - Current.Position) * ease;
 
-        CurrentScale = current.Scale + (next.Scale - current.Scale) * eased;
+        CurrentScale = current.Scale + (futureFrame.Scale - current.Scale) * ease;
 
-        if (current.Floats is not null && next.Floats is not null) {
-            int n = Math.Min(current.Floats.Length, next.Floats.Length);
+        if (current.Floats is not null && futureFrame.Floats is not null) {
+            int n = Math.Min(current.Floats.Length, futureFrame.Floats.Length);
             if (CurrentFloats == null || CurrentFloats.Length != n)
                 CurrentFloats = new float[n];
 
             for (int i = 0; i < n; i++)
-                CurrentFloats[i] = current.Floats[i] + (next.Floats[i] - current.Floats[i]) * eased;
+                CurrentFloats[i] = current.Floats[i] + (futureFrame.Floats[i] - current.Floats[i]) * ease;
         }
     }
 
@@ -233,10 +233,10 @@ public class Animator {
         // Note: Using futureFrame easing as requested
         float ease = Easings.ComputeEase(futureFrame.Easing, next);
 
-        if (Current.BezierPoints.Count > 2)
-            CurrentPosition = MathUtils.Bezier3D(ease, Current.BezierPoints.ToArray());
-        else
-            CurrentPosition = Current.Position + (futureFrame.Position - Current.Position) * ease;
+        bool hasBezier = futureFrame.BezierPoints != null && futureFrame.BezierPoints.Count > 0;
+        CurrentPosition = hasBezier
+            ? GetBezierPos(ease, Current, futureFrame)
+            : Current.Position + (futureFrame.Position - Current.Position) * ease;
 
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
 
@@ -305,9 +305,11 @@ public class Animator {
         // Note: Using futureFrame easing as requested
         var ease = Easings.ComputeEase(futureFrame.Easing, CurrentProgress);
 
-        var hasBezier = Current.BezierPoints != null && Current.BezierPoints.Count > 2;
-        CurrentPosition = hasBezier ? MathUtils.Bezier3D(ease, Current.BezierPoints.ToArray()) :
-            Current.Position + (futureFrame.Position - Current.Position) * ease;
+        // use future frame for bezier...?
+        bool hasBezier = futureFrame.BezierPoints != null && futureFrame.BezierPoints.Count > 0;
+        CurrentPosition = hasBezier
+            ? GetBezierPos(ease, Current, futureFrame)
+            : Current.Position + (futureFrame.Position - Current.Position) * ease;
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
         // CurrentPosition = Current.Position + (futureFrame.Position - Current.Position) * ease;
 
@@ -434,6 +436,20 @@ public class Animator {
         return true;
     }
 
+    static Vector3 GetBezierPos(float t, KeyFrame current, KeyFrame next) {
+        // gc hell?
+        var safePoints = new List<Vector3>();
+
+        if (current.BezierPoints.Count == 0 || current.BezierPoints[0] != current.Position)
+            safePoints.Add(current.Position);
+
+        safePoints.AddRange(next.BezierPoints);
+
+        if (safePoints[^1] != next.Position)
+            safePoints.Add(next.Position);
+
+        return MathUtils.Bezier3D(t, safePoints.ToArray());
+    }
 
     public override string ToString()
         => $"keyfc: {KeyFrames.Count} | cprog: {CurrentProgress} | tprog: {TotalProgress} | eta: {EstimatedCompletionTime}";
