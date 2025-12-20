@@ -1,26 +1,27 @@
-using TanksRebirth.Internals.UI;
-using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework;
-using System.Linq;
-using System;
-using TanksRebirth.GameContent.Systems;
 using Microsoft.Xna.Framework.Graphics;
-using TanksRebirth.GameContent.UI;
-using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.Net;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.Systems.PingSystem;
-using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Cosmetics;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.UI;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
@@ -213,11 +214,16 @@ public class GameHandler {
         // TankFootprint.Draw();
 
         // TankGame.Instance.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-        foreach (var tank in AllTanks)
-            tank?.Render();
+        foreach (var tank in AllTanks) {
+            if (tank == null) continue;
+            if (!CameraGlobals.ViewFrustum.Intersects(tank.Hurtbox)) continue;
+            tank.Render();
+        }
 
-        foreach (var cube in Block.AllBlocks)
-            cube?.OnRender();
+        // not worth doing culling logic for smaller tiny things. the tank render logic can be lengthy
+
+        foreach (var block in Block.AllBlocks)
+            block?.OnRender();
 
         foreach (var mine in Mine.AllMines)
             mine?.Render();

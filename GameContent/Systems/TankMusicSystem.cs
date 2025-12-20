@@ -14,7 +14,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 
 namespace TanksRebirth.GameContent.Systems;
 

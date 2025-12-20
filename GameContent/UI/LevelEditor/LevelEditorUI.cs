@@ -23,6 +23,7 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using System.Diagnostics;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 

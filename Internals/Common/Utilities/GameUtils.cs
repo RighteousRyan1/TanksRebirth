@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;

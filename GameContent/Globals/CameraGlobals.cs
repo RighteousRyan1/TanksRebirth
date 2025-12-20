@@ -6,14 +6,12 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Net;
 using TanksRebirth.Graphics.Cameras;
 using System.Linq;
 using System;
-using TanksRebirth.Internals.Common.Framework.Animation;
-using System.Collections.Generic;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.Globals;
 
@@ -75,6 +73,8 @@ public static class CameraGlobals {
     public static Matrix GameProjection;
 
     public const float POV_CAM_OFFSET_Y = 20f;
+
+    public static BoundingFrustum ViewFrustum = new(Matrix.Identity);
 
     public static void Initialize(GraphicsDevice device) {
         RebirthFreecam = new(device) {
@@ -139,6 +139,8 @@ public static class CameraGlobals {
                 UpdateOverheadCamera();
                 break;
         }
+
+        ViewFrustum.Matrix = GameView * GameProjection;
     }
     static void UpdateOverheadCamera() {
         UpdateOverhead();
@@ -155,7 +157,6 @@ public static class CameraGlobals {
 
         GameProjection = Matrix.CreateOrthographic(1920, 1080, -5000, 75000f);
     }
-
     static void UpdateMainMenuCamera() {
         if (MainMenuUI.CameraPositionAnimator.CurrentPosition != Vector3.Zero) {
             RebirthFreecam.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition;
@@ -168,12 +169,11 @@ public static class CameraGlobals {
         GameView = RebirthFreecam.View;
         GameProjection = RebirthFreecam.Projection;
     }
-
     static void UpdateFreecamCamera() {
         if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X))
             DebugManager.persistFreecam = !DebugManager.persistFreecam;
 
-        float realMoveSpeed = 10f * RuntimeData.DeltaTime;
+        float realMoveSpeed = 5f * RuntimeData.DeltaTime;
         const float rotationSpeed = 0.01f;
 
         RebirthFreecam.HasLookAt = false;
@@ -234,9 +234,9 @@ public static class CameraGlobals {
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyR))
             RebirthFreecam.Move(RebirthFreecam.World.Right * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyU))
-            RebirthFreecam.Move(RebirthFreecam.World.Up * realMoveSpeed);
+            RebirthFreecam.Move(Vector3.UnitY * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyD))
-            RebirthFreecam.Move(RebirthFreecam.World.Down * realMoveSpeed);
+            RebirthFreecam.Move(-Vector3.UnitY * realMoveSpeed);
 
         GameView = RebirthFreecam.View;
         GameProjection = RebirthFreecam.Projection;

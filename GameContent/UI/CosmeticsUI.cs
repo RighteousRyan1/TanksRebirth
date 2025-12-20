@@ -2,11 +2,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -16,7 +19,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Cosmetics;
+namespace TanksRebirth.GameContent.UI;
 
 #pragma warning disable
 
@@ -32,10 +35,16 @@ public static class CosmeticsUI {
 
     static Animator _keyAnimation;
 
+    // todo: implement!
+    static Animator _unboxAnimation;
+
+
     static float _prevTotalAnim;
 
     public static bool IsActive => MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics;
     public static RenderableChest Chest;
+
+    internal static PlayerTank displayTank;
 
     public static void Initialize() {
         Chest = new(new(0, 0, 0), CameraGlobals.GameView, CameraGlobals.GameProjection);
@@ -58,6 +67,20 @@ public static class CosmeticsUI {
         var basePos = Chest.ChestPosition - new Vector3(15, 23, 15);
         _clickSpot = new BoundingSphere(Chest.KeySlotPos, 6);
 
+        displayTank?.Update();
+
+        if (displayTank != null) {
+            displayTank.Position = Chest.ChestPosition.FlattenZ();
+            displayTank.OffsetY = Chest.ChestPosition.Y + 15;
+            displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
+
+            // like why negative... gonna shoot myself mayhaps.
+            displayTank.TurretRotation = -displayTank.ChassisRotation;
+        }
+        else {
+            displayTank = new(playerType: PlayerID.Blue, ignoreRegister: true);
+        }
+
         HandleInputs();
         if (_keyAnimation is not null) {
             // start things
@@ -71,7 +94,7 @@ public static class CosmeticsUI {
                 Particle cosPart;
 
                 if (prop is Prop3D p3d) {
-                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel.Duplicate(), p3d.ModelTexture);
+                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel.Asset, p3d.ModelTexture);
                     cosPart.Scale = Vector3.One * prop.Scale;
                 }
                 else {
@@ -89,6 +112,7 @@ public static class CosmeticsUI {
                     p.Position = Chest.ChestPosition + new Vector3(0, 75, 0);
                     if (p.LifeTime > 180)
                         p.Destroy();
+
 
                 };
             }
@@ -198,7 +222,7 @@ public static class CosmeticsUI {
         for (int i = 0; i < numKeys; i++) {
             var keyPart = GameHandler.Particles.MakeParticle(origPos, ModelGlobals.Key.Asset, tex);
 
-            float k = (numKeys == 1) ? 0.5f : (float)i / (numKeys - 1);
+            float k = numKeys == 1 ? 0.5f : (float)i / (numKeys - 1);
             // helps calculate the goal position
             float angle = MathHelper.Lerp(startRads, endRads, k);
 
@@ -270,7 +294,7 @@ public static class CosmeticsUI {
                 // Hover Effect Logic
                 float baseScale = 40f;
                 float hoverScale = 55f;
-                float targetScale = (p == _hoveredKey) ? hoverScale : baseScale;
+                float targetScale = p == _hoveredKey ? hoverScale : baseScale;
 
                 // Smoothly interpolate scale
                 p.Scale = Vector3.Lerp(p.Scale, new Vector3(targetScale), 0.2f * RuntimeData.DeltaTime);
@@ -306,8 +330,8 @@ public static class CosmeticsUI {
                 }
 
                 // if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.X)) p.Destroy();
-                float ySin = (MathF.Sin(RuntimeData.RunTime / 50 + phaseOffset)) * 0.5f * 5;
-                p.Position = origPos + (destination * ease) + new Vector3(0, ySin, 0);
+                float ySin = MathF.Sin(RuntimeData.RunTime / 50 + phaseOffset) * 0.5f * 5;
+                p.Position = origPos + destination * ease + new Vector3(0, ySin, 0);
             };
         }
     }
@@ -317,8 +341,10 @@ public static class CosmeticsUI {
         _dispPart?.Destroy();
         _movingKey = null;
     }
-    public static void RenderCrates() {
-        DebugManager.DrawBoundingSphere(_clickSpot, ColorUtils.DiscoPartyColor, CameraGlobals.GameView, CameraGlobals.GameProjection);
+    public static void DrawMenu() {
+        // DebugManager.DrawBoundingSphere(_clickSpot, ColorUtils.DiscoPartyColor, CameraGlobals.GameView, CameraGlobals.GameProjection);
         Chest?.Render();
+
+        displayTank?.Render();
     }
 }

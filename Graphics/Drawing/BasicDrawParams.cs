@@ -16,5 +16,8 @@ public struct BasicDrawParams {
     public bool UsePhong;
 
     public Vector3 LightDirection;
+
+    /// <summary>The scale at which the object is drawn.</summary>
+    public Vector3 Scaling;
     public BasicDrawParams() { }
 }

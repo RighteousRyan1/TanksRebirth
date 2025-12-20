@@ -10,11 +10,11 @@ using System.Linq;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common;
@@ -461,15 +461,16 @@ public static class DebugManager {
             var pingColor = new StatisticalColor<int>(Color.Lime, Color.Red, 30, ping, 250);
             var packetLossColor = new StatisticalColor<float>(Color.Lime, Color.Red, 0f, pLoss, 0.25f);
 
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[0], WindowUtils.WindowTop, Color.White, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[1], WindowUtils.WindowTop * 0.75f, pingColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[2], WindowUtils.WindowTop * 1.25f, packetLossColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+            DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, info[0], WindowUtils.WindowTop, Color.White, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+            DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, info[1], WindowUtils.WindowTop * 0.75f, pingColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+            DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, info[2], WindowUtils.WindowTop * 1.25f, packetLossColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
         }
 
         if (!DebuggingEnabled) return;
         if (_hideUi) return;
 
         DrawUtils.DrawAxes();
+        DrawUtils.DrawFrustum(TankGame.Instance.GraphicsDevice, CameraGlobals.ViewFrustum, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         var posOffset = new Vector2(0, 80);
 
@@ -553,7 +554,7 @@ public static class DebugManager {
                     body.Position.Y * Tank.UNITS_PER_METER),
                     CameraGlobals.GameView, CameraGlobals.GameProjection);
 
-                DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "BODY", position, drawColor,
+                DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, "BODY", position, drawColor,
                     Color.White, Vector2.One * 0.5f, 0f, borderThickness: 0.5f);
             }
         }
@@ -608,8 +609,7 @@ public static class DebugManager {
         if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {
             TextCopy.ClipboardService.SetText($"{CameraGlobals.RebirthFreecam.Position.ToCtor()}, {CameraGlobals.RebirthFreecam.Rotation.ToCtor()}");
         }
-    }
-    public static void DrawDebugMetrics() {
+
         var information = new string[] {
             $"PrimitiveCount: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.PrimitiveCount}",
             $"Vx: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.VertexShaderCount}",
@@ -619,7 +619,7 @@ public static class DebugManager {
             $"Textures: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.TextureCount}",
             $"Targets: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.TargetCount}"
         };
-        DrawDebugString(FontGlobals.RebirthFont, TankGame.SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
+        DrawDebugString(FontGlobals.RebirthFont, spriteBatch, string.Join('\n', information), Vector2.Zero, -1);
     }
     public static void SpawnCrateAtMouse() {
         var pos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);

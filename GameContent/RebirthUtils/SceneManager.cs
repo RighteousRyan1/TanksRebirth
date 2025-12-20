@@ -198,6 +198,7 @@ public static class SceneManager {
             TankMusicSystem.SnowLoop.Play();
         }
     }
+    // something here is making tanks get cleared from the tank array?
     public static void ClearTankDeathmarks() {
         for (int i = 0; i < TankDeathMark.deathMarks.Length; i++) {
             TankDeathMark.deathMarks[i]?.check?.Destroy();

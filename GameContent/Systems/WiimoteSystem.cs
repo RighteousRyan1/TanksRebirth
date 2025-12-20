@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework;

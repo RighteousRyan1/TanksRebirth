@@ -440,6 +440,8 @@ public partial class AITank {
         pattern ??= c => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
 
         var whitePixel = TextureGlobals.Pixels[Color.White];
+
+        // genuine fucking stupidity as to why this is negative in so many calculations
         Vector2 pathPos = Position + offset.RotatedBy(-TurretRotation);
         pathDir.Y *= -1;
         pathDir *= PATH_UNIT_LENGTH;
@@ -470,11 +472,12 @@ public partial class AITank {
                 if (doBounceReset) uninterruptedIterations = 0;
             }
 
-            // Setup hitbox once
-            pathHitbox.X = (int)pathPos.X - 5;
-            pathHitbox.Y = (int)pathPos.Y - 5;
-            pathHitbox.Width = 8;
-            pathHitbox.Height = 8;
+            // setup hitbox
+            // path used to be XY - 5, WH = 8
+            pathHitbox.X = (int)pathPos.X - Shell.COLL_RECT_DIM / 2;
+            pathHitbox.Y = (int)pathPos.Y - Shell.COLL_RECT_DIM / 2;
+            pathHitbox.Width = Shell.COLL_RECT_DIM;
+            pathHitbox.Height = Shell.COLL_RECT_DIM;
 
             Vector2 dummy = Vector2.Zero;
             Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummy, out var dir, out var block, out bool corner, false, pattern);
@@ -508,12 +511,12 @@ public partial class AITank {
                 }
             }
 
-            // Delay teleport until next frame
+            // delay teleport until next frame
             if (teleported && i == tpTriggerIndex) {
                 pathPos = teleportedTo;
             }
 
-            // Check destroy conditions
+            // check destroy conditions
             bool hitsInstant = i == 0 && Block.AllBlocks.Any(x => x != null && x.Hitbox.Intersects(pathHitbox) && pattern(x));
             bool hitsTooEarly = i < (int)Properties.ShellSpeed / 2 && ricochetCount > 0;
             bool ricochetLimitReached = ricochetCount > Properties.RicochetCount;
@@ -521,7 +524,7 @@ public partial class AITank {
             if (hitsInstant || hitsTooEarly || ricochetLimitReached)
                 break;
 
-            // Check tanks BEFORE moving
+            // check tanks BEFORE moving
             float realMiss = 1f + missDist * 2 * uninterruptedIterations;
 
             foreach (var enemy in GameHandler.AllTanks) {

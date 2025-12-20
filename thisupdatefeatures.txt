@@ -26,6 +26,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - "Difficulties" now changed to "Modifiers"
 - Severely overhauled the chat box
 - MASSIVE revamps to the game stats menu, multiplayer menu, and the chat window
+- Hit/hurtboxes now occur on 3 dimensions instead of previously 2, to allow for modders to do potentially cool things, and also makes debugging much easier
 
 # Changes Important for Modders
 
@@ -48,8 +49,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - `SwapXTexture` from entity classes is now just `DrawParamsX.XTexture = newTexture;`
 - Keyframes now are dimension-agnostic
 - `CameraGlobals.IsUsingFirstPresonCamera` has been de-typo'd :|
-- `Difficulties.Types` -> `Modifiers.Map`
-- All string indices in `Modifiers` are now constants so they can be easily identified- and yes, you'll have to use them
 - Animators have been made less archaic- instead of the final frame not needing a duration or easing function, it is now the first one
 - Added a really neat camera animation system to the freecam debug menu
 	- You can see controls on the left

@@ -6,7 +6,6 @@ using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.UI.LevelEditor;

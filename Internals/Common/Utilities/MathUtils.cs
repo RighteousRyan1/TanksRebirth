@@ -1,20 +1,20 @@
 ﻿using Microsoft.Xna.Framework;
-using TanksRebirth.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using tainicom.Aether.Physics2D.Collision;
-using System.Runtime.CompilerServices;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class MathUtils
-{
+public static class MathUtils {
     /// <summary>Scales from the center of the rectangle provided.</summary>
     public static Rectangle ScaleRect(Rectangle rect, float scale) {
-        Vector2 center = new Vector2(rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f);
+        var center = new Vector2(rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f);
         float w = rect.Width * scale;
         float h = rect.Height * scale;
         return new Rectangle((int)(center.X - w / 2), (int)(center.Y - h / 2), (int)w, (int)h);

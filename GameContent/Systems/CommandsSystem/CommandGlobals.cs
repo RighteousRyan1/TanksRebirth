@@ -170,6 +170,9 @@ public static class CommandGlobals {
             TankGame.Settings.AmbientVolume = float.Parse(args[0]);
             VolumeUI.AmbientVolume.Value = TankGame.Settings.AmbientVolume;
         }),
+
+
+
         // render engine
         [new CommandInput(name: "r_menu", description: "Disable/enable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, false, (args) => {
             GameScene.ShouldRenderAll = bool.Parse(args[0]);
@@ -190,6 +193,11 @@ public static class CommandGlobals {
                 GameScene.SceneRenderColor = ColorUtils.ColorsByName[color];
             }
         }),
+        [new CommandInput(name: "r_room_draw_enable", description: "Whether or not to draw the room scene.")] = new CommandOutput(netSync: false, false, (args) => {
+            RoomScene.EnableDraw = bool.Parse(args[0]);
+        }),
+
+
         // main menu
         [new CommandInput(name: "snd_legacy_mus", description: "Switch to and from the legacy menu music.")] = new CommandOutput(netSync: false, false, (args) => {
             if (bool.Parse(args[0])) {
@@ -280,16 +288,16 @@ public static class CommandGlobals {
 
         // funny dev stuff
 
-        [new CommandInput(name: "s_control_tanks", description: "Host only: lets the host control a tank's movement with their mouse")] = new CommandOutput(netSync: false, true, (args) => {
+        [new CommandInput(name: "s_control_tanks", description: "Host only: Lets the host control a tank's movement with their mouse")] = new CommandOutput(netSync: false, true, (args) => {
             var enable = bool.Parse(args[0]);
             
             DebugManager.SuperSecretDevOption = enable;
         }),
-        [new CommandInput(name: "s_rand_cosmetics", description: "Host only: lets the host control a tank's movement with their mouse")] = new CommandOutput(netSync: false, true, (args) => {
+        [new CommandInput(name: "s_rand_cosmetics", description: "Host only: Enables randomized cosmetics.")] = new CommandOutput(netSync: false, true, (args) => {
             var enable = bool.Parse(args[0]);
 
             DebugManager.SecretCosmeticSetting = enable;
-            ChatSystem.SendMessage($"Random cosmetics: {DebugManager.SecretCosmeticSetting}", DebugManager.SecretCosmeticSetting ? Color.Lime : Color.Red);
+            TankGame.IngameConsole.Log($"Random cosmetics: {DebugManager.SecretCosmeticSetting}", DebugManager.SecretCosmeticSetting ? Color.Lime : Color.Red);
         }),
     };
 }

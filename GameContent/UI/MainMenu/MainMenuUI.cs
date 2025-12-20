@@ -15,6 +15,7 @@ using TanksRebirth.Net;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Graphics;
 using Microsoft.Xna.Framework.Graphics;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -269,9 +270,6 @@ public static partial class MainMenuUI {
                     break;
                 case UIState.Mulitplayer:
                     DrawMPMenu(gameTime);
-                    break;
-                case UIState.Cosmetics:
-                    DrawCosmeticsUI();
                     break;
                 case UIState.StatsMenu:
                     DrawStatsMenu(gameTime);

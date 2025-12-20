@@ -20,10 +20,13 @@ using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Framework.Collisions;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
 
-public abstract class Tank {
+public abstract class Tank(bool ignoresRegister) {
+    /// <summary>If true, this tank is not registered with the game entity lists and is managed manually.</summary>
+    public bool IgnoreRegister = ignoresRegister;
     public struct TankDrawParams {
         public Texture2D? ShadowTexture;
         public Texture2D? TankTexture;
@@ -33,6 +36,9 @@ public abstract class Tank {
 
         /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
         public Model Model;
+
+        /// <summary>Render-only. Used to make asymmetrical tank textures not visually 180 by rotating the drawn tank model by 180 degrees.</summary>
+        public bool GraphicalFlip;
 
         public const float PLR_AMB_MUL = 2f;
         public const float AI_AMB_MUL = 0.9f;
@@ -157,13 +163,11 @@ public abstract class Tank {
     /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="IProp"/>s.</summary>
     public List<IProp> Props = [];
     readonly List<Particle> _propParticles = [];
-    readonly Dictionary<Prop3D, Model> _duplicatedModels = [];
+    // readonly Dictionary<Prop3D, Model> _duplicatedModels = [];
     #region Fields / Properties
     float _oldRotation;
     public Body Physics { get; set; } = new();
-
     public bool UsesCustomModel { get; set; }
-
     public int WorldId { get; set; }
     /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
     public int Team { get; set; }
@@ -187,8 +191,14 @@ public abstract class Tank {
 
     public BasicDrawParams DrawParams = new();
     public TankDrawParams DrawParamsTank;
+    /// <summary>The rotation of this <see cref="Tank"/>'s turret. Generally should not be modified in a player context.</summary>
+    public float TurretRotation { get; set; }
+
+    /// <summary>The rotation of this <see cref="Tank"/>'s chassis.</summary>
+    public float ChassisRotation { get; set; }
     public Vector2 TurretPosition => Position + new Vector2(0, TurretLength).RotatedBy(-TurretRotation);
-    public Vector3 TurretPosition3D => new(TurretPosition.X, TNK_DMG_COLL_Y, TurretPosition.Y);
+    public Vector3 TurretPosition3D => new(TurretPosition.X, OffsetY + TNK_DMG_COLL_Y, TurretPosition.Y);
+    // would this better to just be set every frame rather than redundantly perform this calculation every time it's accessed?
     public Vector2 Position {
         get => Physics.Position * UNITS_PER_METER;
         set => Physics.Position = value / UNITS_PER_METER;
@@ -199,10 +209,10 @@ public abstract class Tank {
     public BoundingBox Worldbox { get; set; }
 
     public BoundingBox Hurtbox;
-    /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
+    // /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
     // public Circle CollCircle => new() { Center = Position, Radius = TNK_WIDTH / 2 };
 
-    /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
+    // /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
     //public Rectangle CollRect => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2),
     //    (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
 
@@ -215,14 +225,9 @@ public abstract class Tank {
     /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
     public bool IsTurning { get; internal set; }
 
+    // this feels really stupid to have as a property of the tank itself... oh well
     /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
     public bool IsHoveredByMouse { get; internal set; }
-    /// <summary>The rotation of this <see cref="Tank"/>'s turret
-    /// . Generally should not be modified in a player context.</summary>>
-    public float TurretRotation { get; set; }
-
-    /// <summary>The rotation of this <see cref="Tank"/>'s chassis.</summary>
-    public float ChassisRotation { get; set; }
 
     /// <summary>The rotation this <see cref="Tank"/>'s chassis will pivot to.</summary>
     public float DesiredChassisRotation;
@@ -230,22 +235,17 @@ public abstract class Tank {
     /// <summary>Whether or not the tank has been destroyed or not.</summary>
     public bool IsDestroyed { get; set; }
 
-    public Vector3 Position3D => Position.ExpandZ();
+    /// <summary>Positional Y offset. Physics will still occur on Y = 0, but hitbox/hurtboxes and drawing will occur at this Y.</summary>
+    public float OffsetY;
+    public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, OffsetY, 0);
     public Vector3 Velocity3D => Velocity.ExpandZ();
 
-    public Vector3 Scaling = Vector3.One;
-
     #endregion
-
-    #region Model Stuff
 
     internal Matrix[] boneTransforms = [];
 
     internal ModelMesh? cannonMesh;
 
-    public bool Flip;
-
-    #endregion
     public static int[] GetActiveTeams(Func<Tank, bool>? predicate) {
         var teams = new List<int>();
 
@@ -272,7 +272,7 @@ public abstract class Tank {
         //Scaling = new Vector3(1, 1, 3);
         //Body = CollisionsWorld.CreateEllipse(TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.X, TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.Z, 8, 1f, 
         //    Position / UNITS_PER_METER, bodyType: BodyType.Dynamic);
-        Physics = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.X, 1f, Position / UNITS_PER_METER,
+        Physics = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER * DrawParams.Scaling.X, 1f, Position / UNITS_PER_METER,
             BodyType.Dynamic);
         Physics.Tag = this;
     }
@@ -404,6 +404,7 @@ public abstract class Tank {
     }
     public virtual void Initialize() {
         InitModelSemantics();
+        DrawParams.Scaling = Vector3.One;
         if (DebugManager.SecretCosmeticSetting) {
             for (int i = 0; i < 1; i++) {
                 var recieved = VanillaCosmetics.LootPool.Roll(out _);
@@ -488,8 +489,8 @@ public abstract class Tank {
         Physics.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
 
         // try to make positive. i hate game
-        DrawParams.World = Matrix.CreateScale(Scaling)
-            * Matrix.CreateFromYawPitchRoll(-ChassisRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
+        DrawParams.World = Matrix.CreateScale(DrawParams.Scaling)
+            * Matrix.CreateFromYawPitchRoll(-ChassisRotation - (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0f), 0, 0)
             * Matrix.CreateTranslation(Position3D);
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
@@ -500,11 +501,11 @@ public abstract class Tank {
         if (IsTurning) {
             if (DesiredChassisRotation - ChassisRotation >= MathHelper.PiOver2) {
                 ChassisRotation += MathHelper.Pi;
-                Flip = !Flip;
+                DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
             else if (DesiredChassisRotation - ChassisRotation <= -MathHelper.PiOver2) {
                 ChassisRotation -= MathHelper.Pi;
-                Flip = !Flip;
+                DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
         };
 
@@ -519,27 +520,24 @@ public abstract class Tank {
             Speed *= Properties.Deceleration * RuntimeData.DeltaTime;
 
         // bigkitty told me that stuns instantly apply zero-velocity
-        if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary || (!CampaignGlobals.InMission && !MainMenuUI.IsActive)) {
+        if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary || !CampaignGlobals.InMission && !MainMenuUI.IsActive) {
             Velocity = Vector2.Zero;
             Speed = 0f;
         }
 
         // try to make negative. go poopoo
-        cannonMesh!.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (Flip ? MathHelper.Pi : 0));
-        DrawParamsTank.Model!.Root.Transform = DrawParams.World;
-
-        DrawParamsTank.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+        SetBoneTransforms();
 
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
             if (Velocity.Length() != 0) {
-                treadPlaceTimer = MathF.Round(11 / Velocity.Length()) * Scaling.X;
+                treadPlaceTimer = MathF.Round(11 / Velocity.Length()) * DrawParams.Scaling.X;
                 // MAYBE: change back to <= delta time if it doesn't work.
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
             if (IsTurning && ChassisRotation != _oldRotation) {
-                treadPlaceTimer = Properties.TurningSpeed * 150 * Scaling.X;
+                treadPlaceTimer = Properties.TurningSpeed * 150 * DrawParams.Scaling.X;
                 // MAYBE: change back to <= delta time if it doesn't work.
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
@@ -961,12 +959,12 @@ public abstract class Tank {
             if (cosmetic is not Prop3D cos3d)
                 continue;
 
-            if (!_duplicatedModels.ContainsKey(cos3d)) {
-                _duplicatedModels.Add(cos3d, cos3d.PropModel.Duplicate());
-            }
+            //if (!_duplicatedModels.ContainsKey(cos3d)) {
+            //    _duplicatedModels.Add(cos3d, cos3d.PropModel.Duplicate());
+            //}
             // _duplicatedModels[cos3d].Meshes
 
-            foreach (var mesh in _duplicatedModels[cos3d].Meshes) {
+            foreach (var mesh in cos3d.PropModel.Asset.Meshes) {
                 if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
                     continue;
 
@@ -976,7 +974,7 @@ public abstract class Tank {
                         rotY = cosmetic.Rotation.Y + TurretRotation;
                     else if (cosmetic.LockOptions == PropLockOptions.ToTank)
                         rotY = cosmetic.Rotation.Y + -ChassisRotation;
-                    else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
+                    else if (cosmetic.LockOptions == PropLockOptions.AroundTurret)
                         cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
 
                     var baseMatrix = Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition);
@@ -1019,5 +1017,11 @@ public abstract class Tank {
             particle?.Destroy();
         }
         CampaignGlobals.OnMissionStart -= OnMissionStart;
+    }
+    public void SetBoneTransforms() {
+        cannonMesh!.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0));
+        DrawParamsTank.Model!.Root.Transform = DrawParams.World;
+
+        DrawParamsTank.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
     }
 }

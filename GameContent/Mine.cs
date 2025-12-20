@@ -10,6 +10,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;

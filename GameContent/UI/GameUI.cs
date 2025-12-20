@@ -12,7 +12,6 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth.GameContent.UI;
 

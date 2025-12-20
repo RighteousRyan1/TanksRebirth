@@ -1,7 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
 
-namespace TanksRebirth.GameContent.Systems.AI;
+namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
 
 public record AIParameters {
     /// <summary>The amount of distance to check (in units) in all directions for obstacles to ensure laying a mine is safe. Word 2.</summary>

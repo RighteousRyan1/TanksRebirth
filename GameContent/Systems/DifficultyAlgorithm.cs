@@ -14,7 +14,7 @@ public static class DifficultyAlgorithm
     public static Dictionary<int, float> TankDiffs = new() {
         [TankID.Brown] = 0.01f,
         [TankID.Ash] = 0.025f,
-        [TankID.Marine] = 0.9f,
+        [TankID.Marine] = 0.09f,
         [TankID.Yellow] = 0.065f,
         [TankID.Pink] = 0.12f,
         [TankID.Green] = 0.28f,

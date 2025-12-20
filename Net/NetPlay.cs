@@ -11,6 +11,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.PingSystem;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework.Audio;

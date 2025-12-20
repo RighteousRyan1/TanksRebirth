@@ -10,6 +10,7 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
 using HidSharp.Reports.Units;
+using System.Collections.Generic;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
@@ -28,8 +29,7 @@ public enum ParticleImportance {
     /// <summary>Particles that are pureply haptic and are not necessary in any regard.</summary>
     Cosmetic 
 }
-public class Particle
-{
+public class Particle {
     /// <summary>Data you may want to assign to this particle, such as assigning an owner to a particle, etc.</summary>
     public object Tag;
 
@@ -100,6 +100,13 @@ public class Particle
 
     public float Layer;
 
+    // Particle.cs is the gift that keeps on giving
+    // particle system needs a billion different refactors
+    /// <summary>If a 3D particle, ignores drawing these meshes (by name).</summary>
+    public List<string> MeshesToIgnore = []; // to default as initialized or not as initialized, that is the question
+
+    // /// <summary>If true, this particle will not halt drawing if not viewable.</summary>
+    // public bool DrawAlways;
     /* TODO:
      * Model alpha must be set!
      * 
@@ -151,6 +158,8 @@ public class Particle
                     Matrix.CreateTranslation(Position);
         }
         foreach (ModelMesh mesh in Model.Meshes) {
+            if (MeshesToIgnore.Contains(mesh.Name))
+                continue;
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = world;
                 effect.View = System.SystemView;
@@ -174,6 +183,10 @@ public class Particle
     internal void Render()
     {
         if (Model is not null)
+            return;
+
+        // ignore render if not viewable
+        if (/*!DrawAlways && */CameraGlobals.ViewFrustum.Contains(Position) == ContainmentType.Disjoint)
             return;
 
         Matrix world;

@@ -12,6 +12,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;

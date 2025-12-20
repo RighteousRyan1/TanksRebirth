@@ -118,8 +118,11 @@ public class Block : IGameObject
             var fullSlabHeight = slabCount * SLAB_SIZE;
             HeightFromGround = fullBlockHeight + fullSlabHeight;
             _stack = value;
+
+            // ViewBox = new BoundingBox()
         }
     }
+    // public BoundingBox ViewBox;
     /// <summary>The maximum height of any <see cref="Block"/>.</summary>
     public const byte MAX_BLOCK_HEIGHT = 7;
 

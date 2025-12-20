@@ -15,6 +15,7 @@ using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
@@ -30,7 +31,7 @@ namespace TanksRebirth.GameContent.Systems.AI;
 public partial class AITank : Tank {
     public ModTank? ModdedData { get; private set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
-    /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
+    /// and <see cref="Explosion"/>s by default. To make an <see cref="AITank"/> behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
     public static readonly List<IAITankDanger> Dangers = [];
 
@@ -113,8 +114,8 @@ public partial class AITank : Tank {
     /// </summary>
     /// <param name="tier">The tier of this <see cref="AITank"/>.</param>
     /// <param name="applyDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
-    /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
-    public AITank(int tier, bool applyDefaults = true, bool isIngame = true) {
+    /// <param name="ignoreRegister">Whether or not this <see cref="AITank"/> is a gameplay tank or a manually-managed tank.</param>
+    public AITank(int tier, bool applyDefaults = true, bool ignoreRegister = false) : base(ignoreRegister) {
         // looking at this code makes me want to barf.
         // maybe move this stuff to events within Difficulties.cs
         if (Modifiers.Map[Modifiers.BUMP])
@@ -167,25 +168,23 @@ public partial class AITank : Tank {
         if (applyDefaults)
             ApplyDefaults(ref Properties);
 
-        int index = Array.IndexOf(GameHandler.AllAITanks, null);
+        if (!ignoreRegister) {
+            int aiIndex = Array.IndexOf(GameHandler.AllAITanks, null);
+            if (aiIndex < 0) return;
 
-        if (index < 0) return;
+            AITankId = aiIndex;
+            GameHandler.AllAITanks[aiIndex] = this;
 
-        AITankId = index;
+            int worldIndex = Array.IndexOf(GameHandler.AllTanks, null);
+            if (worldIndex < 0) {
+                WorldId = -1;
+                GC.Collect(); // guh?
+                return;
+            }
 
-        GameHandler.AllAITanks[index] = this;
-
-        int index2 = Array.IndexOf(GameHandler.AllTanks, null);
-
-        if (index2 < 0) {
-            WorldId = -1;
-            GC.Collect(); // guh?
-            return;
+            WorldId = worldIndex;
+            GameHandler.AllTanks[worldIndex] = this;
         }
-
-        WorldId = index2;
-
-        GameHandler.AllTanks[index2] = this;
 
         Initialize();
 
@@ -497,8 +496,7 @@ public partial class AITank : Tank {
     }
     /// <summary>The main AI loop of this <see cref="AITank"/>.</summary>
     public void DoAI() {
-        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission)
-            return;
+        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission) return;
 
         TurretRotationMultiplier = 1f;
 
@@ -562,9 +560,7 @@ public partial class AITank : Tank {
 
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
-
             var dir = Vector2.UnitY.RotatedBy(ChassisRotation);
-
             Velocity = Vector2.Normalize(dir);
 
             Velocity *= Speed;
@@ -577,12 +573,12 @@ public partial class AITank : Tank {
     public BasicEffect TankBasicEffectHandler = new(TankGame.Instance.GraphicsDevice);
     public override void Render() {
         base.Render();
-        if (IsDestroyed || !GameScene.ShouldRenderAll)
-            return;
+        if (IsDestroyed || !GameScene.ShouldRenderAll) return;
+        // find out why i put this here lmao
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();
-        if (MainMenuUI.IsActive && Properties.Invisible || Properties.Invisible && CampaignGlobals.InMission)
-            return;
+
+        if (Properties.Invisible && (MainMenuUI.IsActive || CampaignGlobals.InMission)) return;
 
         foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
@@ -597,8 +593,7 @@ public partial class AITank : Tank {
                         return;
 
                 if (mesh.Name == "Shadow") {
-                    if (!CommandGlobals.DrawMeshShadows)
-                        continue;
+                    if (!CommandGlobals.DrawMeshShadows) continue;
                     effect.Texture = DrawParamsTank.ShadowTexture;
                     effect.Alpha = DrawParamsTank.ShadowAlpha;
                     mesh.Draw();
@@ -686,8 +681,8 @@ public partial class AITank : Tank {
             effect.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, lineVerts, 0, 1);
         }
     }
-    private void DrawExtras() {
-        if (IsDestroyed)
+    void DrawExtras() {
+        if (IsDestroyed || IgnoreRegister)
             return;
 
         // did i ever make any good programming choices before this past year or so?
@@ -781,6 +776,8 @@ public partial class AITank : Tank {
 
         Properties.Armor?.Render();
     }
+
+    // strictly call this on the server.
     public static int PickRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
 
     static readonly object _rayCastLock = new();
@@ -789,7 +786,7 @@ public partial class AITank : Tank {
     /// <param name="callback">Code-callback for performing special actions based on the raycast.</param>
     /// <param name="offset">The angle offset.</param>
     /// <param name="ignoreDirs">Which directions to not cast a ray towards.</param>
-    /// <returns></returns>
+    /// <returns>A direction with the corresponding direction vector.</returns>
     public (CollisionDirection Direction, Vector2 Vec)[] RayCastCardinals(float distance, RayCastReportFixtureDelegate? callback = null, float offset = 0f, params CollisionDirection[] ignoreDirs) {
         // directions denoted by their real directions are good directions
         var goodDirs = new (CollisionDirection, Vector2)[4];

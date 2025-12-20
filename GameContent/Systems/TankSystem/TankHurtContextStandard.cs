@@ -1,6 +1,4 @@
-﻿using TanksRebirth.GameContent.Systems.TankSystem;
-
-namespace TanksRebirth.GameContent;
+﻿namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public struct TankHurtContextStandard(Tank? source) : ITankHurtContext {
     public readonly Tank? Source => source;

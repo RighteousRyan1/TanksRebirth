@@ -3,10 +3,9 @@ using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Internals.Common.Framework;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public struct TankTemplate {
     /// <summary>If false, the template will contain data for an AI tank.</summary>

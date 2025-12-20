@@ -14,6 +14,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
@@ -26,6 +27,7 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent;
 
 public class Shell : IAITankDanger {
+    public const int COLL_RECT_DIM = 2;
     public enum DestructionContext {
         WithObstacle,
         WithMine,
@@ -110,7 +112,7 @@ public class Shell : IAITankDanger {
     public OggAudio? TrailSound;
 
     /// <summary>Used primarily for collisions with blocks. This may be replaced in the future with 3D calculations.</summary>
-    public Rectangle CollHitbox => new((int)(Position.X - 2), (int)(Position.Y - 2), 4, 4);
+    public Rectangle CollHitbox => new((int)(Position.X - COLL_RECT_DIM / 2), (int)(Position.Y - COLL_RECT_DIM / 2), COLL_RECT_DIM, COLL_RECT_DIM);
 
     public float HitSphereSize = 4.0f;
     public BoundingSphere Hitbox;

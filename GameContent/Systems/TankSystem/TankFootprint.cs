@@ -71,7 +71,7 @@ public class TankFootprint {
 
         _track.Pitch = MathHelper.PiOver2;
 
-        Scale = owner.Scaling;
+        Scale = owner.DrawParams.Scaling;
 
         var defScale = new Vector3(0.5f, 0.55f, 0.5f);
         _track.Scale = defScale;

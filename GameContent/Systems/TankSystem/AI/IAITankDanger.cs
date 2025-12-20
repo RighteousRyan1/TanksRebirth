@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace TanksRebirth.GameContent.Systems.AI;
+namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
 
 public interface IAITankDanger {
     /// <summary>The location of this dangerous object.</summary>

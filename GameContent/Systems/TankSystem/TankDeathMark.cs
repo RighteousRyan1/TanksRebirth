@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public class TankDeathMark {
     private const int MAX_DEATH_MARKS = 1000;

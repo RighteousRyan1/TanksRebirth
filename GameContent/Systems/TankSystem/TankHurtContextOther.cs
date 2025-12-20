@@ -1,6 +1,4 @@
-﻿using TanksRebirth.GameContent.Systems.TankSystem;
-
-namespace TanksRebirth.GameContent;
+﻿namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public readonly struct TankHurtContextOther(Tank? source, TankHurtContextOther.HurtContext cxt, string reason) : ITankHurtContext {
     public enum HurtContext {

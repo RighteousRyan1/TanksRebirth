@@ -20,12 +20,14 @@ namespace TanksRebirth.Graphics;
 #pragma warning disable
 
 // TODO: texture pack support
+// also maybe not have this as static...?
 public static class RoomScene {
     public static readonly Vector3 TableScenePos = new(-350f, -61.7f, 330f);
     public static readonly Vector3 FloorScenePos = new(-155f, -0.15f, 210f);
 
     public static readonly float ClockRotation = MathHelper.PiOver4;
 
+    public static bool EnableDraw = true;
 
     // bro there is no construcor stop yapping stupid ide
     public static Model RoomSkyboxScene;
@@ -256,6 +258,8 @@ public static class RoomScene {
     }
 
     public static void Update() {
+        if (!EnableDraw) return;
+
         UpdateRoom();
         UpdateClock();
     }
@@ -308,7 +312,7 @@ public static class RoomScene {
     // render
 
     public static void Render() {
-
+        if (!EnableDraw) return;
         // don't cull backfaces
         TankGame.Instance.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         World = Matrix.CreateScale(Scale)
@@ -323,6 +327,14 @@ public static class RoomScene {
         RoomSkyboxScene!.Root.Transform = World;
 
         foreach (var mesh in OpaqueMeshes) {
+            // multiply by 100 because it's so fucked man
+            var bs = mesh.BoundingSphere;
+            bs.Center = Vector3.Transform(bs.Center, _boneTransforms[mesh.ParentBone.Index]);
+            bs.Radius *= Scale * 100;
+            if (!CameraGlobals.ViewFrustum.Intersects(bs))
+                continue;
+            // var inv = 1f - MathUtils.InverseLerp(100, 2000, Vector3.Distance(CameraGlobals.RebirthFreecam.Position, bs.Center), true);
+            // DebugManager.DrawBoundingSphere(bs, Color.Red * inv, CameraGlobals.GameView, CameraGlobals.GameProjection);
             foreach (BasicEffect effect in mesh.Effects) {
                 MeshEffectSet(mesh, effect);
                 effect.Alpha = 1f;
@@ -330,12 +342,12 @@ public static class RoomScene {
             mesh.Draw();
         }
 
-        // particularly expensive i think
-        //GlassMeshes.Sort((x, y) =>
-        //Vector3.Distance(x.ParentBone.Transform.Translation, CameraGlobals.RebirthFreecam.Position)
-        //.CompareTo(Vector3.Distance(y.ParentBone.Transform.Translation, CameraGlobals.RebirthFreecam.Position)));
-
         foreach (var mesh in GlassMeshes) {
+            var bs = mesh.BoundingSphere;
+            bs.Center = Vector3.Transform(bs.Center, _boneTransforms[mesh.ParentBone.Index]);
+            bs.Radius *= Scale * 100;
+            if (!CameraGlobals.ViewFrustum.Intersects(bs))
+                continue;
             foreach (BasicEffect effect in mesh.Effects) {
                 MeshEffectSet(mesh, effect);
 

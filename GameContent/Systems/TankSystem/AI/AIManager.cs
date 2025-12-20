@@ -12,13 +12,14 @@ using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems.AI;
+namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
 
 public static class AIManager {
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>

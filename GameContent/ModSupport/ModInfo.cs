@@ -10,6 +10,6 @@ public readonly struct ModInfo(string displayName, string briefDescription, stri
     public readonly string DisplayName { get; } = displayName;
     /// <summary>A brief description of the mod. Put something interesting in <c>mod_info.json</c>!</summary>
     public readonly string BriefDescription { get; } = briefDescription;
-    /// <summary></summary>
+    /// <summary>The version of the mod. Can be backdated, but is a bad practice.</summary>
     public readonly string Version { get; } = version;
 }

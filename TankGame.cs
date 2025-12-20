@@ -36,14 +36,13 @@ using TanksRebirth.IO;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
-using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
 using System.Collections.Concurrent;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 
 namespace TanksRebirth;
 
@@ -207,7 +206,6 @@ public class TankGame : Game {
 
             ClientLog.Write("Save file loaded.", LogType.Info);
 
-            GameHandler.Initialize();
             GameDirectory = Directory.GetCurrentDirectory();
             CameraGlobals.Initialize(GraphicsDevice);
             if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
@@ -531,6 +529,9 @@ public class TankGame : Game {
             ClientLog.Write($"Applied user settings.", LogType.Info);
 
             Tank.SetAssetNames();
+
+            GameHandler.Initialize();
+
             TankMusicSystem.SetAssetAssociations();
             GameScene.LoadTexturePack(Settings.MapPack);
             TankMusicSystem.LoadSoundPack(Settings.MusicPack);
@@ -837,7 +838,7 @@ public class TankGame : Game {
         // so the meshes that need UV wrapping will work
         GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
         RoomScene.Render();
-        CosmeticsUI.RenderCrates();
+        CosmeticsUI.DrawMenu();
         GameHandler.RenderAll();
         GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
 
@@ -942,7 +943,6 @@ public class TankGame : Game {
         }
 
         DebugManager.DrawDebug(SpriteRenderer);
-        DebugManager.DrawDebugMetrics();
         Speedrun.DrawSpeedrunHUD(SpriteRenderer);
 
         var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults && gameUiDraw;

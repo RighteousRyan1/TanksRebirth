@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.UI;
 

@@ -41,7 +41,7 @@ public static class VanillaCosmetics {
             cos.RelativePosition += new Vector3(rot.X, 0, rot.Y);
             cos.Rotation += new */
 
-            //cos.LockOptions = PropLockOptions.ToTurretCentered;
+            //cos.LockOptions = PropLockOptions.AroundTurret;
             //cos.RelativePosition = new(0, 19.9f, -5f);
             //cos.Rotation = new Vector3(MathHelper.PiOver2 + MathHelper.PiOver4 * 3 + MathHelper.PiOver4 / 2, tnk.TurretRotation, 0);
             //cos.Rotation = new(-MathHelper.PiOver2, 0, 0);
@@ -52,7 +52,7 @@ public static class VanillaCosmetics {
     public static Prop3D KingsRobe = new("King's Robe", ModelGlobals.KingsRobe, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/robe_tex"), Vector3.Zero, PropLockOptions.ToTank) {
         UniqueBehavior = (cos, tnk) => {
             cos.RelativePosition = Vector3.Zero;
-            cos.Rotation = new(-MathHelper.PiOver2, tnk.Flip ? 0 : MathHelper.Pi, 0);
+            cos.Rotation = new(-MathHelper.PiOver2, tnk.DrawParamsTank.GraphicalFlip ? 0 : MathHelper.Pi, 0);
             cos.Scale = new(100f);
         },
         Rotation = new(-MathHelper.PiOver2, 0, 0),

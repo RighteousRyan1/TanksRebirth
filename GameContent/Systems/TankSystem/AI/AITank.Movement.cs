@@ -5,6 +5,7 @@ using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;

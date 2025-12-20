@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Systems.AI; 

@@ -11,9 +11,8 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -25,7 +24,7 @@ using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 // pretty sure literally everything breaks if you try local multiplayer input in a multiplayer server. get to that later!
 public enum PlayerInput {
@@ -60,7 +59,7 @@ public class PlayerTank : Tank {
     public static CampaignStats PlayerStatistics;
     public static bool _drawShotPath;
     public static int[] KillCounts { get; set; } = [0, 0, 0, 0];
-    public int PlayerId { get; }
+    public int PlayerId { get; } = -1;
     public int PlayerType { get; }
 
     public static Keybind MoveUp = new("Up", Keys.W);
@@ -146,7 +145,7 @@ public class PlayerTank : Tank {
             for (int i = 0; i < Lives.Length; i++)
                 Lives[i] = num;
     }
-    public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
+    public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1, bool ignoreRegister = false) : base(ignoreRegister) {
         DrawParamsTank.Model = isPlayerModel ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
 
         Texture2D texAsset;
@@ -162,9 +161,6 @@ public class PlayerTank : Tank {
 
         _isPlayerModel = isPlayerModel;
         PlayerType = playerType;
-        PlayerId = playerType;
-
-        GameHandler.AllPlayerTanks[PlayerId] = this;
 
         // initialize drawing parameters
         DrawParams.UsePhong = _isPlayerModel;
@@ -173,8 +169,12 @@ public class PlayerTank : Tank {
 
         if (copyTier == -1) ApplyDefaults(ref Properties);
 
-        WorldId = Array.IndexOf(GameHandler.AllTanks, null);
-        GameHandler.AllTanks[WorldId] = this;
+        if (!ignoreRegister) {
+            PlayerId = playerType;
+            GameHandler.AllPlayerTanks[PlayerId] = this;
+            WorldId = Array.IndexOf(GameHandler.AllTanks, null);
+            GameHandler.AllTanks[WorldId] = this;
+        }
 
         base.Initialize();
     }
@@ -220,6 +220,8 @@ public class PlayerTank : Tank {
         base.ApplyDefaults(ref properties);
     }
     public override void Update() {
+        base.Update();
+        if (IgnoreRegister) return;
         /*if (Input.KeyJustPressed(Keys.P))
             foreach (var m in TankDeathMark.deathMarks)
                 m?.ResurrectTank();*/
@@ -249,19 +251,19 @@ public class PlayerTank : Tank {
         }
 
         DesiredDirection = Vector2.Zero;
-        
-        base.Update();
+       
+        // base.Update used to be here
 
         if (LevelEditorUI.IsActive || IsDestroyed) return;
 
         if (IsTurning) {
             if (DesiredChassisRotation - ChassisRotation >= MathHelper.PiOver2) {
                 ChassisRotation += MathHelper.Pi;
-                Flip = !Flip;
+                DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
             else if (DesiredChassisRotation - ChassisRotation <= -MathHelper.PiOver2) {
                 ChassisRotation -= MathHelper.Pi;
-                Flip = !Flip;
+                DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
         }
 
@@ -354,7 +356,7 @@ public class PlayerTank : Tank {
                 // subtract mouse delta eventually
                 int deltaX = mouseState.X - screenCenter.X;
 
-                TurretRotation += -deltaX / (312f.ToResolutionX());
+                TurretRotation += -deltaX / 312f.ToResolutionX();
 
                 // recenter
                 Mouse.SetPosition(screenCenter.X, screenCenter.Y);
@@ -579,8 +581,7 @@ public class PlayerTank : Tank {
             // Why is velocity passed by reference here lol
             Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.Properties.IsSolid);
 
-            if (corner)
-                return;
+            if (corner) return;
             if (block != null) {
                 if (block.Properties.AllowShotPathBounce) {
                     switch (dir) {
@@ -623,11 +624,10 @@ public class PlayerTank : Tank {
     }
     public override void Render() {
         base.Render();
-        if (IsDestroyed)
-            return;
+
+        if (IsDestroyed) return;
         DrawExtras();
-        if (Properties.Invisible && CampaignGlobals.InMission)
-            return;
+        if (Properties.Invisible && CampaignGlobals.InMission) return;
         foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = boneTransforms[mesh.ParentBone.Index];
@@ -657,15 +657,14 @@ public class PlayerTank : Tank {
         }
     }
     private void DrawExtras() {
-        if (IsDestroyed)
-            return;
+        if (IsDestroyed || IgnoreRegister) return;
 
         if (!MainMenuUI.IsActive) {
             if (NetPlay.IsClientMatched(PlayerId)) {
                 var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
                 var scale = 0.5f; // the graphic gets smaller for each availiable shell.
                 for (int i = 0; i < Properties.ShellLimit; i++) {
-                    var scalar = 0.95f + (i * 0.001f); //changetankproperty ShellLimit 
+                    var scalar = 0.95f + i * 0.001f; //changetankproperty ShellLimit 
                     scalar = MathHelper.Clamp(scalar, 0f, 0.99f);
                     scale *= scalar;
                 }
@@ -679,7 +678,7 @@ public class PlayerTank : Tank {
         }
 
         // a bit hardcoded but whatever
-        bool needClarification = (!MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
+        bool needClarification = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0 || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
         if (needClarification && PlayerId < Server.CurrentClientCount) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];

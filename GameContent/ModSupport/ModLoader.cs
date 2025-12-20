@@ -230,7 +230,7 @@ public static class ModLoader {
         });
         LoadedMods.Clear();
         // for when the unloading process is done.
-        ModSingletons._singletonMap.Clear();
+        ModSingletonRegistry._singletonMap.Clear();
         _loadedAlcs.Clear();
         ResetContentDictionaries();
         ModTank.unloadOffset = 0;
@@ -526,7 +526,7 @@ public static class ModLoader {
         modTank.Mod = mod;
 
         // load each tank and its data, add to moddedTypes the singleton of the ModTank.
-        ModSingletons._singletonMap.Add(type, modTank);
+        ModSingletonRegistry._singletonMap.Add(type, modTank);
 
         modTank.Name ??= new([]);
         modTank.Texture ??= tankName;
@@ -548,7 +548,7 @@ public static class ModLoader {
         modBlock!.Mod = mod;
 
         // again, but with modlbocks
-        ModSingletons._singletonMap.Add(type, modBlock);
+        ModSingletonRegistry._singletonMap.Add(type, modBlock);
         modBlock.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{blockName}");
         modBlock.Register();
         TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
@@ -565,7 +565,7 @@ public static class ModLoader {
         modShell!.Mod = mod;
 
         // again, but with modshels
-        ModSingletons._singletonMap.Add(type, modShell);
+        ModSingletonRegistry._singletonMap.Add(type, modShell);
         modShell.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{shellName}");
         TankGame.MainThreadTasks.Enqueue(modShell.Register);
         TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);

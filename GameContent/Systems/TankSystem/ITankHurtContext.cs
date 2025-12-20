@@ -1,6 +1,4 @@
-﻿using TanksRebirth.GameContent.Systems.TankSystem;
-
-namespace TanksRebirth.GameContent;
+﻿namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 /// <summary>Used for a family of things.</summary>
 public interface ITankHurtContext { 

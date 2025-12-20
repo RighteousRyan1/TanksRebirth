@@ -176,7 +176,7 @@ public static class DrawUtils {
          Matrix projection,
          Matrix? world = null) {
 
-        EnsureBboxEffect();
+        EnsureDebugEffect();
 
         var gd = TankGame.Instance.GraphicsDevice;
 
@@ -225,14 +225,12 @@ public static class DrawUtils {
             gd.DrawUserPrimitives(PrimitiveType.LineList, _bboxVertices, 0, 12);
         }
     }
-
     static BasicEffect _debugEff;
     static readonly VertexPositionColor[] _bboxVertices = new VertexPositionColor[24];
-    static void EnsureBboxEffect() {
+    static void EnsureDebugEffect() {
         _debugEff ??= new BasicEffect(TankGame.Instance.GraphicsDevice) {
             VertexColorEnabled = true
         };
-
         _debugEff.World = Matrix.Identity;
         _debugEff.View = CameraGlobals.GameView;
         _debugEff.Projection = CameraGlobals.GameProjection;
@@ -261,7 +259,7 @@ public static class DrawUtils {
         vertices[4] = new VertexPositionColor(origin, Color.Blue);
         vertices[5] = new VertexPositionColor(origin + Vector3.UnitZ * AXIS_DRAW_LEN, Color.Blue);
 
-        EnsureBboxEffect();
+        EnsureDebugEffect();
 
         foreach (var pass in _debugEff.CurrentTechnique.Passes) {
             pass.Apply();
@@ -276,7 +274,7 @@ public static class DrawUtils {
 
         if (segments < 4) segments = 4;
 
-        EnsureBboxEffect();
+        EnsureDebugEffect();
 
         var gd = TankGame.Instance.GraphicsDevice;
 
@@ -347,6 +345,54 @@ public static class DrawUtils {
                     return new Vector3(x, y, zRot);
                 });
             }
+        }
+    }
+    public static void DrawFrustum(GraphicsDevice device, BoundingFrustum frustum, Color color, Matrix view, Matrix proj) {
+        _debugEff ??= new BasicEffect(device) {
+            VertexColorEnabled = true
+        };
+
+        _debugEff.World = Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = proj;
+
+        // Get the 8 corners of the frustum
+        // Indices:
+        // 0-3: Near Plane (TopLeft, TopRight, BottomRight, BottomLeft)
+        // 4-7: Far Plane (TopLeft, TopRight, BottomRight, BottomLeft)
+        var corners = frustum.GetCorners();
+
+        // We need 12 lines x 2 vertices per line = 24 vertices
+        var verts = new VertexPositionColor[24];
+
+        // Helper to fill the array
+        int i = 0;
+        void AddLine(int indexA, int indexB) {
+            verts[i++] = new VertexPositionColor(corners[indexA], color);
+            verts[i++] = new VertexPositionColor(corners[indexB], color);
+        }
+
+        // --- Near Plane ---
+        AddLine(0, 1);
+        AddLine(1, 2);
+        AddLine(2, 3);
+        AddLine(3, 0);
+
+        // --- Far Plane ---
+        AddLine(4, 5);
+        AddLine(5, 6);
+        AddLine(6, 7);
+        AddLine(7, 4);
+
+        // --- Connections (Near to Far) ---
+        AddLine(0, 4);
+        AddLine(1, 5);
+        AddLine(2, 6);
+        AddLine(3, 7);
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            device.DrawUserPrimitives(PrimitiveType.LineList, verts, 0, 12);
         }
     }
 }
