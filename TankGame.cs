@@ -962,7 +962,7 @@ public class TankGame : Game {
 
     public static void DrawGameElements() {
         var shader = Modifiers.Map[Modifiers.LANTERN] && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
-        if (!GameScene.ShouldRenderAll) shader = null;
+        if (!GameScene.UpdateAndRender) shader = null;
 
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);

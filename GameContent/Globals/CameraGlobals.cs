@@ -1,17 +1,18 @@
 using Microsoft.Xna.Framework;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Linq;
+using System.Reflection;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.Net;
-using TanksRebirth.Graphics.Cameras;
-using System.Linq;
-using System;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics.Cameras;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Globals;
 
@@ -34,7 +35,7 @@ public static class CameraGlobals {
     public static void SetMatrices() {
         ScreenProjOrthographic = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -5000, 5000f);
         ScreenProjPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 1f, 10000f);
-        
+
         // still dont know why i offset z by -500
         ScreenView = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(0, 0, -500);
     }
@@ -78,7 +79,7 @@ public static class CameraGlobals {
 
     public static void Initialize(GraphicsDevice device) {
         RebirthFreecam = new(device) {
-            Position = MainMenuUI.MenuCameraManipulations[MainMenuUI.UIState.LoadingMods].Position
+            Position = MainMenuUI.MenuGraphicsStates[MainMenuUI.UIState.LoadingMods].Position
         };
     }
     public static void UpdateOverhead() {
@@ -155,7 +156,7 @@ public static class CameraGlobals {
             Matrix.CreateRotationY(OrthoRotationVector.X) *
             Matrix.CreateRotationX(OrthoRotationVector.Y);
 
-        GameProjection = Matrix.CreateOrthographic(1920, 1080, -5000, 75000f);
+        GameProjection = Matrix.CreateOrthographic(1920, 1080, -3500, 75000f);
     }
     static void UpdateMainMenuCamera() {
         if (MainMenuUI.CameraPositionAnimator.CurrentPosition != Vector3.Zero) {

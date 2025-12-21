@@ -101,17 +101,26 @@ public class Animator {
     }
     /// <summary>The animator will interpolate between these values to the next frame's values.</summary><param name="frame"></param>
     public Animator WithFrame(KeyFrame frame) {
-        if (frame.BezierPoints != null && frame.BezierPoints.Count > 0) {
+        // idk if i should keep this xd
+        /*if (frame.BezierPoints != null && frame.BezierPoints.Count > 0) {
+            // if a keyframe has already been added...
             if (KeyFrames.Count > 0) {
-                if (KeyFrames[^1].BezierPoints.Count > 2) {
-                    KeyFrames[^1].BezierPoints.Add(frame.Position);
+                // previous keyframe from the currently added ones
+                var prevFrame = KeyFrames[^1];
+
+                // add the position of this keyframe if it has not already been added.
+                if (!frame.BezierPoints.Contains(frame.Position)) {
+                    frame.BezierPoints.Insert(0, frame.Position);
+                }
+                // add the position of the previous keyframe if not already added.
+                if (!frame.BezierPoints.Contains(prevFrame.Position)) {
+                    frame.BezierPoints?.Insert(0, prevFrame.Position);
                 }
             }
-            else {
-                frame.BezierPoints?.Insert(0, frame.Position);
-            }
-        }
+        }*/
         KeyFrames.Add(frame);
+
+        // slightly confused why i added this, but if it's bad i guess i'll find out
         CurrentFloats = KeyFrames[0].Floats;
         return this;
     }
@@ -452,5 +461,5 @@ public class Animator {
     }
 
     public override string ToString()
-        => $"keyfc: {KeyFrames.Count} | cprog: {CurrentProgress} | tprog: {TotalProgress} | eta: {EstimatedCompletionTime}";
+        => $"keyfc: {KeyFrames.Count} | cprog: {CurrentProgress:0.00} | tprog: {TotalProgress:0.00} | eta: {EstimatedCompletionTime}";
 }

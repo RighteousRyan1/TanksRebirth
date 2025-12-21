@@ -23,7 +23,7 @@ public enum MapTheme
     Christmas,
 }
 public static class GameScene {
-    public static bool ShouldRenderAll = true;
+    public static bool UpdateAndRender = true;
 
     static bool _ucscBacking;
     public static bool UseCustomSceneColor {
@@ -359,7 +359,7 @@ public static class GameScene {
         DrawParams.Projection = CameraGlobals.GameProjection;
         DrawParams.World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Center);
 
-        if (ShouldRenderAll) {
+        if (UpdateAndRender) {
             FloorRenderer.RenderFloor();
             BoundsRenderer.RenderBounds();
         }

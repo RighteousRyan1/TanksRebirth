@@ -170,4 +170,6 @@ public struct EulerAngles(float yaw, float pitch, float roll)
     public float Pitch = pitch;
     /// <summary>The X rotation</summary>
     public float Roll = roll;
+
+    public static EulerAngles FromXYZ(Vector3 xyz) => new(xyz.Z, xyz.Y, xyz.X);
 }

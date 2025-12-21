@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using tainicom.Aether.Physics2D.Dynamics;
@@ -28,6 +29,7 @@ namespace TanksRebirth.GameContent;
 
 public class Shell : IAITankDanger {
     public const int COLL_RECT_DIM = 2;
+    public const int TOO_SHORT_LIFETIME = 5;
     public enum DestructionContext {
         WithObstacle,
         WithMine,
@@ -84,9 +86,9 @@ public class Shell : IAITankDanger {
 
     // this used to be 1500. why?
     /// <summary>The maximum shells allowed at any given time.</summary>
-    private const int MaxShells = 200;
+    public const int MAX_SHELLS = 200;
 
-    public static Shell[] AllShells { get; } = new Shell[MaxShells];
+    public static Shell[] AllShells { get; } = new Shell[MAX_SHELLS];
 
     /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
     public Tank? Owner;
@@ -125,12 +127,13 @@ public class Shell : IAITankDanger {
     public int Id { get; private set; }
     /// <summary>Represents an ID between (0-63 * client #) used for syncing. Set randomly and is synced on spawn but not manipulated! Useful for state change operations on the bullet, such as death.</summary>
     public byte UID { get; private set; }
-    float _wallRicCooldown;
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
     public ShellProperties Properties { get; set; } = new();
     public int Type { get; set; }
-    public void ReassignId(int newId) => Id = newId;
+
+    /// <summary>An identifier of the shell's volley. If shells share the same volley ID, they cannot collide until they separate from spawn.</summary>
+    public int VolleyId = -1;
     /// <summary>Updates the UID of the shell. Avoid changing during runtime if unnecessary.</summary>
     public void SetUID(byte newID) => UID = newID;
     /// <summary>aGenerates a random UID for use with shell instance management</summary>
@@ -209,7 +212,6 @@ public class Shell : IAITankDanger {
 
         Properties.HomeProperties = homing;
         Owner = owner;
-
         // if explosive, black
 
         Velocity = velocity;
@@ -268,13 +270,12 @@ public class Shell : IAITankDanger {
         SetUID(GenerateUID(owner));
         PostCreate?.Invoke(this);
     }
-    private void StopSounds(int delay, MissionEndContext context, bool result1up) {
+    void StopSounds(int delay, MissionEndContext context, bool result1up) {
         TrailSound?.Instance?.Stop();
         ShootSound?.Instance?.Stop();
     }
-    internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
-            return;
+    public void Update() {
+        if (!CampaignGlobals.InMission && !MainMenuUI.IsActive) return;
 
         Hitbox = new(Position3D, HitSphereSize);
 
@@ -284,59 +285,47 @@ public class Shell : IAITankDanger {
                 * Matrix.CreateTranslation(Position3D);
 
         //if (TrailSound != null) {
-            //if (CameraGlobals.IsUsingFirstPresonCamera)
-            //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.RebirthFreecam.Position);
+        //if (CameraGlobals.IsUsingFirstPresonCamera)
+        //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.RebirthFreecam.Position);
         //}
 
-        if (_wallRicCooldown <= 0) {
-            if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
-                OnRicochet?.Invoke(this);
-                Ricochet(true);
+        if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
+            OnRicochet?.Invoke(this);
+            Ricochet(true);
 
-                ModdedData?.OnRicochet(null);
-
-                _wallRicCooldown = 5;
-            }
-
-            if (Position.Y is < GameScene.MIN_Z or > GameScene.MAX_Z) {
-                OnRicochet?.Invoke(this);
-                Ricochet(false);
-
-                ModdedData?.OnRicochet(null);
-
-                _wallRicCooldown = 5;
-            }
+            ModdedData?.OnRicochet(null);
         }
-        else
-            _wallRicCooldown -= RuntimeData.DeltaTime;
+
+        if (Position.Y is < GameScene.MIN_Z or > GameScene.MAX_Z) {
+            OnRicochet?.Invoke(this);
+            Ricochet(false);
+
+            ModdedData?.OnRicochet(null);
+        }
 
         var dummy = Vector2.Zero;
 
         Collision.HandleCollisionSimple_ForBlocks(CollHitbox, Velocity, ref dummy, out var dir, out var block,
             out bool corner, false, (c) => c.Properties.IsSolid);
 
-        if (LifeTime <= 5 && (dir != CollisionDirection.None || corner))
-            Destroy(DestructionContext.WithObstacle);
         if (corner)
             Destroy(DestructionContext.WithObstacle);
-        if (_wallRicCooldown <= 0) {
-            switch (dir) {
-                case CollisionDirection.Up:
-                case CollisionDirection.Down:
-                    Ricochet(false);
-                    block.ModdedData?.OnRicochet(this);
-                    ModdedData?.OnRicochet(block);
-                    OnRicochetWithBlock?.Invoke(block, this);
-                    break;
-                case CollisionDirection.Left:
-                case CollisionDirection.Right:
-                    // TODO: fix this pls
-                    Ricochet(true);
-                    block.ModdedData?.OnRicochet(this);
-                    ModdedData?.OnRicochet(block);
-                    OnRicochetWithBlock?.Invoke(block, this);
-                    break;
-            }
+        switch (dir) {
+            case CollisionDirection.Up:
+            case CollisionDirection.Down:
+                Ricochet(false);
+                block.ModdedData?.OnRicochet(this);
+                ModdedData?.OnRicochet(block);
+                OnRicochetWithBlock?.Invoke(block, this);
+                break;
+            case CollisionDirection.Left:
+            case CollisionDirection.Right:
+                // TODO: fix this pls
+                Ricochet(true);
+                block.ModdedData?.OnRicochet(this);
+                ModdedData?.OnRicochet(block);
+                OnRicochetWithBlock?.Invoke(block, this);
+                break;
         }
 
         LifeTime += RuntimeData.DeltaTime;
@@ -381,11 +370,9 @@ public class Shell : IAITankDanger {
 
                 if (success) {
                     float dist = Vector2.Distance(Position, Properties.HomeProperties.Target);
-
                     Velocity += MathUtils.DirectionTo(Position, Properties.HomeProperties.Target) * Properties.HomeProperties.Power / dist;
 
-                    Vector2 trueSpeed = Vector2.Normalize(Velocity) * Properties.HomeProperties.Speed;
-
+                    var trueSpeed = Vector2.Normalize(Velocity) * Properties.HomeProperties.Speed;
                     Velocity = trueSpeed;
                 }
             }
@@ -410,6 +397,7 @@ public class Shell : IAITankDanger {
         ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
     }
+    #region Particles
     void RenderSmokeParticle(float timer) {
 
         // TODO: make look accurate
@@ -508,11 +496,12 @@ public class Shell : IAITankDanger {
                 flame.Destroy();
         };
     }
-    private void TankGame_OnFocusRegained(object? sender, nint e) {
+    #endregion
+    void TankGame_OnFocusRegained(object? sender, nint e) {
         if (TrailSound is not null && TrailSound.Instance is not null)
             TrailSound.Instance?.Resume();
     }
-    private void TankGame_OnFocusLost(object? sender, nint e) {
+    void TankGame_OnFocusLost(object? sender, nint e) {
         if (TrailSound is not null && TrailSound.Instance is not null)
             TrailSound.Instance?.Pause();
     }
@@ -527,6 +516,10 @@ public class Shell : IAITankDanger {
         if (RicochetsRemaining <= 0) {
             Destroy(DestructionContext.WithObstacle);
             return;
+        }
+
+        if (LifeTime < TOO_SHORT_LIFETIME) {
+            Destroy(DestructionContext.WithObstacle);
         }
 
         if (horizontal)
@@ -584,22 +577,57 @@ public class Shell : IAITankDanger {
 
         ref var bulletSSpace = ref MemoryMarshal.GetReference((Span<Shell>)AllShells);
 
-        for (var i = 0; i < AllShells.Length; i++) {
-            ref var bullet = ref Unsafe.Add(ref bulletSSpace, i);
-            if (bullet == null || bullet == this) continue;
-            // if (!bullet.HitCircle.Intersects(HitCircle)) continue;
-            if (!bullet.Hitbox.Intersects(Hitbox)) continue;
+        // prevents collisions between shells spawned in the same volley
+        bool hasSibling = false;
+        bool stillIntersecting = false;
 
-            if (bullet.Properties.IsDestructible)
-                bullet.Destroy(DestructionContext.WithShell);
+        for (int i = 0; i < AllShells.Length; i++) {
+            var s = AllShells[i];
+            if (s == null || s == this)
+                continue;
+
+            if (s.VolleyId != VolleyId)
+                continue;
+
+            if (s.Hitbox == default)
+                continue;
+
+            hasSibling = true;
+
+            if (s.Hitbox.Intersects(Hitbox)) {
+                stillIntersecting = true;
+                break;
+            }
+        }
+
+        if (hasSibling && !stillIntersecting)
+            VolleyId = -1;
+
+        // regular collision, with respect to collision group
+        for (var i = 0; i < AllShells.Length; i++) {
+            ref var shell = ref Unsafe.Add(ref bulletSSpace, i);
+            if (shell == null || shell == this) continue;
+            
+            // prevents collisions between shells of the same volley until they separate
+            if (shell.VolleyId > -1 && VolleyId > -1
+                && shell.VolleyId == VolleyId) continue;
+
+            bool collision = shell.Hitbox.Intersects(Hitbox);
+            if (!collision) continue;
+
+            if (shell.Properties.IsDestructible)
+                shell.Destroy(DestructionContext.WithShell);
             if (Properties.IsDestructible)
                 Destroy(DestructionContext.WithShell);
 
+            // if destroy has been called this will be true, so prevent further checking
+            if (shell == null) continue;
+
             // if two indestructible bullets come together, destroy them both. too powerful!
-            if (bullet is { Properties.IsDestructible: true, } || Properties.IsDestructible) continue;
+            if (shell.Properties.IsDestructible || Properties.IsDestructible) continue;
 
             // bullet is sometimes null here? so null safety is key
-            bullet?.Destroy(DestructionContext.WithShell);
+            shell.Destroy(DestructionContext.WithShell);
             Destroy(DestructionContext.WithShell);
         }
     }
@@ -646,6 +674,7 @@ public class Shell : IAITankDanger {
         TrailSound?.Dispose();
         TrailSound = null;
 
+        // there's definitely a way to un-hardcode this
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.Explosive)
                 new Explosion(Position, 7f, Owner, 0.25f);
@@ -662,10 +691,7 @@ public class Shell : IAITankDanger {
         Remove();
     }
 
-    internal void Render() {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
+    public void Render() {
         DrawParams.Projection = CameraGlobals.GameProjection;
         DrawParams.View = CameraGlobals.GameView;
 
@@ -674,7 +700,10 @@ public class Shell : IAITankDanger {
         //    Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius, true);
         if (DebugManager.DebuggingEnabled) {
             DebugManager.DrawDebugString(TankGame.SpriteRenderer,
-                $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
+                $"RicochetsLeft: {RicochetsRemaining}" +
+                $"\nTier: {Type}" +
+                $"\nId: {Id}" +
+                $"\nSgid: {VolleyId}",
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
                 centered: true);
 

@@ -22,6 +22,8 @@ public partial class AITank {
 
     public int CurrentRandomMove;
 
+    public Vector2 AvoidPosition;
+
     // random movements do not happen until this queue is empty
     // random turns SHOULD BE (but not now) added to the pivot queue
     /// <summary>A queue of movements that will be split into <see cref="AIParameters.MaxQueuedMovements"/> sub-turns, which are entered into <see cref="SubPivotQueue"/>.</summary>
@@ -36,10 +38,15 @@ public partial class AITank {
     /// <summary>Default movement handling for this <see cref="AITank"/>. Includes random movements, avoidance, PivotQueue/SubQueue working, and obstacle navigation.</summary>
     public void DoMovement() {
         // IsTurning is on crack?
+
         bool shouldMove = !IsTurning && CurMineStun <= 0 && CurShootStun <= 0;
 
         if (!shouldMove) return;
         if (!Behaviors[0].IsModOf(CurrentRandomMove)) return;
+
+        // realistically... it will never avoid from its own position.
+        // so this should be safe
+        AvoidPosition = Vector2.Zero;
 
         CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
         Behaviors[0].Value = 0;
@@ -56,11 +63,10 @@ public partial class AITank {
 
         // the tank avoids the average position of all dangers
         if (NearbyDangers.Count > 0) {
-            var sum = Vector2.Zero;
             for (int i = 0; i < NearbyDangers.Count; i++)
-                sum += NearbyDangers[i].Position;
+                AvoidPosition += NearbyDangers[i].Position;
 
-            var averageDangerPosition = sum / NearbyDangers.Count;
+            var averageDangerPosition = AvoidPosition / NearbyDangers.Count;
 
             SubPivotQueue.Clear();
             PivotQueue.Clear();
@@ -135,7 +141,7 @@ public partial class AITank {
 
         float vecRot;
 
-        var redirectAngle = 1.35f; // MathHelper.PiOver2; // normally /2
+        var redirectAngle = 1.3f; // MathHelper.PiOver2; // normally /2
 
         if (dir != CollisionDirection.Down)
             vecRot = dir == CollisionDirection.Left ? -redirectAngle : redirectAngle;

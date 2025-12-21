@@ -720,7 +720,11 @@ public static class AIManager {
                 properties.Deceleration = 0.6f;
                 properties.MaxSpeed = 2.4f;
                 properties.TurningSpeed = 0.06f;
-                properties.MaximalTurn = MathHelper.ToRadians(5);
+
+                // note to self and others: this value is normally 5 (from the original game)
+                // but with the current implementation, it's hard to pinpoint why their movement is so jittery.
+                // for now, this is being increased to 8, and is not a permanent change
+                properties.MaximalTurn = MathHelper.ToRadians(8);
                 properties.ShellLimit = 3;
                 properties.ShellCooldown = 60;
                 properties.ShellSpeed = 6f;
@@ -971,11 +975,7 @@ public static class AIManager {
     };
     public static bool RunThreads = true;
     internal static void UpdateAITanks() {
-
         if (ModLoader.Status != LoadStatus.Complete)
-            return;
-
-        if (!GameScene.ShouldRenderAll)
             return;
 
         //if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.H)) {

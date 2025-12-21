@@ -74,7 +74,7 @@ public class Freecam(GraphicsDevice device) {
             ChangeProjection();
         }
     }
-    float _far = 50000f;
+    float _far = 75000f;
     public float FarViewDistance {
         get => _far;
         set {

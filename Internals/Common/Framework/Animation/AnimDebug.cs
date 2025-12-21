@@ -58,7 +58,6 @@ public static class AnimDebug {
 
                 safeCurve.AddRange(next.BezierPoints);
 
-                // next keyframe = end point
                 safeCurve.Add(next.Position);
 
                 int steps = 60;

@@ -155,8 +155,7 @@ public sealed class Mine : IAITankDanger {
     }
 
     internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
-            return;
+        if (!CampaignGlobals.InMission && !MainMenuUI.IsActive) return;
 
         DrawParams.World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
 
@@ -228,9 +227,6 @@ public sealed class Mine : IAITankDanger {
     }
 
     internal void Render() {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
         DrawParams.View = CameraGlobals.GameView;
         DrawParams.Projection = CameraGlobals.GameProjection;
 

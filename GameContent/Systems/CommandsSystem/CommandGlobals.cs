@@ -175,10 +175,10 @@ public static class CommandGlobals {
 
         // render engine
         [new CommandInput(name: "r_menu", description: "Disable/enable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, false, (args) => {
-            GameScene.ShouldRenderAll = bool.Parse(args[0]);
+            GameScene.UpdateAndRender = bool.Parse(args[0]);
         }),
         [new CommandInput(name: "r_gp_ui", description: "Disable/enable drawing gameplay UI.")] = new CommandOutput(netSync: false, false, (args) => {
-            GameScene.ShouldRenderAll = bool.Parse(args[0]);
+            GameSceneUI.DrawingEnabled = bool.Parse(args[0]);
         }),
         [new CommandInput(name: "r_chromakey_enabled", description: "Enables/disables chroma key rendering.")] = new CommandOutput(netSync: false, false, (args) => {
             GameScene.UseCustomSceneColor = bool.Parse(args[0]);

@@ -19,7 +19,6 @@ using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
-using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -27,7 +26,6 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.AI;
 
-#pragma warning disable CA2211
 public partial class AITank : Tank {
     public ModTank? ModdedData { get; private set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
@@ -255,13 +253,16 @@ public partial class AITank : Tank {
     public List<Tank> TanksNearShootAwareness = [];
     public List<Block> BlocksNear = [];
     public override void Update() {
-        base.Update();
-    }
-    public override void PreUpdate() {
+        // why did i not do this sooner?
         ModdedData?.PreUpdate();
-    }
-    public override void PostUpdate() {
+        base.Update();
         ModdedData?.PostUpdate();
+    }
+    public override void Shoot(bool fxOnly = false, bool netSend = true) {
+        base.Shoot(fxOnly, netSend);
+
+        // only called once
+        ModdedData?.Fire();
     }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
@@ -358,6 +359,8 @@ public partial class AITank : Tank {
     }
     // TODO: kepe things better
     void KeyDropLogic(Color color) {
+        if (GameLauncher.IsConsoleAllocated) return;
+
         if (TankGame.SaveFile.CollectedKeys >= 10) {
             SoundPlayer.SoundError();
             var str = TankGame.GameLanguage.KeysWarning;
@@ -573,7 +576,7 @@ public partial class AITank : Tank {
     public BasicEffect TankBasicEffectHandler = new(TankGame.Instance.GraphicsDevice);
     public override void Render() {
         base.Render();
-        if (IsDestroyed || !GameScene.ShouldRenderAll) return;
+        if (IsDestroyed) return;
         // find out why i put this here lmao
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();

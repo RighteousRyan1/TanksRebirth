@@ -7,7 +7,6 @@ using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
-using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.ModSupport;
@@ -22,8 +21,8 @@ namespace TanksRebirth.GameContent.ModSupport;
 /// Create your own tank for this game!
 /// </summary>
 public class ModTank : ILoadable, IModContent {
-    private List<OggMusic> _music;
-    private Texture2D? _texture;
+    List<OggMusic> _music;
+    Texture2D? _texture;
 
     public string InternalName { get; set; }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModTank"/> is a part of.</summary>
@@ -69,9 +68,11 @@ public class ModTank : ILoadable, IModContent {
     /// <summary>Called when this tank detects danger.
     /// <br></br>Use <see cref="AITank.NearbyDangers"/> to access dangerous objects near the tank.</summary>
     public virtual void DangerDetected() { }
-    /// <summary>Called when this tank shoots.</summary>
+    /// <summary>Called for each <see cref="Shell"/> a tank shoots.</summary>
     /// <param name="shell">The shell which was shot.</param>
     public virtual void Shoot(Shell shell) { }
+    /// <summary>Called once when a tank shoots.</summary>
+    public virtual void Fire() { }
     /// <summary>Called when this tank lays a mine.</summary>
     /// <param name="mine">The mine that was laid</param>
     public virtual void LayMine(Mine mine) { }

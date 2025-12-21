@@ -136,53 +136,57 @@ public class GameHandler {
         foreach (var ping in IngamePing.AllIngamePings)
             ping?.Update();
 
-        if (!IntermissionSystem.IsAwaitingNewMission) {
-            foreach (var pTank in AllPlayerTanks)
-                pTank?.Update();
+        if (GameScene.UpdateAndRender) {
+            if (!IntermissionSystem.IsAwaitingNewMission) {
+                foreach (var pTank in AllPlayerTanks)
+                    pTank?.Update();
 
-            AIManager.UpdateAITanks();
+                AIManager.UpdateAITanks();
 
-            foreach (var mine in Mine.AllMines)
-                mine?.Update();
+                foreach (var mine in Mine.AllMines)
+                    mine?.Update();
 
-            foreach (var bullet in Shell.AllShells)
-                bullet?.Update();
+                foreach (var bullet in Shell.AllShells)
+                    bullet?.Update();
 
-            foreach (var fp in TankFootprint.AllFootprints)
-                fp?.Update();
+                foreach (var fp in TankFootprint.AllFootprints)
+                    fp?.Update();
 
-            foreach (var p in Airplane.AllPlanes)
-                p?.Update();
-        }
-        if (CampaignGlobals.InMission) {
-            TankMusicSystem.Update();
-
-            foreach (var crate in Crate.AllCrates)
-                crate?.Update();
-
-            foreach (var pu in Powerup.Powerups)
-                pu?.Update();
-        }
-        else {
-            foreach (var audio in TankMusicSystem.Audio.ToList()) {
-                audio.Value.Volume = 0;
-                audio.Value.Stop();
+                foreach (var p in Airplane.AllPlanes)
+                    p?.Update();
             }
+            if (CampaignGlobals.InMission) {
+                TankMusicSystem.Update();
+
+                foreach (var crate in Crate.AllCrates)
+                    crate?.Update();
+
+                foreach (var pu in Powerup.Powerups)
+                    pu?.Update();
+            }
+            else {
+                foreach (var audio in TankMusicSystem.Audio.ToList()) {
+                    audio.Value.Volume = 0;
+                    audio.Value.Stop();
+                }
+            }
+
+            // level editor update used to be here...?
+
+            foreach (var expl in Explosion.Explosions)
+                expl?.Update();
+
+            foreach (var cube in Block.AllBlocks)
+                cube?.OnUpdate();
+
+            if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
+                foreach (var sq in PlacementSquare.Placements)
+                    sq?.Update();
+
+            Particles.UpdateParticles();
         }
 
         LevelEditorUI.Update();
-
-        foreach (var expl in Explosion.Explosions)
-            expl?.Update();
-
-        foreach (var cube in Block.AllBlocks)
-            cube?.OnUpdate();
-
-        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
-            foreach (var sq in PlacementSquare.Placements)
-                sq?.Update();
-
-        Particles.UpdateParticles();
 
         var mmActive = MainMenuUI.IsActive;
         if (mmActive)
@@ -222,42 +226,45 @@ public class GameHandler {
 
         // not worth doing culling logic for smaller tiny things. the tank render logic can be lengthy
 
-        foreach (var block in Block.AllBlocks)
-            block?.OnRender();
+        if (GameScene.UpdateAndRender) {
 
-        foreach (var mine in Mine.AllMines)
-            mine?.Render();
+            foreach (var block in Block.AllBlocks)
+                block?.OnRender();
 
-        foreach (var bullet in Shell.AllShells)
-            bullet?.Render();
+            foreach (var mine in Mine.AllMines)
+                mine?.Render();
 
-        foreach (var mark in TankDeathMark.deathMarks)
-            mark?.Render();
+            foreach (var bullet in Shell.AllShells)
+                bullet?.Render();
 
-        foreach (var ping in IngamePing.AllIngamePings)
-            ping?.Render();
+            foreach (var mark in TankDeathMark.deathMarks)
+                mark?.Render();
 
-        foreach (var p in Airplane.AllPlanes)
-            p?.Render();
+            foreach (var ping in IngamePing.AllIngamePings)
+                ping?.Render();
 
-        //foreach (var print in TankFootprint.footprints)
-        //print?.Render();
+            foreach (var p in Airplane.AllPlanes)
+                p?.Render();
 
-        foreach (var crate in Crate.AllCrates)
-            crate?.Render();
+            //foreach (var print in TankFootprint.footprints)
+            //print?.Render();
 
-        foreach (var powerup in Powerup.Powerups)
-            powerup?.Render();
+            foreach (var crate in Crate.AllCrates)
+                crate?.Render();
 
-        Particles.RenderModelParticles();
+            foreach (var powerup in Powerup.Powerups)
+                powerup?.Render();
 
-        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
-            foreach (var sq in PlacementSquare.Placements)
-                sq?.Render();
+            Particles.RenderModelParticles();
 
-        TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+            if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
+                foreach (var sq in PlacementSquare.Placements)
+                    sq?.Render();
 
-        Particles.RenderParticles();
+            TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+
+            Particles.RenderParticles();
+        }
 
         // only render the level editor if it's active
         // change depth stencil...?

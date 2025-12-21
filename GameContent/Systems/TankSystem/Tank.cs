@@ -119,28 +119,21 @@ public abstract class Tank(bool ignoresRegister) {
     #region Events
 
     public delegate void DamageDelegate(Tank victim, bool destroy, ITankHurtContext context);
+    public delegate void ApplyDefaultsDelegate(Tank tank, TankProperties properties);
+    public delegate void ShootDelegate(Tank tank, Shell shell);
+    public delegate void LayMineDelegate(Tank tank, Mine mine);
+    public delegate void PreUpdateDelegate(Tank tank);
+    public delegate void PostUpdateDelegate(Tank tank);
+    public delegate void FireDelegate(Tank tank);
 
     public static event DamageDelegate? OnDamage;
-
-    public delegate void ApplyDefaultsDelegate(Tank tank, TankProperties properties);
-
     public static event ApplyDefaultsDelegate? PostApplyDefaults;
-
-    public delegate void ShootDelegate(Tank tank, Shell shell);
-
-    /// <summary>Does not run for spread-fire.</summary>
+    /// <summary>Ran for every spread-fire shot.</summary>
     public static event ShootDelegate? OnShoot;
-
-    public delegate void LayMineDelegate(Tank tank, Mine mine);
-
+    /// <summary>Ran once when a tank shoots.</summary>
+    public static event FireDelegate? OnFire;
     public static event LayMineDelegate? OnLayMine;
-
-    public delegate void PreUpdateDelegate(Tank tank);
-
     public static event PreUpdateDelegate? OnPreUpdate;
-
-    public delegate void PostUpdateDelegate(Tank tank);
-
     public static event PostUpdateDelegate? OnPostUpdate;
 
     #endregion
@@ -442,7 +435,7 @@ public abstract class Tank(bool ignoresRegister) {
         }
 
         if (Modifiers.Map[Modifiers.SHOTGUNS]) {
-            Properties.ShellSpread = 0.3f;
+            Properties.ShellSpread = 0.15f;
             Properties.ShellShootCount = 3;
             Properties.ShellLimit *= 3;
 
@@ -467,7 +460,6 @@ public abstract class Tank(bool ignoresRegister) {
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
         OnPreUpdate?.Invoke(this);
-        PreUpdate();
 
         DecrementTimers();
 
@@ -571,10 +563,7 @@ public abstract class Tank(bool ignoresRegister) {
         TimeSinceLastAction += RuntimeData.DeltaTime;
 
         OnPostUpdate?.Invoke(this);
-        PostUpdate();
     }
-    public virtual void PreUpdate() { }
-    public virtual void PostUpdate() { }
     /// <summary>Damage this <see cref="Tank"/>. If it has no armor, destroy it.</summary>
     public virtual void Damage(ITankHurtContext context, bool netSend, Color? colorOverride = null) {
         if (IsDestroyed || Properties.Immortal)
@@ -742,39 +731,14 @@ public abstract class Tank(bool ignoresRegister) {
     }
 
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
-    public virtual void Shoot(bool fxOnly, bool netSend = true) {
+    public virtual void Shoot(bool fxOnly = false, bool netSend = true) {
         if (!MainMenuUI.IsActive && !CampaignGlobals.InMission || !Properties.HasTurret)
             return;
 
-        if (CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)
-            return;
+        if (CurShootCooldown > 0) return;
 
-        bool flip = false;
-        float angle = 0f;
-
-        var rotatedPos = Vector2.UnitY.RotatedBy(TurretRotation);
-
-        if (!fxOnly) {
-            var shell = new Shell(TurretPosition, new Vector2(-rotatedPos.X, rotatedPos.Y) * Properties.ShellSpeed,
-                Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
-
-            LastShotShell = shell;
-
-            OnShoot?.Invoke(this, shell);
-
-            if (this is AITank ai)
-                ai.ModdedData?.Shoot(shell);
-
-            // only send this code once for the shooting player
-            if (netSend) {
-                if (this is PlayerTank pt) {
-                    if (NetPlay.IsClientMatched(pt.PlayerId))
-                        Client.SyncShellFire(shell);
-                }
-                else
-                    Client.SyncShellFire(shell);
-            }
-        }
+        bool notEnoughShots = (Properties.ShellLimit - OwnedShellCount) < Properties.ShellShootCount;
+        if (notEnoughShots) return;
 
         DoShootParticles();
 
@@ -782,41 +746,66 @@ public abstract class Tank(bool ignoresRegister) {
         KnockbackVelocity = force / UNITS_PER_METER;
 
         if (!fxOnly) {
-            for (int i = 1; i < Properties.ShellShootCount; i++) {
-                // i == 0 : null, 0 rads
-                // i == 1 : flipped, -0.15 rads
-                // i == 2 : !flipped, 0.15 rads
-                // i == 3 : flipped, -0.30 rads
-                // i == 4 : !flipped, 0.30 rads
-                flip = !flip;
-                if ((i - 1) % 2 == 0)
-                    angle += Properties.ShellSpread;
-                var newAngle = flip ? -angle : angle;
+            foreach (var shell in ShootSpread()) {
+                OnShoot?.Invoke(this, shell);
 
-                var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
-                    homing: Properties.ShellHoming);
-                rotatedPos = Vector2.UnitY.RotatedBy(TurretRotation);
+                // shitcode...
+                if (this is AITank ai)
+                    ai.ModdedData?.Shoot(shell);
 
-                var newPos = Position + new Vector2(0, 20).RotatedBy(-TurretRotation + newAngle);
-
-                shell.Position = new Vector2(newPos.X, newPos.Y);
-
-                shell.Velocity = new Vector2(-rotatedPos.X, rotatedPos.Y).RotatedBy(newAngle) *
-                                 Properties.ShellSpeed;
-
-                shell.RicochetsRemaining = Properties.RicochetCount;
+                // this might be shitcode...
+                if (netSend) {
+                    if (this is PlayerTank pt) {
+                        if (NetPlay.IsClientMatched(pt.PlayerId))
+                            Client.SyncShellFire(shell);
+                    }
+                    else
+                        Client.SyncShellFire(shell);
+                }
             }
         }
 
         TimeSinceLastAction = 0;
-
         CurShootStun = Properties.ShootStun;
         CurShootCooldown = Properties.ShellCooldown;
 
         if (_oldShellLimit != Properties.ShellLimit)
             Array.Resize(ref OwnedShells, Properties.ShellLimit);
 
+        OnFire?.Invoke(this);
+
         _oldShellLimit = Properties.ShellLimit;
+    }
+    IEnumerable<Shell> ShootSpread() {
+        bool flip = false;
+        float angle = 0f;
+
+        var rotatedPos = Vector2.UnitY.RotatedBy(TurretRotation);
+        for (int i = 0; i < Properties.ShellShootCount; i++) {
+            // i == 0 : null, 0 rads
+            // i == 1 : flipped, -0.15 rads
+            // i == 2 : !flipped, 0.15 rads
+            // i == 3 : flipped, -0.30 rads
+            // i == 4 : !flipped, 0.30 rads
+            flip = !flip;
+            if ((i - 1) % 2 == 0)
+                angle += Properties.ShellSpread;
+
+            var newAngle = flip ? -angle : angle;
+
+            var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
+                homing: Properties.ShellHoming) {
+                // this could be magical and lead to *super specific* edge cases but otherwise this is a decent way to put it
+                VolleyId = (int)RuntimeData.UpdateCount % 10000
+            };
+
+            var newPos = Position + new Vector2(0, 20).RotatedBy(-TurretRotation + newAngle);
+            shell.Position = new Vector2(newPos.X, newPos.Y);
+            shell.Velocity = new Vector2(-rotatedPos.X, rotatedPos.Y).RotatedBy(newAngle) * Properties.ShellSpeed;
+            shell.RicochetsRemaining = Properties.RicochetCount;
+
+            yield return shell;
+        }
     }
     public void DoShootParticles() {
         var hit = GameHandler.Particles.MakeParticle(TurretPosition3D,
@@ -910,7 +899,6 @@ public abstract class Tank(bool ignoresRegister) {
     }
 
     public virtual void Render() {
-        if (!GameScene.ShouldRenderAll) return;
         if (IsDestroyed) return;
 
         DrawParams.Projection = CameraGlobals.GameProjection;

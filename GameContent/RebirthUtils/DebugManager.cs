@@ -138,6 +138,8 @@ public static class DebugManager {
             sb.End();
     }
     public static void InitDebugUI() {
+        if (!GameLauncher.IsConsoleAllocated) return;
+
         MissionName = new(FontGlobals.RebirthFont, Color.White, 0.75f, 20) {
             DefaultString = "Mission Name",
             IsVisible = false
@@ -240,6 +242,7 @@ public static class DebugManager {
         };
     }
     public static void UpdateDebug() {
+        if (!GameLauncher.IsConsoleAllocated) return;
         if (InputUtils.KeyJustPressed(Keys.F4))
             DebuggingEnabled = !DebuggingEnabled;
 
@@ -345,6 +348,7 @@ public static class DebugManager {
 
                 for (int i = 0; i < _bezierPts.Count; i++)
                     pts.Add(_bezierPts[i]);
+
                 _povAnimatorKeyframeBuilder.Add(new(
                     position: fc.Position,
                     scale: fc.Rotation,
@@ -445,6 +449,7 @@ public static class DebugManager {
 
     public static float SnapToQuarterCircle(float radians) => MathF.Round(radians / MathHelper.PiOver2) * MathHelper.PiOver2;
     public static void DrawDebug(SpriteBatch spriteBatch) {
+        if (!GameLauncher.IsConsoleAllocated) return;
         if (Client.IsConnected()) {
             var myClient = Client.NetClient;
             var ping = myClient.Ping;
@@ -591,7 +596,8 @@ public static class DebugManager {
             $"\n\ncurrent easing type: {_povAnimatorFunction}" +
             $"\ncurrent frame timespan: {_povAnimatorDuration}" +
             $"\nCamera keyframes:" +
-            $"\n{string.Join("\n", _povAnimatorKeyframeBuilder)}",
+            $"\n{string.Join("\n", _povAnimatorKeyframeBuilder)}" +
+            $"\n\nAnim: {_povAnimatorTest?.ToString() ?? "N/A"}",
                 new Vector2(0, 50),
                 Color.White,
                 Vector2.One * 0.75f);

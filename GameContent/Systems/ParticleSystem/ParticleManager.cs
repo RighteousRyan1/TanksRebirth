@@ -45,9 +45,6 @@ public class ParticleManager
     }
 
     public void RenderParticles(bool renderInReverseOrder = false) {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
         //if (Internals.Common.InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.U))
             //Console.Clear();
 
@@ -71,9 +68,6 @@ public class ParticleManager
         //Console.WriteLine($"Particle Render: {ms:0.000}ms");
     }
     public void RenderModelParticles(bool renderInReverseOrder = false) {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
         if (renderInReverseOrder) {
             for (int i = CurrentParticles.Count - 1; i >= 0; i--) {
                 var particle = CurrentParticles[i];
@@ -92,9 +86,6 @@ public class ParticleManager
         }
     }
     public void UpdateParticles() {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
         //var s = Stopwatch.StartNew();
 
         for (int i = 0; i < CurrentParticles.Count; i++) {

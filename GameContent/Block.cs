@@ -338,8 +338,6 @@ public class Block : IGameObject
     public void OnPreRender() { }
 
     public void OnRender() {
-        if (!GameScene.ShouldRenderAll)
-            return;
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         if (Type != BlockID.Teleporter) {
             World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
@@ -410,9 +408,6 @@ public class Block : IGameObject
     }
 
     public void OnUpdate() {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
         Hitbox = new((int)(Position.X - SIDE_LENGTH / 2 + 1), (int)(Position.Y - SIDE_LENGTH / 2), (int)SIDE_LENGTH - 1, (int)SIDE_LENGTH);
         _offset = new();
 

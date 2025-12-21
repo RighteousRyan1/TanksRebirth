@@ -274,8 +274,6 @@ public class Airplane {
         };
     }
     public void Render() {
-        if (!GameScene.ShouldRenderAll)
-            return;
         World = Matrix.CreateScale(0.6f)
             * Matrix.CreateRotationY(Rotation)
             * Matrix.CreateTranslation(Position);

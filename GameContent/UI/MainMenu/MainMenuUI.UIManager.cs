@@ -53,16 +53,18 @@ public static partial class MainMenuUI
         set {
             _menuState = value;
 
-            if (MenuCameraManipulations.ContainsKey(value)) {
+            if (MenuGraphicsStates.ContainsKey(value)) {
+                _goalBlur = MenuGraphicsStates[value].GaussianBlurFactor;
                 CameraPositionAnimator = Animator.Create()
                     .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position))
-                    .WithFrame(new(position: MenuCameraManipulations[value].Position, duration: CameraTransitionTime, easing: CameraEasingFunction));
+                    .WithFrame(new(position: MenuGraphicsStates[value].Position, duration: CameraTransitionTime, easing: CameraEasingFunction));
                 CameraRotationAnimator = Animator.Create()
                     .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation))
-                    .WithFrame(new(position: MenuCameraManipulations[value].Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
+                    .WithFrame(new(position: MenuGraphicsStates[value].Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
             }
             // if it doesn't have a proper camera position, just go to the regular one.
             else {
+                _goalBlur = DEFAULT_BLUR;
                 CameraPositionAnimator = Animator.Create()
                     .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position))
                     .WithFrame(new(position: CamPosMain, duration: CameraTransitionTime, easing: CameraEasingFunction));

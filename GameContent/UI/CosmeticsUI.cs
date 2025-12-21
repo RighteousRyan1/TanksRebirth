@@ -55,9 +55,6 @@ public static class CosmeticsUI {
         Chest.DrawParams.View = CameraGlobals.GameView;
         Chest.DrawParams.Projection = CameraGlobals.GameProjection;
 
-        GameShaders.BlurFactor += (!IsActive ? 0.000075f : -0.000075f) * RuntimeData.DeltaTime;
-        GameShaders.BlurFactor = MathHelper.Clamp(GameShaders.BlurFactor, 0f, 0.0075f);
-
         _interp += (_isOpening ? 0.015f : -0.015f) * RuntimeData.DeltaTime;
         _interp = MathHelper.Clamp(_interp, 0, 1);
 
@@ -122,6 +119,9 @@ public static class CosmeticsUI {
         Chest.LidRotation = new Vector3(0, Easings.ComputeEase
             (_isOpening ? EasingFunction.OutBounce : EasingFunction.OutSine, _interp) * (MathHelper.Pi + MathHelper.PiOver4 / 2), 
             0);
+    }
+    public static void UpdateActive() {
+        // yadda yadda
     }
 
     public static void HandleInputs() {
