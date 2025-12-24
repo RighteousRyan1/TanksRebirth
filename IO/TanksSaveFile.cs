@@ -1,20 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.Achievements;
-using TanksRebirth.Enums;
 using TanksRebirth.GameContent;
-using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.IO;
 
-public class GameData : IFileSerializable {
+public class TanksSaveFile : IFileSerializable {
     private const byte CURRENT_GAME_DATA_VERSION = 1;
 
     public bool ReadingOutdatedFile;

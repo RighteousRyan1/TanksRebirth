@@ -12,9 +12,9 @@ namespace TanksRebirth.GameContent.UI;
 /// <summary>Track information only at the start of an event to show changes in values by the end of said event.</summary>
 public class DeltaStats {
     public PlayerTank.CampaignStats OldStats { get; private set; }
-    public GameData OldData { get; private set; } = new();
+    public TanksSaveFile OldData { get; private set; } = new();
 
-    public GameData DeltaData;
+    public TanksSaveFile DeltaData;
     public PlayerTank.CampaignStats DeltaPlayerStats;
     public int NumStatsWithDelta { get; private set; }
 
@@ -22,7 +22,7 @@ public class DeltaStats {
     public object[] NewValues { get; private set; }
 
     // zero clue why OldData is the same as 'data' within CalculateDelta, especially given this code below.
-    public void SetOldData(PlayerTank.CampaignStats stats, GameData data) {
+    public void SetOldData(PlayerTank.CampaignStats stats, TanksSaveFile data) {
         OldData.TotalKills = data.TotalKills;
         OldData.BounceKills = data.BounceKills;
         OldData.BulletKills = data.BulletKills;
@@ -38,7 +38,7 @@ public class DeltaStats {
         }
     }
     /// <summary>Sends the delta of the statistics to <see cref="DeltaData"/> and <see cref="DeltaPlayerStats"/></summary>
-    public void CalculateDelta(PlayerTank.CampaignStats stats, GameData data) {
+    public void CalculateDelta(PlayerTank.CampaignStats stats, TanksSaveFile data) {
         DeltaPlayerStats = new() {
             MineHits = stats.MineHits - OldStats.MineHits,
             MinesLaid = stats.MinesLaid - OldStats.MineHits,
@@ -61,7 +61,7 @@ public class DeltaStats {
         for (int i = 0; i < OldData.TankKills.Count; i++) {
             DeltaData.TankKills[i] = data.TankKills[i] - OldData.TankKills[i];
         }
-        var members = typeof(GameData).GetFields();
+        var members = typeof(TanksSaveFile).GetFields();
         foreach (var member in members) {
             var type = member.FieldType;
             switch (type) {

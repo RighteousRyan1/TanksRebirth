@@ -535,7 +535,7 @@ public static class DebugManager {
             $"\nTotal Deaths: {TankGame.SaveFile.Deaths}" +
             $"\nTotal Suicides: {TankGame.SaveFile.Suicides}" +
             $"\nMissions Completed: {TankGame.SaveFile.MissionsCompleted}" +
-            $"\nExp Level / Multiplier: {TankGame.SaveFile.ExpLevel} / {GameData.UniversalExpMultiplier}",
+            $"\nExp Level / Multiplier: {TankGame.SaveFile.ExpLevel} / {TanksSaveFile.UniversalExpMultiplier}",
             new(8, WindowUtils.WindowHeight * 0.4f),
             2);
         for (int i = 0; i < PlayerTank.TankKills.Count; i++) {

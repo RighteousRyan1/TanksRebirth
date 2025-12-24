@@ -952,36 +952,34 @@ public static class AIManager {
         return cnt;
     }
 
-    public const int SECTION_1 = 20;
-    public const int SECTION_2 = 40;
-    public const int SECTION_3 = 60;
-    //static Stopwatch s = new();
-    //static List<double> msList = [];
+    internal const int AI_TANK_TASK_COUNT = 16;
+    internal static Task[] AITasks = new Task[AI_TANK_TASK_COUNT];
+    internal static CancellationTokenSource? AICancelSource;
 
-    public static Thread AIThread1 { get; } = new Thread(ProcessAISection1) {
-        Name = "AIThread1",
-        IsBackground = true,
-        Priority = ThreadPriority.AboveNormal
-    };
-    public static Thread AIThread2 { get; } = new Thread(ProcessAISection2) {
-        Name = "AIThread2",
-        IsBackground = true,
-        Priority = ThreadPriority.AboveNormal
-    };
-    public static Thread AIThread3 { get; } = new Thread(ProcessAISection3) {
-        Name = "AIThread3",
-        IsBackground = true,
-        Priority = ThreadPriority.AboveNormal
-    };
-    public static bool RunThreads = true;
+    internal static void AITaskInit() {
+        AICancelSource = new CancellationTokenSource();
+
+        int chunk = GameHandler.MAX_AI_TANKS / AI_TANK_TASK_COUNT;
+
+        for (int i = 0; i < AI_TANK_TASK_COUNT; i++) {
+            int taskIndex = i;
+            int from = chunk * taskIndex;
+            int to = (taskIndex == AI_TANK_TASK_COUNT - 1)
+                ? GameHandler.MAX_AI_TANKS
+                : chunk * (taskIndex + 1);
+
+            AITasks[i] = Task.Factory.StartNew(
+                () => ProcessAISectionAsync(from, to, AICancelSource.Token),
+                AICancelSource.Token,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default
+            );
+        }
+    }
     internal static void UpdateAITanks() {
-        if (ModLoader.Status != LoadStatus.Complete)
-            return;
-
-        //if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.H)) {
-        //    msList = [];
-        //    msList.Clear();
-        //}
+        if (ModLoader.Status != LoadStatus.Complete) return;
+        // if you're not connected to a server or you aren't *the* server
+        if (!Client.IsHost() && Client.IsConnected()) return;
 
         Span<AITank> aiTanks = GameHandler.AllAITanks;
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
@@ -992,100 +990,63 @@ public static class AIManager {
             tank.Update();
             tank.HandleTankMetaData();
         }
-
-        // if you're not connected to a server or you aren't *the* server
-        // if (!Client.IsHost() && Client.IsConnected()) return;
-
-        /*Parallel.For(0, GameHandler.ActiveAITankCount, new ParallelOptions() {
-            MaxDegreeOfParallelism = 3,
-        }, i => {
-            var tank = GameHandler.AllAITanks[i];
-            if (tank.IsDestroyed) return;
-
-            tank.DoAI();
-
-            // only does anything if you're in a multiplayer context.
-            Client.SyncAITank(tank);
-        });*/
-
-        // ProcessAI();
-        //s.Restart();
-        //s.Stop();
-        //double ms = (s.ElapsedTicks * 1_000_000.0) / Stopwatch.Frequency / 1000;
-        //Console.WriteLine($"AI time this frame: {ms:0.000}ms | Average: {(msList.Sum() / msList.Count):0.000}");
-
-        //msList?.Add(ms);
     }
-    public static void ProcessAISection1() {
-        while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
-            Thread.Sleep(sleepTime);
 
-            if (GameHandler.ActiveAITankCount == 0) continue;
-            if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
-            if (!Client.IsHost() && Client.IsConnected()) continue;
+    internal static async Task ProcessAISectionAsync(
+        int from,
+        int toExclusive,
+        CancellationToken token) {
+        try {
+            while (!token.IsCancellationRequested) {
+                int sleepTime = TankGame.LastGameTime is null
+                    ? 1
+                    : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
 
-            Span<AITank> aiTanks = GameHandler.AllAITanks;
-            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+                await Task.Delay(sleepTime, token);
 
-            // start of the array to SECTION_1
-            for (var i = 0; i < SECTION_1; i++) {
-                var tank = Unsafe.Add(ref tanksSearchSpace, i);
-                if (tank is null || tank.IsDestroyed) continue;
+                if (GameHandler.ActiveAITankCount == 0)
+                    continue;
 
-                tank.DoAI();
+                if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected())
+                    continue;
 
-                // only does anything if you're in a multiplayer context.
-                Client.SyncAITank(tank);
+                if (!Client.IsHost() && Client.IsConnected())
+                    continue;
+
+                //Span<AITank> aiTanks = GameHandler.AllAITanks;
+                //ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+
+                var allTanks = GameHandler.AllAITanks;
+
+                for (int i = from; i < toExclusive; i++) {
+                    token.ThrowIfCancellationRequested();
+
+                    // var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                    var tank = allTanks[i];
+                    if (tank is null || tank.IsDestroyed)
+                        continue;
+
+                    tank.DoAI();
+                    Client.SyncAITank(tank);
+                }
             }
+        } catch (OperationCanceledException) {
+
         }
     }
-    public static void ProcessAISection2() {
-        while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
-            Thread.Sleep(sleepTime);
+    internal static async Task StopAITasksAsync() {
+        if (AICancelSource == null) return;
 
-            if (GameHandler.ActiveAITankCount < SECTION_1) continue;
-            if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
-            if (!Client.IsHost() && Client.IsConnected()) continue;
+        AICancelSource.Cancel();
 
-            Span<AITank> aiTanks = GameHandler.AllAITanks;
-            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
-
-            // SECTION_1 to SECTION_2
-            for (var i = SECTION_1; i < SECTION_2; i++) {
-                var tank = Unsafe.Add(ref tanksSearchSpace, i);
-                if (tank is null || tank.IsDestroyed) continue;
-
-                tank.DoAI();
-
-                // only does anything if you're in a multiplayer context.
-                Client.SyncAITank(tank);
-            }
+        try {
+            await Task.WhenAll(AITasks);
+        } catch (OperationCanceledException) {
+            // expected
         }
-    }
-    public static void ProcessAISection3() {
-        while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
-            Thread.Sleep(sleepTime);
-
-            if (GameHandler.ActiveAITankCount < SECTION_2) continue;
-            if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
-            if (!Client.IsHost() && Client.IsConnected()) continue;
-
-            Span<AITank> aiTanks = GameHandler.AllAITanks;
-            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
-
-            // SECTION_2 to the end of the array
-            for (var i = SECTION_2; i < aiTanks.Length; i++) {
-                var tank = Unsafe.Add(ref tanksSearchSpace, i);
-                if (tank is null || tank.IsDestroyed) continue;
-
-                tank.DoAI();
-
-                // only does anything if you're in a multiplayer context.
-                Client.SyncAITank(tank);
-            }
+        finally {
+            AICancelSource.Dispose();
+            AICancelSource = null;
         }
     }
 }

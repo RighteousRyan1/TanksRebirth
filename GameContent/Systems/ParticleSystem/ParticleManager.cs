@@ -57,12 +57,14 @@ public class ParticleManager
         Particle.EffectHandle.FogEnabled = false;
 
         if (renderInReverseOrder) {
-            for (int i = CurrentParticles.Count - 1; i >= 0; i--)
+            for (int i = CurrentParticles.Count - 1; i >= 0; i--) {
                 CurrentParticles[i]?.Render();
+            }
         }
         else {
-            for (int i = 0; i < CurrentParticles.Count; i++)
+            for (int i = 0; i < CurrentParticles.Count; i++) {
                 CurrentParticles[i]?.Render();
+            }
         }
         //double ms = s.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency / 1000;
         //Console.WriteLine($"Particle Render: {ms:0.000}ms");

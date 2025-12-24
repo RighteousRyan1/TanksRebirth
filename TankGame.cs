@@ -72,7 +72,7 @@ public class TankGame : Game {
 
     public static TankGame Instance { get; private set; }
     /// <summary>The user's save data.</summary>
-    public static GameData SaveFile { get; private set; } = new();
+    public static TanksSaveFile SaveFile { get; private set; } = new();
     /// <summary>The game time for the previous logic loop.</summary>
     public static GameTime LastGameTime { get; private set; }
     /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
@@ -133,9 +133,7 @@ public class TankGame : Game {
         // logging speaks for itself
         Task.Run(() => {
             try {
-                ClientLog.Write(
-                    "Obtaining message of the day (MOTD) from GitHub...",
-                    LogType.Info);
+                ClientLog.Write("Obtaining message of the day (MOTD) from GitHub...", LogType.Info);
                 var bytes = WebUtils.DownloadWebFile(
                     "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
                     out var name, out var status);
@@ -143,11 +141,10 @@ public class TankGame : Game {
             }
             catch {
                 // in the case that an HTTPRequestException is thrown (no internet access)
-                ClientLog.Write(
-                    "Failed to obtain MOTD. Falling back to offline MOTDs.",
-                    LogType.Warn);
+                ClientLog.Write("Failed to obtain MOTD. Falling back to offline MOTDs.", LogType.Warn);
                 MOTD = LocalizationRandoms.GetRandomMotd();
             }
+            ClientLog.Write("MOTD: " + MOTD, LogType.Info);
         });
 
         // check if platform is windows, mac, or linux
@@ -160,8 +157,9 @@ public class TankGame : Game {
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             RuntimeData.OS = OSPlatform.Linux;
         }
-        
-        ClientLog.Write($"Playing on Operating System '{RuntimeData.OS}'", LogType.Info);
+
+        // ClientLog.Write("pp:" + RuntimeInformation.FrameworkDescription, LogType.Info);
+        ClientLog.Write($"OS: {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}", LogType.Info);
 
         // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
 
@@ -240,9 +238,7 @@ public class TankGame : Game {
 
             VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
 
-            AIManager.AIThread1.Start();
-            AIManager.AIThread2.Start();
-            AIManager.AIThread3.Start();
+            AIManager.AITaskInit();
             ClientLog.Write("Tank AI Threads started.", LogType.Info);
 
             // add the main player in when loading
@@ -259,28 +255,36 @@ public class TankGame : Game {
             ReportError(e);
         }
     }
-
-    private void InputUtils_OnGamePadDisconnected(int player) {
+    // TODO: adjust to only add a cursor if the connecting player index is supposed to be a gamepad:
+    // 1) PlayerTank.PlayerControlledByGamepad
+    // 2) Adjust PlayerMice when this value is changed
+    // 
+    // unrelated, but check if UpdateMainClientMouse is working as intended
+    void InputUtils_OnGamePadDisconnected(int player) {
         var plrReal = player + 1;
         ClientLog.Write($"Gamepad disconnected from player {plrReal}.", LogType.Info);
         PlayerMice[plrReal] = null;
     }
 
-    private void InputUtils_OnGamePadConnected(int player) {
+    void InputUtils_OnGamePadConnected(int player) {
         var plrReal = player + 1;
+
+        var kbTnk = PlayerTank.PlayerControlledByKeyboard;
+        var numGps = InputUtils.NumGamepadsConnected;
+
         ClientLog.Write($"Gamepad connected, controlling player {player}.", LogType.Info);
         PlayerMice[plrReal] = new RebirthMouse(PlayerID.PlayerTankColors[plrReal], PlayerID.PlayerTankColorsBright[plrReal], plrReal) {
-            Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * (plrReal)
+            Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * plrReal
         };
     }
 
-    private void UpdateMainClientMouse(Client client) {
+    void UpdateMainClientMouse(Client client) {
         // update only the current client's mouse.
         // other mice won't exist in online multiplayer contexts, but will exist in local multiplayer.
         PlayerMice[0].MouseColor = PlayerID.PlayerTankColorsBright[client.Id];
     }
 
-    protected override void OnExiting(object sender, ExitingEventArgs args) {
+    protected override async void OnExiting(object sender, ExitingEventArgs args) {
         ClientLog.Write($"Handling termination process...", LogType.Info);
 
         // update game-related numbers
@@ -300,9 +304,8 @@ public class TankGame : Game {
 
         CurrentSessionTimer.Stop();
 
-        AIManager.RunThreads = false;
-        AIManager.AIThread1.Join();
-
+        // AIManager.AIThread1.Join();
+        await AIManager.StopAITasksAsync();
         // write end-life metrics
 
         ClientLog.Write($"Average overall FPS: {FPSTracker.AverageFPS}", LogType.Info);

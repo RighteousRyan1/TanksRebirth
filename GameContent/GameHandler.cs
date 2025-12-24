@@ -141,6 +141,7 @@ public class GameHandler {
                 foreach (var pTank in AllPlayerTanks)
                     pTank?.Update();
 
+                // todo: reimpl
                 AIManager.UpdateAITanks();
 
                 foreach (var mine in Mine.AllMines)
@@ -220,7 +221,7 @@ public class GameHandler {
         // TankGame.Instance.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         foreach (var tank in AllTanks) {
             if (tank == null) continue;
-            if (!CameraGlobals.ViewFrustum.Intersects(tank.Hurtbox)) continue;
+            // if (!CameraGlobals.ViewFrustum.Intersects(tank.Hurtbox)) continue;
             tank.Render();
         }
 

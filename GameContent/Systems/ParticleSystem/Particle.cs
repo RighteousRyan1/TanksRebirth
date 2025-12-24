@@ -186,8 +186,8 @@ public class Particle {
             return;
 
         // ignore render if not viewable
-        if (/*!DrawAlways && */CameraGlobals.ViewFrustum.Contains(Position) == ContainmentType.Disjoint)
-            return;
+        //if (CameraGlobals.ViewFrustum.Contains(Position) == ContainmentType.Disjoint)
+        //    return;
 
         Matrix world;
 

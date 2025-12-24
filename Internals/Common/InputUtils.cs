@@ -116,7 +116,8 @@ public static class InputUtils {
     readonly static bool[] _previousConnected = new bool[MAX_GAMEPADS];
 
     // they *must* have a keyboard + mouse plugged in, right?
-    public static int NumConnectedInputs { get; private set; } = 1;
+    public static int NumConnectedInputs => NumGamepadsConnected + 1;
+    public static int NumGamepadsConnected { get; private set; }
     public static void PollKBM() {
         KeyboardMouse.PreviousKey = KeyboardMouse.CurrentKey;
         KeyboardMouse.PreviousMouse = KeyboardMouse.CurrentMouse;
@@ -145,11 +146,11 @@ public static class InputUtils {
 
             if (nowConnected && !wasConnected) {
                 OnGamePadConnected?.Invoke(index);
-                NumConnectedInputs++;
+                NumGamepadsConnected++;
             }
             else if (!nowConnected && wasConnected) {
                 OnGamePadDisconnected?.Invoke(index);
-                NumConnectedInputs--;
+                NumGamepadsConnected--;
             }
 
             _previousConnected[i] = nowConnected;
