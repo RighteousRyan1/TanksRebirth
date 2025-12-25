@@ -1,5 +1,6 @@
 using FontStashSharp;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
@@ -41,7 +42,7 @@ public static partial class LevelEditorUI {
     public static Vector2 PlaceInfoStart;
 
     // 255 for now. no real need to make it bigger unless modders are ballin'
-    public static ParticleManager EditorParticleSystem = new(255, () => CameraGlobals.ScreenView, () => CameraGlobals.ScreenProjOrthographic);
+    public static ParticleManager EditorParticleSystem = new(() => CameraGlobals.ScreenView, () => CameraGlobals.ScreenProjOrthographic);
     // TODO: dynamically drawn 3d models on the UI.
     // TODO: rework scrollbar UI code, massively. my sanity is starting to taper off and achieve an all time low.
     // this will have the tanks at the bottom n stuff.
@@ -180,8 +181,8 @@ public static partial class LevelEditorUI {
     public static void UpdateParticles() {
         EditorParticleSystem.UpdateParticles();
     }
-    public static void RenderEditorParticles() {
-        EditorParticleSystem.RenderParticles();
+    public static void RenderEditorParticles(SpriteBatch spriteBatch) {
+        EditorParticleSystem.RenderParticles(spriteBatch);
         EditorParticleSystem.RenderModelParticles();
     }
 }

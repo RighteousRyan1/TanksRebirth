@@ -106,6 +106,8 @@ public class Campaign
         // run line 120 and 121 in each when i get back
     }
 
+    const int roundingFactor = 5;
+
     // FIXME: not sure why this is public?
     public static (BlockMapPosition Position, bool Alive)[] CurrentTrackedSpawns { get; set; } // position of spawn, alive
 
@@ -116,9 +118,9 @@ public class Campaign
         PlacementSquare.ResetSquares();
         SceneManager.CleanupEntities();
         SceneManager.CleanupScene();
-        const int roundingFactor = 5;
 
         bool hasSpawnedCompanion = false;
+
         // do not be confused by there being more tanks than there is visible. Tanks also contains the players that are not spawned
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
             var template = LoadedMission.Tanks[i];
@@ -140,107 +142,12 @@ public class Campaign
 
             var chassisRotation = MathF.Round(template.Rotation, roundingFactor);
 
-            if (!template.IsPlayer) {
-                if (CurrentTrackedSpawns[i].Alive) {
-                    var tank = template.GetAiTank();
-
-                    tank.Position = template.Position;
-
-                    tank.ChassisRotation = chassisRotation;
-                    tank.DesiredChassisRotation = chassisRotation;
-                    tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
-                    tank.IsDestroyed = false;
-                    tank.Team = template.Team;
-                    if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {
-                        tank.OnDestroy += () => {
-                            var tankSpawnIndex = Array.IndexOf(CurrentTrackedSpawns, CurrentTrackedSpawns.First(pos => {
-                                var converted = BlockMapPosition.ConvertFromVector2(template.Position);
-                                return pos.Position == converted;
-                            }));
-
-                            if (tankSpawnIndex > -1)
-                                CurrentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
-                        };
-                    }
-                    var placement = PlacementSquare.GetFromClosest(tank.Position3D);
-                    if (placement is not null) {
-                        // ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
-                        placement.TankId = tank.WorldId;
-                        placement.HasBlock = false;
-
-                        // set the position since there doesn't need to be any hassle
-                        tank.Position = placement.Position.FlattenZ();
-                    }
-                }
+            if (!template.IsPlayer && CurrentTrackedSpawns[i].Alive) {
+                LoadAIControlled(template, chassisRotation);
             }
             else {
-                var lives = PlayerTank.Lives[template.PlayerType];
-                var isValidMPPlayer = template.PlayerType < Server.CurrentClientCount;
-                var isLocalGame = !Client.IsConnected();
-
-                if (lives <= 0)
-                    goto skip_player_init;
-
-                if (isLocalGame) {
-                    var isValidLocalPlayer = template.PlayerType < InputUtils.NumConnectedInputs;
-                    if (!isValidLocalPlayer)
-                        goto skip_player_init;
-                }
-
-                if (isValidMPPlayer || isLocalGame) {
-                    var tank = template.GetPlayerTank();
-
-                    tank.Position = template.Position;
-                    tank.ChassisRotation = chassisRotation;
-                    tank.DesiredChassisRotation = chassisRotation;
-                    tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
-                    tank.IsDestroyed = false;
-                    tank.Team = template.Team;
-
-                    // NOTE TO SELF: no more level editor checks since i'm disabling the access of the level editor while in a multiplayer context
-                    if (NetPlay.IsClientMatched(tank.PlayerId)) {
-                        PlayerTank.MyTeam = tank.Team;
-                        PlayerTank.MyTankType = tank.PlayerType;
-                    }
-
-                    // almost definitely never fails.
-                    var placeId = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
-                    var placement = PlacementSquare.Placements[placeId];
-
-                    if (Modifiers.Map[Modifiers.AI_COMPANION] && !hasSpawnedCompanion) {
-                        var companionPos = template.Position;
-
-                        var nextPlayerIdx = Array.FindIndex(LoadedMission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);
-
-                        if (nextPlayerIdx > -1) {
-                            companionPos = LoadedMission.Tanks[nextPlayerIdx].Position;
-                        }
-
-                        var randomTier = AITank.PickRandomTier();
-                        var tnk = new AITank(randomTier) {
-                            // target = rot - pi
-                            // turret =  -rot
-                            Position = companionPos,
-                            Team = tank.Team,
-                            ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
-                            DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
-                            TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
-                            IsDestroyed = false,
-                        };
-
-                        hasSpawnedCompanion = true;
-                        // tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
-                    }
-
-                    placement.TankId = tank.WorldId;
-                    placement.HasBlock = false;
-                }
+                LoadPlayer(template, chassisRotation, hasSpawnedCompanion);
             }
-
-            // skips past this player's initialization logic
-            skip_player_init:
-            // since we need some sort of logic after a label :(
-            continue;
         }
 
         for (int b = 0; b < LoadedMission.Blocks.Length; b++) {
@@ -262,6 +169,100 @@ public class Campaign
             $"({LoadedMission.Tanks.Count(x => x.IsPlayer)} player(s), {LoadedMission.Tanks.Count(x => !x.IsPlayer)} AI(s)) tanks and {LoadedMission.Blocks.Length} obstacles.", LogType.Info);
 
         OnMissionLoad?.Invoke(GameHandler.AllTanks, Block.AllBlocks);
+    }
+
+    void LoadPlayer(TankTemplate template, float chassisRotation, bool hasSpawnedCompanion) {
+        var lives = PlayerTank.Lives[template.PlayerType];
+        var isValidMPPlayer = template.PlayerType < Server.CurrentClientCount;
+        var isLocalGame = !Client.IsConnected();
+
+        if (lives <= 0) return;
+
+        if (isLocalGame) {
+            int inputCheckValue = PlayerTank.NumLocalPlayers;
+            var isValidLocalPlayer = template.PlayerType < inputCheckValue;
+            if (!isValidLocalPlayer) return;
+        }
+
+        if (isValidMPPlayer || isLocalGame) {
+            var tank = template.GetPlayerTank();
+
+            tank.Position = template.Position;
+            tank.ChassisRotation = chassisRotation;
+            tank.DesiredChassisRotation = chassisRotation;
+            tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
+            tank.IsDestroyed = false;
+            tank.Team = template.Team;
+
+            // NOTE TO SELF: no more level editor checks since i'm disabling the access of the level editor while in a multiplayer context
+            if (NetPlay.IsClientMatched(tank.PlayerId)) {
+                PlayerTank.MyTeam = tank.Team;
+                PlayerTank.MyTankType = tank.PlayerType;
+            }
+
+            // almost definitely never fails.
+            var placeId = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
+            var placement = PlacementSquare.Placements[placeId];
+
+            if (Modifiers.Map[Modifiers.AI_COMPANION] && !hasSpawnedCompanion) {
+                var companionPos = template.Position;
+
+                var nextPlayerIdx = Array.FindIndex(LoadedMission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);
+
+                if (nextPlayerIdx > -1) {
+                    companionPos = LoadedMission.Tanks[nextPlayerIdx].Position;
+                }
+
+                var randomTier = AITank.PickRandomTier();
+                var tnk = new AITank(randomTier) {
+                    // target = rot - pi
+                    // turret =  -rot
+                    Position = companionPos,
+                    Team = tank.Team,
+                    ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                    DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                    TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
+                    IsDestroyed = false,
+                };
+
+                hasSpawnedCompanion = true;
+                // tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
+            }
+
+            placement.TankId = tank.WorldId;
+            placement.HasBlock = false;
+        }
+    }
+    static void LoadAIControlled(TankTemplate template, float chassisRotation) {
+        var tank = template.GetAiTank();
+
+        tank.Position = template.Position;
+
+        tank.ChassisRotation = chassisRotation;
+        tank.DesiredChassisRotation = chassisRotation;
+        tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
+        tank.IsDestroyed = false;
+        tank.Team = template.Team;
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {
+            tank.OnDestroy += () => {
+                var tankSpawnIndex = Array.IndexOf(CurrentTrackedSpawns, CurrentTrackedSpawns.First(pos => {
+                    var converted = BlockMapPosition.ConvertFromVector2(template.Position);
+                    return pos.Position == converted;
+                }));
+
+                if (tankSpawnIndex > -1)
+                    CurrentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
+            };
+        }
+        var placement = PlacementSquare.GetFromClosest(tank.Position3D);
+        if (placement is not null) {
+            // ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
+            placement.TankId = tank.WorldId;
+            placement.HasBlock = false;
+
+            // set the position since there doesn't need to be any hassle
+            tank.Position = placement.Position.FlattenZ();
+        }
     }
 
     [Obsolete("This is for the legacy version of TanksRebirth.")]

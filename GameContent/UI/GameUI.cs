@@ -12,6 +12,8 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -24,20 +26,15 @@ public static class GameUI {
     public static Keybind Pause = new("Pause", Keys.Escape);
 
     public static UITextButton ResumeButton;
-
     public static UITextButton RestartButton;
-
-    public static UITextButton QuitButton { get; set; }
-
     public static UITextButton OptionsButton;
+    public static UITextButton QuitButton;
+
+    public static UITextButton KeyboardPlayerButton;
 
     public static UITextButton VolumeButton;
-
     public static UITextButton GraphicsButton;
-
     public static UITextButton ControlsButton;
-
-
     public static UITextButton BackButton;
 
     public static UIElement[] menuElements;
@@ -94,6 +91,7 @@ public static class GameUI {
             RestartButton.IsVisible = false;
             QuitButton.IsVisible = false;
             OptionsButton.IsVisible = false;
+            KeyboardPlayerButton.IsVisible = true;
 
             SetSettingsUIVisibility(true);
 
@@ -159,6 +157,18 @@ public static class GameUI {
         BackButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
         BackButton.OnLeftClick = (uiElement) => HandleBackButton();
 
+        KeyboardPlayerButton = new($"{TankGame.GameLanguage.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}", font, Color.WhiteSmoke) {
+            IsVisible = false
+        };
+        KeyboardPlayerButton.SetDimensions(() => new Vector2(WindowUtils.WindowWidth - 300.ToResolutionX(), 10.ToResolutionY()), () => new Vector2(250, 50).ToResolution());
+        KeyboardPlayerButton.OnLeftClick = (ui) => {
+            PlayerTank.PlayerControlledByKeyboard++;
+            if (PlayerTank.PlayerControlledByKeyboard > InputUtils.NumGamepadsConnected)
+                PlayerTank.PlayerControlledByKeyboard = -1;
+
+            KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}";
+        };
+
         // MainMenuUI.Initialize();
 
         GraphicsUI.Initialize();
@@ -182,10 +192,9 @@ public static class GameUI {
                 SoundPlayer.SoundError();
                 return;
             }
-            if (!netSent)
-                Client.SendQuit();
-            foreach (var elem in MainMenuUI.campaignNames)
-                elem?.Remove();
+            if (!netSent) Client.SendQuit();
+
+            foreach (var elem in MainMenuUI.campaignNames) elem?.Remove();
             MainMenuUI.campaignNames.Clear();
 
             // LOL: fuck it it's a funny bug, leave it in.
@@ -210,7 +219,7 @@ public static class GameUI {
         }
     }
 
-    private static void PostInitialize() {
+    static void PostInitialize() {
         Pause.OnPress = () => {
             if (CampaignCompleteUI.IsViewingResults)
                 return;
@@ -250,10 +259,13 @@ public static class GameUI {
             GraphicsButton,
             ControlsButton,
             BackButton,
+
             GraphicsUI.VSyncBtn,
             GraphicsUI.PPLButton,
             GraphicsUI.WinKindBtn,
             GraphicsUI.ResBtn,
+            GraphicsUI.MenuGameplayBtn,
+            GraphicsUI.FadeTracksBtn,
             VolumeUI.MusicVolume,
             VolumeUI.EffectsVolume,
             VolumeUI.AmbientVolume
@@ -279,7 +291,9 @@ public static class GameUI {
     // 7/7/25 - WHAT THE FUCK IS THIS SHIT.
     // TODO: pls get arctan to finish the rewrite
     // TODO: arctan is fucking ignoring me
-    private static void HandleBackButton() {
+
+    // todo: ui states/screens/panels/whatever
+    static void HandleBackButton() {
         if (!_initialized)
             return;
 
@@ -306,6 +320,7 @@ public static class GameUI {
             ControlsButton.IsVisible = false;
             GraphicsButton.IsVisible = false;
             VolumeButton.IsVisible = false;
+            KeyboardPlayerButton.IsVisible = false;
         }
 
 
@@ -319,6 +334,7 @@ public static class GameUI {
             ControlsButton.IsVisible = false;
             GraphicsButton.IsVisible = false;
             VolumeButton.IsVisible = false;
+            KeyboardPlayerButton.IsVisible = false;
         }
         else if (VolumeUI.BatchVisible) {
             VolumeUI.BatchVisible = false;
@@ -332,6 +348,8 @@ public static class GameUI {
             VolumeButton.IsVisible = true;
             GraphicsButton.IsVisible = true;
             ControlsButton.IsVisible = true;
+
+            KeyboardPlayerButton.IsVisible = true;
 
             if (TankGame.Settings.WindowKind == WindowKind.Windowed) {
                 TankGame.Settings.ResWidth = GraphicsUI.CurrentRes.Key;

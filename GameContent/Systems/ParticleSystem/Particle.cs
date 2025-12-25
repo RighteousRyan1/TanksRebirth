@@ -176,6 +176,7 @@ public class Particle {
         //TankGame.SpriteRenderer.End();
         //TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
     }
+    // ahh yes... a draw call for every fucking particle. this code needs to be euthanized
     internal void Draw(SpriteBatch spriteBatch) {
         if (Model is not null)
             return;

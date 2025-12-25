@@ -43,6 +43,8 @@ public ref struct PlayerBinds {
 }
 public class PlayerTank : Tank {
     static bool _justCenteredMouse = false;
+
+    public static int NumLocalPlayers => PlayerControlledByKeyboard == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
     #region The Rest
     public static int MyTeam;
     public static int MyTankType;
@@ -459,6 +461,7 @@ public class PlayerTank : Tank {
             LayMine();
 
         if (rightStick.Length() > 0) {
+            // ChatSystem.SendMessage(rightStick);
             var unprojectedPosition = MatrixUtils.ConvertWorldToScreen(
                 new Vector3(0, 11, 0), DrawParams.World, DrawParams.View, DrawParams.Projection);
 

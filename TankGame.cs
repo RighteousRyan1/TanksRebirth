@@ -646,16 +646,22 @@ public class TankGame : Game {
             MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
             MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
 
+            for (int i = 0; i < PlayerMice.Length; i++) {
+                if (PlayerMice[i] is null) continue;
+                PlayerMice[i].ShouldRender = true;
+                if (i >= PlayerTank.NumLocalPlayers) PlayerMice[i].ShouldRender = false;
+            }
+
             if (PlayerTank.PlayerControlledByKeyboard > -1) {
                 var numMice = InputUtils.NumConnectedInputs;
                 // fallback if the mouse of the player being controlled by KBM is nonexistent
                 if (numMice - 1 < PlayerTank.PlayerControlledByKeyboard) {
-                    PlayerTank.PlayerControlledByKeyboard = 0;
+                    PlayerTank.PlayerControlledByKeyboard = InputUtils.NumGamepadsConnected;
                 }
                 PlayerMice[PlayerTank.PlayerControlledByKeyboard].Position = MouseUtils.MousePosition;
             }
             // more hacks, more hacks. but it works
-            else if (MainMenuUI.IsActive || PlayerTank.PlayerControlledByKeyboard == -2) {
+            else if (MainMenuUI.IsActive || (PlayerTank.PlayerControlledByKeyboard <= -1 && GameUI.Paused)) {
                 PlayerMice[0].Position = MouseUtils.MousePosition;
                 PlayerMice[0].MouseColor = PlayerMice[0].TrailColor = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
             }
@@ -723,9 +729,10 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            foreach (var elem in PlayerMice) {
+            for (int i = 0; i < PlayerMice.Length; i++) {
+                var elem = PlayerMice[i];
                 if (elem is null) continue;
-                elem.ShouldRender = (!Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride;
+                elem.ShouldRender = (!Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride && elem.ShouldRender;
             }
 
             UIElement.UpdateElements();

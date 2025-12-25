@@ -157,5 +157,6 @@
   "MenuGameplay": "Menu Gameplay",
   "MenuGameplayDesc": "Whether or not to enable gameplay in the background of the menu.",
   "ParticleIntensity": "Particle Intensity",
-  "ParticleIntensityDesc": "The intensity of particle effects. (this setting is purely experimental!)"
+  "ParticleIntensityDesc": "The intensity of particle effects. (this setting is purely experimental!)",
+  "KeyboardPlayer": "Keyboard Player"
 }

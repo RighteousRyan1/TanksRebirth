@@ -12,18 +12,27 @@ public sealed class PlayerID
     public const int Green = 2;
     public const int Yellow = 3;
 
-    public static readonly Dictionary<int, Color> PlayerTankColors = new()
-    {
-        [Blue] = Color.Blue,
-        [Red] = Color.Red,
-        [Green] = Color.Lime,
-        [Yellow] = Color.Yellow
-    };
-    public static readonly Dictionary<int, Color> PlayerTankColorsBright = new() {
-        [Blue] = ColorUtils.ChangeColorBrightness(Color.Blue, 0.5f),
-        [Red] = ColorUtils.ChangeColorBrightness(Color.Red, 0.5f),
-        [Green] = ColorUtils.ChangeColorBrightness(Color.Lime, 0.5f),
-        [Yellow] = ColorUtils.ChangeColorBrightness(Color.Yellow, 0.5f)
+    // in order: Blue, Red, Green, Yellow
+    public static readonly Color[] PlayerTankColors = [
+        Color.Blue,
+        Color.Red,
+        Color.Lime,
+        Color.Yellow
+    ];
+    public static readonly Color[] PlayerTankColorsBright = [
+        ColorUtils.ChangeColorBrightness(Color.Blue, 0.5f),
+        ColorUtils.ChangeColorBrightness(Color.Red, 0.5f),
+        ColorUtils.ChangeColorBrightness(Color.Lime, 0.5f),
+        ColorUtils.ChangeColorBrightness(Color.Yellow, 0.5f)
+    ];
+
+    public static string GetLocalizedPlayerColorName(int playerId) => playerId switch {
+        Blue => TankGame.GameLanguage.Blue,
+        Red => TankGame.GameLanguage.Red,
+        Green => TankGame.GameLanguage.Green,
+        Yellow => TankGame.GameLanguage.Yellow,
+        // this should never happen, but just in case...
+        _ => TankGame.GameLanguage.Disabled,
     };
 
     public static ReflectionDictionary<PlayerID> Collection { get; internal set; } = new(MemberType.Fields);

@@ -197,6 +197,7 @@ public class Language {
     public string MenuGameplayDesc { get; set; }
     public string ParticleIntensity { get; set; }
     public string ParticleIntensityDesc { get; set; }
+    public string KeyboardPlayer { get; set; }
     #endregion
     #region Other
     public string BonusTank { get; set; }

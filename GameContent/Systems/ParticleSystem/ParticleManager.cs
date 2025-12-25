@@ -17,8 +17,6 @@ namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 public class ParticleManager {
     // maybe rendertarget for lvl edit particles?
     public SwapBackArray<Particle> CurrentParticles;
-    public SwapBackArray<Particle> AdditiveParticles;
-    public SwapBackArray<Particle> AlphaBlendParticles;
     public Matrix SystemView => _viewFunc.Invoke();
     public Matrix SystemProjection => _projFunc.Invoke();
 
@@ -27,12 +25,10 @@ public class ParticleManager {
 
     // apparently maxparticles is useless
     public ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
-        CurrentParticles = AdditiveParticles = AlphaBlendParticles = [];
+        CurrentParticles = [];
         _viewFunc = view;
         _projFunc = proj;
         CurrentParticles.OnSwapBack += OnSwapBack;
-        AdditiveParticles.OnSwapBack += OnSwapBack;
-        AlphaBlendParticles.OnSwapBack += OnSwapBack;
     }
     void OnSwapBack(int index, Particle particle) {
         //Console.WriteLine($"remove: {particle.Id} ---> {index}");
@@ -40,8 +36,6 @@ public class ParticleManager {
     }
     public void Empty() {
         CurrentParticles.Clear();
-        AdditiveParticles.Clear();
-        AlphaBlendParticles.Clear();
 
         // this should hypothetically remove additive/alphablend particles too since theyre also in currentparticles
         for (int i = 0; i < CurrentParticles.Count; i++) {
@@ -61,21 +55,9 @@ public class ParticleManager {
         Particle.EffectHandle.Projection = SystemProjection;
         Particle.EffectHandle.FogEnabled = false;
 
-        // render alpha-blended particles
-
-        //for (int i = 0; i < CurrentParticles.Count; i++) {
-            //CurrentParticles[i]?.Draw(spriteBatch);
-        //}
-
-        for (int i = 0; i < AlphaBlendParticles.Count; i++) {
-            var particle = AlphaBlendParticles[i];
-            particle?.Draw(spriteBatch);
-        }
-
-        // render additively blended particles
-        for (int i = 0; i < AdditiveParticles.Count; i++) {
-            var particle = AdditiveParticles[i];
-            particle?.Draw(spriteBatch);
+        
+        for (int i = 0; i < CurrentParticles.Count; i++) {
+            CurrentParticles[i]?.Draw(spriteBatch);
         }
 
 

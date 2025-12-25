@@ -290,6 +290,7 @@ public static partial class MainMenuUI
         GameUI.OptionsButtonSize.Y = 50;
         GameUI.QuitButton.IsVisible = true;
         GameUI.OptionsButton.IsVisible = true;
+        GameUI.KeyboardPlayerButton.IsVisible = false;
     }
     public static void LeaveUI() {
         SetMPButtonsVisibility(false);
