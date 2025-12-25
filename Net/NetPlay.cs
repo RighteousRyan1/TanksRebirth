@@ -316,7 +316,7 @@ public static class NetPlay {
                 var shellType = reader.GetInt();
                 var shellPos = reader.GetVector2();
                 var shellVel = reader.GetVector2();
-                var shellRicochets = reader.GetUInt();
+                var shellRicochets = reader.GetInt();
                 var shellOwner = reader.GetInt();
                 var shellUID = reader.GetByte();
 
@@ -597,7 +597,7 @@ public static class NetPlay {
                 var shellType = reader.GetInt();
                 var shellPos = reader.GetVector2();
                 var shellVel = reader.GetVector2();
-                var shellRicochets = reader.GetUInt();
+                var shellRicochets = reader.GetInt();
                 var shellOwner = reader.GetInt();
                 var shellUniqueID = reader.GetByte();
 

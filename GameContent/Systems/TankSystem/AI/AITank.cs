@@ -26,6 +26,9 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.AI;
 
+// eventually: AITank will be the basis for all AI controlled tanks...
+// e.g: VioletTank : AITank, NecromancerTank : AITank, etc.
+// this will allow for easier management of AI tanks and their unique behaviors without adding bloat for specific tank kinds
 public partial class AITank : Tank {
     public ModTank? ModdedData { get; private set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
@@ -43,10 +46,7 @@ public partial class AITank : Tank {
     public event InstancedDestroy? OnDestroy;
     /// <summary>Each of these keep track of certain behaviors that take place during the AI Cycle, including, but not limited to:<para></para>
     /// Navigation, Shell/Mine avoidance, Mine Laying, Shell Shooting</summary>
-    public AiBehavior[] Behaviors { get; private set; }
-    /// <summary>Each of these are for super special tanks (by default). The currently unimplemented tanks have special abilities that
-    /// use this.</summary>
-    public AiBehavior[] SpecialBehaviors;
+    public AITimer[] Behaviors { get; private set; }
     /// <summary>The AI Tank Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
     public int AiTankType;
     /// <summary>The invoked method for performing the actions of the tank's AI.</summary>
@@ -98,7 +98,7 @@ public partial class AITank : Tank {
 
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
 
-        SwapTankTexture(Assets[$"tank_" + tierName]);
+        SwapTankTexture(Assets[$"tank_" + tierName]!);
 
         if (!UsesCustomModel)
             DrawParamsTank.Model = ModelGlobals.TankEnemy.Duplicate();
@@ -116,23 +116,19 @@ public partial class AITank : Tank {
     public AITank(int tier, bool applyDefaults = true, bool ignoreRegister = false) : base(ignoreRegister) {
         // looking at this code makes me want to barf.
         // maybe move this stuff to events within Difficulties.cs
-        if (Modifiers.Map[Modifiers.BUMP])
-            tier++;
-        if (Modifiers.Map[Modifiers.MONOCHROME])
-            tier = Modifiers.MonochromeValue;
-        if (Modifiers.Map[Modifiers.MASTER])
-            tier = Modifiers.VanillaToMasterModeConversions[tier];
+        if (Modifiers.Map[Modifiers.BUMP])       tier++;
+        if (Modifiers.Map[Modifiers.MONOCHROME]) tier = Modifiers.MonochromeValue;
+        if (Modifiers.Map[Modifiers.MASTER])     tier = Modifiers.VanillaToMasterModeConversions[tier];
 
-        SpecialBehaviors = [];
         NearbyDangers = [];
 
         AiTankType = tier;
-
-        Behaviors = new AiBehavior[4];
+        Behaviors = new AITimer[4];
 
         for (int i = 0; i < Behaviors.Length; i++)
             Behaviors[i] = new();
 
+        // behaviors are definitely stupid, do something about them later
         Behaviors[0].Label = "TankChassisMovement";
         Behaviors[1].Label = "TankTurretMovement";
         Behaviors[2].Label = "TankShellFire";

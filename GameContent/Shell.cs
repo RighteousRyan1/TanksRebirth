@@ -28,7 +28,7 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent;
 
 public class Shell : IAITankDanger {
-    public const int COLL_RECT_DIM = 2;
+    public const int COLL_RECT_DIM = 3;
     public const int TOO_SHORT_LIFETIME = 5;
     public enum DestructionContext {
         WithObstacle,
@@ -98,9 +98,9 @@ public class Shell : IAITankDanger {
     public Vector3 Velocity3D => Velocity.ExpandZ();
 
     /// <summary>Maximum amount of times this <see cref="Shell"/> can bounce off walls.</summary>
-    public uint Ricochets;
+    public int Ricochets;
     /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
-    public uint RicochetsRemaining;
+    public int RicochetsRemaining;
 
     public float Rotation;
 
@@ -201,7 +201,7 @@ public class Shell : IAITankDanger {
     /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
     /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
     /// <param name="playSpawnSound">Play the shooting sound associated with this <see cref="Shell"/>.</param>
-    public Shell(Vector2 position, Vector2 velocity, int type, Tank? owner, uint ricochets = 0,
+    public Shell(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0,
         HomingProperties homing = default, bool playSpawnSound = true) {
         Type = type;
         RicochetsRemaining = ricochets;

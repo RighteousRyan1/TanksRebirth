@@ -68,7 +68,7 @@ public class PlayerTank : Tank {
     public static Keybind MoveRight = new("Right", Keys.D);
     public static Keybind PlaceMine = new("Place Mine", Keys.Space);
     public static Keybind ShowShotPath = new("Draw Shot Path", Keys.Q);
-    public static GamepadBind GamePadShoot = new("Fire Bullet", Buttons.RightTrigger);
+    public static GamepadBind GamePadShoot = new("Fire Bullet", Buttons.RightShoulder);
     public static GamepadBind GamePadPlaceMine = new("Place Mine", Buttons.A);
 
     bool playerControl;
@@ -83,6 +83,7 @@ public class PlayerTank : Tank {
     public static Vector2[] AimTargets = new Vector2[4];
 
     // -1 if all are controllers!
+    // -2 is only the client tank
     public static int PlayerControlledByKeyboard = PlayerID.Blue;
 
     /// <summary>
@@ -167,14 +168,14 @@ public class PlayerTank : Tank {
         DrawParams.LightPower = 1f;
         DrawParams.AmbientPower = _isPlayerModel ? TankDrawParams.PLR_AMB_MUL : TankDrawParams.AI_AMB_MUL;
 
-        if (copyTier == -1) ApplyDefaults(ref Properties);
-
         if (!ignoreRegister) {
             PlayerId = playerType;
             GameHandler.AllPlayerTanks[PlayerId] = this;
             WorldId = Array.IndexOf(GameHandler.AllTanks, null);
             GameHandler.AllTanks[WorldId] = this;
         }
+
+        if (copyTier == -1) ApplyDefaults(ref Properties);
 
         base.Initialize();
     }
@@ -203,10 +204,8 @@ public class PlayerTank : Tank {
             InputUtils.GamePads[padIndex].Current.IsConnected;
         properties.MaximalTurn = MathHelper.ToRadians(hasGamepad ? 10 : 46);
 
-        Properties.ShootPitch = 0.1f * PlayerType;
-
+        properties.ShootPitch = 0.1f * PlayerType;
         properties.ShellType = ShellID.Player;
-
         properties.ShellHoming = new();
 
         properties.DestructionColor = PlayerType switch {
@@ -294,7 +293,8 @@ public class PlayerTank : Tank {
                     }
                 }
 
-                if (InputUtils.CanDetectClick() && UsesKeyboard) {
+                // THIS MUST HAVE A BETTER WAY
+                if (InputUtils.CanDetectClick() && (UsesKeyboard || PlayerControlledByKeyboard == -2)) {
                     Shoot(false);
                 }
             }
@@ -304,9 +304,7 @@ public class PlayerTank : Tank {
             var norm = Vector2.Normalize(DesiredDirection);
 
             DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
-
             ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
-
             Velocity = Vector2.UnitY.RotatedBy(ChassisRotation) * Speed;
 
             oldPosition = Position;
@@ -315,18 +313,24 @@ public class PlayerTank : Tank {
     void ProcessPlayerMouse() {
         if (!NetPlay.IsClientMatched(PlayerId)) return;
 
-        if (TankGame.PlayerMice.Length <= PlayerId) return;
-
-        if (UsesKeyboard)
+        if (UsesKeyboard) {
             AimTargets[PlayerId] = MouseUtils.MousePosition;
+            var numMice = InputUtils.NumConnectedInputs;
+
+            // ensures the mouse is not used if invalid
+            if (numMice - 1 > PlayerControlledByKeyboard) {
+                TankGame.PlayerMice[PlayerId].Position = MouseUtils.MousePosition;
+            }
+        }
 
         var denyFpsAiming = !Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive;
         if (denyFpsAiming) {
+            var mouseIndex = PlayerControlledByKeyboard == -2 ? 0 : PlayerId;
             //int padIndex = GamepadIndex;
             //if (padIndex < 0)
             //    return; // KBM player will use actual mouse
 
-            var cursorToAimAt = TankGame.PlayerMice[PlayerId];
+            var cursorToAimAt = TankGame.PlayerMice[mouseIndex];
 
             if (cursorToAimAt != null) {
                 var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position, -11f);
@@ -462,11 +466,11 @@ public class PlayerTank : Tank {
                 (int)(unprojectedPosition.X + rightStick.X * 400),
                 (int)(unprojectedPosition.Y - rightStick.Y * 400));
 
-            TankGame.PlayerMice[padIndex + 1].Position = newMousePos;
+            TankGame.PlayerMice[PlayerId].Position = newMousePos;
         }
     }
     void ControlHandle_Keybinding() {
-        if (PlayerId != PlayerControlledByKeyboard)
+        if (PlayerId != PlayerControlledByKeyboard && PlayerControlledByKeyboard > -2)
             return;
 
         if (ShowShotPath.JustPressed)
@@ -501,7 +505,7 @@ public class PlayerTank : Tank {
             DesiredDirection = DesiredDirection.RotatedBy(-TurretRotation + MathHelper.Pi);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
-        if (Client.IsConnected()) {
+        /*if (Client.IsConnected()) {
             // maybe make a camera transition to said tank.
 
             //if (context.Source is not null)
@@ -512,7 +516,7 @@ public class PlayerTank : Tank {
                 Lives[PlayerId]--;
             }
         }
-        else {
+        else {*/
             Lives[PlayerId]--;
 
             Remove(false);
@@ -548,13 +552,14 @@ public class PlayerTank : Tank {
                 PlayerStatistics.Suicides++;
             }
             TankGame.SaveFile.Deaths++;
-        }
+        // }
     }
 
     // this should probably be voided lol
     void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;
 
+        // data
         var whitePixel = TextureGlobals.Pixels[Color.White];
         var pathPos = Position + new Vector2(0, 18).RotatedBy(-TurretRotation);
         var pathDir = Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi);
@@ -562,71 +567,164 @@ public class PlayerTank : Tank {
         pathDir *= Properties.ShellSpeed;
 
         var pathRicochetCount = 0;
+        TanksSpotted = [];
 
+        // maybe no linq...
+        var activeTanks = GameHandler.AllTanks
+            .Where(t => t is not null && !t.IsDestroyed)
+            .ToArray();
+
+        // stackalloc is more optimal...? maybe
+        Span<Vector2> corners = stackalloc Vector2[Properties.RicochetCount + 2];
+        Span<int> cornerSteps = stackalloc int[Properties.RicochetCount + 2];
+        int cornersCount = 0;
+
+        corners[cornersCount] = pathPos;
+        cornerSteps[cornersCount] = 0;
+        cornersCount++;
+
+        int currentStep = 0;
+
+        const float tankHitRadiusSq = TNK_WIDTH * 4;
+
+        var dummyPos = Vector2.Zero;
 
         for (int i = 0; i < MAX_PATH_UNITS; i++) {
-            var dummyPos = Vector2.Zero;
+            currentStep++;
 
+            // 2a. BOUNDS CHECK
+            bool hitBound = false;
             if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
-                pathRicochetCount++;
                 pathDir.X *= -1;
+                hitBound = true;
             }
             if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
-                pathRicochetCount++;
                 pathDir.Y *= -1;
+                hitBound = true;
             }
 
-            var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
+            if (hitBound) {
+                pathRicochetCount++;
+                // Add bounce point
+                if (cornersCount < corners.Length) {
+                    corners[cornersCount] = pathPos;
+                    cornerSteps[cornersCount] = i;
+                    cornersCount++;
+                }
+            }
 
-            // Why is velocity passed by reference here lol
-            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.Properties.IsSolid);
+            // block coll
+            if (pathRicochetCount <= Properties.RicochetCount) {
+                var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
-            if (corner) return;
-            if (block != null) {
-                if (block.Properties.AllowShotPathBounce) {
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.Properties.IsSolid);
+
+                if (corner) break;
+
+                if (block != null && block.Properties.AllowShotPathBounce) {
+                    bool bounced = false;
                     switch (dir) {
                         case CollisionDirection.Up:
                         case CollisionDirection.Down:
                             pathDir.Y *= -1;
-                            pathRicochetCount += block.Properties.PathBounceCount;
+                            bounced = true;
                             break;
                         case CollisionDirection.Left:
                         case CollisionDirection.Right:
                             pathDir.X *= -1;
-                            pathRicochetCount += block.Properties.PathBounceCount;
+                            bounced = true;
                             break;
+                    }
+
+                    if (bounced) {
+                        pathRicochetCount += block.Properties.PathBounceCount;
+
+                        if (cornersCount < corners.Length) {
+                            corners[cornersCount] = pathPos;
+                            cornerSteps[cornersCount] = i;
+                            cornersCount++;
+                        }
                     }
                 }
             }
 
-            var cannotBounce = pathRicochetCount > Properties.RicochetCount;
-            if (cannotBounce) return;
+            if (pathRicochetCount > Properties.RicochetCount) break;
 
-            // final check used to be: tnk.CollCircle.Intersects(new Circle { Center = pathPos, Radius = 4 })
-            var tankInPath = GameHandler.AllTanks.FirstOrDefault(
-                tnk => tnk is not null && !tnk.IsDestroyed && GameUtils.Distance_WiiTanksUnits(tnk.Position, pathPos) <= 8);
-            if (Array.IndexOf(GameHandler.AllTanks, tankInPath) > -1 && tankInPath is not null) {
-                TanksSpotted = [tankInPath!];
-                return;
+            // tank coll
+            Tank targetTank = null;
+            for (int t = 0; t < activeTanks.Length; t++) {
+                var tnk = activeTanks[t];
+                // Use DistanceSquared to avoid Sqrt calls
+                if (Vector2.DistanceSquared(tnk.Position, pathPos) <= tankHitRadiusSq) {
+                    targetTank = tnk;
+                    break;
+                }
             }
-            TanksSpotted = [];
+
+            if (targetTank != null) {
+                TanksSpotted = [targetTank];
+
+                if (cornersCount < corners.Length) {
+                    corners[cornersCount] = pathPos;
+                    cornerSteps[cornersCount] = i;
+                    cornersCount++;
+                }
+                break;
+            }
 
             pathPos += pathDir;
+        }
 
-            var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), CameraGlobals.GameView, CameraGlobals.GameProjection);
-            var off = MathF.Abs(MathF.Sin(i * MathF.PI / 5 - RuntimeData.RunTime * 0.3f));
-            var rgbColor = ColorUtils.HsvToRgb(RuntimeData.UpdateCount + i % 255 / 255f * 360, 1, 1);
-            var scale = Vector2.One * 4 * off;
-            DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, whitePixel, pathPosScreen, Color.Black,
-                rgbColor, scale, 0f, Anchor.Center, 1f);
-            //TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, ColorUtils.HsvToRgb(RuntimeData.UpdateCount + i % 255 / 255f * 360, 1, 1), 0, whitePixel.Size() / 2, new Vector2(3 + off).ToResolution(), default, default);
+        // Add the very last position if we didn't crash into a tank
+        if (TanksSpotted.Length == 0 && cornersCount < corners.Length) {
+            corners[cornersCount] = pathPos;
+            cornerSteps[cornersCount] = currentStep;
+            cornersCount++;
+        }
+
+        // drawing stuffs
+        var viewProj = CameraGlobals.GameView * CameraGlobals.GameProjection;
+        var viewport = TankGame.Instance.GraphicsDevice.Viewport;
+
+        Vector2 ProjectAtTankHeight(Vector2 pos) {
+            var pos3 = new Vector3(pos.X, TNK_DMG_COLL_Y, pos.Y);
+            var screenPos = viewport.Project(pos3, CameraGlobals.GameProjection, CameraGlobals.GameView, Matrix.Identity);
+            return new Vector2(screenPos.X, screenPos.Y);
+        }
+
+        for (int i = 0; i < cornersCount - 1; i++) {
+            var startWorld = corners[i];
+            var endWorld = corners[i + 1];
+
+            var startScreen = ProjectAtTankHeight(startWorld);
+            var endScreen = ProjectAtTankHeight(endWorld);
+
+            // We need to know how many "simulation steps" this segment took to match your animation style
+            int stepsInSegment = cornerSteps[i + 1] - cornerSteps[i];
+            if (stepsInSegment <= 0) continue;
+
+            for (int step = 0; step < stepsInSegment; step++) {
+                float t = step / (float)stepsInSegment;
+                var currentScreenPos = Vector2.Lerp(startScreen, endScreen, t);
+
+                int globalI = cornerSteps[i] + step;
+
+                var off = MathF.Abs(MathF.Sin(globalI * MathF.PI / 5 - RuntimeData.RunTime * 0.3f));
+                var rgbColor = ColorUtils.HsvToRgb(RuntimeData.UpdateCount + globalI % 255 / 255f * 360, 1, 1);
+                var scale = Vector2.One * 4 * off;
+
+                DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, whitePixel, currentScreenPos, Color.Black,
+                    rgbColor, scale, 0f, Anchor.Center, 1f);
+            }
         }
     }
     public override void Render() {
         base.Render();
 
         if (IsDestroyed) return;
-        DrawExtras();
+
+        // doing this for now. will eventually pass it in via Render(SpriteBatch)
+        DrawExtras(TankGame.SpriteRenderer);
         if (Properties.Invisible && CampaignGlobals.InMission) return;
         foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
@@ -656,31 +754,86 @@ public class PlayerTank : Tank {
             }
         }
     }
-    private void DrawExtras() {
+    static Dictionary<int, float[]> _bulletAnimationStates = [];
+    void DrawExtras(SpriteBatch spriteBatch) {
         if (IsDestroyed || IgnoreRegister) return;
 
+        // todo: a good way of making the displays not overlap
+
+        // draw every player's bullet count, even in MP
         if (!MainMenuUI.IsActive) {
-            if (NetPlay.IsClientMatched(PlayerId)) {
-                var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
-                var scale = 0.5f; // the graphic gets smaller for each availiable shell.
-                for (int i = 0; i < Properties.ShellLimit; i++) {
-                    var scalar = 0.95f + i * 0.001f; //changetankproperty ShellLimit 
-                    scalar = MathHelper.Clamp(scalar, 0f, 0.99f);
-                    scale *= scalar;
-                }
-                var realSize = (tex.Size() * scale).ToResolution();
-                for (int i = 1; i <= Properties.ShellLimit; i++) {
-                    var colorToUse = i > OwnedShellCount ? Color.White : Color.DimGray;
-                    var position = new Vector2(WindowUtils.WindowWidth - realSize.X * scale, 0);
-                    TankGame.SpriteRenderer.Draw(tex, position + new Vector2(0, i * (realSize.Y + (scale * 10).ToResolutionY())), null, colorToUse, 0f, new Vector2(tex.Size().X, 0), new Vector2(scale).ToResolution(), default, default);
-                }
+            var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
+            var baseScale = 0.5f;
+            var offX = 25f.ToResolutionX();
+            var offY = (tex.Height * baseScale).ToResolutionY();
+            var spacing = 5f;
+            var font = FontGlobals.RebirthFont;
+
+            // player data
+            var baseColor = PlayerID.PlayerTankColors[PlayerId];
+            var brightColor = PlayerID.PlayerTankColorsBright[PlayerId];
+            string displayName;
+
+            if (Server.ConnectedClients is not null && Server.ConnectedClients[PlayerId] != null)
+                displayName = Server.ConnectedClients[PlayerId].Name;
+            else
+                displayName = $"P{PlayerId + 1}";
+
+            // anim state failsafe
+            if (!_bulletAnimationStates.TryGetValue(PlayerId, out float[]? animStates) || animStates.Length != Properties.ShellLimit) {
+                animStates = (new float[Properties.ShellLimit]);
+                _bulletAnimationStates[PlayerId] = animStates;
+                // Initialize all to 1.0f (full) so they don't pop in on game start
+                Array.Fill(_bulletAnimationStates[PlayerId], 1f);
+            }
+
+            // offsets
+            float panelHeight = 160f;
+            float startX = WindowUtils.WindowWidth - 25f;
+            float startY = 25f + (PlayerId * panelHeight).ToResolutionY();
+
+            // name/player index
+            var nameSize = font.MeasureString(displayName);
+            var namePos = new Vector2(startX - nameSize.X, startY);
+            DrawUtils.DrawStringWithBorder(spriteBatch, font, displayName, namePos, baseColor, Color.White, Vector2.One, 0f);
+
+            float bulletStartY = startY + nameSize.Y + 8f;
+            for (int i = 0; i < Properties.ShellLimit; i++) {
+                // fade in or fade out?
+                float targetState = (i < OwnedShellCount) ? 0f : 1f;
+
+                // speed of fade in/out
+                float speed = 0.08f * RuntimeData.DeltaTime;
+                animStates[i] = MathHelper.Lerp(animStates[i], targetState, speed);
+
+                // easings
+                float smoothedValue;
+                if (targetState > 0.5f)
+                    smoothedValue = Easings.OutBack(animStates[i]);
+                else // Shooting
+                    smoothedValue = Easings.OutQuart(animStates[i]);
+
+                // interpolation
+                var colorToUse = Color.Lerp(Color.DimGray * 0.5f, brightColor, smoothedValue);
+                float currentScale = MathHelper.Lerp(baseScale * 0.7f, baseScale, smoothedValue);
+
+                // draw
+                float xPos = startX - offX;
+                float yPos = bulletStartY + (i * (offY + spacing));
+                var position = new Vector2(xPos, yPos);
+
+                DrawUtils.DrawTextureWithBorder(spriteBatch, tex, position, colorToUse, 
+                    Color.White * smoothedValue, new Vector2(currentScale).ToResolution(), 0f, Anchor.Center);
             }
         }
 
         // a bit hardcoded but whatever
-        bool needClarification = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0 || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
+        bool needClarification = 
+            !MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0 
+            || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
-        if (needClarification && PlayerId < Server.CurrentClientCount) {
+        //  && PlayerId < Server.CurrentClientCount
+        if (needClarification) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 50).ToResolution();
 

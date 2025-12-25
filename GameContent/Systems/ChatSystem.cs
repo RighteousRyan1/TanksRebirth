@@ -183,6 +183,8 @@ public sealed record ChatSystem {
         var lines = new List<List<TextSection>>();
         var currentLine = new List<TextSection>();
         float currentLineWidth = 0f;
+
+        if (sections is null) return lines;
         // float spaceWidth = font.MeasureString(" ").X * scale;
 
         foreach (var section in sections) {

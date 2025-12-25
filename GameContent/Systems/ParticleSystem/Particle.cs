@@ -3,17 +3,15 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
 using TanksRebirth.Graphics;
-using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
-using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
-using HidSharp.Reports.Units;
 using System.Collections.Generic;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
+// this needs an optimization... stat.
 public enum ParticleIntensity
 {
     None, // no particles at all
@@ -113,8 +111,7 @@ public class Particle {
      * billboard from 'position' to the camera.
      */
 
-    internal Particle(Vector3 position, ParticleManager system)
-    {
+    internal Particle(Vector3 position, ParticleManager system) {
         Position = position;
         System = system;
 
@@ -122,15 +119,14 @@ public class Particle {
         // Console.WriteLine($"{Id} -- count: {System.CurrentParticles.Count}");
     }
 
-    public void Update()
-    {
+    public void Update() {
         UniqueBehavior?.Invoke(this);
         LifeTime += RuntimeData.DeltaTime;
     }
 
     public static BasicEffect EffectHandle = new(TankGame.Instance.GraphicsDevice);
 
-    internal void RenderModels() {
+    internal void DrawModel() {
 
         // this code causes draw order malfunction. ts pmo
 
@@ -180,8 +176,7 @@ public class Particle {
         //TankGame.SpriteRenderer.End();
         //TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
     }
-    internal void Render()
-    {
+    internal void Draw(SpriteBatch spriteBatch) {
         if (Model is not null)
             return;
 
@@ -205,41 +200,41 @@ public class Particle {
                     Matrix.CreateTranslation(Position);
         }
 
-        if (!IsIn2DSpace)
-        {
+        if (!IsIn2DSpace) {
             if (Model is null) {
                 EffectHandle.World = world;
                 // EffectHandle.Texture = Texture;
                 EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
-
                 EffectHandle.Alpha = Alpha;
 
                 EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
 
-                TankGame.SpriteRenderer.End();
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle); 
+                spriteBatch.End();
+                spriteBatch.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle);
                 if (!IsText)
-                    TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, /*TextureScale*/ Scale.X, default, Layer);
+                    spriteBatch.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, /*TextureScale*/ Scale.X, default, Layer);
                 else
-                    TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
+                    spriteBatch.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
 
-                TankGame.SpriteRenderer.End();
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+                spriteBatch.End();
+                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
             }
         }
-        else
-        {
-            TankGame.SpriteRenderer.End();
-            TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer); if (!IsText)
-                TankGame.SpriteRenderer.Draw(Texture, ToScreenSpace ? 
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
+        else {
+            spriteBatch.End();
+            spriteBatch.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
+
+            if (!IsText)
+                spriteBatch.Draw(Texture, ToScreenSpace ?
+                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) :
                     new Vector2(Position.X, Position.Y), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
             else
-                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, ToScreenSpace ? 
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
+                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, ToScreenSpace ?
+                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) :
                     new Vector2(Position.X, Position.Y), Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
-            TankGame.SpriteRenderer.End();
-            TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+
+            spriteBatch.End();
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         }
 
         // EffectHandle.SetDefaultGameLighting_IngameEntities();

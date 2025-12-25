@@ -25,7 +25,7 @@ public class TankProperties {
     /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> can own at any given time. Word 30.</summary>
     public int ShellLimit { get; set; }
     /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet. Word 34.</summary>
-    public uint RicochetCount { get; set; }
+    public int RicochetCount { get; set; }
     /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet. Word 37.</summary>
     public uint ShellCooldown { get; set; }
     /// <summary>How fast the bullets this <see cref="Tank"/> shoot are. Word 38.</summary>

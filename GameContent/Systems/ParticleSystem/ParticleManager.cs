@@ -11,15 +11,14 @@ using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
-using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
-public class ParticleManager
-{
+public class ParticleManager {
     // maybe rendertarget for lvl edit particles?
     public SwapBackArray<Particle> CurrentParticles;
-
+    public SwapBackArray<Particle> AdditiveParticles;
+    public SwapBackArray<Particle> AlphaBlendParticles;
     public Matrix SystemView => _viewFunc.Invoke();
     public Matrix SystemProjection => _projFunc.Invoke();
 
@@ -27,11 +26,13 @@ public class ParticleManager
     private readonly Func<Matrix> _projFunc;
 
     // apparently maxparticles is useless
-    public ParticleManager(int maxParticles, Func<Matrix> view, Func<Matrix> proj) {
-        CurrentParticles = [];
+    public ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
+        CurrentParticles = AdditiveParticles = AlphaBlendParticles = [];
         _viewFunc = view;
         _projFunc = proj;
         CurrentParticles.OnSwapBack += OnSwapBack;
+        AdditiveParticles.OnSwapBack += OnSwapBack;
+        AlphaBlendParticles.OnSwapBack += OnSwapBack;
     }
     void OnSwapBack(int index, Particle particle) {
         //Console.WriteLine($"remove: {particle.Id} ---> {index}");
@@ -39,14 +40,18 @@ public class ParticleManager
     }
     public void Empty() {
         CurrentParticles.Clear();
+        AdditiveParticles.Clear();
+        AlphaBlendParticles.Clear();
+
+        // this should hypothetically remove additive/alphablend particles too since theyre also in currentparticles
         for (int i = 0; i < CurrentParticles.Count; i++) {
             CurrentParticles[i]?.Destroy();
         }
     }
 
-    public void RenderParticles(bool renderInReverseOrder = false) {
+    public void RenderParticles(SpriteBatch spriteBatch) {
         //if (Internals.Common.InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.U))
-            //Console.Clear();
+        //Console.Clear();
 
         //Console.SetCursorPosition(0, 0);
         //var s = Stopwatch.StartNew();
@@ -56,35 +61,33 @@ public class ParticleManager
         Particle.EffectHandle.Projection = SystemProjection;
         Particle.EffectHandle.FogEnabled = false;
 
-        if (renderInReverseOrder) {
-            for (int i = CurrentParticles.Count - 1; i >= 0; i--) {
-                CurrentParticles[i]?.Render();
-            }
+        // render alpha-blended particles
+
+        //for (int i = 0; i < CurrentParticles.Count; i++) {
+            //CurrentParticles[i]?.Draw(spriteBatch);
+        //}
+
+        for (int i = 0; i < AlphaBlendParticles.Count; i++) {
+            var particle = AlphaBlendParticles[i];
+            particle?.Draw(spriteBatch);
         }
-        else {
-            for (int i = 0; i < CurrentParticles.Count; i++) {
-                CurrentParticles[i]?.Render();
-            }
+
+        // render additively blended particles
+        for (int i = 0; i < AdditiveParticles.Count; i++) {
+            var particle = AdditiveParticles[i];
+            particle?.Draw(spriteBatch);
         }
+
+
         //double ms = s.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency / 1000;
         //Console.WriteLine($"Particle Render: {ms:0.000}ms");
     }
-    public void RenderModelParticles(bool renderInReverseOrder = false) {
-        if (renderInReverseOrder) {
-            for (int i = CurrentParticles.Count - 1; i >= 0; i--) {
-                var particle = CurrentParticles[i];
-                if (particle is not null)
-                    if (particle.Model != null)
-                        particle.RenderModels();
-            }
-        }
-        else {
-            for (int i = 0; i < CurrentParticles.Count; i++) {
-                var particle = CurrentParticles[i];
-                if (particle is not null)
-                    if (particle.Model != null)
-                        particle.RenderModels();
-            }
+    public void RenderModelParticles() {
+        for (int i = 0; i < CurrentParticles.Count; i++) {
+            var particle = CurrentParticles[i];
+            if (particle is not null)
+                if (particle.Model != null)
+                    particle.DrawModel();
         }
     }
     public void UpdateParticles() {
@@ -93,7 +96,7 @@ public class ParticleManager
         for (int i = 0; i < CurrentParticles.Count; i++) {
             CurrentParticles[i].Update();
         }
-        
+
         //double ms = s.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency / 1000;
         //Console.WriteLine($"Particle Logic: {ms:0.000}ms");
     }

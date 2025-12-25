@@ -17,6 +17,7 @@ using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
@@ -952,7 +953,141 @@ public static class AIManager {
         return cnt;
     }
 
-    internal const int AI_TANK_TASK_COUNT = 16;
+
+    public const int SECTION_1 = 20;
+    public const int SECTION_2 = 40;
+    public const int SECTION_3 = 60;
+
+    // for some reason this approach abides the laws of delta time... while Task.Run doesn't...??? WTF???
+    public static Thread AIThread1 { get; } = new Thread(ProcessAISection1) {
+        Name = "AIThread1",
+        IsBackground = true,
+        Priority = ThreadPriority.AboveNormal
+    };
+    public static Thread AIThread2 { get; } = new Thread(ProcessAISection2) {
+        Name = "AIThread2",
+        IsBackground = true,
+        Priority = ThreadPriority.AboveNormal
+    };
+    public static Thread AIThread3 { get; } = new Thread(ProcessAISection3) {
+        Name = "AIThread3",
+        IsBackground = true,
+        Priority = ThreadPriority.AboveNormal
+    };
+    public static bool RunThreads = true;
+    public static void StartThreads() {
+        AIThread1.Start();
+        AIThread2.Start();
+        AIThread3.Start();
+    }
+    internal static void UpdateAITanks() {
+
+        if (ModLoader.Status != LoadStatus.Complete)
+            return;
+
+        if (!GameScene.UpdateAndRender)
+            return;
+
+        Span<AITank> aiTanks = GameHandler.AllAITanks;
+        ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+        for (var i = 0; i < aiTanks.Length; i++) {
+            var tank = Unsafe.Add(ref tanksSearchSpace, i);
+            if (tank is null || tank.IsDestroyed) continue;
+
+            tank.Update();
+            tank.HandleTankMetaData();
+        }
+
+        // if you're not connected to a server or you aren't *the* server
+        // if (!Client.IsHost() && Client.IsConnected()) return;
+
+        /*Parallel.For(0, GameHandler.ActiveAITankCount, new ParallelOptions() {
+            MaxDegreeOfParallelism = 3,
+        }, i => {
+            var tank = GameHandler.AllAITanks[i];
+            if (tank.IsDestroyed) return;
+
+            tank.DoAI();
+
+            // only does anything if you're in a multiplayer context.
+            Client.SyncAITank(tank);
+        });*/
+    }
+    public static void ProcessAISection1() {
+        while (RunThreads) {
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            Thread.Sleep(sleepTime);
+
+            if (GameHandler.ActiveAITankCount == 0) continue;
+            if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
+            if (!Client.IsHost() && Client.IsConnected()) continue;
+
+            Span<AITank> aiTanks = GameHandler.AllAITanks;
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+
+            // start of the array to SECTION_1
+            for (var i = 0; i < SECTION_1; i++) {
+                var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tank is null || tank.IsDestroyed) continue;
+
+                tank.DoAI();
+
+                // only does anything if you're in a multiplayer context.
+                Client.SyncAITank(tank);
+            }
+        }
+    }
+    public static void ProcessAISection2() {
+        while (RunThreads) {
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            Thread.Sleep(sleepTime);
+
+            if (GameHandler.ActiveAITankCount < SECTION_1) continue;
+            if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
+            if (!Client.IsHost() && Client.IsConnected()) continue;
+
+            Span<AITank> aiTanks = GameHandler.AllAITanks;
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+
+            // SECTION_1 to SECTION_2
+            for (var i = SECTION_1; i < SECTION_2; i++) {
+                var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tank is null || tank.IsDestroyed) continue;
+
+                tank.DoAI();
+
+                // only does anything if you're in a multiplayer context.
+                Client.SyncAITank(tank);
+            }
+        }
+    }
+    public static void ProcessAISection3() {
+        while (RunThreads) {
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            Thread.Sleep(sleepTime);
+
+            if (GameHandler.ActiveAITankCount < SECTION_2) continue;
+            if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
+            if (!Client.IsHost() && Client.IsConnected()) continue;
+
+            Span<AITank> aiTanks = GameHandler.AllAITanks;
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+
+            // SECTION_2 to the end of the array
+            for (var i = SECTION_2; i < aiTanks.Length; i++) {
+                var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tank is null || tank.IsDestroyed) continue;
+
+                tank.DoAI();
+
+                // only does anything if you're in a multiplayer context.
+                Client.SyncAITank(tank);
+            }
+        }
+    }
+
+    /* experimental. not necessary right now
+    internal const int AI_TANK_TASK_COUNT = 4;
     internal static Task[] AITasks = new Task[AI_TANK_TASK_COUNT];
     internal static CancellationTokenSource? AICancelSource;
 
@@ -978,8 +1113,6 @@ public static class AIManager {
     }
     internal static void UpdateAITanks() {
         if (ModLoader.Status != LoadStatus.Complete) return;
-        // if you're not connected to a server or you aren't *the* server
-        if (!Client.IsHost() && Client.IsConnected()) return;
 
         Span<AITank> aiTanks = GameHandler.AllAITanks;
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
@@ -1012,6 +1145,8 @@ public static class AIManager {
 
                 if (!Client.IsHost() && Client.IsConnected())
                     continue;
+
+                ChatSystem.SendMessage(sleepTime, ColorUtils.DiscoPartyColor);
 
                 //Span<AITank> aiTanks = GameHandler.AllAITanks;
                 //ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
@@ -1048,5 +1183,5 @@ public static class AIManager {
             AICancelSource.Dispose();
             AICancelSource = null;
         }
-    }
+    }*/
 }

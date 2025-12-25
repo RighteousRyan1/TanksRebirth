@@ -39,8 +39,6 @@ public static class PingMenu {
     static int _pickedPingId;
     public static void DrawPingHUD() {
         if (InputUtils.MouseMiddle && !InputUtils.OldMouseMiddle) {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), _pickedPingId, NetPlay.GetMyClientId(), Client.IsConnected());
         }
 
@@ -53,7 +51,7 @@ public static class PingMenu {
 
         float offY = 0f;
         float scale = 0.5f;
-        var basePos = WindowUtils.WindowRight - new Vector2(60, 300).ToResolution();
+        var basePos = new Vector2(60, 300).ToResolution();
         var padding = 10f;
         var rect = new Rectangle() {
             X = (int)(basePos.X - padding * 4),

@@ -160,7 +160,6 @@ public sealed class Mine : IAITankDanger {
         DrawParams.World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
 
         // this might need offsetting due to the nature of the orthographic camera
-        HitBoxSize = 18;
         HitBox = new(Position3D - new Vector3(HitBoxSize / 2, HitBoxSize / 2, HitBoxSize / 2),
                 Position3D + new Vector3(HitBoxSize / 2, HitBoxSize / 2, HitBoxSize / 2));
 

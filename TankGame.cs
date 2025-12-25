@@ -43,6 +43,7 @@ using System.Collections.Concurrent;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using System.Linq;
 
 namespace TanksRebirth;
 
@@ -238,13 +239,12 @@ public class TankGame : Game {
 
             VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
 
-            AIManager.AITaskInit();
+            // AIManager.AITaskInit();
+            AIManager.StartThreads();
             ClientLog.Write("Tank AI Threads started.", LogType.Info);
 
             // add the main player in when loading
             PlayerMice[0] = new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue);
-
-            Client.OnClientStart += UpdateMainClientMouse;
 
             InputUtils.OnGamePadConnected += InputUtils_OnGamePadConnected;
             InputUtils.OnGamePadDisconnected += InputUtils_OnGamePadDisconnected;
@@ -267,24 +267,18 @@ public class TankGame : Game {
     }
 
     void InputUtils_OnGamePadConnected(int player) {
-        var plrReal = player + 1;
 
         var kbTnk = PlayerTank.PlayerControlledByKeyboard;
         var numGps = InputUtils.NumGamepadsConnected;
 
+        var plrReal = player + 1;
         ClientLog.Write($"Gamepad connected, controlling player {player}.", LogType.Info);
         PlayerMice[plrReal] = new RebirthMouse(PlayerID.PlayerTankColors[plrReal], PlayerID.PlayerTankColorsBright[plrReal], plrReal) {
             Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * plrReal
         };
     }
 
-    void UpdateMainClientMouse(Client client) {
-        // update only the current client's mouse.
-        // other mice won't exist in online multiplayer contexts, but will exist in local multiplayer.
-        PlayerMice[0].MouseColor = PlayerID.PlayerTankColorsBright[client.Id];
-    }
-
-    protected override async void OnExiting(object sender, ExitingEventArgs args) {
+    protected override void OnExiting(object sender, ExitingEventArgs args) {
         ClientLog.Write($"Handling termination process...", LogType.Info);
 
         // update game-related numbers
@@ -304,8 +298,11 @@ public class TankGame : Game {
 
         CurrentSessionTimer.Stop();
 
-        // AIManager.AIThread1.Join();
-        await AIManager.StopAITasksAsync();
+        // since yeah?
+        AIManager.RunThreads = false;
+
+        // await AIManager.StopAITasksAsync();
+        ClientLog.Write("Tank AI Threads stopped.", LogType.Info);
         // write end-life metrics
 
         ClientLog.Write($"Average overall FPS: {FPSTracker.AverageFPS}", LogType.Info);
@@ -646,6 +643,26 @@ public class TankGame : Game {
                 }
             }*/
 
+            MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
+            MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
+
+            if (PlayerTank.PlayerControlledByKeyboard > -1) {
+                var numMice = InputUtils.NumConnectedInputs;
+                // fallback if the mouse of the player being controlled by KBM is nonexistent
+                if (numMice - 1 < PlayerTank.PlayerControlledByKeyboard) {
+                    PlayerTank.PlayerControlledByKeyboard = 0;
+                }
+                PlayerMice[PlayerTank.PlayerControlledByKeyboard].Position = MouseUtils.MousePosition;
+            }
+            // more hacks, more hacks. but it works
+            else if (MainMenuUI.IsActive || PlayerTank.PlayerControlledByKeyboard == -2) {
+                PlayerMice[0].Position = MouseUtils.MousePosition;
+                PlayerMice[0].MouseColor = PlayerMice[0].TrailColor = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
+            }
+
+            if (Client.IsConnected())
+                PlayerTank.PlayerControlledByKeyboard = -2;
+
             HandleLogic(gameTime);
 
             if (MainThreadTasks.TryDequeue(out var action))
@@ -667,11 +684,7 @@ public class TankGame : Game {
             RuntimeData.CrashInfo = new(e.Message, e.StackTrace ?? "No stack trace available.", e);
         }
     }
-    private void HandleLogic(GameTime gameTime) {
-        MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
-        MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
-
-        PlayerMice[0].Position = MouseUtils.MousePosition;
+    void HandleLogic(GameTime gameTime) {
 
         /*if ()
         // since "connected inputs" also tracks the keyboard.
@@ -842,7 +855,7 @@ public class TankGame : Game {
         GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
         RoomScene.Render();
         CosmeticsUI.DrawMenu();
-        GameHandler.RenderAll();
+        GameHandler.RenderAll(SpriteRenderer);
         GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
 
         spriteBatch.End();

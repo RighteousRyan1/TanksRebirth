@@ -878,13 +878,13 @@ public abstract class Tank(bool ignoresRegister) {
 
         CurMineCooldown = Properties.MineCooldown;
         CurMineStun = Properties.MineStun;
-
         OwnedMineCount++;
 
         TimeSinceLastAction = 0;
 
         var mine = new Mine(this, Position, 600);
 
+        // horrendous code
         if (this is PlayerTank pt) {
             if (NetPlay.IsClientMatched(pt.PlayerId))
                 Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
@@ -942,15 +942,8 @@ public abstract class Tank(bool ignoresRegister) {
         }
 
         foreach (var cosmetic in Props) {
-            //if (GameProperties.InMission && Properties.Invisible)
-            //break;
             if (cosmetic is not Prop3D cos3d)
                 continue;
-
-            //if (!_duplicatedModels.ContainsKey(cos3d)) {
-            //    _duplicatedModels.Add(cos3d, cos3d.PropModel.Duplicate());
-            //}
-            // _duplicatedModels[cos3d].Meshes
 
             foreach (var mesh in cos3d.PropModel.Asset.Meshes) {
                 if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))

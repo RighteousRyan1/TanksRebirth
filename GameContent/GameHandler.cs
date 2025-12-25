@@ -30,14 +30,15 @@ public class GameHandler {
 
     public const int MAX_AI_TANKS = 60;
     public const int MAX_PLAYERS = 4;
-    public const int MAX_PARTICLES = 15000;
+    //
+    // public const int MAX_PARTICLES = 15000; // removed for now
 
     public delegate void PostRender();
     public static event PostRender? OnPostRender;
     public delegate void PostUpdate();
     public static event PostUpdate? OnPostUpdate;
 
-    public static ParticleManager Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
+    public static ParticleManager Particles { get; } = new(() => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
     public static XpBar ExpBar;
 
     public static byte ActiveTankCount;
@@ -211,7 +212,7 @@ public class GameHandler {
         OnPostUpdate?.Invoke();
     }
 
-    internal static void RenderAll() {
+    internal static void RenderAll(SpriteBatch spriteBatch) {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         
         // CHECK: move this back if necessary
@@ -264,7 +265,7 @@ public class GameHandler {
 
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
-            Particles.RenderParticles();
+            Particles.RenderParticles(spriteBatch);
         }
 
         // only render the level editor if it's active
