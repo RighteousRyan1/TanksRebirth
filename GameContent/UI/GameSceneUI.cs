@@ -38,8 +38,6 @@ public static class GameSceneUI {
     }
 
     public static void DrawScores() {
-        // TODO: probably make it where single player can use controllers
-        // make a ui for that later xd im too FUCKING TIRED rn
         var drawCount = Client.IsConnected() ? Server.CurrentClientCount : PlayerTank.NumLocalPlayers;
         for (int i = 0; i < drawCount; i++) {
 

@@ -137,5 +137,16 @@
   "MoveMissionDownFlavor": "Zamień wybraną misję z tą poniżej.",
   "LoadMissionFlavor": "Otworzy okno wyboru pliku, abyś wybrał którą misję/kampanię załadować.",
   "BlockStackFlavor": "GÓRA i DÓŁ aby zmienić wysokość bloków",
-  "GameStatsFlavor": "Zobacz swoje statystyki!"
+  "KeysCount": "Masz {0} kluczy.",
+  "KeysWarning": "Za dużo kluczy!",
+  "FadeTracks": "Zanikanie śladów czołgu",
+  "FadeTracksDesc": "Po włączeniu ślady czołgu będą stopniowo zanikać. Może to znacznie poprawić wydajność.",
+  "MenuGameplay": "Rozgrywka w menu",
+  "MenuGameplayDesc": "Określa, czy rozgrywka ma być aktywna w tle menu.",
+  "ParticleIntensity": "Intensywność cząsteczek",
+  "ParticleIntensityDesc": "Intensywność efektów cząsteczkowych. (To ustawienie jest czysto eksperymentalne!)",
+  "KeyboardPlayer": "Gracz klawiaturą",
+  "MissionReady": "Gotowy?",
+  "MissionSet": "Do startu...",
+  "MissionStart": "Start!"
 }

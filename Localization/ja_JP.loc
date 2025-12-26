@@ -149,5 +149,17 @@
   "MoveMissionDownFlavor": "現在選択されているミッションを下のミッションと入れ替えます。",
   "LoadMissionFlavor": "ミッションやキャンペーンを読み込むためのファイル選択ダイアログを開きます。",
   "BlockStackFlavor": "↑↓キーで積み重ねを変更します。",
-  "GameStatsFlavor": "これまでの全統計を表示します！"
+  "GameStatsFlavor": "これまでの全統計を表示します！",
+  "KeysCount": "{0} 個のキーを所持しています。",
+  "KeysWarning": "キーが多すぎます！",
+  "FadeTracks": "戦車の履帯をフェード",
+  "FadeTracksDesc": "有効にすると、戦車の履帯が徐々に消えます。パフォーマンス向上に役立つ場合があります。",
+  "MenuGameplay": "メニュー中のゲームプレイ",
+  "MenuGameplayDesc": "メニュー画面の背後でゲームプレイを有効にするかどうかを設定します。",
+  "ParticleIntensity": "パーティクル強度",
+  "ParticleIntensityDesc": "パーティクルエフェクトの強度です。（この設定は実験的です！）",
+  "KeyboardPlayer": "キーボードプレイヤー",
+  "MissionReady": "準備はいい？",
+  "MissionSet": "用意…",
+  "MissionStart": "スタート！"
 }

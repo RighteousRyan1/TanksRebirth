@@ -10,7 +10,7 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent.Systems.AI; 
 public partial class AITank {
     public bool IsInDanger;
-    public List<IAITankDanger> NearbyDangers;
+    public volatile List<IAITankDanger> NearbyDangers;
     public IAITankDanger? ClosestDanger;
 
     readonly List<IAITankDanger> _evasionDangersBuffer = [];

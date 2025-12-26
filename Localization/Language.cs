@@ -180,6 +180,9 @@ public class Language {
     #endregion
     #region Gameplay
     public string Hit { get; set; }
+    public string MissionReady { get; set; }
+    public string MissionSet { get; set; }
+    public string MissionStart { get; set; }
     #endregion
     #region Settings
     public string PerPxLight { get; set; }

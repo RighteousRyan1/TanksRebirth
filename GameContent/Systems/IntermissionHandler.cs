@@ -310,20 +310,21 @@ public static class IntermissionHandler {
     static void CountdownAnimator_OnKeyFrameFinish(int frameIndex) {
         // just started, also localize
         if (frameIndex == -1) {
-            PrepareDisplay = "Ready?";
+            PrepareDisplay = TankGame.GameLanguage.MissionReady;
         }
         if (frameIndex == 1) {
-            PrepareDisplay = "Set...";
+            PrepareDisplay = TankGame.GameLanguage.MissionSet;
         }
         else if (frameIndex == 3) {
-            PrepareDisplay = "Start!";
+            PrepareDisplay = TankGame.GameLanguage.MissionStart;
         }
     }
 
     public static void RenderCountdownGraphics() {
-        if (!MainMenuUI.IsActive && !CameraGlobals.OverheadView && !LevelEditorUI.IsActive/* && TankFunctionWait > 0*/) {
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
-                IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.Flatten().ToResolution(), 0f, Anchor.Center, 3);
+        if (!MainMenuUI.IsActive && !CameraGlobals.OverheadView && !LevelEditorUI.IsActive) {
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, 
+                new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
+                IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.Flatten().ToResolution(), 0f, Anchor.Center, CountdownAnimator.CurrentScale.Length());
         }
     }
 }

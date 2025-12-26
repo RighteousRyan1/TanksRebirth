@@ -46,6 +46,8 @@ public class PlayerTank : Tank {
 
     public static int NumLocalPlayers => PlayerControlledByKeyboard == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
     #region The Rest
+
+    // "My" denotes that it's for the client's tank team/tank type
     public static int MyTeam;
     public static int MyTankType;
     public static int StartingLives = 3;
@@ -618,7 +620,7 @@ public class PlayerTank : Tank {
 
             // block coll
             if (pathRicochetCount <= Properties.RicochetCount) {
-                var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
+                var pathHitbox = new Rectangle((int)pathPos.X - Shell.COLL_RECT_DIM / 2, (int)pathPos.Y - Shell.COLL_RECT_DIM / 2, Shell.COLL_RECT_DIM, Shell.COLL_RECT_DIM);
 
                 Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.Properties.IsSolid);
 

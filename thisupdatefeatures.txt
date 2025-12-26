@@ -19,6 +19,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- It allows you to quickly load/unload/reload mods instead of having to use debug functions or restart the game
 - Added a new dev console which is accessible from the tilde key (~)
 - Player bullet count UI is now shown for all players (including in online contexts)
+- Even more localization!
+	- Translators are still welcome to correct any faulty translations- some translations were done via machine translation
 
 # Changes
 

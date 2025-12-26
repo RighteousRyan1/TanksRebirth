@@ -13,7 +13,11 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.Internals.UI;
 
 // make position stored as a Func<Vector2> so said position is always set, which will make UI adjustment easier.
-public abstract partial class UIElement {
+public abstract partial class UIElement : IUIProperties {
+    // from IUIProperties
+
+    // UIElement
+
     public static int delay;
 
     public static Texture2D UIPanelBackground;
@@ -21,9 +25,9 @@ public abstract partial class UIElement {
 
     public Rectangle Scissor = new(0, 0, 10000, 10000);
 
-    private Vector2 InternalPosition;
-
-    private Vector2 InternalSize;
+    Vector2 _position;
+    Vector2 _size;
+    Rectangle? _backingHitbox;
 
     public string Tooltip;
 
@@ -31,15 +35,13 @@ public abstract partial class UIElement {
     public Anchor TooltipAnchor;
 
     /// <summary>A list of all <see cref="UIElement"/>s.</summary>
-    public static List<UIElement> AllUIElements { get; internal set; } = new();
+    public static List<UIElement> AllUIElements { get; internal set; } = [];
 
     /// <summary>The parent of this <see cref="UIElement"/>.</summary>
-    public UIElement? Parent { get; private set; }
+    public UIElement? Parent { get; set; }
 
     /// <summary>This <see cref="UIElement"/>'s children.</summary>
-    protected IList<UIElement> Children { get; set; } = new List<UIElement>();
-
-    private Rectangle? _backingHitbox;
+    protected IList<UIElement> Children { get; set; } = [];
 
     /// <summary>The hitbox of this <see cref="UIElement"/>.</summary>
     public Rectangle Hitbox {
@@ -56,7 +58,7 @@ public abstract partial class UIElement {
     public Vector2 ScaleOrigin = new(0.5f);
 
     /// <summary>Whether or not this <see cref="UIElement"/> is visible. If set to <see langword="false"/>, the <see cref="UIElement"/> will not accept mouse input.</summary>
-    public bool IsVisible = true;
+    public bool IsVisible { get; set; } = true;
 
     /// <summary>Whether or not the mouse is currently hovering over this <see cref="UIElement"/>.</summary>
     public bool MouseHovering;
@@ -65,7 +67,7 @@ public abstract partial class UIElement {
     public bool Initialized;
 
     /// <summary>Whether or not to handle mouse interactions for this <see cref="UIElement"/>.</summary>
-    public bool IgnoreMouseInteractions;
+    public bool IgnoreMouseInteractions { get; set; }
 
     /// <summary>Whether or not to have the <see cref="UIElement"/> under this one fire mouse input events.</summary>
     public bool FallThroughInputs;
@@ -82,8 +84,6 @@ public abstract partial class UIElement {
     /// <summary>Whether or not the <see cref="UIElement"/> should draw its children before itself.</summary>
     public bool ReverseDrawOrder { get; set; }
 
-    private static UIPanel cunoSucksElement;
-
     internal UIElement() {
         AllUIElements.Add(this);
     }
@@ -96,15 +96,15 @@ public abstract partial class UIElement {
     /// <param name="width">The width of the created <see cref="UIElement"/>.</param>
     /// <param name="height">The height of the created <see cref="UIElement"/>.</param>
     public void SetDimensions(float x, float y, float width, float height) {
-        InternalPosition = new Vector2(x, y);
-        InternalSize = new Vector2(width, height);
+        _position = new Vector2(x, y);
+        _size = new Vector2(width, height);
         _doUpdating = false;
         Recalculate();
     }
 
-    private Func<Vector2> _updatedPos;
-    private Func<Vector2> _updatedSize;
-    private bool _doUpdating;
+    Func<Vector2> _updatedPos;
+    Func<Vector2> _updatedSize;
+    bool _doUpdating;
 
     public void SetDimensions(Func<Vector2> position, Func<Vector2> dimensions) {
         _updatedPos = position;
@@ -117,21 +117,22 @@ public abstract partial class UIElement {
     /// </summary>
     /// <param name="rect">The <see cref="Rectangle"/> dictating the created <see cref="UIElement"/>'s dimensions.</param>
     public void SetDimensions(Rectangle rect) {
-        InternalPosition = new Vector2(rect.X, rect.Y);
-        InternalSize = new Vector2(rect.Width, rect.Height);
+        _position = new Vector2(rect.X, rect.Y);
+        _size = new Vector2(rect.Width, rect.Height);
         Recalculate();
+        /*
         cunoSucksElement = new() { IsVisible = false };
         cunoSucksElement.Remove();
         cunoSucksElement = new();
-        cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
+        cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);*/
     }
 
     /// <summary>
     /// Recalculates the position and size of this <see cref="UIElement"/>. Called automatically after <see cref="SetDimensions"/>. Generally does not need to be called.
     /// </summary>
     public void Recalculate() {
-        Position = InternalPosition;
-        Size = InternalSize;
+        Position = _position;
+        Size = _size;
     }
 
     private static RasterizerState _state = new() { ScissorTestEnable = true };
@@ -322,9 +323,9 @@ public abstract partial class UIElement {
             if (!element._doUpdating) continue;
             // this may need revertation. 
 
-            element.Position = element.InternalPosition =
+            element.Position = element._position =
                 element._updatedPos.Invoke() + element.Offset.ToResolution();
-            element.Size = element.InternalSize = element._updatedSize.Invoke();
+            element.Size = element._size = element._updatedSize.Invoke();
             /*element.Position = element.InternalPosition =
                 element._updatedPos.Invoke().ToResolution() + element.Offset.ToResolution();
             element.Size = element.InternalSize = element._updatedSize.Invoke().ToResolution();*/

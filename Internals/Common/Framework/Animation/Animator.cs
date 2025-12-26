@@ -1,12 +1,35 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Animation;
 
+/// <summary>
+/// Manages a time-based, keyframe-driven animation that interpolates position, scale,
+/// and arbitrary floating-point values over a defined timeline.
+/// <para>
+/// An <see cref="Animator"/> consists of an ordered list of <see cref="KeyFrame"/>s.
+/// Each keyframe represents a target state, while interpolation occurs between the
+/// current frame and the next frame using the next frame’s duration and easing function.
+/// </para>
+/// <para>
+/// The animation may be played, paused, restarted, looped, stepped manually, or seeked
+/// to an exact position in time or percentage of completion. Interpolation progress is
+/// exposed both per-keyframe (<see cref="CurrentProgress"/>) and across the full timeline
+/// (<see cref="TotalProgress"/>).
+/// </para>
+/// <para>
+/// Arbitrary float values can be animated alongside transform data via buffered
+/// interpolation, allowing this animator to drive rotations, shader parameters,
+/// custom gameplay values, or any other float-based property.
+/// </para>
+/// <para>
+/// This class is designed for real-time usage in a game loop and avoids stable ordering
+/// guarantees; keyframe completion events are emitted via <see cref="OnKeyFrameFinish"/>
+/// when a frame fully elapses.
+/// </para>
+/// </summary>
 public class Animator {
     public static readonly List<Animator> Animators = [];
 
@@ -42,9 +65,9 @@ public class Animator {
     }
     /// <summary>If > -1, the animation will move from the current frame to this ID in the array of KeyFrames.</summary>
     public int NextKeyFrame = -1;
-    /// <summary>The current 2D position of the given animation.</summary>
+    /// <summary>The current position of the given animation.</summary>
     public Vector3 CurrentPosition { get; private set; }
-    /// <summary>The current two-dimensional scale of the given animation.</summary>
+    /// <summary>The current scale of the given animation.</summary>
     public Vector3 CurrentScale { get; private set; }
     /// <summary>The current rotation of the given animation. You can use this to match to any float you want.</summary>
     public float[] CurrentFloats { get; private set; }
