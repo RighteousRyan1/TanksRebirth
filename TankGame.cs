@@ -284,6 +284,8 @@ public class TankGame : Game {
         // update game-related numbers
         SaveFile.TimePlayed += CurrentSessionTimer.Elapsed;
 
+        Settings.PlayerUsingKeyboard = PlayerTank.PlayerControlledByKeyboard;
+
         // save everything related to game-data
         SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
         JsonSerializerOptions opts = new() { WriteIndented = true };
@@ -489,6 +491,8 @@ public class TankGame : Game {
             FontGlobals.LoadLocalizedFont(LangCode.English);
             FontGlobals.LoadLocalizedFont(Settings.Language);
 
+            PlayerTank.PlayerControlledByKeyboard = Settings.PlayerUsingKeyboard;
+
             FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
             FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
             ClientLog.Write($"Loaded fonts.", LogType.Info);
@@ -616,10 +620,10 @@ public class TankGame : Game {
     // FIXME: this method is a clusterfuck
     protected override void Update(GameTime gameTime) {
         try {
+            // resets every frame regardless of state
             MouseUIHover = false;
 
-            if (GameUI.Paused)
-                MouseUIHover = true;
+            if (GameUI.Paused) MouseUIHover = true;
             IngameConsole.Update(gameTime);
             /*if (Debugger.IsAttached) {
                 SteamworksUtils.SetSteamStatus("balls", "inspector");

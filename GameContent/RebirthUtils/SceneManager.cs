@@ -61,6 +61,7 @@ public static class SceneManager {
             if (Client.ClientRandom.NextFloat(0, 1) <= 0.3f) {
 
                 // TODO: add some sort of snowflake limit because the damn renderer sucks ass.
+                // or an even better idea, improve it
 
                 float y = 200f;
 
@@ -101,7 +102,7 @@ public static class SceneManager {
             }
         }
     }
-    private static void DoThunderStuff() {
+    static void DoThunderStuff() {
         if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenuUI.IsActive || GameUI.Paused) {
             if (Thunder.SoftRain!.IsPlaying()) {
                 Thunder.SoftRain.Instance.Stop();

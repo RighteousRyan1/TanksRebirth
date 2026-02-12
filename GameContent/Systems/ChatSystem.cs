@@ -225,7 +225,7 @@ public sealed record ChatSystem {
         var font = FontGlobals.RebirthFont;
 
         // applies easing
-        float smoothOpen = Easings.InOutQuint(_openProgress);
+        float smoothOpen = Easings.ComputeEase(EasingFunction.InOutQuint, _openProgress);
 
         var resScale = new Vector2(DEFAULT_SCALE).ToResolution();
         var padding = new Vector2(PADDING_BASE).ToResolution();

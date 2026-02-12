@@ -1,5 +1,5 @@
 using Microsoft.Xna.Framework.Input;
-using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
 using TanksRebirth.Localization;
 
@@ -30,14 +30,11 @@ public class GameConfig
     #region Controls Settings
 
     public Keys UpKeybind { get; set; } = Keys.W;
-
     public Keys LeftKeybind { get; set; } = Keys.A;
-
     public Keys RightKeybind { get; set; } = Keys.D;
-
     public Keys DownKeybind { get; set; } = Keys.S;
-
     public Keys MineKeybind { get; set; } = Keys.Space;
+    public int PlayerUsingKeyboard { get; set; } = PlayerID.Blue;
 
     #endregion
 

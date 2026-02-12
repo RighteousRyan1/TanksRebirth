@@ -460,7 +460,7 @@ public static class IntermissionSystem {
         // draw player graphics & life remaining
         var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
         var clientConnected = Client.IsConnected();
-        var count = clientConnected ? Server.CurrentClientCount : InputUtils.NumConnectedInputs;
+        var count = clientConnected ? Server.CurrentClientCount : PlayerTank.NumLocalPlayers;
 
         for (int i = 0; i < count; i++) {
             string name = string.Empty;

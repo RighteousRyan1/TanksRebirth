@@ -66,17 +66,13 @@ public static class CosmeticsUI {
 
         displayTank?.Update();
 
-        if (displayTank != null) {
-            displayTank.Position = Chest.ChestPosition.FlattenZ();
-            displayTank.OffsetY = Chest.ChestPosition.Y + 15;
-            displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
+        displayTank ??= new(playerType: PlayerID.Blue, ignoreRegister: true);
+        displayTank.Position = Chest.ChestPosition.FlattenZ();
+        displayTank.OffsetY = Chest.ChestPosition.Y + 15 + 40;
+        displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
 
-            // like why negative... gonna shoot myself mayhaps.
-            displayTank.TurretRotation = -displayTank.ChassisRotation;
-        }
-        else {
-            displayTank = new(playerType: PlayerID.Blue, ignoreRegister: true);
-        }
+        // like why negative... gonna shoot myself mayhaps.
+        displayTank.TurretRotation = -displayTank.ChassisRotation;
 
         HandleInputs();
         if (_keyAnimation is not null) {
@@ -88,7 +84,11 @@ public static class CosmeticsUI {
                 var rarity = VanillaCosmetics.GetRarityFromFloat(percent);
                 Console.WriteLine($"{prop.Name} | {rarity} | {percent:0.00}");
 
-                Particle cosPart;
+                displayTank.AddCosmetic(prop);
+
+
+
+                /*Particle cosPart;
 
                 if (prop is Prop3D p3d) {
                     cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel.Asset, p3d.ModelTexture);
@@ -111,7 +111,7 @@ public static class CosmeticsUI {
                         p.Destroy();
 
 
-                };
+                };*/
             }
 
             _prevTotalAnim = _keyAnimation.TotalProgress;
@@ -283,6 +283,9 @@ public static class CosmeticsUI {
 
                     keyPart.Roll += 0.025f;
                     keyPart.Pitch -= 0.025f;
+
+                    // remove props from display tank
+                    displayTank?.RemoveCosmetics();
 
                     if (keyPart.Position.Y < 0) {
                         keyPart.Destroy();

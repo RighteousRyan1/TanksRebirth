@@ -768,7 +768,9 @@ public class PlayerTank : Tank {
         // draw every player's bullet count, even in MP
         if (!MainMenuUI.IsActive) {
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
-            var baseScale = 0.5f;
+            // based off of a normal shell limit of 5.
+            var shellCountScale = MathF.Min(1f, 5f / Properties.ShellLimit);
+            var baseScale = 0.5f * shellCountScale;
             var offX = 25f.ToResolutionX();
             var offY = (tex.Height * baseScale).ToResolutionY();
             var spacing = 5f;
@@ -828,7 +830,7 @@ public class PlayerTank : Tank {
                 var position = new Vector2(xPos, yPos);
 
                 DrawUtils.DrawTextureWithBorder(spriteBatch, tex, position, colorToUse, 
-                    Color.White * smoothedValue, new Vector2(currentScale).ToResolution(), 0f, Anchor.Center);
+                    Color.White * smoothedValue, new Vector2(currentScale).ToResolution(), 0f, Anchor.Center, borderThickness: shellCountScale + 0.5f);
             }
         }
 
@@ -859,7 +861,8 @@ public class PlayerTank : Tank {
             //string pText = "nerd";
             var scale = 0.3f;
 
-            string pText = Client.IsConnected() ? Server.ConnectedClients[PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
+            string pText = Client.IsConnected() ? 
+                Server.ConnectedClients![PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
 
             TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, Anchor.BottomCenter.GetAnchor(tex1.Size()), scale.ToResolution(), default, default);
             TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, Anchor.BottomCenter.GetAnchor(tex2.Size()), scale.ToResolution(), default, default);

@@ -33,8 +33,9 @@ public static class IntermissionHandler {
     private static float _oldWait;
 
     public static MissionEndContext LastResult = (MissionEndContext)(-1);
-    public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) // bool major = (if true, play M100 fanfare, else M20)
-    {
+
+    // bool major = (if true, play M100 fanfare, else M20)
+    public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) {
         TankMusicSystem.StopAll();
 
         // Server.SyncSeeds();
@@ -107,7 +108,7 @@ public static class IntermissionHandler {
 
         if (CampaignCompleteUI.FanfaresAndDurations.TryGetValue(context, out (OggAudio, TimeSpan) value)) {
             value.Item1.Instance?.Play();
-            value.Item1.Instance.Volume = TankGame.Settings.MusicVolume;
+            value.Item1.Instance!.Volume = TankGame.Settings.MusicVolume;
             SceneManager.DoEndScene(value.Item2, context);
         }
         else
@@ -322,8 +323,8 @@ public static class IntermissionHandler {
 
     public static void RenderCountdownGraphics() {
         if (!MainMenuUI.IsActive && !CameraGlobals.OverheadView && !LevelEditorUI.IsActive) {
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, 
-                new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay,
+                new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3),
                 IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.Flatten().ToResolution(), 0f, Anchor.Center, CountdownAnimator.CurrentScale.Length());
         }
     }

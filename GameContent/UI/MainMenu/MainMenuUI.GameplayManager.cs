@@ -29,6 +29,7 @@ public static partial class MainMenuUI {
     }
     public static void OpenGP() {
         SceneManager.CleanupScene();
+        SceneManager.CleanupEntities();
         PlayerTank.TankKills.Clear();
 
         if (!TankGame.Settings.MenuGameplayEnabled) return;

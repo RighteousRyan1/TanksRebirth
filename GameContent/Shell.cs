@@ -244,7 +244,7 @@ public class Shell : IAITankDanger {
                 };
             }
             if (owner is not null) {
-                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.6f, pitchOverride: GameUtils.NaturalPitchShift);
+                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 1f, pitchOverride: GameUtils.NaturalPitchShift);
                 //if (CameraGlobals.IsUsingFirstPresonCamera)
                 //    SoundUtils.CreateSpatialSound(ShootSound, owner.TurretPosition3D, CameraGlobals.RebirthFreecam.Position);
             }

@@ -117,10 +117,10 @@ public record Modifiers {
     }
 
     public static void ManageAirplanes() {
-        if (!Client.IsHost()) return;
+        if (!Client.IsHost() && Client.IsConnected()) return;
 
-        if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.AirplaneTest) || Map[Modifiers.PLANES]) && CampaignGlobals.InMission) {
-            if (RuntimeData.RunTime % 300 <= RuntimeData.DeltaTime) {
+        if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.AirplaneTest) || Map[PLANES]) && CampaignGlobals.InMission) {
+            if (RuntimeData.RunTime % 180 <= RuntimeData.DeltaTime) {
                 // 33% chance every 5 seconds
                 if (Client.ClientRandom.Next(3) == 0) {
                     Airplane.SpawnPlaneWithSmokeGrenades();

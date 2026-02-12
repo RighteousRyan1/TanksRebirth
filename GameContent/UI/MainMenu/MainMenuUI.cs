@@ -16,6 +16,7 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Graphics;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -257,6 +258,7 @@ public static partial class MainMenuUI {
         OpenUI();
         OpenAudio();
         OpenGP();
+
         // there used to be stuff that manually removed entities. i hope we didn't need that
         OnMenuOpen?.Invoke();
     }

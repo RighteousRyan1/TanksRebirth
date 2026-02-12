@@ -27,6 +27,7 @@ using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.Systems;
 
+
 /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
 public class Campaign
 {
@@ -142,8 +143,9 @@ public class Campaign
 
             var chassisRotation = MathF.Round(template.Rotation, roundingFactor);
 
-            if (!template.IsPlayer && CurrentTrackedSpawns[i].Alive) {
-                LoadAIControlled(template, chassisRotation);
+            if (!template.IsPlayer) {
+                if (CurrentTrackedSpawns[i].Alive)
+                    LoadAIControlled(template, chassisRotation);
             }
             else {
                 LoadPlayer(template, chassisRotation, hasSpawnedCompanion);

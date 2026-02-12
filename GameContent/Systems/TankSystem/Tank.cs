@@ -281,13 +281,14 @@ public abstract class Tank(bool ignoresRegister) {
         cannonMesh = DrawParamsTank.Model.Meshes["Cannon"];
         boneTransforms = new Matrix[DrawParamsTank.Model.Bones.Count];
     }
-    public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
+    void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
         if (Props.Contains(prop)) return;
         Props.Add(prop);
         var particle = GameHandler.Particles.MakeParticle(Position3D + prop.RelativePosition, prop.Texture);
 
         particle.Scale = prop.Scale;
         particle.HasAdditiveBlending = false;
+        particle.Tag = _propParticles.Count; // tag is essentially an index
         // += vs =  ?
         // TODO: this prolly is the culprit of 2d cosmetics not doin nun
         particle.UniqueBehavior = particle => {
@@ -304,6 +305,27 @@ public abstract class Tank(bool ignoresRegister) {
         };
 
         _propParticles.Add(particle);
+    }
+    public void AddCosmetic(IProp prop) {
+        if (prop is Prop3D p3d)
+            Props.Add((Prop3D)p3d.Clone());
+        else if (prop is Prop2D p2d)
+            AddProp2D(p2d);
+    }
+    /*public void RemoveCosmetic(IProp prop) {
+        if (prop is Prop3D p3d) {
+            Props.Remove(p3d);
+        }
+        else if (prop is Prop2D p2d) {
+            _propParticles.Remove(;
+        }
+    }*/
+    public void RemoveCosmetics() {
+        foreach (var item in _propParticles) {
+            item.Destroy();
+        }
+        _propParticles.Clear();
+        Props.Clear();
     }
     void OnMissionStart() {
         DoInvisibilityGFXandSFX();
@@ -402,10 +424,7 @@ public abstract class Tank(bool ignoresRegister) {
             for (int i = 0; i < 1; i++) {
                 var recieved = VanillaCosmetics.LootPool.Roll(out _);
 
-                if (recieved is Prop3D cosmetic1)
-                    Props.Add((Prop3D)cosmetic1.Clone());
-                else if (recieved is Prop2D cosmetic2)
-                    AddProp2D(cosmetic2);
+                AddCosmetic(recieved);
             }
         }
 
@@ -416,12 +435,14 @@ public abstract class Tank(bool ignoresRegister) {
 
         GeneratePhysics();
 
+        // here be JOLLY
         if (GameScene.Theme == MapTheme.Christmas)
             Props.Add(VanillaCosmetics.SantaHat);
 
         foreach (var cos in Props)
-            if (cos is Prop2D cos2d)
-                AddProp2D(cos2d);
+            AddCosmetic(cos);
+            //if (cos is Prop2D cos2d)
+            //    AddProp2D(cos2d);
 
         if (Modifiers.Map[Modifiers.TRIPLE_BOUNCE])
             Properties.RicochetCount *= 3;
@@ -994,9 +1015,7 @@ public abstract class Tank(bool ignoresRegister) {
     public virtual void Remove(bool nullifyMe) {
         if (CollisionsWorld.BodyList.Contains(Physics))
             CollisionsWorld.Remove(Physics);
-        foreach (var particle in _propParticles) {
-            particle?.Destroy();
-        }
+        RemoveCosmetics();
         CampaignGlobals.OnMissionStart -= OnMissionStart;
     }
     public void SetBoneTransforms() {
