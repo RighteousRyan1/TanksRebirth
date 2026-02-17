@@ -9,16 +9,13 @@ using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.UI;
-using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.Graphics;
 
 #pragma warning disable
-public enum MapTheme
-{
+public enum MapTheme {
     Vanilla,
     Christmas,
 }

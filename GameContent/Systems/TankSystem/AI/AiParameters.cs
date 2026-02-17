@@ -3,7 +3,7 @@ using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
 
-public record AIParameters {
+public struct AIParameters() {
     /// <summary>The amount of distance to check (in units) in all directions for obstacles to ensure laying a mine is safe. Word 2.</summary>
     public float ObstacleAwarenessMine { get; set; }
     /// <summary>The maximum amount of time before this <see cref="AITank"/> can lay a mine. Word 4.</summary>
@@ -64,7 +64,6 @@ public record AIParameters {
     public float TankAwarenessShoot { get; set; }
 
 
-
     // ### SEPARATION BETWEEN ORIGINAL PARAMETERS AND REBIRTH-EXCLUSIVE PARAMETERS ###
 
 
@@ -77,9 +76,6 @@ public record AIParameters {
     /// <summary>Whether or not this tank's shot raycast resets it's distance check per-bounce.</summary>
     public bool BounceReset { get; set; } = true;
 
-    /// <summary>When this tank finds a wall in its path, it moves away at this angle every (insert thing here) ticks.</summary>
-    public float RedirectAngle { get; set; } = MathHelper.ToRadians(5);
-
     /// <summary>Whether or not this tank predics the future position of its target.</summary>
     public bool PredictsPositions { get; set; }
 
@@ -87,7 +83,7 @@ public record AIParameters {
     public bool DeflectsBullets { get; set; }
 
     /// <summary>Whether or not this <see cref="AITank"/> will shoot mines that are near destructible obstacles.</summary>
-    public bool ShootsMinesSmartly { get; set; }
+    public bool ShootsMinesSmartly { get; set; } // WIP
     /// <summary>If true, this tank will target the tank that is actively firing at it rather than the closest, if applicable.</summary>
     public bool SmartTargeting { get; set; }
     /// <summary>The 'base' experience value the player gains killing this tank.</summary>

@@ -90,7 +90,7 @@ public static partial class MainMenuUI {
         DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Modifiers.DisguiseValue);
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Modifiers.MonochromeValue);
         RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(Modifiers.RandomTanksLower)} | Upper: {TankID.Collection.GetKey(Modifiers.RandomTanksUpper)}";
-        Modifiers.Map["RandomizedTanks"] = Modifiers.RandomTanksLower > 0 && Modifiers.RandomTanksUpper > 0;
+        Modifiers.Map[Modifiers.RANDOM_ENEMY] = Modifiers.RandomTanksLower > 0 && Modifiers.RandomTanksUpper > 0;
 
         // me in march 2024: what the fuck is this code.
         // also me in july 2025: what the FUCK is this code
@@ -103,7 +103,7 @@ public static partial class MainMenuUI {
         AllHoming.Color = Modifiers.Map[Modifiers.HOMING] ? Color.Lime : Color.Red;
         Armored.Color = Modifiers.Map[Modifiers.ARMOR] ? Color.Lime : Color.Red;
         BumpUp.Color = Modifiers.Map[Modifiers.BUMP] ? Color.Lime : Color.Red;
-        Monochrome.Color = Modifiers.Map[Modifiers.MONOCHROME] ? Color.Lime : Color.Red;
+        Monochrome.Color = Modifiers.MonochromeValue > 0 ? Color.Lime : Color.Red;
         InfiniteLives.Color = Modifiers.Map[Modifiers.INF_LIFE] ? Color.Lime : Color.Red;
         MasterMode.Color = Modifiers.Map[Modifiers.MASTER] ? Color.Lime : Color.Red;
         TacticalPlanes.Color = Modifiers.Map[Modifiers.PLANES] ? Color.Lime : Color.Red;

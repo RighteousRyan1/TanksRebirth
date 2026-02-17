@@ -1,8 +1,21 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
 
-public class TankProperties {
+/// <summary>
+/// A bitfield representing what kind of resistance a tank has.
+/// </summary>
+[Flags]
+public enum ResistanceFlags : byte {
+    /// <summary>An invulnerability to every <see cref="Shell"/>.</summary>
+    Shells = 1 << 0,
+    /// <summary>An invulnerability to every <see cref="Explosion"/>.</summary>
+    Explosions = 1 << 1,
+    /// <summary>An invulnerability to every flag within <see cref="ResistanceFlags"/>.</summary>
+    All = Shells | Explosions
+}
+public struct TankProperties() {
     /// <summary>Whether or not the tank should become invisible at mission start. Word 1</summary>
     public bool Invisible { get; set; }
     /// <summary>The maximum amount of mines this <see cref="Tank"/> can place. Word 3.</summary>
@@ -63,22 +76,7 @@ public class TankProperties {
     /// <summary>The type of track that is laid.</summary>
     public int TrackType { get; set; }
 
-    /// <summary>If <see cref="ShellShootCount"/> is greater than 1, this is how many radians each shot's offset will be when this <see cref="Tank"/> shoots.
-    /// <para/>
-    /// A common formula to calculate values for when the bullets won't instantly collide is:
-    /// <para/>
-    /// <c>(ShellShootCount / 12) - 0.05</c>
-    /// <para/>
-    /// A table:
-    /// <para/>
-    /// 3 = 0.3
-    /// <para/>
-    /// 5 = 0.4
-    /// <para/>
-    /// 7 = 0.65
-    /// <para/>
-    /// 9 = 0.8
-    /// </summary>
+    /// <summary>If <see cref="ShellShootCount"/> is greater than 1, this is how many radians each shot's offset will be when this <see cref="Tank"/> shoots.</summary>
     public float ShellSpread { get; set; } = 0f;
 
     /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> fires upon shooting in a spread.</summary>
@@ -88,23 +86,19 @@ public class TankProperties {
     public Color DestructionColor { get; set; } = Color.Black;
 
     /// <summary>The armor properties this <see cref="Tank"/> has.</summary>
-    public TankArmor? Armor { get; set; } = null;
+    public TankArmor? Armor { get; set; }
 
-    // Get it working before using this.
     /// <summary>How much this <see cref="Tank"/> is launched backward after firing a shell.</summary>
     public float Recoil { get; set; } = 0f;
 
     /// <summary>Whether or not this <see cref="Tank"/> has a turret to fire shells with.</summary>
     public bool HasTurret { get; set; } = true;
 
-    /// <summary>Whether or not this <see cref="Tank"/> is able to be destroyed by <see cref="Mine"/>s.</summary>
-    public bool InvulnerableToMines { get; set; }
-
-    /// <summary>Whether or not this <see cref="Tank"/> is unable to be destroyed.</summary>
-    public bool Immortal { get; set; }
+    /// <summary>The kinds of invulnerability this <see cref="Tank"/> has.</summary>
+    public ResistanceFlags Resistance { get; set; }
 
     /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
     public Shell.HomingProperties ShellHoming = new();
 
-    public int SafeGetArmorHitPoints() => Armor is null ? 0 : Armor.HitPoints;
+    public readonly int SafeGetArmorHitPoints() => Armor == null ? 0 : Armor.HitPoints;
 }

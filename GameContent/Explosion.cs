@@ -146,10 +146,13 @@ public class Explosion : IAITankDanger {
                     shell.Destroy(Shell.DestructionContext.WithExplosion);
             }
             foreach (var tank in GameHandler.AllTanks) {
-                if (tank is null || Vector2.Distance(tank.Position, Position) > DamageRadiusScale * MAGIC_EXPLOSION_NUMBER
-                    || tank.IsDestroyed || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
-                    continue;
+                if (tank is null) continue;
+                if (tank.IsDestroyed || HasHit[tank.WorldId]) continue;
+                if (Vector2.Distance(tank.Position, Position) > DamageRadiusScale * MAGIC_EXPLOSION_NUMBER) continue;
+
                 HasHit[tank.WorldId] = true;
+
+                // Tank.Damage prevents damage within the method
                 if (Owner is null)
                     tank.Damage(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion"), true);
                 else if (Owner is not null) {

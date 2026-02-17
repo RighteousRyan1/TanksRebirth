@@ -12,17 +12,16 @@ namespace TanksRebirth.GameContent.Systems.TankSystem;
 public class TankArmor {
     /// <summary>The tank who has this armor.</summary>
     public Tank Host;
-
-    private readonly int _hitpointsMax;
     public int HitPoints;
-
-    private readonly Texture2D _maskingTexture;
-    private readonly Model _model;
-
     public bool HideArmor;
 
-    private readonly Particle _healthBarTotal;
-    private readonly Particle _healthBarCurrent;
+    readonly int _hitpointsMax;
+
+    readonly Texture2D _maskingTexture;
+    readonly Model _model;
+
+    readonly Particle _healthBarTotal;
+    readonly Particle _healthBarCurrent;
 
     public TankArmor(Tank host, int hitPoints) {
         _model = ModelGlobals.Armor.Asset;
@@ -50,13 +49,8 @@ public class TankArmor {
             //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)(position.X - _hitpointsMax / 2 * width), (int)position.Y, (int)(HitPoints * width), (int)height), Color.Lime);
         }*/
 
-        void setHealthBar(float xScl, float yScl) {
-            _healthBarTotal.Scale = new(xScl, yScl, 1f);
-            _healthBarCurrent.Scale = new(xScl * (HitPoints + 1) / (_hitpointsMax + 1), yScl, 1f);
-        }
-
         if (canRenderHealthBar && _hitpointsMax > 3) {
-            setHealthBar(5, 2);
+            SetHealthBar(5, 2);
             _healthBarTotal.Position = Host.Position3D + new Vector3(0, 40, 0);
             _healthBarCurrent.Position = Host.Position3D + new Vector3(0, 40, 0);
         }
@@ -117,6 +111,10 @@ public class TankArmor {
                 mesh.Draw();
             }
         }
+    }
+    void SetHealthBar(float xScl, float yScl) {
+        _healthBarTotal.Scale = new(xScl, yScl, 1f);
+        _healthBarCurrent.Scale = new(xScl * (HitPoints + 1) / (_hitpointsMax + 1), yScl, 1f);
     }
     /// <summary>Remove this <see cref="TankArmor"/> from memory.</summary>
     public void Remove() {

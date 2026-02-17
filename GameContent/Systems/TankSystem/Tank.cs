@@ -23,7 +23,6 @@ using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
-
 public abstract class Tank(bool ignoresRegister) {
     /// <summary>If true, this tank is not registered with the game entity lists and is managed manually.</summary>
     public bool IgnoreRegister = ignoresRegister;
@@ -587,12 +586,11 @@ public abstract class Tank(bool ignoresRegister) {
     }
     /// <summary>Damage this <see cref="Tank"/>. If it has no armor, destroy it.</summary>
     public virtual void Damage(ITankHurtContext context, bool netSend, Color? colorOverride = null) {
-        if (IsDestroyed || Properties.Immortal)
-            return;
+        if (IsDestroyed) return;
+        if (context is TankHurtContextShell && Properties.Resistance.HasFlag(ResistanceFlags.Shells)) return;
+        if (context is TankHurtContextExplosion && Properties.Resistance.HasFlag(ResistanceFlags.Explosions)) return;
 
-        Color popupColor;
-
-        popupColor = context.Source is not null ? context.Source switch {
+        var popupColor = context.Source is not null ? context.Source switch {
             PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType],
             AITank ai => AITank.TankDestructionColors[ai.AiTankType],
             _ => Color.White

@@ -47,12 +47,12 @@ public partial class AITank : Tank {
     /// <summary>Each of these keep track of certain behaviors that take place during the AI Cycle, including, but not limited to:<para></para>
     /// Navigation, Shell/Mine avoidance, Mine Laying, Shell Shooting</summary>
     public AITimer[] Behaviors { get; private set; }
-    /// <summary>The AI Tank Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
-    public int AiTankType;
     /// <summary>The invoked method for performing the actions of the tank's AI.</summary>
     public Action? AIBehaviorAction;
     /// <summary>The position of this <see cref="AITank"/> in the <see cref="GameHandler.AllAITanks"/> array.</summary>
     public int AITankId { get; private set; }
+    /// <summary>The AI Tank Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
+    public int AiTankType { get; set; }
     /// <summary>Only use if you know what you're doing!</summary>
     /// <param name="newId">The new ID to be assigned to this <see cref="AITank"/>.</param>
     public void ReassignId(int newId) => AITankId = newId;
@@ -81,7 +81,7 @@ public partial class AITank : Tank {
     /// <param name="texture">The new texture.</param>
     public void SwapTankTexture(Texture2D texture) => DrawParamsTank.TankTexture = texture;
     /// <summary>The AI parameter collection of this AI Tank.</summary>
-    public AIParameters Parameters { get; set; } = new();
+    public AIParameters Parameters = new();
     /// <summary>The position of the target this <see cref="AITank"/> is currently attempting to aim at.</summary>
     public Vector2 AimTarget { get; set; }
     /// <summary>Whether or not this tank sees its target. Generally should not be set, but the tank will shoot if able when this is true.</summary>
@@ -222,7 +222,6 @@ public partial class AITank : Tank {
                 Speed = properties.ShellSpeed,
                 Power = 0.1f * properties.ShellSpeed
             };
-            // ShellHoming.isHeatSeeking = true;
 
             Parameters.DetectionForgivenessHostile *= 2;
         }
@@ -231,7 +230,7 @@ public partial class AITank : Tank {
             Parameters.DeflectsBullets = true;
 
         if (Modifiers.Map[Modifiers.ARMOR]) {
-            if (properties.Armor is null)
+            if (properties.Armor == null)
                 properties.Armor = new(this, 3);
             else
                 properties.Armor = new(this, properties.Armor.HitPoints + 3);

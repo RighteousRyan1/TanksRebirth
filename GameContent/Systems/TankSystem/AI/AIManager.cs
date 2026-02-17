@@ -35,7 +35,7 @@ public static class AIManager {
     public static AIParameters GetAIParameters(int tankType) {
         var aiParams = new AIParameters();
 
-        if (AIParameterDefaults.TryGetValue(tankType, out AIParameters? value))
+        if (AIParameterDefaults.TryGetValue(tankType, out AIParameters value))
             return value;
 
         /*if (!AIParameterDefaults.TryGetValue(tankType, out AIParameters? value)) {
@@ -86,7 +86,6 @@ public static class AIManager {
                 aiParams.TurretSpeed = 0.01f;
                 aiParams.TurretMovementTimer = 45;
                 aiParams.TankAwarenessShoot = 70;
-
 
                 aiParams.BaseXP = 0.015f;
                 break;
@@ -533,7 +532,7 @@ public static class AIManager {
     public static TankProperties GetAITankProperties(int tankType) {
         var properties = new TankProperties();
 
-        if (AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value))
+        if (AIPropertyDefaults.TryGetValue(tankType, out TankProperties value))
             return value;
 
         /*if (!AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value)) {
@@ -575,8 +574,6 @@ public static class AIManager {
                 properties.ShellCooldown = 180;
                 properties.ShellSpeed = 3f;
                 properties.ShootStun = 10;
-
-
 
 
                 properties.ShellType = ShellID.Standard;
@@ -628,7 +625,7 @@ public static class AIManager {
                 properties.TreadPitch = 0.085f;
 
                 if (Modifiers.Map[Modifiers.MINE_SPAM]) {
-                    properties.InvulnerableToMines = true;
+                    properties.Resistance |= ResistanceFlags.Explosions;
                     properties.MineCooldown = 10;
                     properties.MineLimit = 20;
                     properties.MineStun = 0;
