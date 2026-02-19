@@ -430,7 +430,7 @@ public static class DebugManager {
 
 
         if (InputUtils.KeyJustPressed(Keys.PageUp)) SpawnTankPlethorae(true);
-        if (InputUtils.KeyJustPressed(Keys.PageDown)) SpawnMe(Client.ClientRandom.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
+        if (InputUtils.KeyJustPressed(Keys.PageDown)) SpawnMe(PlayerID.Blue, tankToSpawnTeam);
         if (InputUtils.KeyJustPressed(Keys.Home))
             SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 

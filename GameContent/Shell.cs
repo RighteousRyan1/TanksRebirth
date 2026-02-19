@@ -118,7 +118,7 @@ public class Shell : IAITankDanger {
 
     public float HitSphereSize = 4.0f;
     public BoundingSphere Hitbox;
-    /// <summary>The hit-circle on the 2D backing map for the game.</summary>
+    // /// <summary>The hit-circle on the 2D backing map for the game.</summary>
     // public Circle HitCircle => new() { Center = Position, Radius = 5 }; // original is moreso a radius of 7, but 5 is good, since it isnt 480p
     public int Team => Owner?.Team ?? TeamID.NoTeam;
     /// <summary>

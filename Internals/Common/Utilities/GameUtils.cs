@@ -57,7 +57,7 @@ public static class GameUtils
     }
 
     // divide since the distance is bigger from regular distance calculations
-    const float WII_TANKS_UNIT_CONVERSION = 0.71428571428f;
+    public const float WII_TANKS_UNIT_CONVERSION = 0.71428571428f;
     public static float Distance_WiiTanksUnits(Vector2 position, Vector2 endPoint) => Vector2.Distance(position, endPoint) / WII_TANKS_UNIT_CONVERSION;
     public static float Value_WiiTanksUnits(float value) => value * WII_TANKS_UNIT_CONVERSION;
 }

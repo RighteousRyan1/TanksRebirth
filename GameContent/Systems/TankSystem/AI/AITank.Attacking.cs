@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Mono.Unix.Native;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,38 +41,43 @@ public partial class AITank {
     readonly List<Vector2> _tankPointsBuffer = [];
     /// <summary>Updates turret directions/targets and updates tanks in the shoot path.</summary>
     public void HandleTurret() {
-        TargetTurretRotation %= MathHelper.TwoPi;
-
-        TurretRotation %= MathHelper.TwoPi;
+        //TargetTurretRotation %= MathHelper.TwoPi;
+        //TurretRotation %= MathHelper.TwoPi;
+        TargetTurretRotation = MathHelper.WrapAngle(TargetTurretRotation);
+        TurretRotation = MathHelper.WrapAngle(TurretRotation);
 
         var diff = TargetTurretRotation - TurretRotation;
-        if (diff > MathHelper.Pi)
-            TargetTurretRotation -= MathHelper.TwoPi;
-        else if (diff < -MathHelper.Pi)
-            TargetTurretRotation += MathHelper.TwoPi;
+
+        if (diff > MathHelper.Pi) TargetTurretRotation -= MathHelper.TwoPi;
+        else if (diff < -MathHelper.Pi) TargetTurretRotation += MathHelper.TwoPi;
 
         TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, Parameters.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
 
         // update things prior to timer check
         if (TargetTank is null) return;
-        if (!_isSeeking && !_predicts) {
-            IsEnemySpotted = false;
-            if (TargetTank!.Properties.Invisible && TargetTank.TimeSinceLastAction < Parameters.Rememberance) {
-                AimTarget = TargetTank.Position;
-                IsEnemySpotted = true;
-            }
 
-            if (!TargetTank.Properties.Invisible) {
+        if (!_isSeeking && !_predicts) {
+            IsEnemySpotted = !TargetTank.Properties.Invisible || TargetTank.TimeSinceLastAction < Parameters.Rememberance;
+
+            if (IsEnemySpotted) {
                 AimTarget = TargetTank.Position;
-                IsEnemySpotted = true;
             }
         }
+
         UpdateAim();
 
         if (!Behaviors[1].IsModOf(Parameters.TurretMovementTimer)) return;
 
-        var dirVec = Position - AimTarget;
-        TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + Client.ClientRandom.NextFloat(-Parameters.AimOffset, Parameters.AimOffset);
+        var targTurrRot = (Position - AimTarget).ToRotation();
+        TargetTurretRotation = GetRealAim(targTurrRot) + Client.ClientRandom.NextFloat(-Parameters.AimOffset, Parameters.AimOffset);
+    }
+    /// <summary>
+    /// Given how the tank's forward vectors are handled (right now), magical mathematics are applied to <paramref name="inputAngle"/>.
+    /// </summary>
+    /// <param name="inputAngle">The input angle</param>
+    /// <returns>The final/output rotation angle.</returns>
+    public static float GetRealAim(float inputAngle) {
+        return -inputAngle - MathHelper.PiOver2;
     }
     /// <summary>Attempts to lay a mine based on various conditions and environmental factors.</summary>
     /// <remarks>This method evaluates multiple conditions to determine whether a mine can be laid, including:
@@ -212,6 +218,7 @@ public partial class AITank {
     }
     // TODO: make view distance, and make tanks in path public
     /// <summary>Updates meta-data related to aiming and shooting. The tank will not fire if <see cref="DoAttack"/> is false, but meta-data will still update.</summary>
+    /// <summary>Updates meta-data related to aiming and shooting. The tank will not fire if <see cref="DoAttack"/> is false, but meta-data will still update.</summary>
     public void UpdateAim() {
         _predicts = false;
         SeesTarget = false;
@@ -253,18 +260,17 @@ public partial class AITank {
         }
         if (Parameters.PredictsPositions) {
             if (TargetTank is not null) {
-                var calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
-                float rot = -Position.DirectionTo(GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation))
+                float t = GeometryUtils.QuadraticCoeff(TurretPosition, TargetTank.Position, TargetTank.Velocity, Properties.ShellSpeed);
+
+                if (t < 0f) t = 0f;
+
+                float rot = -TurretPosition.DirectionTo(GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, t))
                     .ToRotation() - MathHelper.PiOver2;
 
                 tanksDef = GetTanksInPath(
-                Vector2.UnitY.RotatedBy(-Position.DirectionTo(TargetTank.Position).ToRotation() - MathHelper.PiOver2),
+                Vector2.UnitY.RotatedBy(-TurretPosition.DirectionTo(TargetTank.Position).ToRotation() - MathHelper.PiOver2),
                 out var ricP, out var tnkCol, offset: Parameters.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
                 missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
-
-                var targ = GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation);
-                var posPredict = GetTanksInPath(Vector2.UnitY.RotatedBy(rot),
-                    out var ricP1, out var tnkCol2, offset: Vector2.UnitY * 20, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
                 if (tanksDef.Contains(TargetTank)) {
                     _predicts = true;
@@ -282,9 +288,6 @@ public partial class AITank {
         bool findsEnemy = false;
         bool findsSelf = false;
         bool findsFriendly = false;
-
-        if (findsEnemy && !tooCloseToExplosiveShell)
-            SeesTarget = true;
 
         for (int i = 0; i < tanksDef.Count; i++) {
             var tnk = tanksDef[i];
@@ -306,14 +309,23 @@ public partial class AITank {
             if (canShoot) {
                 var tanks = GetTanksInPath(Vector2.UnitY.RotatedBy(_seekRotation), out var ricP, out var tnkCol, false, default, Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
-                var findsEnemy2 = tanks.Any(tnk => tnk is not null && !tnk.IsOnSameTeamAs(Team) && tnk != this);
+                // linq -> loop
+                var findsEnemy2 = false;
+                for (int i = 0; i < tanks.Count; i++) {
+                    var tnk = tanks[i];
+                    if (tnk != null && !tnk.IsOnSameTeamAs(Team) && tnk != this) {
+                        findsEnemy2 = true;
+                        break;
+                    }
+                }
+
                 // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
                 // var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TeamID.NoTeam));
                 // ChatSystem.SendMessage($"{findsEnemy2} {findsFriendly2} | seek: {seeks}", Color.White);
                 if (findsEnemy2/* && !findsFriendly2*/) {
                     _isSeeking = true;
                     TurretRotationMultiplier = 3f;
-                    TargetTurretRotation = _seekRotation - MathHelper.Pi;
+                    TargetTurretRotation = _seekRotation - MathHelper.Pi; // minus pi... why?
                 }
             }
 
@@ -321,41 +333,39 @@ public partial class AITank {
                 _isSeeking = false;
         }
         // tanks wont shoot when fleeing from a mine
-        if (ClosestDanger is Mine)
-            if (Parameters.CantShootWhileFleeing)
-                return;
+        if (ClosestDanger is Mine && Parameters.CantShootWhileFleeing)
+            return;
 
         if (!DoAttack) return;
         if (!Behaviors[2].IsModOf(CurrentRandomShoot)) return;
+
         CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
         Behaviors[2].Value = 0;
         // Console.WriteLine(TanksSpotted.Length);
 
         // no need to check friendliesNearby because we return earlier in this method if there are any
-        if (Parameters.PredictsPositions) {
-            if (SeesTarget)
-                if (CurShootCooldown <= 0)
-                    TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
-                    //Shoot(false);
-        }
-        else {
-            if (SeesTarget && !findsSelf && !findsFriendly)
-                if (CurShootCooldown <= 0)
-                    TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
-                    //Shoot(false);
+        if (SeesTarget && CurShootCooldown <= 0) {
+            if (Parameters.PredictsPositions || (!findsSelf && !findsFriendly)) {
+                TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
+                //Shoot(false);
+            }
         }
     }
     /// <summary>Gets the a <see cref="Tank"/> that is hostile and is targetable (with respect to <see cref="Parameters"/>).</summary>
     public Tank? GetAppropriateTarget() {
         Tank? target = null;
-        float closestDistSq = float.MaxValue;
+
+        // cache the count to avoid property lookups on every iteration
+        int tankCount = GameHandler.AllTanks.Length;
 
         if (Parameters.SmartTargeting) {
             var smallestActionTime = float.MaxValue;
             Tank? smallestActionTimeTank = TargetTank;
 
-            foreach (var tank in GameHandler.AllTanks) {
+            for (int i = 0; i < tankCount; i++) {
+                var tank = GameHandler.AllTanks[i];
                 if (tank is null || tank.IsDestroyed || tank == this || tank.IsOnSameTeamAs(Team)) continue;
+
                 if (tank.TimeSinceLastAction < smallestActionTime) {
                     smallestActionTime = tank.TimeSinceLastAction;
                     smallestActionTimeTank = tank;
@@ -364,12 +374,15 @@ public partial class AITank {
             return smallestActionTimeTank;
         }
 
-        foreach (var tank in GameHandler.AllTanks) {
+        float closestDistSq = float.MaxValue;
+
+        for (int i = 0; i < tankCount; i++) {
+            var tank = GameHandler.AllTanks[i];
             if (tank is null || tank.IsDestroyed || tank == this || tank.IsOnSameTeamAs(Team)) continue;
 
             float distSq = Vector2.DistanceSquared(tank.Position, Position);
             if (distSq < closestDistSq) {
-                if (tank.Properties.Invisible && tank.TimeSinceLastAction < Parameters.Rememberance || !tank.Properties.Invisible) {
+                if (!tank.Properties.Invisible || tank.TimeSinceLastAction < Parameters.Rememberance) {
                     target = tank;
                     closestDistSq = distSq;
                 }
@@ -396,12 +409,11 @@ public partial class AITank {
             }
         }
 
-        if (GameHandler.AllPlayerTanks.Any(x => x is not null && x.IsOnSameTeamAs(Team))) {
+        if (hasPlayerTeammate) {
             foreach (var ping in IngamePing.AllIngamePings) {
-                if (ping is null) break;
-                if (ping.TrackedTank is null) break;
-                if (ping.TrackedTank == this) break; // no self-targeting
-                if (ping.TrackedTank.Team == Team) break; // no friendly fire
+                if (ping is null || ping.TrackedTank is null) continue;
+                if (ping.TrackedTank == this) continue; // no self-targeting
+                if (ping.TrackedTank.Team == Team) continue; // no friendly fire
                 target = ping.TrackedTank;
                 overridden = true;
                 break;
@@ -409,22 +421,34 @@ public partial class AITank {
         }
         return target;
     }
+    // maybe use WiiTanksDistance or whatever
     /// <summary>Makes this <see cref="AITank"/> attempt to shoot to destroy the given <see cref="Shell"/>.</summary>
     public void DoDeflection(Shell shell) {
-        var calculation = (Position.Distance(shell.Position) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
-        float rot = -Position.DirectionTo(GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, calculation))
-            .ToRotation() + MathHelper.PiOver2;
+        Vector2 deltaP = shell.Position - TurretPosition;
+
+        float t = GeometryUtils.QuadraticCoeff(TurretPosition, shell.Position, shell.Velocity, Properties.ShellSpeed);
+
+        if (t < 0f) t = 0f;
+
+        // if t = valid, aim at the perfect interception point
+        // if t < 0, the shell is unhittable (moving away too fast), so fallback to its current position
+        Vector2 aimTarget = t > 0f
+            ? GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, t)
+            : shell.Position;
+
+        float rot = -TurretPosition.DirectionTo(aimTarget).ToRotation() + MathHelper.PiOver2;
 
         TargetTurretRotation = rot;
+        TurretRotationMultiplier = 4f; // introduce constant?
 
-        TurretRotationMultiplier = 4f;
+        // absolute shortest angular distance between current and target rotation
+        float angleDiff = Math.Abs(MathHelper.WrapAngle(TargetTurretRotation - TurretRotation));
 
-        // used to be rot %=... was it necessary?
-        //TargetTurretRotation %= MathHelper.Tau;
-
-        //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
-
-        Shoot(false);
+        // bool futureVisible = 
+        // only shoot if it's aiming where it should
+        if (angleDiff <= 0.05f) {
+            TankGame.MainThreadTasks.Enqueue(() => Shoot());
+        }
     }
 
     // TODO: literally fix everything about these turret rotation values.

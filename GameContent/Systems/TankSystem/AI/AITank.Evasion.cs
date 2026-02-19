@@ -27,7 +27,7 @@ public partial class AITank {
         _evasionDangersBuffer.Clear();
 
         foreach (var danger in Dangers) {
-            var isHostile = danger.Team != Team && danger.Team != TeamID.NoTeam;
+            var isHostile = !IsOnSameTeamAs(danger.Team);
 
             // mines and explosions should be treated differently and specially
             if (danger is Mine || danger is Explosion) {

@@ -533,10 +533,9 @@ public partial class AITank : Tank {
         // only use if checking the respective boolean!
         var shell = (ClosestDanger as Shell)!;
 
-        if (Parameters.DeflectsBullets) {
-            if (isShellNear) {
-                DoDeflection(shell);
-            }
+        // isShellNear already accounts for the direction arc
+        if (Parameters.DeflectsBullets && isShellNear && Properties.ShellLimit - OwnedShellCount > 0) {
+            DoDeflection(shell);
         }
 
         HandleTurret();
@@ -734,29 +733,6 @@ public partial class AITank : Tank {
 
             if (Parameters.SmartRicochets)
                 GetTanksInPath(Vector2.UnitY.RotatedBy(_seekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
-            // maybe not necessary. store from the cpu, draw on the gpu.
-            var poo = GetTanksInPath(Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
-            if (Parameters.PredictsPositions) {
-                float rot = -Position.DirectionTo(TargetTank is not null ?
-                    GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
-                    AimTarget).ToRotation() - MathHelper.PiOver2;
-                GetTanksInPath(Vector2.UnitY.RotatedBy(rot), out var ricP3, out var tnkCol3, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
-            }
-            for (int i = 0; i < ricP2.Length; i++) {
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"ric{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
-                    Matrix.CreateTranslation(ricP2[i].X, 0, ricP2[i].Y), DrawParams.View, DrawParams.Projection), 1, centered: true);
-            }
-            for (int i = 0; i < tnkCol2.Length; i++) {
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"col{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
-                    Matrix.CreateTranslation(tnkCol2[i].X, 0, tnkCol2[i].Y), DrawParams.View, DrawParams.Projection), 1, centered: true);
-            }
-
-            /*for (int i = 0; i < info.Length; i++) {
-                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
-                    new Vector2(0, (i * 20));
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos,
-                    Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
-            }*/
         }
         /*if (DebugManager.DebugLevel == DebugManager.Id.AIData && !Properties.Stationary) {
             // magical numbers too lazy, look at update method to define

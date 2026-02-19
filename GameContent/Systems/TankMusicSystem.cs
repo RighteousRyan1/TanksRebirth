@@ -18,23 +18,25 @@ using TanksRebirth.GameContent.Systems.TankSystem.AI;
 
 namespace TanksRebirth.GameContent.Systems;
 
-public static class TankMusicSystem
-{
+public static class TankMusicSystem {
     public static OggMusic SnowLoop;
     public static string AssetRoot;
-    public static int TierHighest => AIManager.GetHighestTierActive(x => !TierExclusionRule_DoesntHaveSong.Contains(x.AiTankType));
+    public static int TierHighest => AIManager.GetHighestTierActive(x => !NoSongRule.Contains(x.AiTankType));
 
     public static float Pitch = 0f;
     public static float Pan = 0f;
     public static float VolumeMultiplier = 1f;
 
-    public static List<int> TierExclusionRule_DoesntHaveSong = [];
-    public static List<int> TierExclusionRule_Uses3ToUpgrade = [TankID.Ash, TankID.Silver];
+    public static HashSet<int> NoSongRule = [];
+    /// <summary>Makes instrumental changes start at tank 3 instead of tank 2.</summary>
+    public static HashSet<int> Skip2Rule = [TankID.Ash, TankID.Silver];
+    /// <summary>Makes instrumental changes achieved by tank 2 persist until tank 4.</summary>
+    public static HashSet<int> Skip3Rule = [TankID.Marine, TankID.Sapphire];
 
     public static readonly Dictionary<int, int> MaxSongNumPerTank = new() {
         [TankID.Brown] = 1,
         [TankID.Ash] = 2,
-        [TankID.Marine] = 2,
+        [TankID.Marine] = 3, // used to be 2 based on goofy ahh data, same with sapphire
         [TankID.Yellow] = 3,
         [TankID.Pink] = 3,
         [TankID.Green] = 4,
@@ -43,7 +45,7 @@ public static class TankMusicSystem
         [TankID.Black] = 1,
         [TankID.Bronze] = 1,
         [TankID.Silver] = 2,
-        [TankID.Sapphire] = 2,
+        [TankID.Sapphire] = 3,
         [TankID.Citrine] = 3,
         [TankID.Ruby] = 3,
         [TankID.Emerald] = 4,
@@ -109,39 +111,62 @@ public static class TankMusicSystem
         SnowLoop.Volume = 0;
         VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 
-        foreach (var song in Audio.ToList())
+        // if this starts causing dogshit... put .ToList()
+        foreach (var song in Audio)
             song.Value?.SetVolume(0f);
 
-        if (MainMenuUI.IsActive && AIManager.CountAll() == 0 || TierHighest == TankID.None) {
-            return;
-        }
+        // i feel like && -> || ?
+        if (MainMenuUI.IsActive && AIManager.CountAll() == 0 || TierHighest == TankID.None) return;
 
         if (GameScene.Theme == MapTheme.Christmas) {
             SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
             return;
         }
 
-        var musicVolume = TankGame.Settings.MusicVolume * VolumeMultiplier;
+        // maybe only need to update some of these things in the event of an ai tank death?
 
+        var musicVolume = TankGame.Settings.MusicVolume * VolumeMultiplier;
         var tierHighestName = TankID.Collection.GetKey(TierHighest);
+
         // only count the tanks that exist and are below the highest tier.
         var all = AIManager.CountAll(x => x.AiTankType <= TierHighest);
-        string num = MaxSongNumPerTank[TierHighest] > 1 ?
-            (TierExclusionRule_Uses3ToUpgrade.Contains(TierHighest) ?
-            (all == 2 || all == 1 ? 1 : MaxSongNumPerTank[TierHighest]).ToString() : Math.Min(all, MaxSongNumPerTank[TierHighest]).ToString())
-            : string.Empty;
+        string num = GetSongSuffix(TierHighest, all);
 
         var name = tierHighestName!.ToLower() + num;
 
         Audio[name].SetVolume(musicVolume);
 
-        int index = Audio.Values.ToList().FindIndex(x => x.Volume > 0);
-
-        if (index > -1) {
-            Audio.ElementAt(index).Value.BackingAudio.Instance.Pitch = Pitch;
-            Audio.ElementAt(index).Value.BackingAudio.Instance.Pan = Pan;
-            CurrentSong = Audio.ElementAt(index).Value;
+        OggMusic activeSong = null;
+        foreach (var song in Audio.Values) {
+            if (song != null && song.Volume > 0) {
+                activeSong = song;
+                break;
+            }
         }
+
+        if (activeSong != null) {
+            activeSong.BackingAudio.Instance.Pitch = Pitch;
+            activeSong.BackingAudio.Instance.Pan = Pan;
+            CurrentSong = activeSong;
+        }
+    }
+    static string GetSongSuffix(int tankId, int tankCount) {
+        int maxSongs = MaxSongNumPerTank.TryGetValue(tankId, out int max) ? max : 1;
+
+        if (maxSongs <= 1)
+            return string.Empty;
+
+        if (Skip2Rule.Contains(tankId)) {
+            // 1, 1, 2
+            return tankCount >= 3 ? maxSongs.ToString() : "1";
+        }
+        else if (Skip3Rule.Contains(tankId)) {
+            // 1, 2, 2, 3
+            if (tankCount == 1) return "1";
+            else if (tankCount == 2 || tankCount == 3) return "2";
+        }
+        
+        return Math.Min(tankCount, maxSongs).ToString();
     }
     public static OggMusic CurrentSong;
 

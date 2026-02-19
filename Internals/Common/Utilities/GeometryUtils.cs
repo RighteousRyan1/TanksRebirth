@@ -8,11 +8,9 @@ using Microsoft.Xna.Framework;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class GeometryUtils
-{
+public static class GeometryUtils {
 
-    public static T[] Shift<T>(ref T[] array, int index, int amount)
-    {
+    public static T[] Shift<T>(ref T[] array, int index, int amount) {
         // extend the array by amount if we're out of bounds, then shift every element past index by amount
         if (index + amount > array.Length)
         {
@@ -29,9 +27,34 @@ public static class GeometryUtils
     }
     // sigh no work
 
-    public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time)
-    {
-        return source + velocity * time;
+    public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time) => source + velocity * time;
+    /// <summary>Returns the quadratic coefficient of an anonymous parabola.</summary>
+    public static float QuadraticCoeff(Vector2 position, Vector2 targetPosition, Vector2 targetVelocity, float sourceSpeed) {
+        Vector2 deltaP = targetPosition - position;
+
+        float a = targetVelocity.LengthSquared() - (sourceSpeed * sourceSpeed);
+        float b = 2f * Vector2.Dot(deltaP, targetVelocity);
+        float c = deltaP.LengthSquared();
+
+        if (Math.Abs(a) < 0.0001f) {
+            if (Math.Abs(b) > 0.0001f) {
+                return -c / b;
+            }
+            return -1f;
+        }
+
+        float discriminant = (b * b) - (4f * a * c);
+        if (discriminant >= 0f) {
+            float sqrtDisc = (float)Math.Sqrt(discriminant);
+            float t1 = (-b - sqrtDisc) / (2f * a);
+            float t2 = (-b + sqrtDisc) / (2f * a);
+
+            if (t1 > 0f && t2 > 0f) return Math.Min(t1, t2);
+            if (t1 > 0f) return t1;
+            if (t2 > 0f) return t2;
+        }
+
+        return -1f; // Target is mathematically unhittable at current speeds
     }
     /// <summary>
     /// Create a ray on a 2D plane either covering the X and Y axes of a plane or the X and Z axes of a plane.
@@ -40,8 +63,7 @@ public static class GeometryUtils
     /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
     /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
     /// <returns>The ray created.</returns>
-    public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-    {
+    public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true) {
         Ray ray;
 
         if (zAxis)
@@ -58,8 +80,7 @@ public static class GeometryUtils
     /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
     /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
     /// <returns>The ray created.</returns>
-    public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-    {
+    public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true) {
         Ray ray;
 
         if (zAxis)
@@ -70,8 +91,7 @@ public static class GeometryUtils
         return ray;
     }
 
-    public static Ray Reflect(Ray ray, float? distanceAlongRay)
-    {
+    public static Ray Reflect(Ray ray, float? distanceAlongRay) {
         if (!distanceAlongRay.HasValue)
             throw new NullReferenceException("The distance along the ray was null.");
 
@@ -82,13 +102,9 @@ public static class GeometryUtils
         return new(distPos, reflected);
     }
 
-    public static Rectangle CreateRectangleFromCenter(int x, int y, int width, int height)
-    {
-        return new Rectangle(x - width / 2, y - height / 2, width, height);
-    }
+    public static Rectangle CreateRectangleFromCenter(int x, int y, int width, int height) => new(x - width / 2, y - height / 2, width, height);
 
-    public static Ray Flatten(this Ray ray, bool zAxis = true)
-    {
+    public static Ray Flatten(this Ray ray, bool zAxis = true) {
         Ray usedRay;
 
         if (zAxis)
@@ -99,8 +115,7 @@ public static class GeometryUtils
         return usedRay;
     }
 
-    public static float GetPiRandom()
-    {
+    public static float GetPiRandom() {
         var seed = new Random().Next(0, 4);
 
         return seed switch 
@@ -113,8 +128,7 @@ public static class GeometryUtils
         };
     }
 
-    public static EulerAngles AsEulerAngles(this Quaternion quaternion)
-    {
+    public static EulerAngles AsEulerAngles(this Quaternion quaternion) {
         EulerAngles angles = new();
 
         // roll
@@ -136,34 +150,25 @@ public static class GeometryUtils
         return angles;
     }
 
-    public static float GetQuarterRotation(sbyte rot)
-    {
-        return MathHelper.PiOver2 * rot;
-    }
+    public static float GetQuarterRotation(int rot) => MathHelper.PiOver2 * rot;
 
-    public static void Add(ref Vector3 v, float scale)
-    {
+    public static void Add(ref Vector3 v, float scale) {
         v.X += scale;
         v.Y += scale;
         v.Z += scale;
     }
-    public static void Multiply(ref Vector3 v, float scale)
-    {
+    public static void Multiply(ref Vector3 v, float scale) {
         v.X *= scale;
         v.Y *= scale;
         v.Z *= scale;
     }
 
-    public static float Average(ref Vector3 v)
-    {
-        return (v.X + v.Y + v.Z) / 3;
-    }
+    public static float Average(ref Vector3 v) => (v.X + v.Y + v.Z) / 3;
 }
 /// <summary>
 /// Useful for conversion of <see cref="Quaternion"/>s to basic Yaw/Pitch/Roll angles.
 /// </summary>
-public struct EulerAngles(float yaw, float pitch, float roll)
-{
+public struct EulerAngles(float yaw, float pitch, float roll) {
     /// <summary>The Z rotation</summary>
     public float Yaw = yaw;
     /// <summary>The Y rotation</summary>

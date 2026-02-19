@@ -93,7 +93,7 @@ public class ModTank : ILoadable, IModContent {
         TankID.Collection.TryRemove(Type - unloadOffset);
         AITank.TankDestructionColors.Remove(Type);
         if (!HasSong)
-            TankMusicSystem.TierExclusionRule_DoesntHaveSong.Remove(Type); 
+            TankMusicSystem.NoSongRule.Remove(Type); 
         for (int i = 0; i < _music.Count; i++) {
             _music[i].Stop();
             _music[i].BackingAudio.Dispose();
@@ -125,7 +125,7 @@ public class ModTank : ILoadable, IModContent {
             // why was the first parameter "fileName" before instead of name.ToLower()?
             TankMusicSystem.Audio.Add(name.ToLower(), oggMusic);
         } else if (!HasSong) {
-            TankMusicSystem.TierExclusionRule_DoesntHaveSong.Add(Type);
+            TankMusicSystem.NoSongRule.Add(Type);
         }
 
         _texture = Mod.ImportAsset<Texture2D>(Texture);
