@@ -27,12 +27,12 @@ public sealed class PlayerID
     ];
 
     public static string GetLocalizedPlayerColorName(int playerId) => playerId switch {
-        Blue => TankGame.GameLanguage.Blue,
-        Red => TankGame.GameLanguage.Red,
-        Green => TankGame.GameLanguage.Green,
-        Yellow => TankGame.GameLanguage.Yellow,
+        Blue => TankGame.GameLanguage.Teams.Blue,
+        Red => TankGame.GameLanguage.Teams.Red,
+        Green => TankGame.GameLanguage.Teams.Green,
+        Yellow => TankGame.GameLanguage.Teams.Yellow,
         // this should never happen, but just in case...
-        _ => TankGame.GameLanguage.Disabled,
+        _ => TankGame.GameLanguage.Basic.Disabled,
     };
 
     public static ReflectionDictionary<PlayerID> Collection { get; internal set; } = new(MemberType.Fields);

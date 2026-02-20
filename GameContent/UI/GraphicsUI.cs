@@ -27,8 +27,7 @@ public static class GraphicsUI {
 
     public static KeyValuePair<int, int> CurrentRes = new(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
 
-    static KeyValuePair<int, int>[] _commonResolutions =
-    [
+    static readonly KeyValuePair<int, int>[] _commonResolutions = [
         new(640, 480),
         new(1280, 720),
         new(1920, 1080),
@@ -56,31 +55,31 @@ public static class GraphicsUI {
         _initialized = true;
         // Per-Pixel Lighting
 
-        PPLButton = new(TankGame.GameLanguage.PerPxLight + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.PerPixelLighting), FontGlobals.RebirthFont, Color.WhiteSmoke) {
+        PPLButton = new(TankGame.GameLanguage.Settings.PerPxLight + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.PerPixelLighting), FontGlobals.RebirthFont, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.PerPxLightDesc
+            Tooltip = TankGame.GameLanguage.Settings.PerPxLightDesc
         };
         PPLButton.SetDimensions(() => new Vector2(240, 150).ToResolution(), () => new Vector2(400, 100).ToResolution());
         PPLButton.OnLeftClick = (uiElement) => {
             TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting;
-            PPLButton.Text = $"{TankGame.GameLanguage.PerPxLight}: {TankGame.GameLanguage.GetEnablement(TankGame.Settings.PerPixelLighting)}";
+            PPLButton.Text = $"{TankGame.GameLanguage.Settings.PerPxLight}: {TankGame.GameLanguage.GetEnablement(TankGame.Settings.PerPixelLighting)}";
         };
 
         // Vsync
-        VSyncBtn = new(TankGame.GameLanguage.VSync + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.Vsync), FontGlobals.RebirthFont, Color.WhiteSmoke) {
+        VSyncBtn = new(TankGame.GameLanguage.Settings.VSync + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.Vsync), FontGlobals.RebirthFont, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.VSyncDesc
+            Tooltip = TankGame.GameLanguage.Settings.VSyncDesc
         };
         VSyncBtn.SetDimensions(() => new Vector2(240, 275).ToResolution(), () => new Vector2(400, 100).ToResolution());
         VSyncBtn.OnLeftClick = (uiElement) => {
             TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = TankGame.Settings.Vsync = !TankGame.Settings.Vsync;
             TankGame.Instance.Graphics.ApplyChanges();
-            VSyncBtn.Text = TankGame.GameLanguage.VSync + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.Vsync);
+            VSyncBtn.Text = TankGame.GameLanguage.Settings.VSync + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.Vsync);
         };
 
-        WinKindBtn = new($"{TankGame.GameLanguage.WindowKind}: {StringUtils.SplitByCamel(Enum.GetName(TankGame.Settings.WindowKind)!)}", FontGlobals.RebirthFont, Color.WhiteSmoke) {
+        WinKindBtn = new($"{TankGame.GameLanguage.Settings.WindowKind}: {StringUtils.SplitByCamel(Enum.GetName(TankGame.Settings.WindowKind)!)}", FontGlobals.RebirthFont, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.WindowKindDesc
+            Tooltip = TankGame.GameLanguage.Settings.WindowKindDesc
         };
         WinKindBtn.SetDimensions(() => new Vector2(240, 400).ToResolution(), () => new Vector2(400, 100).ToResolution());
         WinKindBtn.OnLeftClick = (uiElement) => {
@@ -95,14 +94,14 @@ public static class GraphicsUI {
                 TankGame.Settings.WindowKind = WindowKind.Windowed;
             }
 
-            WinKindBtn.Text = $"{TankGame.GameLanguage.WindowKind}: {StringUtils.SplitByCamel(Enum.GetName(TankGame.Settings.WindowKind)!)}";
+            WinKindBtn.Text = $"{TankGame.GameLanguage.Settings.WindowKind}: {StringUtils.SplitByCamel(Enum.GetName(TankGame.Settings.WindowKind)!)}";
             WindowUtils.ChangeWindowKind(TankGame.Settings.WindowKind);
         };
 
         // Resolution
-        ResBtn = new($"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}", FontGlobals.RebirthFont, Color.WhiteSmoke) {
+        ResBtn = new($"{TankGame.GameLanguage.Settings.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}", FontGlobals.RebirthFont, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.ResolutionDesc
+            Tooltip = TankGame.GameLanguage.Settings.ResolutionDesc
         };
         ResBtn.SetDimensions(() => new Vector2(240, 525).ToResolution(), () => new Vector2(400, 100).ToResolution());
         ResBtn.OnLeftClick = (uiElement) => {
@@ -118,7 +117,7 @@ public static class GraphicsUI {
 
             CurrentRes = _commonResolutions[_idxPair];
 
-            ResBtn.Text = $"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}";
+            ResBtn.Text = $"{TankGame.GameLanguage.Settings.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}";
         };
         ResBtn.OnRightClick = (uiElement) => {
             var tryFind = _commonResolutions.FirstOrDefault(x => x.Key == CurrentRes.Key);
@@ -134,30 +133,30 @@ public static class GraphicsUI {
 
             CurrentRes = _commonResolutions[_idxPair];
 
-            ResBtn.Text = $"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}";
+            ResBtn.Text = $"{TankGame.GameLanguage.Settings.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}";
         };
 
-        FadeTracksBtn = new(TankGame.GameLanguage.FadeTracks + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.FadeFootprints), FontGlobals.RebirthFont, Color.WhiteSmoke) {
+        FadeTracksBtn = new(TankGame.GameLanguage.Settings.FadeTracks + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.FadeFootprints), FontGlobals.RebirthFont, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.FadeTracksDesc
+            Tooltip = TankGame.GameLanguage.Settings.FadeTracksDesc
         };
         FadeTracksBtn.SetDimensions(() => new Vector2(240, 650).ToResolution(), () => new Vector2(400, 100).ToResolution());
 
         FadeTracksBtn.OnLeftClick = (uiElement) => {
             TankGame.Settings.FadeFootprints = !TankGame.Settings.FadeFootprints;
             TankFootprint.ShouldTracksFade = TankGame.Settings.FadeFootprints;
-            FadeTracksBtn.Text = TankGame.GameLanguage.FadeTracks + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.FadeFootprints);
+            FadeTracksBtn.Text = TankGame.GameLanguage.Settings.FadeTracks + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.FadeFootprints);
         };
 
-        MenuGameplayBtn = new(TankGame.GameLanguage.MenuGameplay + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.MenuGameplayEnabled), FontGlobals.RebirthFont, Color.WhiteSmoke) {
+        MenuGameplayBtn = new(TankGame.GameLanguage.Settings.MenuGameplay + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.MenuGameplayEnabled), FontGlobals.RebirthFont, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.MenuGameplayDesc
+            Tooltip = TankGame.GameLanguage.Settings.MenuGameplayDesc
         };
         MenuGameplayBtn.SetDimensions(() => new Vector2(660, 150).ToResolution(), () => new Vector2(400, 100).ToResolution());
 
         MenuGameplayBtn.OnLeftClick = (uiElement) => {
             TankGame.Settings.MenuGameplayEnabled = !TankGame.Settings.MenuGameplayEnabled;
-            MenuGameplayBtn.Text = TankGame.GameLanguage.MenuGameplay + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.MenuGameplayEnabled);
+            MenuGameplayBtn.Text = TankGame.GameLanguage.Settings.MenuGameplay + ": " + TankGame.GameLanguage.GetEnablement(TankGame.Settings.MenuGameplayEnabled);
 
             if (!MainMenuUI.IsActive) return;
             foreach (var tank in GameHandler.AllTanks) {

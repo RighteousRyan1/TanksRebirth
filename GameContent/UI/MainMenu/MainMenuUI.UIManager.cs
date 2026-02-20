@@ -23,15 +23,7 @@ public static partial class MainMenuUI
     // ok are rendertargets just a death sentence???
     public static RenderTarget2D TextTarget;
 
-    private static readonly string tanksMessage =
-        $"Tanks Rebirth ALPHA v{RuntimeData.ShortVersion}" +
-        $"\nOriginal game and assets developed by Nintendo" +
-        $"\nProgrammed by RighteousRyan" +
-        $"\nArt and graphics by BigKitty1011" +
-        $"\nTANKS to all of our contributors, including:\n" +
-        $"\nDottik, Arram, TheGoldfishKing, LolXD87," +
-        $"\nAnotherGuy, Dymkar, Arctan Dev, 4mbro0s3-2," +
-        $"\nvsjoqvist, Tomat, nakamurash, timweh, Guthen, Vicerix";
+    static readonly string tanksMessage = $"Tanks Rebirth ALPHA v{RuntimeData.ShortVersion}";
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
 
@@ -45,9 +37,10 @@ public static partial class MainMenuUI
         Difficulties,
         Settings,
         StatsMenu,
-        ModsMenu
+        ModsMenu,
+        Credits
     }
-    private static UIState _menuState;
+    static UIState _menuState;
     public static UIState MenuState {
         get => _menuState;
         set {
@@ -84,16 +77,17 @@ public static partial class MainMenuUI
     public static UITextButton PlayButton_Multiplayer;
     public static UITextButton StartMPGameButton;
     public static UITextButton DifficultiesButton;
-
-    private static UIElement[] _menuElements;
+    
+    static UIElement[] _menuElements;
 
     internal static List<UIElement> campaignNames = [];
 
     public static UITextButton CosmeticsMenuButton;
     public static UITextButton StatsMenu;
+    public static UITextButton CreditsButton;
 
     public static void InitializeMain(SpriteFontBase font) {
-        PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
+        PlayButton = new(TankGame.GameLanguage.Menu.Play, font, Color.WhiteSmoke) {
             IsVisible = true,
         };
         PlayButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
@@ -102,9 +96,9 @@ public static partial class MainMenuUI
             MenuState = UIState.PlayList;
         };
 
-        PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke) {
+        PlayButton_Multiplayer = new(TankGame.GameLanguage.Menu.Multiplayer, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.MultiplayerFlavor
+            Tooltip = TankGame.GameLanguage.Menu.MultiplayerFlavor
         };
         PlayButton_Multiplayer.SetDimensions(() => new Vector2(700, 750).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
@@ -114,9 +108,9 @@ public static partial class MainMenuUI
             MenuState = UIState.Mulitplayer;
         };
 
-        DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke) {
+        DifficultiesButton = new(TankGame.GameLanguage.Menu.Difficulties, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.DifficultiesFlavor
+            Tooltip = TankGame.GameLanguage.Menu.DifficultiesFlavor
         };
         DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
         DifficultiesButton.OnLeftClick = (element) => {
@@ -124,9 +118,9 @@ public static partial class MainMenuUI
             MenuState = UIState.Difficulties;
         };
 
-        PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke) {
+        PlayButton_SinglePlayer = new(TankGame.GameLanguage.Menu.SinglePlayer, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.SinglePlayerFlavor
+            Tooltip = TankGame.GameLanguage.Menu.SinglePlayerFlavor
         };
         PlayButton_SinglePlayer.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
@@ -136,43 +130,52 @@ public static partial class MainMenuUI
         };
         InitializeDifficultyButtons();
 
-        PlayButton_LevelEditor = new(TankGame.GameLanguage.LevelEditor, font, Color.WhiteSmoke) {
+        PlayButton_LevelEditor = new(TankGame.GameLanguage.Menu.LevelEditor, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.LevelEditFlavor
+            Tooltip = TankGame.GameLanguage.Menu.LevelEditFlavor
         };
         PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
         PlayButton_LevelEditor.OnLeftClick = (b) => {
             LevelEditorUI.Initialize();
             LevelEditorUI.TryOpen();
         };
-        CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke) {
+        CosmeticsMenuButton = new(TankGame.GameLanguage.Menu.CosmeticsMenu, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.CosmeticsMenu,
+            Tooltip = TankGame.GameLanguage.Menu.CosmeticsMenu,
             OnLeftClick = (a) => {
                 CosmeticsUI.EnterMenu();
+
+                CosmeticsMenuButton.IsVisible = false;
+                SetPlayButtonsVisibility(false);
+                SetMPButtonsVisibility(false);
+                SetPrimaryMenuButtonsVisibility(false);
+
+                MenuState = UIState.Cosmetics;
             }
         };
         CosmeticsMenuButton.SetDimensions(() => new Vector2(50, 50).ToResolution(), () => new Vector2(300, 50).ToResolution());
-        CosmeticsMenuButton.OnLeftClick += (elem) => {
-            CosmeticsMenuButton.IsVisible = false;
-            SetPlayButtonsVisibility(false);
-            SetMPButtonsVisibility(false);
-            SetPrimaryMenuButtonsVisibility(false);
 
-            MenuState = UIState.Cosmetics;
-        };
-        StatsMenu = new(TankGame.GameLanguage.GameStats, font, Color.WhiteSmoke) {
+        StatsMenu = new(TankGame.GameLanguage.Menu.GameStats, font, Color.WhiteSmoke) {
             IsVisible = false,
-            OnLeftClick = (a) => { MenuState = UIState.StatsMenu; },
-            Tooltip = TankGame.GameLanguage.GameStatsFlavor
+            OnLeftClick = (a) => {
+                RequestStats();
+                MenuState = UIState.StatsMenu; 
+            },
+            Tooltip = TankGame.GameLanguage.Menu.GameStatsFlavor
         };
-        StatsMenu.OnLeftClick = (a) => {
-            RequestStats();
-            MenuState = UIState.StatsMenu;
+        StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 200.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
+
+        CreditsButton = new(TankGame.GameLanguage.Credits.Credits, font, Color.WhiteSmoke) {
+            IsVisible = false,
+            OnLeftClick = (a) => {
+                CreditsHandler.Load(TankGame.GameLanguage);
+                MenuState = UIState.Credits;
+            },
+            // Tooltip = TankGame.GameLanguage.Menu.GameStatsFlavor
         };
+        CreditsButton.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 + 20.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
 
         InitModsMenu(font);
-        StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
     }
     private static void HideAll() {
         PlayButton.IsVisible = false;
@@ -197,6 +200,7 @@ public static partial class MainMenuUI
         PlayButton.IsVisible = visible;
         ModsMenuButton.IsVisible = visible;
         StatsMenu.IsVisible = visible;
+        CreditsButton.IsVisible = visible;
     }
 
     // the code is horrid but at least it's separated now
@@ -208,20 +212,20 @@ public static partial class MainMenuUI
 
         device.Clear(RenderGlobals.BackBufferColor);
 
-        var bottomLeft = Anchor.BottomLeft.GetTextureAnchor(TextTarget);
+        if (MenuState == UIState.PrimaryMenu) {
 
-        var messageScale = new Vector2(0.8f).ToResolution();
-        var font = FontGlobals.RebirthFont;
+            var bottomLeft = Anchor.BottomLeft.GetTextureAnchor(TextTarget);
+            var messageScale = new Vector2(0.8f).ToResolution();
+            var font = FontGlobals.RebirthFont;
 
-        spriteBatch.Begin();
-        DrawUtils.DrawStringBorderOnly(spriteBatch, font, tanksMessage, bottomLeft, Color.Black, messageScale, 0f, Anchor.BottomLeft, borderThickness: 0.75f);
-        spriteBatch.End();
+            spriteBatch.Begin();
+            DrawUtils.DrawStringBorderOnly(spriteBatch, font, tanksMessage, bottomLeft, Color.Black, messageScale, 0f, Anchor.BottomLeft, borderThickness: 0.75f);
+            spriteBatch.End();
 
-        spriteBatch.Begin();
-        spriteBatch.DrawString(font, tanksMessage, bottomLeft, Color.White, messageScale, origin: Anchor.BottomLeft.GetAnchor(font.MeasureString(tanksMessage)));
-        //DrawUtils.DrawTextWithBorder(spriteBatch, FontGlobals.RebirthFont, tanksMessage, Anchor.BottomLeft.GetTextureAnchor(TextTarget),
-        //Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.5f);
-        spriteBatch.End();
+            spriteBatch.Begin();
+            spriteBatch.DrawString(font, tanksMessage, bottomLeft, Color.White, messageScale, origin: Anchor.BottomLeft.GetAnchor(font.MeasureString(tanksMessage)));
+            spriteBatch.End();
+        }
 
         device.SetRenderTarget(null);
     }
@@ -248,9 +252,17 @@ public static partial class MainMenuUI
     }
     public static void UpdateUI() {
         // quite unfortunate hardcode. fix later.
-        if (MenuState == UIState.StatsMenu)
-            if (InputUtils.KeyJustPressed(Keys.Escape))
-                MenuState = UIState.PrimaryMenu;
+        if (InputUtils.KeyJustPressed(Keys.Escape)) {
+            switch (MenuState) {
+                case UIState.StatsMenu:
+                    MenuState = UIState.PrimaryMenu;
+                    break;
+                case UIState.Credits:
+                    MenuState = UIState.PrimaryMenu;
+                    CreditsHandler.Unload();
+                    break;
+            }
+        }
         // todo: do transitions
         SetPlayButtonsVisibility(MenuState == UIState.PlayList);
         SetMPButtonsVisibility(MenuState == UIState.Mulitplayer);

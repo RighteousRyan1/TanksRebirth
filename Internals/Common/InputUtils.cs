@@ -175,12 +175,12 @@ public static class InputUtils {
     public static bool OldMouseRight => KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Pressed;
     public static bool OldMouse3 => KeyboardMouse.PreviousMouse.XButton1 == ButtonState.Pressed;
     public static bool OldMouse4 => KeyboardMouse.PreviousMouse.XButton2 == ButtonState.Pressed;
-    public static bool CanDetectClick(bool rightClick = false) {
+    public static bool Click(bool rightClick = false) {
         bool clicked = !rightClick ? KeyboardMouse.CurrentMouse.LeftButton == ButtonState.Pressed && KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Released
             : KeyboardMouse.CurrentMouse.RightButton == ButtonState.Pressed && KeyboardMouse.PreviousMouse.RightButton == ButtonState.Released;
         return WindowUtils.WindowActive && clicked;
     }
-    public static bool CanDetectClickRelease(bool rightClick = false) {
+    public static bool ClickRelease(bool rightClick = false) {
         bool released = !rightClick ? KeyboardMouse.CurrentMouse.LeftButton != ButtonState.Pressed && KeyboardMouse.PreviousMouse.LeftButton != ButtonState.Released
             : KeyboardMouse.CurrentMouse.RightButton != ButtonState.Pressed && KeyboardMouse.PreviousMouse.RightButton != ButtonState.Released;
         return WindowUtils.WindowActive && released;

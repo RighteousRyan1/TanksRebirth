@@ -217,13 +217,15 @@ public static class GameScene {
             SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
             SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
             SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
-            SetBlockTexture(BoundaryModel.Meshes["shadow_interior_vertical"], BoundaryTextureContext.block_shadow_b); // polygon7
-            SetBlockTexture(BoundaryModel.Meshes["shadow_7"], BoundaryTextureContext.block_shadow_b); // polygon15
+
+            var tryShadow7 = BoundaryModel.Meshes.TryGetValue("shadow_7", out var shadow_7);
+            if (tryShadow7)
+                SetBlockTexture(shadow_7, BoundaryTextureContext.block_shadow_b); // polygon15
 
             SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
 
             SetBlockTexture(BoundaryModel.Meshes["shadow_interior_upper"], BoundaryTextureContext.block_shadow_d);
-
+            SetBlockTexture(BoundaryModel.Meshes["shadow_interior_vertical"], BoundaryTextureContext.block_shadow_b); // polygon7
             SetBlockTexture(BoundaryModel.Meshes["shadow_corner"], BoundaryTextureContext.block_shadow_b);
         }
 
@@ -278,8 +280,6 @@ public static class GameScene {
                             if (mesh.Name == "snow_field" || mesh.Name == "snow_blocks") {
                                 // ... apparently my initial assignment just... doesn't work. so it's set here.
                                 effect.Texture = Assets["snow"];
-                                // literally what the fuck is this
-                                effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(62) * Matrix.CreateTranslation(Center);
                             }
 
                             if (UseCustomSceneColor) {

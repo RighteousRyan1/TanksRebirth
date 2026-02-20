@@ -8,10 +8,15 @@ using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class WindowUtils
-{
+public static class WindowUtils {
+    // probably prefer a constant "RenderScale" instead of calling ToResolution literally fucking everywhere...
     public static Vector2 RenderResolution => new(1920, 1080);
     public static Vector2 ToResolution(this Vector2 input) => input * (WindowBounds / RenderResolution);
+    public static Vector3 ToResolution(this Vector3 input) {
+        var scale = (WindowBounds / RenderResolution);
+
+        return input * new Vector3(scale.X, scale.Y, scale.X);
+    }
     public static Vector2 ToResolution(this Vector2 input, Vector2 baseRes) => input * (baseRes / WindowBounds);
     public static Vector2 ToResolution(this float input) => input * (WindowBounds / RenderResolution);
     public static float ToResolutionF(this float input) => input * (WindowBounds / RenderResolution).Length();

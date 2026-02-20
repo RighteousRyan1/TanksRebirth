@@ -317,7 +317,7 @@ public record struct Mission
             var stack = reader.ReadByte();
             var x = reader.ReadSingle();
             var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
-            var link = reader.ReadSByte();
+            var link = reader.ReadByte();
 
             blocks.Add(new() {
                 Type = type,
@@ -366,7 +366,7 @@ public record struct Mission
             var stack = reader.ReadByte();
             var x = reader.ReadSingle();
             var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
-            var link = reader.ReadSByte();
+            var link = reader.ReadByte();
 
             blocks.Add(new() {
                 Type = type,
@@ -414,7 +414,7 @@ public record struct Mission
             var stack = reader.ReadByte();
             var x = reader.ReadSingle();
             var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
-            var link = reader.ReadSByte();
+            var link = reader.ReadByte();
 
             blocks.Add(new() {
                 Type = type,
@@ -464,7 +464,7 @@ public record struct Mission
             var stack = reader.ReadByte();
             var x = reader.ReadSingle();
             var y = reader.ReadSingle();
-            var link = reader.ReadSByte();
+            var link = reader.ReadByte();
 
             blocks.Add(new() {
                 Type = type,

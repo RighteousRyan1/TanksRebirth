@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.Enums;
+﻿using System.Collections.Generic;
 using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.Systems;
 
-public static class DifficultyAlgorithm
-{
+public static class DifficultyAlgorithm {
 
     public static Dictionary<int, float> TankDiffs = new() {
         [TankID.Brown] = 0.01f,
@@ -38,8 +32,7 @@ public static class DifficultyAlgorithm
         //[0] = TankGame.GameLanguage.Trivial,
     };
 
-    public static float GetDifficulty(Mission mission)
-    {
+    public static float GetDifficulty(Mission mission) {
         float difficulty = 0;
         // Dictionary<int, int> tankCounts = [];
 

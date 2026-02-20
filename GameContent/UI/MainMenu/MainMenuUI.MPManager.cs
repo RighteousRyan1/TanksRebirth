@@ -115,7 +115,7 @@ public static partial class MainMenuUI {
         };
         ServerNameInput.SetDimensions(() => PasswordInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
 
-        ConnectToServerButton = new(TankGame.GameLanguage.ConnectToServer, font, uiColor) {
+        ConnectToServerButton = new(TankGame.GameLanguage.Menu.ConnectToServer, font, uiColor) {
             IsVisible = false,
             Tooltip = "Connect to the written IP and Port in the form of ip:port"
         };
@@ -147,7 +147,7 @@ public static partial class MainMenuUI {
             }
         };
 
-        CreateServerButton = new(TankGame.GameLanguage.CreateServer, font, Color.WhiteSmoke) {
+        CreateServerButton = new(TankGame.GameLanguage.Menu.CreateServer, font, Color.WhiteSmoke) {
             IsVisible = false,
             Tooltip = "Create a server with the written IP and Port in the form of ip:port"
         };
@@ -190,7 +190,7 @@ public static partial class MainMenuUI {
             }
 
         };
-        StartMPGameButton = new(TankGame.GameLanguage.Play, font, uiColor) {
+        StartMPGameButton = new(TankGame.GameLanguage.Menu.Play, font, uiColor) {
             IsVisible = false,
             Tooltip = "Start the game with every client that is connected"
         };

@@ -180,14 +180,14 @@ public static class NetPlay {
                     var missionName = reader.GetString();
                     var note = reader.GetString();
 
-                    List<BlockTemplate> blockTotal = new();
-                    List<TankTemplate> tankTotal = new();
+                    List<BlockTemplate> blockTotal = [];
+                    List<TankTemplate> tankTotal = [];
 
                     for (int m = 0; m < blockLen; m++) {
                         var bPos = reader.GetVector2();
                         var bType = reader.GetInt();
                         var bStack = reader.GetByte();
-                        var tpLink = reader.GetSByte();
+                        var tpLink = reader.GetByte();
 
                         blockTotal.Add(new() {
                             Position = bPos,

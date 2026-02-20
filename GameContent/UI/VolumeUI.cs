@@ -50,7 +50,7 @@ public static class VolumeUI
         MusicVolume.BarWidth = 10;
         MusicVolume.SliderColor = Color.WhiteSmoke;
 
-        MusicText = new(TankGame.GameLanguage.MusicVolume, FontGlobals.RebirthFont, Color.Black)
+        MusicText = new(TankGame.GameLanguage.Settings.MusicVolume, FontGlobals.RebirthFont, Color.Black)
         {
             // IgnoreMouseInteractions = true,
             IsVisible = false,
@@ -70,7 +70,7 @@ public static class VolumeUI
         EffectsVolume.BarWidth = 10;
         EffectsVolume.SliderColor = Color.WhiteSmoke;
 
-        EffectsText = new(TankGame.GameLanguage.EffectsVolume, FontGlobals.RebirthFont, Color.Black)
+        EffectsText = new(TankGame.GameLanguage.Settings.EffectsVolume, FontGlobals.RebirthFont, Color.Black)
         {
             //IgnoreMouseInteractions = true,
             IsVisible = false
@@ -89,7 +89,7 @@ public static class VolumeUI
         AmbientVolume.BarWidth = 10;
         AmbientVolume.SliderColor = Color.WhiteSmoke;
 
-        AmbientText = new(TankGame.GameLanguage.AmbientVolume, FontGlobals.RebirthFont, Color.Black)
+        AmbientText = new(TankGame.GameLanguage.Settings.AmbientVolume, FontGlobals.RebirthFont, Color.Black)
         {
             //IgnoreMouseInteractions = true,
             IsVisible = false

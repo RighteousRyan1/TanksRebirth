@@ -57,7 +57,7 @@ public static class GameSceneUI {
         var tnk = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
         var barPos = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - (bar.Height + 35).ToResolutionY());
         var missionInfo = LevelEditorUI.IsTestingLevel ? 
-            LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
+            LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.General.Mission}"}";
         var infoMeasure = font.MeasureString(missionInfo) * infoScale;
         var infoScaling = 1f - ((float)missionInfo.Length / LevelEditorUI.MAX_MISSION_CHARS) + 0.4f;
         var tanksRemaining = $"× {AIManager.CountAll()}";

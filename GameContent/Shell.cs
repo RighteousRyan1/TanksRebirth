@@ -124,7 +124,7 @@ public class Shell : IAITankDanger {
     public byte UID { get; private set; }
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
-    public ShellProperties Properties { get; set; } = new();
+    public ShellProperties Properties = new();
     public int Type { get; set; }
 
     /// <summary>An identifier of the shell's volley. If shells share the same volley ID, they cannot collide until they separate from spawn.</summary>
@@ -161,15 +161,13 @@ public class Shell : IAITankDanger {
                 break;
             case ShellID.Rocket:
                 DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
-                Properties.Flaming = true;
+                Properties.Visuals |= VisualFlags.Flaming;
                 TrailSound = new OggAudio("Content/Assets/sounds/tnk_shoot_rocket_loop.ogg", 0.3f);
                 TrailSound.Instance.IsLooped = true;
                 break;
             case ShellID.TrailedRocket:
                 DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
-                Properties.EmitsSmoke = false;
-                Properties.LeavesTrail = true;
-                Properties.Flaming = true;
+                Properties.Visuals = VisualFlags.SmokeTrail | VisualFlags.Flaming;
                 TrailSound = new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
                 TrailSound.Instance.IsLooped = true;
                 break;
@@ -178,7 +176,7 @@ public class Shell : IAITankDanger {
                 break;
             case ShellID.Explosive:
                 DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet");
-                Properties.IsDestructible = false;
+                Properties.Penetration = -1;
                 break;
             default:
                 ModdedData?.OnCreate();
@@ -377,16 +375,16 @@ public class Shell : IAITankDanger {
 
         CheckCollisions();
 
-        var bruh = Properties.Flaming ? (int)Math.Round(6 / Velocity.Length()) : (int)Math.Round(12 / Velocity.Length());
+        var bruh = Properties.Visuals.HasFlag(VisualFlags.Flaming) ? (int)Math.Round(6 / Velocity.Length()) : (int)Math.Round(12 / Velocity.Length());
         var num = bruh != 0 ? bruh : 5f;
 
-        if (Properties.EmitsSmoke)
+        if (Properties.Visuals.HasFlag(VisualFlags.SmokePuff))
             RenderSmokeParticle(num);
 
-        if (Properties.LeavesTrail)
+        if (Properties.Visuals.HasFlag(VisualFlags.SmokeTrail))
             RenderLeaveTrail();
 
-        if (Properties.Flaming)
+        if (Properties.Visuals.HasFlag(VisualFlags.Flaming))
             RenderFlamingParticle();
 
         ModdedData?.PostUpdate();
@@ -419,7 +417,7 @@ public class Shell : IAITankDanger {
                 particle.Destroy();
 
             if (particle.Alpha > 0)
-                particle.Alpha -= (Properties.Flaming ? 0.03f : 0.02f) * RuntimeData.DeltaTime;
+                particle.Alpha -= (Properties.Visuals.HasFlag(VisualFlags.Flaming) ? 0.03f : 0.02f) * RuntimeData.DeltaTime;
 
             GeometryUtils.Add(ref particle.Scale, 0.0075f * RuntimeData.DeltaTime);
         };
@@ -610,16 +608,17 @@ public class Shell : IAITankDanger {
             bool collision = shell.Hitbox.Intersects(Hitbox);
             if (!collision) continue;
 
-            if (shell.Properties.IsDestructible)
-                shell.Destroy(DestructionContext.WithShell);
-            if (Properties.IsDestructible)
-                Destroy(DestructionContext.WithShell);
+            var otherDestructible = shell.Properties.Penetration > -1;
+            var thisDestructible = Properties.Penetration > -1;
+
+            if (otherDestructible) shell.Destroy(DestructionContext.WithShell);
+            if (thisDestructible) Destroy(DestructionContext.WithShell);
 
             // if destroy has been called this will be true, so prevent further checking
             if (shell == null) continue;
 
             // if two indestructible bullets come together, destroy them both. too powerful!
-            if (shell.Properties.IsDestructible || Properties.IsDestructible) continue;
+            if (otherDestructible || thisDestructible) continue;
 
             // bullet is sometimes null here? so null safety is key
             shell.Destroy(DestructionContext.WithShell);

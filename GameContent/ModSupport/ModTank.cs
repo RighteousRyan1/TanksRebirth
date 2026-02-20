@@ -40,6 +40,11 @@ public class ModTank : ILoadable, IModContent {
     /// The English localized name will be the name that gets added to the game internally.
     /// </summary>
     public virtual LocalizedString Name { get; internal set; }
+    /// <summary>
+    /// Describe how your tank works, in preferably multiple languages.<br></br>
+    /// This description will appear in the level editor menu.
+    /// </summary>
+    public virtual LocalizedString Description { get; internal set; }
     /// <summary>The color to associate with this <see cref="ModTank"/>. This color will be used for the "Hit!" graphics, the post-game
     /// results screen, and the color of the tank chunks when the tank is destroyed. Defaults to <see cref="Color.Black"/>.</summary>
     public virtual Color AssociatedColor => Color.Black;
@@ -88,7 +93,7 @@ public class ModTank : ILoadable, IModContent {
 
     internal static int unloadOffset = 0;
     internal void Unload() {
-        var name = Name.GetLocalizedString(LangCode.English)!;
+        var name = Name[LangCode.English]!;
         // if more than one mod has a modded tank, the game unloads that, and indices are not adjusted... unloadOffset fixes that
         TankID.Collection.TryRemove(Type - unloadOffset);
         AITank.TankDestructionColors.Remove(Type);
@@ -106,11 +111,13 @@ public class ModTank : ILoadable, IModContent {
     internal void Load() {
         _music = [];
 
-        var name = Name.GetLocalizedString(LangCode.English)!;
+        var name = Name[LangCode.English]!;
 
+        // this might entirely need to be saved when converting to ModName.TankName saving/loading
         Type = TankID.Collection.ForcefullyInsert(name);
         TankMusicSystem.MaxSongNumPerTank[Type] = Songs;
         AITank.TankDestructionColors[Type] = AssociatedColor;
+        DifficultyAlgorithm.TankDiffs[Type] = 0f; // introduce property?
         if (Songs > 1) {
             for (int i = 0; i < Songs; i++) {
                 var fileName = $"{name.ToLower()}{i + 1}";

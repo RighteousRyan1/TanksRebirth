@@ -45,7 +45,11 @@ public static partial class LevelEditorUI {
     public static Vector2 PlaceInfoStart;
 
     // 255 for now. no real need to make it bigger unless modders are ballin'
-    public static ParticleManager EditorParticleSystem = new(() => CameraGlobals.ScreenView, () => CameraGlobals.ScreenProjOrthographic);
+    public static ParticleManager EditorParticleSystem = new(() => mtxvw(), () => CameraGlobals.ScreenProjOrthographic);
+
+    static Matrix mtxvw() {
+        return CameraGlobals.ScreenView * Matrix.CreateRotationX(CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE); // used to be pi/8
+    }
     // TODO: dynamically drawn 3d models on the UI.
     // TODO: rework scrollbar UI code, massively. my sanity is starting to taper off and achieve an all time low.
     // this will have the tanks at the bottom n stuff.
@@ -63,27 +67,47 @@ public static partial class LevelEditorUI {
     static List<Particle> _blockCategoryParticles;
 
     static Dictionary<EditorCategory, List<Particle>> _categoryParticles;
+
+    public static float ElementRotation => RuntimeData.RunTime / 100;
+    // this is causing sometimes for block shadows to not be destroyed
     static void OpenPeripherals() {
         _tankCategoryParticles ??= [];
         _plrCategoryParticles ??= [];
         _blockCategoryParticles ??= [];
         _categoryParticles ??= [];
+
         _tankCategoryParticles.Clear();
         _plrCategoryParticles.Clear();
         _blockCategoryParticles.Clear();
         _categoryParticles.Clear();
+
         // ensure particle trimming for blocks
         // spawn block model particle
         // this is for stacks
-        var bp = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.BlockStack.Duplicate(), GameScene.Assets["block.1"]);
-        bp.Scale = Vector3.One;
+        var bp = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.BlockStack.Asset, GameScene.Assets["block.1"]);
+        bp.Scale = Vector3.One * 2;
         bp.Alpha = 1f;
+        bp.Color = Color.Black;
         bp.UniqueBehavior = (p) => {
+            // bp.Model = (Block.WouldUseAlternateModel(BlockStack) ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack).Asset;
             bp.Position = DrawUtils.CenteredOrthoToScreen(PlaceInfoStart).Expand();
-            bp.Roll = 0f;
-            bp.Yaw = 0f;
-            bp.Pitch = MathHelper.PiOver4;
-            bp.Scale = new(2f); //new(2f + MathF.Sin(RuntimeData.RunTime / 10f) / 10f);
+            bp.Yaw = MathHelper.PiOver4;
+            bp.Alpha = CurCategory == EditorCategory.Terrain ? 1 : 0;
+        };
+
+        var mask = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.FlatFace.Asset, TextureGlobals.Pixels[Color.Gray]);
+
+        // most of these values are magical. the particle system is truly fucked
+        mask.Scale = Vector3.One * 10;
+        mask.Alpha = 1f;
+        mask.Yaw = MathHelper.PiOver4;
+        mask.LightPower = 0.775f;
+        mask.Color = Color.Black;
+        mask.ApplyGameLight = false;
+        mask.UniqueBehavior = (p) => {
+            var curHeight = Block.GetOffsetY(BlockStack, true);
+            mask.Position = bp.Position + Vector3.Up * curHeight * bp.Scale;
+            mask.Alpha = bp.Alpha * 0.25f;
         };
 
         for (int i = TankID.Brown; i < TankID.Collection.Count; i++) {
@@ -91,17 +115,12 @@ public static partial class LevelEditorUI {
 
             // i fear there's no better way to do this?
             var tnkDummy = new AITank(i, false, true);
-            var tnkPart = EditorParticleSystem.MakeParticle(Vector3.Zero, tnkDummy.DrawParamsTank.Model, Tank.Assets["tank_" + elem.Key.ToLower()]);
+            var tnkPart = EditorParticleSystem.MakeParticle(Vector3.Zero, tnkDummy.DrawParamsTank.Model, tnkDummy.DrawParamsTank.TankTexture);
             tnkDummy.Remove(true); // eradicate it after dummy init
 
             tnkPart.MeshesToIgnore = ["Shadow"];
             tnkPart.Color = Color.Black;
-            tnkPart.UniqueBehavior = (p) => {
-                var t = RuntimeData.RunTime / 50;
-                tnkPart.Yaw = t;
-                tnkPart.Roll = 0; // MathF.Sin(t) * 0.25f; // barrel roll
-                tnkPart.Pitch = 0; // forward/backward
-            };
+            tnkPart.Yaw = ElementRotation;
 
             _tankCategoryParticles.Add(tnkPart);
         }
@@ -109,17 +128,11 @@ public static partial class LevelEditorUI {
         for (int i = 0; i < PlayerID.Collection.Count; i++) {
             var elem = PlayerID.Collection[i];
 
-            // i fear there's no better way to do this?
             var tnkPart = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.TankPlayer.Duplicate(), Tank.Assets["plrtank_" + elem.Key.ToLower()]);
 
             tnkPart.MeshesToIgnore = ["Shadow"];
             tnkPart.Color = Color.Black;
-            tnkPart.UniqueBehavior = (p) => {
-                var t = RuntimeData.RunTime / 50;
-                tnkPart.Yaw = t;
-                tnkPart.Roll = 0; // MathF.Sin(t) * 0.25f; // barrel roll
-                tnkPart.Pitch = 0; // forward/backward
-            };
+            tnkPart.Yaw = ElementRotation;
 
             _plrCategoryParticles.Add(tnkPart);
         }
@@ -135,17 +148,16 @@ public static partial class LevelEditorUI {
             // var mdl = altModel ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack;
             var block = new Block(i, BlockStack, new Vector2(float.MaxValue), true);
             var blPart = EditorParticleSystem.MakeParticle(Vector3.Zero, block.Model, block.Texture);
-            block.Remove();
+            blPart.Yaw = ElementRotation;
 
             // i still need to discover how 
 
+            blPart.MeshesToIgnore = ["Shadow"];
+            blPart.Texturing = block.TextureMap;
+
+            block.Remove();
+
             blPart.Color = Color.Black;
-            blPart.UniqueBehavior = (p) => {
-                var t = RuntimeData.RunTime / 50;
-                blPart.Yaw = t;
-                blPart.Roll = MathF.Sin(t) * 0.25f; // barrel roll
-                blPart.Pitch = 0; // forward/backward
-            };
 
             _blockCategoryParticles.Add(blPart);
         }
@@ -165,28 +177,29 @@ public static partial class LevelEditorUI {
         AlertText = alert;
         SoundPlayer.SoundError();
     }
+    // this needs to be written much neater
     public static void DrawPlacementInfo(SpriteBatch sb) {
         // placement information
         sb.Draw(TextureGlobals.Pixels[Color.White], PlaceInfoRect, null, Color.Gray, 0f, Vector2.Zero, default, 0f);
         sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)40.ToResolutionY()), null, Color.White, 0f, Vector2.Zero, default, 0f);
         sb.DrawString(FontGlobals.RebirthFont,
-            TankGame.GameLanguage.PlaceInfo,
+            TankGame.GameLanguage.LevelEdit.PlaceInfo,
             new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 3.ToResolutionY()),
             Color.Black,
             Vector2.One.ToResolution(),
             0f,
-            Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.PlaceInfo)));
+            Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.LevelEdit.PlaceInfo)));
 
-        var helpText = TankGame.GameLanguage.PlacementTeamInfo;
+        var helpText = TankGame.GameLanguage.LevelEdit.PlacementTeamInfo;
         PlaceInfoStart = new(WindowUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
 
         // draw tank placement info
         if (CurCategory == EditorCategory.EnemyTanks || CurCategory == EditorCategory.PlayerTanks) {
             // TODO: should be optimised. do later.
-            sb.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.TankTeams, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.TankTeams) / 2);
+            sb.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.LevelEdit.TankTeams, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.LevelEdit.TankTeams) / 2);
 
             sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle((int)PlaceInfoStart.X, (int)(PlaceInfoStart.Y - 40.ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, Color.Black, 0f, Vector2.Zero, default, 0f);
-            sb.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.NoTeam, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            sb.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.Teams.NoTeam, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
             for (int i = 0; i < TeamID.Collection.Count - 1; i++) {
                 var color = TeamID.TeamColors[i + 1];
 
@@ -210,9 +223,9 @@ public static partial class LevelEditorUI {
         }
         // draw obstacle placement info
         else if (CurCategory == EditorCategory.Terrain) {
-            helpText = TankGame.GameLanguage.BlockStackFlavor;
+            helpText = TankGame.GameLanguage.LevelEdit.BlockStackFlavor;
             // TODO: add static dict for specific types?
-            PlaceInfoStart = new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 450.ToResolutionY());
+            PlaceInfoStart = new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 250.ToResolutionY());
 
             /*var tex = SelectedBlockType != BlockID.Hole ? $"{BlockID.Collection.GetKey(SelectedBlockType)}_{BlockStack}" : $"{BlockID.Collection.GetKey(SelectedBlockType)}";
             var size = RenderTextures[tex].Size();
@@ -241,11 +254,11 @@ public static partial class LevelEditorUI {
         sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 125).ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
         sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
 
-        sb.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.LevelInfo)));
-        sb.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        sb.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.LevelEdit.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.LevelEdit.LevelInfo)));
+        sb.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.LevelEdit.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
         // localize later.
         sb.DrawString(FontGlobals.RebirthFont, $"Total Terrain: {Block.AllBlocks.Count(x => x is not null)}", new Vector2(10, 60).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-        sb.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.DifficultyRating}: {difficultyRating:0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        sb.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.LevelEdit.DifficultyRating}: {difficultyRating:0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
     }
     public static void DrawAlerts(SpriteBatch sb) {
         if (_alertTime <= 0) return;

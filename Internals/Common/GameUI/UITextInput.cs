@@ -46,7 +46,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                 if ((InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.LeftControl) || InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.RightControl)) && InputUtils.KeyJustPressed(Keys.V))
                     Text += ClipboardService.GetText();
 
-            if (InputUtils.CanDetectClick()) {
+            if (InputUtils.Click()) {
                 if (MouseHovering) {
                     if (currentActiveBox != Id) {
                         ActiveHandle = true;

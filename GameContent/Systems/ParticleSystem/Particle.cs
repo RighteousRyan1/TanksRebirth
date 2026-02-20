@@ -8,12 +8,12 @@ using FontStashSharp;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
 using System.Collections.Generic;
+using TanksRebirth.Graphics.Drawing;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
 // this needs an optimization... stat.
-public enum ParticleIntensity
-{
+public enum ParticleIntensity {
     None, // no particles at all
     Low, // Particles emit at 25% the frequency
     Medium, // ... 50%
@@ -102,6 +102,7 @@ public class Particle {
     // particle system needs a billion different refactors
     /// <summary>If a 3D particle, ignores drawing these meshes (by name).</summary>
     public List<string> MeshesToIgnore = []; // to default as initialized or not as initialized, that is the question
+    public ModelTextureMap Texturing;
 
     // /// <summary>If true, this particle will not halt drawing if not viewable.</summary>
     // public bool DrawAlways;
@@ -110,6 +111,8 @@ public class Particle {
      * 
      * billboard from 'position' to the camera.
      */
+
+    public bool ApplyGameLight = true;
 
     internal Particle(Vector3 position, ParticleManager system) {
         Position = position;
@@ -167,14 +170,18 @@ public class Particle {
                 effect.Projection = System.SystemProjection;
 
                 effect.TextureEnabled = true;
-                effect.Texture = Texture;
+
+                if (Texturing != null && Texturing.Count > 0) effect.Texture = Texturing[mesh.Name];
+                else effect.Texture = Texture;
 
                 effect.Alpha = Alpha;
 
-                //effect.LightingEnabled = true;
-                //effect.DirectionalLight0
-                effect.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
-                effect.SetDefaultGameLighting_IngameEntities(LightPower);
+                effect.EmissiveColor = Color.ToVector3();
+
+                if (ApplyGameLight) {
+                    effect.EmissiveColor *= SceneManager.GameLight.Brightness;
+                    effect.SetDefaultGameLighting_IngameEntities(LightPower);
+                }
             }
             mesh.Draw();
         }
@@ -184,8 +191,7 @@ public class Particle {
     }
     // ahh yes... a draw call for every fucking particle. this code needs to be euthanized
     internal void Draw(SpriteBatch spriteBatch) {
-        if (Model is not null)
-            return;
+        if (Model is not null) return;
 
         // ignore render if not viewable
         //if (CameraGlobals.ViewFrustum.Contains(Position) == ContainmentType.Disjoint)
@@ -214,7 +220,10 @@ public class Particle {
                 EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
                 EffectHandle.Alpha = Alpha;
 
-                EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
+                if (ApplyGameLight) {
+                    EffectHandle.EmissiveColor *= SceneManager.GameLight.Brightness;
+                    EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
+                }
 
                 spriteBatch.End();
                 spriteBatch.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle);

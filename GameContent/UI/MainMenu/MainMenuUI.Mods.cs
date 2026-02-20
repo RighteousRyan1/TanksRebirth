@@ -36,7 +36,7 @@ public partial class MainMenuUI {
     private static Rectangle _listViewRect;
 
     public static void InitModsMenu(SpriteFontBase font) {
-        ModsMenuButton = new(TankGame.GameLanguage.Mods, font, Color.WhiteSmoke) {
+        ModsMenuButton = new(TankGame.GameLanguage.Misc.Mods, font, Color.WhiteSmoke) {
             IsVisible = false,
         };
         ModsMenuButton.SetDimensions(() => new Vector2(WindowUtils.WindowWidth - 250.ToResolutionX(), 10.ToResolutionY()), () => new Vector2(240, 50).ToResolution());
@@ -46,7 +46,7 @@ public partial class MainMenuUI {
             InitModMenuGraphics(TankGame.Instance.GraphicsDevice);
         };
 
-        ModsMenuLeave = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke) {
+        ModsMenuLeave = new(TankGame.GameLanguage.Menu.Back, font, Color.WhiteSmoke) {
             IsVisible = false,
         };
         ModsMenuLeave.SetDimensions(() => new Vector2(WindowUtils.WindowWidth - 250.ToResolutionX(), 10.ToResolutionY()), () => new Vector2(240, 50).ToResolution());
@@ -56,7 +56,7 @@ public partial class MainMenuUI {
             DisposeModMenuGraphics();
         };
 
-        ReloadMods = new(TankGame.GameLanguage.ReloadMods, font, Color.WhiteSmoke) {
+        ReloadMods = new(TankGame.GameLanguage.Misc.ReloadMods, font, Color.WhiteSmoke) {
             IsVisible = false,
         };
         ReloadMods.SetDimensions(() => new Vector2(WindowUtils.WindowWidth - 250.ToResolutionX(), 70.ToResolutionY()), () => new Vector2(240, 50).ToResolution());
@@ -174,7 +174,7 @@ public partial class MainMenuUI {
                     textColor, borderColor, new Vector2(0.6f).ToResolution(), 0, Anchor.TopLeft, borderThickness: 0.5f);
 
                 // Draw Status
-                var status = TankGame.GameLanguage.Status + ": " + (enabled ? TankGame.GameLanguage.Enabled : TankGame.GameLanguage.Disabled);
+                var status = TankGame.GameLanguage.Basic.Status + ": " + TankGame.GameLanguage.GetEnablement(enabled);
                 var statusColor = enabled ? Color.Lime : Color.Red;
                 DrawUtils.DrawStringWithBorder(sb, btn.Font, status, btn.Position + new Vector2(100, 75).ToResolution(),
                     statusColor, ColorUtils.ChangeColorBrightness(statusColor, -0.5f), new Vector2(0.6f).ToResolution(), 0, Anchor.TopLeft, borderThickness: 0.5f);

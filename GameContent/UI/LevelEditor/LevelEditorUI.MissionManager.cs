@@ -11,20 +11,21 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
 public partial class LevelEditorUI {
+    // TODO: some hacky resolution thing is going on here. look into it
     public static void DrawCampaigns() {
-        if (loadedCampaign != null) {
-            var heightDiff = 40;
-            _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(_missionTab.X, _missionTab.Y, _missionTab.Width, heightDiff).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont,
-                TankGame.GameLanguage.MissionList,
-                new Vector2(175, 153).ToResolution(),
-                Color.Black,
-                Vector2.One.ToResolution(),
-                0f,
-                Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.MissionList)));
-        }
+        if (loadedCampaign == null) return;
+
+        var heightDiff = 40;
+        _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(_missionTab.X, _missionTab.Y, _missionTab.Width, heightDiff).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont,
+            TankGame.GameLanguage.LevelEdit.MissionList,
+            new Vector2(175, 153).ToResolution(),
+            Color.Black,
+            Vector2.One.ToResolution(),
+            0f,
+            Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.LevelEdit.MissionList)));
     }
     public static void SetupMissionsBar(Campaign campaign, bool setCampaignData = true) {
         RemoveMissionButtons();
@@ -41,47 +42,45 @@ public partial class LevelEditorUI {
             _hasMajorVictory = campaign.MetaData.HasMajorVictory;
         }
 
+        if (loadedCampaign == null) return;
+
         float totalOff = 0;
+        for (int i = 0; i < campaign.CachedMissions.Length; i++) {
+            var mission = campaign.CachedMissions[i];
+            if (mission == default || mission.Name is null) break;
+            var btn = new UITextButton(mission.Name, FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution());
+            btn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
 
-        if (loadedCampaign != null) {
-            for (int i = 0; i < campaign.CachedMissions.Length; i++) {
-                var mission = campaign.CachedMissions[i];
-                if (mission == default || mission.Name is null)
-                    break;
-                var btn = new UITextButton(mission.Name, FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution());
-                btn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
+            btn.Offset = new(0, i * 30);
+            totalOff += btn.Offset.Y;
 
-                btn.Offset = new(0, i * 30);
-                totalOff += btn.Offset.Y;
+            btn.HasScissor = true;
+            btn.Scissor = _missionButtonScissor;
 
-                btn.HasScissor = true;
-                btn.Scissor = _missionButtonScissor;
+            int index = i;
+            var len = btn.Text.Length;
+            btn.TextScale = () => Vector2.One * (len > 20 ? 1f - (len - 20) * 0.03f : 1f);
 
-                int index = i;
-                var len = btn.Text.Length;
-                btn.TextScale = () => Vector2.One * (len > 20 ? 1f - (len - 20) * 0.03f : 1f);
+            btn.OnLeftClick = (a) => {
+                _missionButtons.ForEach(x => x.Color = UnselectedColor);
+                btn.Color = SelectedColor;
 
-                btn.OnLeftClick = (a) => {
-                    _missionButtons.ForEach(x => x.Color = UnselectedColor);
-                    btn.Color = SelectedColor;
+                var mission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
-                    var mission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
+                // save what we have before changing
+                loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(mission.Name);
+                loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife = mission.GrantsExtraLife;
 
-                    // save what we have before changing
-                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(mission.Name);
-                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife = mission.GrantsExtraLife;
+                loadedCampaign.LoadMission(index);
+                loadedCampaign.SetupLoadedMission(true);
 
-                    loadedCampaign.LoadMission(index);
-                    loadedCampaign.SetupLoadedMission(true);
+                MissionName.Text = loadedCampaign.CachedMissions[index].Name;
 
-                    MissionName.Text = loadedCampaign.CachedMissions[index].Name;
-
-                    // update the mission we are wanting to rate
-                    difficultyRating = DifficultyAlgorithm.GetDifficulty(loadedCampaign.CurrentMission);
-                };
-                btn.IsVisible = IsActive;
-                _missionButtons.Add(btn);
-            }
+                // update the mission we are wanting to rate
+                difficultyRating = DifficultyAlgorithm.GetDifficulty(loadedCampaign.CurrentMission);
+            };
+            btn.IsVisible = IsActive;
+            _missionButtons.Add(btn);
         }
     }
     public static void AddMission() {
@@ -136,7 +135,7 @@ public partial class LevelEditorUI {
         if (loadedCampaign.CachedMissions.Length == 0) {
             loadedCampaign.LoadMission(new Mission {
                 Blocks = [],
-                Name = $"{TankGame.GameLanguage.Mission} 1",
+                Name = $"{TankGame.GameLanguage.General.Mission} 1",
                 Tanks = []
             });
             SetupMissionsBar(loadedCampaign, false);

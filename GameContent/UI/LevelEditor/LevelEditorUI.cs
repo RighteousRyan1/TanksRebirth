@@ -26,6 +26,8 @@ using System.Diagnostics;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals.Common.Framework.Collections;
+using TanksRebirth.GameContent.ModSupport;
+using System.Reflection;
 
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
@@ -68,6 +70,24 @@ public static partial class LevelEditorUI {
                     }
                 }
             }
+
+            switch (_curc) {
+                case EditorCategory.EnemyTanks:
+                    EnemyTanksCategory.Color = Color.DeepSkyBlue;
+                    TerrainCategory.Color = Color.White;
+                    PlayerTanksCategory.Color = Color.White;
+                    break;
+                case EditorCategory.Terrain:
+                    EnemyTanksCategory.Color = Color.White;
+                    TerrainCategory.Color = Color.DeepSkyBlue;
+                    PlayerTanksCategory.Color = Color.White;
+                    break;
+                case EditorCategory.PlayerTanks:
+                    EnemyTanksCategory.Color = Color.White;
+                    TerrainCategory.Color = Color.White;
+                    PlayerTanksCategory.Color = Color.DeepSkyBlue;
+                    break;
+            }
         }
     }
     public static int SelectedTankTier { get; private set; }
@@ -109,7 +129,7 @@ public static partial class LevelEditorUI {
                     // ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
 
                     if (InputUtils.DeltaScrollWheel != _oldelta)
-                        Block.AllBlocks[cur.BlockId].TpLink += (sbyte)(InputUtils.DeltaScrollWheel - _oldelta);
+                        Block.AllBlocks[cur.BlockId].TpLink += (byte)(InputUtils.DeltaScrollWheel - _oldelta);
                 }
             }
         }
@@ -123,7 +143,7 @@ public static partial class LevelEditorUI {
     static bool _sdbui;
 
     static bool _queueOpen;
-    static float _openCountndown;
+    static float _openCountdown;
     public static bool ShouldDrawBarUI {
         get => _sdbui;
         set {
@@ -211,9 +231,13 @@ public static partial class LevelEditorUI {
             }
         }
         TeamColorsLocalized.Clear();
+
+        var teams = (Language.TeamLocales)typeof(Language).GetProperty("Teams", BindingFlags.Public | BindingFlags.Instance).GetValue(TankGame.GameLanguage)!;
         for (int i = 0; i < TeamID.Collection.Count; i++) {
             var name = TeamID.Collection.GetKey(i);
-            TeamColorsLocalized.Add((string)typeof(Language).GetProperty(name!)!.GetValue(TankGame.GameLanguage)!);
+
+
+            TeamColorsLocalized.Add((string)typeof(Language.TeamLocales).GetProperty(name!)!.GetValue(teams)!);
         }
 
         // maybe init/de-init EditorParticleSystem?
@@ -240,7 +264,7 @@ public static partial class LevelEditorUI {
         _initialized = true;
 
         AddMissionBtn = new UITextButton("+", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = TankGame.GameLanguage.AddMissionFlavor
+            Tooltip = TankGame.GameLanguage.LevelEdit.AddMissionFlavor
         };
         AddMissionBtn.SetDimensions(
             () => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()),
@@ -251,7 +275,7 @@ public static partial class LevelEditorUI {
         _listModifyButtons.Add(AddMissionBtn);
 
         RemoveMissionBtn = new UITextButton("-", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = TankGame.GameLanguage.RemoveMissionFlavor
+            Tooltip = TankGame.GameLanguage.LevelEdit.RemoveMissionFlavor
         };
         RemoveMissionBtn.SetDimensions(
             () => new Vector2(AddMissionBtn.Position.X + AddMissionBtn.Size.X, AddMissionBtn.Position.Y),
@@ -262,7 +286,7 @@ public static partial class LevelEditorUI {
         _listModifyButtons.Add(RemoveMissionBtn);
 
         MoveMissionUp = new UITextButton("v", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = TankGame.GameLanguage.MoveMissionUpFlavor,
+            Tooltip = TankGame.GameLanguage.LevelEdit.MoveMissionUpFlavor,
             TextRotation = MathHelper.Pi
         };
         MoveMissionUp.SetDimensions(
@@ -272,7 +296,7 @@ public static partial class LevelEditorUI {
         _listModifyButtons.Add(MoveMissionUp);
 
         MoveMissionDown = new UITextButton("v", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = TankGame.GameLanguage.MoveMissionDownFlavor
+            Tooltip = TankGame.GameLanguage.LevelEdit.MoveMissionDownFlavor
         };
         MoveMissionDown.SetDimensions(
             () => new(MoveMissionUp.Position.X + MoveMissionUp.Size.X, AddMissionBtn.Position.Y),
@@ -285,7 +309,7 @@ public static partial class LevelEditorUI {
             MoveMissionUp.IsVisible =
             MoveMissionDown.IsVisible = IsActive;
 
-        TestLevel = new(TankGame.GameLanguage.TestLevel, FontGlobals.RebirthFont, Color.White);
+        TestLevel = new(TankGame.GameLanguage.LevelEdit.TestLevel, FontGlobals.RebirthFont, Color.White);
         TestLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
 
         TestLevel.OnLeftClick = (l) => {
@@ -299,7 +323,7 @@ public static partial class LevelEditorUI {
             cachedMission = Mission.GetCurrent(name, grantsLife);
         };
 
-        ReturnToEditor = new(TankGame.GameLanguage.Return, FontGlobals.RebirthFont, Color.White);
+        ReturnToEditor = new(TankGame.GameLanguage.Menu.Return, FontGlobals.RebirthFont, Color.White);
         ReturnToEditor.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.02f), () => new Vector2(250, 50).ToResolution());
 
         ReturnToEditor.OnLeftClick = (l) => {
@@ -317,26 +341,26 @@ public static partial class LevelEditorUI {
                 _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
         };
 
-        Perspective = new(TankGame.GameLanguage.Perspective, FontGlobals.RebirthFont, Color.White);
+        Perspective = new(TankGame.GameLanguage.LevelEdit.Perspective, FontGlobals.RebirthFont, Color.White);
         Perspective.SetDimensions(() => new(WindowUtils.WindowWidth * 0.125f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
-        Perspective.Tooltip = TankGame.GameLanguage.PerspectiveFlavor;
+        Perspective.Tooltip = TankGame.GameLanguage.LevelEdit.PerspectiveFlavor;
         Perspective.OnLeftClick = (l) => { CameraGlobals.OverheadView = !CameraGlobals.OverheadView; };
 
-        TerrainCategory = new(TankGame.GameLanguage.Terrain, FontGlobals.RebirthFont, Color.White);
+        TerrainCategory = new(TankGame.GameLanguage.LevelEdit.Terrain, FontGlobals.RebirthFont, Color.White);
         TerrainCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
         TerrainCategory.OnLeftClick = (l) => { CurCategory = EditorCategory.Terrain; };
 
-        EnemyTanksCategory = new(TankGame.GameLanguage.AIControlled, FontGlobals.RebirthFont, Color.White);
+        EnemyTanksCategory = new(TankGame.GameLanguage.LevelEdit.AIControlled, FontGlobals.RebirthFont, Color.White);
         EnemyTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
         EnemyTanksCategory.OnLeftClick = (l) => { CurCategory = EditorCategory.EnemyTanks; };
-        PlayerTanksCategory = new(TankGame.GameLanguage.Players, FontGlobals.RebirthFont, Color.White);
+        PlayerTanksCategory = new(TankGame.GameLanguage.LevelEdit.Players, FontGlobals.RebirthFont, Color.White);
         PlayerTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.65f), () => new Vector2(200, 50).ToResolution());
         PlayerTanksCategory.OnLeftClick = (l) => { CurCategory = EditorCategory.PlayerTanks; };
 
-        AutoOrientTanks = new(TankGame.GameLanguage.AutoOrientTanks, FontGlobals.RebirthFont, Color.White);
+        AutoOrientTanks = new(TankGame.GameLanguage.LevelEdit.AutoOrientTanks, FontGlobals.RebirthFont, Color.White);
         AutoOrientTanks.SetDimensions(() => new Vector2(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.575f), 
             () => new Vector2(200, 50).ToResolution());
-        AutoOrientTanks.Tooltip = TankGame.GameLanguage.AutoOrientTanksFlavor;
+        AutoOrientTanks.Tooltip = TankGame.GameLanguage.LevelEdit.AutoOrientTanksFlavor;
         AutoOrientTanks.TextScale = () => new Vector2(0.8f);
         AutoOrientTanks.OnLeftClick = (e) => {
             PlacementSquare.Placements.ForEach(p => {
@@ -366,7 +390,7 @@ public static partial class LevelEditorUI {
             });
         };
 
-        Properties = new(TankGame.GameLanguage.Properties, FontGlobals.RebirthFont, Color.White);
+        Properties = new(TankGame.GameLanguage.LevelEdit.Properties, FontGlobals.RebirthFont, Color.White);
 
         float width = 200;
 
@@ -378,7 +402,7 @@ public static partial class LevelEditorUI {
                 EditState = LevelEditState.LevelEditor;
         };
 
-        LoadLevel = new(TankGame.GameLanguage.Load, FontGlobals.RebirthFont, Color.White);
+        LoadLevel = new(TankGame.GameLanguage.LevelEdit.Load, FontGlobals.RebirthFont, Color.White);
 
         LoadLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.575f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
         LoadLevel.OnLeftClick = (a) => {
@@ -416,17 +440,16 @@ public static partial class LevelEditorUI {
                 ChatSystem.SendMessage(e.Message, Color.Red);
             }
         };
-        LoadLevel.Tooltip = TankGame.GameLanguage.LoadMissionFlavor;
+        LoadLevel.Tooltip = TankGame.GameLanguage.LevelEdit.LoadMissionFlavor;
         InitializeSaveMenu();
         SetLevelEditorVisibility(false);
     }
     public static void TryOpen(bool fromMainMenu = true) {
         if (fromMainMenu) {
-            OpenPeripherals();
             float time = 180;
             IntermissionSystem.TimeBlack = time;
             _queueOpen = true;
-            _openCountndown = time;
+            _openCountdown = time;
             CampaignGlobals.ShouldMissionsProgress = false;
         }
         else {
@@ -434,6 +457,7 @@ public static partial class LevelEditorUI {
             IsActive = true;
             SetLevelEditorVisibility(true);
         }
+        OpenPeripherals();
         IsEditing = true;
     }
     public static void OpenForce() {
@@ -453,6 +477,7 @@ public static partial class LevelEditorUI {
         IsActive = false;
         IsTestingLevel = false;
 
+        ClosePeripherals();
         RemoveMissionButtons();
 
         Theme.SetVolume(0);
@@ -473,13 +498,12 @@ public static partial class LevelEditorUI {
         PlacementSquare.ResetSquares();
     }
 
-    // this code is god-tier atrocious. rework soon.
+    // the rectangle of any clickable zone
     static Rectangle _clickRect;
 
     static string _curDescription = string.Empty;
     static Rectangle _curHoverRect;
 
-    public static Color SelectionColor = Color.NavajoWhite;
     public static Color HoverBoxColor = Color.SkyBlue;
 
     // FIXME: this code hurts my eyes. who wrote this?
@@ -512,7 +536,6 @@ public static partial class LevelEditorUI {
 
         #region Main UI
 
-        float xOff = 0;
         _clickRect = new(0, (int)(WindowUtils.WindowBottom.Y * 0.8f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.2f));
         sb.Draw(TextureGlobals.Pixels[Color.White], _clickRect, null, Color.White, 0f, Vector2.Zero, default, 0f);
 
@@ -528,6 +551,7 @@ public static partial class LevelEditorUI {
         DrawCampaigns();
         DrawPlacementInfo(sb);
 
+        float xOff = 0;
         if (CurCategory == EditorCategory.EnemyTanks) {
             // Note the idOffset of 1 to account for selected index logic
             // xOff = DrawCategoryRow(_renderNamesTanks, SelectedTankTier, 1);
@@ -536,7 +560,7 @@ public static partial class LevelEditorUI {
         }
         else if (CurCategory == EditorCategory.Terrain) {
             // xOff = DrawCategoryRow(_renderNamesBlocks, SelectedBlockType, 0);
-            xOff = DrawCategoryRow(_blockCategoryParticles, BlockID.Collection, SelectedBlockType, 0, 0.8f, 1.1f);
+            xOff = DrawCategoryRow(_blockCategoryParticles, BlockID.Collection, SelectedBlockType, 0, /*0.6f, 0.9f*/ 0.6f, 0.9f);
             _maxScroll = xOff;
         }
         else if (CurCategory == EditorCategory.PlayerTanks) {
@@ -566,7 +590,7 @@ public static partial class LevelEditorUI {
                 default,
                 0f);
         }
-        var txt = !_viewMissionDetails ? TankGame.GameLanguage.CampaignDetails : TankGame.GameLanguage.MissionDetails;
+        var txt = !_viewMissionDetails ? TankGame.GameLanguage.LevelEdit.PropertyMenu.CampaignDetails : TankGame.GameLanguage.LevelEdit.PropertyMenu.MissionDetails;
 
         if (EditState == LevelEditState.SavingThings) {
             sb.Draw(TextureGlobals.Pixels[Color.White],
@@ -626,21 +650,24 @@ public static partial class LevelEditorUI {
         // Ensure we aren't clicking in empty space to the right of the last p
         return hoveredIndex < maxItems ? hoveredIndex : -1;
     }
-    // TODO: teleporters dont work? make holes better to view?
-    static float DrawCategoryRow<T>(List<Particle> pEntries, ReflectionDictionary<T> dict, int selectedIndex, int idOffset = 0, float minScale = 6.5f, float maxScale = 8.5f) where T : class, new() {
+    static float DrawCategoryRow<T>(List<Particle> pEntries, ReflectionDictionary<T> dict, int selectedIndex, int idOffset = 0, float minScale = 4.5f, float maxScale = 6f) where T : class, new() {
         float xOff = 0;
 
         for (int i = 0; i < pEntries.Count; i++) {
             bool isSelected = selectedIndex == (i + idOffset);
 
-            var pos = new Vector2((BAR_START_X + BAR_WIDTH / 2).ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.925f);
-            pEntries[i].Position = DrawUtils.CenteredOrthoToScreen(pos).Expand();
+            var posForText = new Vector2((BAR_START_X + BAR_WIDTH / 2).ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.95f);
+            var posForModel = posForText + new Vector2(0, 150).ToResolution();
+            pEntries[i].Position = DrawUtils.CenteredOrthoToScreen(posForModel).Expand();
 
+            float addend = isSelected ? MathHelper.TwoPi : 0;
+            pEntries[i].Yaw = MathHelper.Lerp(pEntries[i].Yaw, ElementRotation + addend, 0.15f * RuntimeData.DeltaTime);
 
-            DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, pos, Vector2.UnitY, dict.GetKey(i + idOffset)!,
-                isSelected ? ColorUtils.DiscoPartyColor : Color.White, Color.Black, Vector2.One * 0.8f, 1f, Anchor.TopCenter, shadowAlpha: 0.5f);
+            DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, posForText, Vector2.UnitY, dict.GetKey(i + idOffset)!,
+                Color.White, isSelected ? ColorUtils.DiscoPartyColor : Color.Black, new Vector2(0.6f).ToResolution(), 1f, Anchor.Center, shadowAlpha: 0.5f);
 
-            pEntries[i].Scale = Vector3.One * MathHelper.Lerp(pEntries[i].Scale.X, isSelected ? maxScale : minScale, 0.1f * RuntimeData.DeltaTime);
+            var apprScale = isSelected ? maxScale : minScale;
+            pEntries[i].Scale = Vector3.Lerp(pEntries[i].Scale, Vector3.One.ToResolution() * apprScale, 0.1f * RuntimeData.DeltaTime);
 
             // this code hurts me. emotionally
             xOff += BAR_WIDTH.ToResolutionX();
@@ -654,8 +681,8 @@ public static partial class LevelEditorUI {
         if (loadedCampaign is not null && !IsTestingLevel)
             cachedMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
-        if (_openCountndown >= 0) {
-            _openCountndown -= RuntimeData.DeltaTime;
+        if (_openCountdown >= 0) {
+            _openCountdown -= RuntimeData.DeltaTime;
         }
         else if (_queueOpen) {
             OpenForce();
@@ -675,10 +702,11 @@ public static partial class LevelEditorUI {
 
                 if (mouseRay.Intersects(tnk.Worldbox).HasValue) {
                     HoveringAnyTank = true;
-                    if (InputUtils.KeyJustPressed(Keys.K))
-                        tnk.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
+                    
+                    //if (InputUtils.KeyJustPressed(Keys.K))
+                    //    tnk.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
 
-                    if (InputUtils.CanDetectClick(rightClick: true)) {
+                    if (InputUtils.Click(rightClick: true)) {
                         tnk!.ChassisRotation = (tnk.ChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
                         tnk!.DesiredChassisRotation = (tnk.DesiredChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
                         tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
@@ -704,12 +732,12 @@ public static partial class LevelEditorUI {
             _missionsOffset += InputUtils.GetScrollWheelChange() * 30;
 
         _missionsMaxOff = _missionButtons.Count * 30.ToResolutionY();
-        SaveLevelConfirm.Tooltip = _viewMissionDetails ? TankGame.GameLanguage.MissionSaveFlavor : TankGame.GameLanguage.CampaignSaveFlavor;
+        SaveLevelConfirm.Tooltip = _viewMissionDetails ? TankGame.GameLanguage.LevelEdit.PropertyMenu.MissionSaveFlavor : TankGame.GameLanguage.LevelEdit.PropertyMenu.CampaignSaveFlavor;
 
-        CampaignMajorVictory.Text = TankGame.GameLanguage.HasMajorVictoryTheme + ": " + (_hasMajorVictory ? TankGame.GameLanguage.Yes : TankGame.GameLanguage.No);
+        CampaignMajorVictory.Text = TankGame.GameLanguage.LevelEdit.PropertyMenu.HasMajorVictoryTheme + ": " + TankGame.GameLanguage.GetYesNo(_hasMajorVictory);
 
         if (loadedCampaign is not null)
-            MissionGrantsLife.Text = TankGame.GameLanguage.GrantsBonusLife + ": " + (loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife ? TankGame.GameLanguage.Yes : TankGame.GameLanguage.No);
+            MissionGrantsLife.Text = TankGame.GameLanguage.LevelEdit.PropertyMenu.GrantsBonusLife + ": " + TankGame.GameLanguage.GetYesNo(loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife);
 
         if (_missionsOffset > 0)
             _missionsOffset = 0;
@@ -720,23 +748,6 @@ public static partial class LevelEditorUI {
         PlacementSquare.PlacesBlock = CurCategory == EditorCategory.Terrain;
 
         // much better code now
-        switch (CurCategory) {
-            case EditorCategory.EnemyTanks:
-                EnemyTanksCategory.Color = Color.DeepSkyBlue;
-                TerrainCategory.Color = Color.White;
-                PlayerTanksCategory.Color = Color.White;
-                break;
-            case EditorCategory.Terrain:
-                EnemyTanksCategory.Color = Color.White;
-                TerrainCategory.Color = Color.DeepSkyBlue;
-                PlayerTanksCategory.Color = Color.White;
-                break;
-            case EditorCategory.PlayerTanks:
-                EnemyTanksCategory.Color = Color.White;
-                TerrainCategory.Color = Color.White;
-                PlayerTanksCategory.Color = Color.DeepSkyBlue;
-                break;
-        }
         if (IsActive) {
             if (TankGame.Instance.IsActive)
                 UpdateParticles();
@@ -772,12 +783,17 @@ public static partial class LevelEditorUI {
                 };
             }
 
-            if (InputUtils.CanDetectClick()) {
+            if (InputUtils.Click()) {
                 _origClick = MouseUtils.MousePosition - new Vector2(_barOffset, 0);
+            }
 
-                if (hoveredIndex != -1) {
+            if (InputUtils.ClickRelease()) {
+                var releaseMouse = MouseUtils.MousePosition - new Vector2(_barOffset, 0);
+
+                var shouldCheck = Vector2.DistanceSquared(_origClick, releaseMouse) < 50f;
+                if (shouldCheck && hoveredIndex != -1) {
                     if (CurCategory == EditorCategory.EnemyTanks)
-                        SelectedTankTier = hoveredIndex + 1;
+                        SelectedTankTier = hoveredIndex + 1; // so TankID.None isn't used. should None be -1?
                     else if (CurCategory == EditorCategory.Terrain)
                         SelectedBlockType = hoveredIndex;
                     else if (CurCategory == EditorCategory.PlayerTanks)
@@ -824,46 +840,47 @@ public static partial class LevelEditorUI {
         ReturnToEditor.IsVisible = IsEditing && !IsActive && !MainMenuUI.IsActive;
     }
 
+    const string CUSTOM_CONTENT_WARNING = "Descriptions for custom content not yet supported.";
     static string GetTankFlavor(int id) {
         return id switch {
-            TankID.Brown => TankGame.GameLanguage.BrownFlavor,
-            TankID.Ash => TankGame.GameLanguage.AshFlavor,
-            TankID.Marine => TankGame.GameLanguage.MarineFlavor,
-            TankID.Yellow => TankGame.GameLanguage.YellowFlavor,
-            TankID.Pink => TankGame.GameLanguage.PinkFlavor,
-            TankID.Green => TankGame.GameLanguage.GreenFlavor,
-            TankID.Violet => TankGame.GameLanguage.VioletFlavor,
-            TankID.White => TankGame.GameLanguage.WhiteFlavor,
-            TankID.Black => TankGame.GameLanguage.BlackFlavor,
-            TankID.Bronze => TankGame.GameLanguage.BronzeFlavor,
-            TankID.Silver => TankGame.GameLanguage.SilverFlavor,
-            TankID.Sapphire => TankGame.GameLanguage.SapphireFlavor,
-            TankID.Ruby => TankGame.GameLanguage.RubyFlavor,
-            TankID.Citrine => TankGame.GameLanguage.CitrineFlavor,
-            TankID.Amethyst => TankGame.GameLanguage.AmethystFlavor,
-            TankID.Emerald => TankGame.GameLanguage.EmeraldFlavor,
-            TankID.Gold => TankGame.GameLanguage.GoldFlavor,
-            TankID.Obsidian => TankGame.GameLanguage.ObsidianFlavor,
-            _ => "Did Not Load (DNL)"
+            TankID.Brown => TankGame.GameLanguage.LevelEdit.TankPlace.BrownFlavor,
+            TankID.Ash => TankGame.GameLanguage.LevelEdit.TankPlace.AshFlavor,
+            TankID.Marine => TankGame.GameLanguage.LevelEdit.TankPlace.MarineFlavor,
+            TankID.Yellow => TankGame.GameLanguage.LevelEdit.TankPlace.YellowFlavor,
+            TankID.Pink => TankGame.GameLanguage.LevelEdit.TankPlace.PinkFlavor,
+            TankID.Green => TankGame.GameLanguage.LevelEdit.TankPlace.GreenFlavor,
+            TankID.Violet => TankGame.GameLanguage.LevelEdit.TankPlace.VioletFlavor,
+            TankID.White => TankGame.GameLanguage.LevelEdit.TankPlace.WhiteFlavor,
+            TankID.Black => TankGame.GameLanguage.LevelEdit.TankPlace.BlackFlavor,
+            TankID.Bronze => TankGame.GameLanguage.LevelEdit.TankPlace.BronzeFlavor,
+            TankID.Silver => TankGame.GameLanguage.LevelEdit.TankPlace.SilverFlavor,
+            TankID.Sapphire => TankGame.GameLanguage.LevelEdit.TankPlace.SapphireFlavor,
+            TankID.Ruby => TankGame.GameLanguage.LevelEdit.TankPlace.RubyFlavor,
+            TankID.Citrine => TankGame.GameLanguage.LevelEdit.TankPlace.CitrineFlavor,
+            TankID.Amethyst => TankGame.GameLanguage.LevelEdit.TankPlace.AmethystFlavor,
+            TankID.Emerald => TankGame.GameLanguage.LevelEdit.TankPlace.EmeraldFlavor,
+            TankID.Gold => TankGame.GameLanguage.LevelEdit.TankPlace.GoldFlavor,
+            TankID.Obsidian => TankGame.GameLanguage.LevelEdit.TankPlace.ObsidianFlavor,
+            _ => CUSTOM_CONTENT_WARNING
         };
     }
 
     static string GetBlockFlavor(int id) {
         return id switch {
-            BlockID.Wood => TankGame.GameLanguage.WoodFlavor,
-            BlockID.Cork => TankGame.GameLanguage.CorkFlavor,
-            BlockID.Hole => TankGame.GameLanguage.HoleFlavor,
-            _ => "Did Not Load (DNL)"
+            BlockID.Wood => TankGame.GameLanguage.LevelEdit.ObstaclePlace.WoodFlavor,
+            BlockID.Cork => TankGame.GameLanguage.LevelEdit.ObstaclePlace.CorkFlavor,
+            BlockID.Hole => TankGame.GameLanguage.LevelEdit.ObstaclePlace.HoleFlavor,
+            _ => CUSTOM_CONTENT_WARNING
         };
     }
 
     static string GetPlayerFlavor(int id) {
         return id switch {
-            PlayerID.Blue => TankGame.GameLanguage.P1TankFlavor,
-            PlayerID.Red => TankGame.GameLanguage.P2TankFlavor,
-            PlayerID.Green => TankGame.GameLanguage.P3TankFlavor,
-            PlayerID.Yellow => TankGame.GameLanguage.P4TankFlavor,
-            _ => "Did Not Load (DNL)"
+            PlayerID.Blue => TankGame.GameLanguage.LevelEdit.PlayerPlace.P1TankFlavor,
+            PlayerID.Red => TankGame.GameLanguage.LevelEdit.PlayerPlace.P2TankFlavor,
+            PlayerID.Green => TankGame.GameLanguage.LevelEdit.PlayerPlace.P3TankFlavor,
+            PlayerID.Yellow => TankGame.GameLanguage.LevelEdit.PlayerPlace.P4TankFlavor,
+            _ => CUSTOM_CONTENT_WARNING
         };
     }
 

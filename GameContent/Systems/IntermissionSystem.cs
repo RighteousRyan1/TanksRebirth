@@ -130,11 +130,11 @@ public static class IntermissionSystem {
             // dummy frame :(
             .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));*/
 
-    TextAnimatorSmall = Animator.Create()
-        // Start State
-        .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero))
-        // Transition to 0.4 scale over 0.25s
-        .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
+        TextAnimatorSmall = Animator.Create()
+            // Start State
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero))
+            // Transition to 0.4 scale over 0.25s
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
 
         TextAnimatorLarge = Animator.Create()
             // Start State
@@ -164,7 +164,7 @@ public static class IntermissionSystem {
 
             // Was Frame 0: elastic animation where the banner drops from the top
             // Target: 40% height. Duration: 0.5s (from old Frame 0)
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.UnitY * WindowUtils.WindowHeight * 0.4f, 
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.UnitY * WindowUtils.WindowHeight * 0.4f,
             easing: EasingFunction.OutElastic))
 
             // Was Frame 1: after this frame, force drawing to 40% of window height (Wait/Drift to Zero?)
@@ -198,8 +198,8 @@ public static class IntermissionSystem {
             // Target: Pos Zero (Fade out state). Duration: 0.5s (from old Frame 5).
             .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));
 
-            // Final Dummy to close it out
-            // .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));
+        // Final Dummy to close it out
+        // .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));
 
         BonusLifeAnimator?.Restart();
         BonusLifeAnimator?.Stop(); // to ensure brightness calculations are proper
@@ -332,7 +332,7 @@ public static class IntermissionSystem {
                 IntermissionHandler.ThirdPersonTransition?.Run();
             }
             IntermissionHandler.BeginIntroSequence();
-            
+
             IntermissionHandler.CountdownAnimator?.Restart();
             IntermissionHandler.CountdownAnimator?.Run();
 
@@ -452,7 +452,7 @@ public static class IntermissionSystem {
         var dims = tex.Size() * scale;
         for (int i = -padding; i < WindowUtils.WindowWidth / dims.X + padding; i++) {
             for (int j = -padding; j < WindowUtils.WindowHeight / dims.Y + padding; j++) {
-                spriteBatch.Draw(tex, new Vector2(i, j) * dims + _offset.ToResolution(), 
+                spriteBatch.Draw(tex, new Vector2(i, j) * dims + _offset.ToResolution(),
                     null, BackgroundColor, 0f, Vector2.Zero, scale, default, default);
             }
         }
@@ -471,7 +471,7 @@ public static class IntermissionSystem {
                 if (InputUtils.NumConnectedInputs > 1)
                     name = "P" + (i + 1);
             }
-            
+
             var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.85f);
             var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.25f);
 
@@ -548,7 +548,7 @@ public static class IntermissionSystem {
 
         // draw large(r) text
         float spacing = 10;
-        string enemyTankDisplay = $"{TankGame.GameLanguage.EnemyTanks}: {mafs}";
+        string enemyTankDisplay = $"{TankGame.GameLanguage.Misc.EnemyTanks}: {mafs}";
         string missionName = CampaignGlobals.LoadedCampaign.LoadedMission.Name;
 
         float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.X;
@@ -579,7 +579,7 @@ public static class IntermissionSystem {
             DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
                 Vector2.One,
-                $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
+                $"{TankGame.GameLanguage.General.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.General.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
                 BackgroundColor,
                 ColorForBorders,
                 TextAnimatorSmall.CurrentScale.Flatten().ToResolution(),
@@ -588,7 +588,7 @@ public static class IntermissionSystem {
             DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
                 Vector2.One,
-                $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
+                $"{TankGame.GameLanguage.General.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
                 BackgroundColor,
                 ColorForBorders,
                 TextAnimatorSmall.CurrentScale.Flatten().ToResolution(),
@@ -635,10 +635,10 @@ public static class IntermissionSystem {
         BonusTextGradient.Top = gradientModifiedTopColor;
         BonusTextGradient.Bottom = gradientModifiedBottomColor;
 
-        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, 
-            new Vector2(BonusBannerTextBuffer.Width / 2, BonusBannerTextBuffer.Height / 2), 
-            Color.White, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(), 
-            origin: Anchor.Center.GetAnchor(FontGlobals.RebirthFontLarge.MeasureString(TankGame.GameLanguage.BonusTank)));
+        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.Misc.BonusTank,
+            new Vector2(BonusBannerTextBuffer.Width / 2, BonusBannerTextBuffer.Height / 2),
+            Color.White, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(),
+            origin: Anchor.Center.GetAnchor(FontGlobals.RebirthFontLarge.MeasureString(TankGame.GameLanguage.Misc.BonusTank)));
 
         spriteBatch.End();
 
@@ -697,7 +697,7 @@ public static class IntermissionSystem {
             // window width / 2
             var drawPos = new Vector2(WindowUtils.WindowWidth / 2, _renderY);
 
-            DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BonusBannerBuffer, drawPos, 
+            DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BonusBannerBuffer, drawPos,
                 Vector2.UnitY, BonusBannerColor, Vector2.One * _bannerScale, BonusBannerAlpha * Alpha, Anchor.Center, shadowDistScale: 1f.ToResolutionY(), shadowAlpha: 0.5f);
 
             // DrawUtils.DrawBox(drawPos, drawPos + BonusBannerBuffer.Size(), Color.Blue, Anchor.Center.GetAnchor(BonusBannerBuffer.Size()));
@@ -711,8 +711,8 @@ public static class IntermissionSystem {
                 spriteBatch.Begin();
                 var textPos = new Vector2(WindowUtils.WindowWidth / 2, _renderY - 20.ToResolutionY());
                 DrawUtils.DrawStringShadowOnly(spriteBatch, FontGlobals.RebirthFontLarge, textPos, Vector2.One * _bannerScale,
-                    TankGame.GameLanguage.BonusTank, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(), BonusBannerAlpha * Alpha, shadowAlpha: 0.5f);
-                DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, 
+                    TankGame.GameLanguage.Misc.BonusTank, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(), BonusBannerAlpha * Alpha, shadowAlpha: 0.5f);
+                DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.Misc.BonusTank,
                     textPos,
                     BonusBannerTextBorderColor * Alpha * BonusBannerAlpha, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(), 0f, borderThickness: 1.5f);
                 spriteBatch.End();
@@ -744,7 +744,8 @@ public static class IntermissionSystem {
 
                 spriteBatch.End();
             }
-        } else {
+        }
+        else {
             _offset = Vector2.Zero;
         }
 
@@ -780,7 +781,7 @@ public static class IntermissionSystem {
         // draw the middle segment
         spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, baseDims.Y), _cutForLength, Color.White, 0f,
             Vector2.Zero, new Vector2(_renderEndX - _renderBeginX, resY), SpriteEffects.FlipVertically, 0f);
-        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, baseDims.Y), _cutForLength, Color.White,0f,
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, baseDims.Y), _cutForLength, Color.White, 0f,
             Anchor.BottomLeft.GetAnchor(new Vector2(1, baseDims.Y)), new Vector2(_renderEndX - _renderBeginX, resY), default, 0f);
 
         // Anchor.BottomRight.GetAnchor(new Vector2(1, baseDims.Y))

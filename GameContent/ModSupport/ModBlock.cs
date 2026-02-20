@@ -7,8 +7,7 @@ namespace TanksRebirth.GameContent.ModSupport;
 // maybe allow for changing the model.
 
 #pragma warning disable CS8618
-public class ModBlock : ILoadable, IModContent
-{
+public class ModBlock : ILoadable, IModContent {
     Texture2D? _texture;
 
     public string InternalName { get; set; }
@@ -17,7 +16,16 @@ public class ModBlock : ILoadable, IModContent
     public Block Block { get; internal set; }
     public int Type { get; set; }
     public virtual string Texture => string.Empty;
-    public virtual LocalizedString Name => new([]);
+    /// <summary>
+    /// The name of this block.<br></br>
+    /// The English localized name will be the name that gets added to the game internally.
+    /// </summary>
+    public virtual LocalizedString Name => new();
+    /// <summary>
+    /// Describe how your tank works, in preferably multiple languages.<br></br>
+    /// This description will appear in the level editor menu.
+    /// </summary>
+    public virtual LocalizedString Description { get; internal set; }
 
     /// <summary>This propery defaults to <see cref="Block.MAX_BLOCK_HEIGHT"/>, the default.</summary>
     public virtual byte MaxHeight => Block.MAX_BLOCK_HEIGHT;
@@ -33,8 +41,7 @@ public class ModBlock : ILoadable, IModContent
     public virtual void OnUnload() { }
     /// <summary>Do things when a your modded block is created in game space. Be sure to call <c>base.PostInitialize(block)</c></summary>
     public virtual void PostInitialize() {
-        if (_texture is null || Texture is null)
-            return;
+        if (_texture is null || Texture is null) return;
         Block.Texture = _texture;
     }
     /// <summary>Called each update of the block.</summary>
@@ -47,7 +54,7 @@ public class ModBlock : ILoadable, IModContent
     public virtual void OnRicochet(Shell shell) { }
     internal static int unloadOffset = 0;
     internal void Register() {
-        var name = Name.GetLocalizedString(LangCode.English);
+        var name = Name[LangCode.English];
         Type = BlockID.Collection.ForcefullyInsert(name);
 
         _texture = Mod.ImportAsset<Texture2D>(Texture);

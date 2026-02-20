@@ -23,7 +23,7 @@ public class ModShell : ILoadable, IModContent {
     public virtual string ShootSound => string.Empty;
     /// <summary>The sound for while this shell is flying. Utilize Path.Combine(ModPath, ...)</summary>
     public virtual string TrailSound => string.Empty;
-    public virtual LocalizedString Name => new([]);
+    public virtual LocalizedString Name => new();
 
     /// <summary>Initialize what you want alongside the loading of your modded shell.</summary>
     public virtual void OnLoad() { }
@@ -34,7 +34,7 @@ public class ModShell : ILoadable, IModContent {
         if (_texture != null)
             Shell.DrawParamsShell.ShellTexture = _texture;
 
-        if (Shell.Properties.LeavesTrail && _cachedTrailSound != null)
+        if (Shell.Properties.Visuals.HasFlag(VisualFlags.SmokeTrail) && _cachedTrailSound != null)
             Shell.TrailSound = _cachedTrailSound;
 
         if (_cachedShootSound != null)
@@ -57,7 +57,7 @@ public class ModShell : ILoadable, IModContent {
     OggAudio? _cachedShootSound;
     OggAudio? _cachedTrailSound;
     internal void Register() {
-        var name = Name.GetLocalizedString(LangCode.English)!;
+        var name = Name[LangCode.English]!;
         Type = ShellID.Collection.ForcefullyInsert(name);
         _texture = Mod.ImportAsset<Texture2D>(Texture);
         LoadSounds();

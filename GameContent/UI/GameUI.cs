@@ -68,18 +68,18 @@ public static class GameUI {
         var ttColor = Color.LightGray;
         var font = FontGlobals.RebirthFont;
 
-        ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke) {
+        ResumeButton = new(TankGame.GameLanguage.General.Resume, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         ResumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
         ResumeButton.OnLeftClick = (uiElement) => Pause.Fire();
 
-        RestartButton = new(TankGame.GameLanguage.StartOver, font, Color.WhiteSmoke) {
+        RestartButton = new(TankGame.GameLanguage.General.StartOver, font, Color.WhiteSmoke) {
             IsVisible = false,
         };
         RestartButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
 
-        OptionsButton = new(TankGame.GameLanguage.Options, font, Color.WhiteSmoke) {
+        OptionsButton = new(TankGame.GameLanguage.Menu.Options, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         OptionsButton.SetDimensions(() => OptionsButtonPos.ToResolution(), () => OptionsButtonSize.ToResolution());
@@ -104,7 +104,7 @@ public static class GameUI {
             }
         };
 
-        VolumeButton = new(TankGame.GameLanguage.Volume, font, Color.WhiteSmoke) {
+        VolumeButton = new(TankGame.GameLanguage.Menu.Volume, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         VolumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
@@ -118,7 +118,7 @@ public static class GameUI {
             ControlsButton.IsVisible = false;
         };
 
-        GraphicsButton = new(TankGame.GameLanguage.Graphics, font, Color.WhiteSmoke) {
+        GraphicsButton = new(TankGame.GameLanguage.Menu.Graphics, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         GraphicsButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
@@ -131,7 +131,7 @@ public static class GameUI {
             ControlsButton.IsVisible = false;
         };
 
-        ControlsButton = new(TankGame.GameLanguage.Controls, font, Color.WhiteSmoke) {
+        ControlsButton = new(TankGame.GameLanguage.Menu.Controls, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         ControlsButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 150).ToResolution());
@@ -143,7 +143,7 @@ public static class GameUI {
             ControlsButton.IsVisible = false;
         };
 
-        QuitButton = new(TankGame.GameLanguage.Quit, font, Color.WhiteSmoke) {
+        QuitButton = new(TankGame.GameLanguage.Menu.Quit, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         QuitButton.SetDimensions(() => QuitButtonPos.ToResolution(), () => QuitButtonSize.ToResolution());
@@ -151,13 +151,13 @@ public static class GameUI {
             QuitOut();
         };
 
-        BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke) {
+        BackButton = new(TankGame.GameLanguage.Menu.Back, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         BackButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
         BackButton.OnLeftClick = (uiElement) => HandleBackButton();
 
-        KeyboardPlayerButton = new($"{TankGame.GameLanguage.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}", font, Color.WhiteSmoke) {
+        KeyboardPlayerButton = new($"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}", font, Color.WhiteSmoke) {
             IsVisible = false
         };
         KeyboardPlayerButton.SetDimensions(() => new Vector2(WindowUtils.WindowWidth - 300.ToResolutionX(), 10.ToResolutionY()), () => new Vector2(250, 50).ToResolution());
@@ -166,7 +166,7 @@ public static class GameUI {
             if (PlayerTank.PlayerControlledByKeyboard > InputUtils.NumGamepadsConnected)
                 PlayerTank.PlayerControlledByKeyboard = -1;
 
-            KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}";
+            KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}";
         };
 
         // MainMenuUI.Initialize();
@@ -293,6 +293,7 @@ public static class GameUI {
     // TODO: arctan is fucking ignoring me
 
     // todo: ui states/screens/panels/whatever
+    // anti-sigma code
     static void HandleBackButton() {
         if (!_initialized)
             return;

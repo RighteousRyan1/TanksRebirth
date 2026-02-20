@@ -10,6 +10,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- Does not work in multiplayer contexts (e.g: two local players cannot play with an online player)
 - Added Wii remote support, check the [guide](https://github.com/RighteousRyan1/TanksRebirth/wiki/Wii-Remote-Support) on how to use one
 	- Also allows the use of a nunchuk
+	- Not the most stable, so please report Wiimote bugs in my server
 - Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better
 - Added slight randomized pitch shifting in many game-related sound effects
 - Way more localization where previously missing
@@ -21,6 +22,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Player bullet count UI is now shown for all players (including in online contexts)
 - Even more localization!
 	- Translators are still welcome to correct any faulty translations- some translations were done via machine translation
+- Some `Shell` and `Tank` properties are now bit flags
 
 # Changes
 
@@ -58,18 +60,21 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Animators have been made less archaic- instead of the final frame not needing a duration or easing function, it is now the first one
 - Added a really neat camera animation system to the freecam debug menu
 	- You can see controls on the left
+- `LocalizedString` is now indexed directly instead of through the method
+- Added `Description` to `ModBlock` and `ModTank` for use in the level editor
 
 # Fixes
 
 - Fixed nametags showing for non-host clients after the game has started if the host started the game with the client being in the multiplayer menu
 - Fixed smokes generated from smoke grenades being the wrong color
-- Mods should load 5 TIMES quicker on average, depending on content, since mod loading is no longer parallelized
+- Mods should load 2x quicker on average, depending on content
 - Fixed some tank destruction particles having frame-dependent animation
 - Fixed bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
 - Fixed clock pendulum not accurately tracking seconds (there was some margin of error before)
 - The mission intro sequence/fanfare is now controlled by the sound effects slider
 - Fixed the room scene not being updated while in pause
 - Places in the room where glass would before not render properly now renders
+- Performance has been improved in various places of the game (the level editor should be much more performant even with the new changes)
 
 # TODO
 

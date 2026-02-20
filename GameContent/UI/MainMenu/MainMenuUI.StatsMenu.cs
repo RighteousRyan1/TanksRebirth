@@ -1,10 +1,8 @@
 using FontStashSharp;
 using Microsoft.Xna.Framework;
-using System;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -12,25 +10,25 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 public static partial class MainMenuUI {
-    private static string[] _info;
-    private static float _statsOpenProgress = 0f; // 0 to 1 for animation
-    private static double _statsOpenTime = 0;
+    static string[] _info;
+    static float _statsOpenProgress = 0f; // 0 to 1 for animation
+    static double _statsOpenTime = 0;
 
     public static void RequestStats() {
         _statsOpenProgress = 0f;
         _statsOpenTime = RuntimeData.RunTime;
 
         _info = [
-            $"{TankGame.GameLanguage.MissionsCompleted}: {TankGame.SaveFile.MissionsCompleted}",
-            $"{TankGame.GameLanguage.CampaignsCompleted}: {TankGame.SaveFile.CampaignsCompleted}",
-            $"{TankGame.GameLanguage.TankKillsTotal}: {TankGame.SaveFile.TotalKills}",
-            $"{TankGame.GameLanguage.Deaths}: {TankGame.SaveFile.Deaths}",
-            $"{TankGame.GameLanguage.Suicides}: {TankGame.SaveFile.Suicides}",
-            $"{TankGame.GameLanguage.TankKillsTotalBullets}: {TankGame.SaveFile.BulletKills}",
-            $"{TankGame.GameLanguage.TankKillsTotalBulletsBounced}: {TankGame.SaveFile.BounceKills}",
-            $"{TankGame.GameLanguage.TankKillsTotalMines}: {TankGame.SaveFile.MineKills}",
-            $"{TankGame.GameLanguage.TimePlayedTotal}: {TankGame.SaveFile.TimePlayed.TotalHours:0.0} hrs",
-            $"{TankGame.GameLanguage.TimePlayedCurrent}: {TankGame.CurrentSessionTimer.Elapsed.TotalMinutes:0.0} mins"
+            $"{TankGame.GameLanguage.GameStats.MissionsCompleted}: {TankGame.SaveFile.MissionsCompleted}",
+            $"{TankGame.GameLanguage.GameStats.CampaignsCompleted}: {TankGame.SaveFile.CampaignsCompleted}",
+            $"{TankGame.GameLanguage.GameStats.TankKillsTotal}: {TankGame.SaveFile.TotalKills}",
+            $"{TankGame.GameLanguage.GameStats.Deaths}: {TankGame.SaveFile.Deaths}",
+            $"{TankGame.GameLanguage.GameStats.Suicides}: {TankGame.SaveFile.Suicides}",
+            $"{TankGame.GameLanguage.GameStats.TankKillsTotalBullets}: {TankGame.SaveFile.BulletKills}",
+            $"{TankGame.GameLanguage.GameStats.TankKillsTotalBulletsBounced}: {TankGame.SaveFile.BounceKills}",
+            $"{TankGame.GameLanguage.GameStats.TankKillsTotalMines}: {TankGame.SaveFile.MineKills}",
+            $"{TankGame.GameLanguage.GameStats.TimePlayedTotal}: {TankGame.SaveFile.TimePlayed.TotalHours:0.0} hrs",
+            $"{TankGame.GameLanguage.GameStats.TimePlayedCurrent}: {TankGame.CurrentSessionTimer.Elapsed.TotalMinutes:0.0} mins"
         ];
     }
 
@@ -41,7 +39,8 @@ public static partial class MainMenuUI {
         DrawStatsPanel();
     }
 
-    private static void DrawStatsPanel() {
+    // localized soon
+    static void DrawStatsPanel() {
         var renderer = TankGame.SpriteRenderer;
         var font = FontGlobals.RebirthFont;
         var largeFont = FontGlobals.RebirthFontLarge;

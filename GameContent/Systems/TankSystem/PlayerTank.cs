@@ -298,7 +298,7 @@ public class PlayerTank : Tank {
                 }
 
                 // THIS MUST HAVE A BETTER WAY
-                if (InputUtils.CanDetectClick() && (UsesKeyboard || PlayerControlledByKeyboard == -2)) {
+                if (InputUtils.Click() && (UsesKeyboard || PlayerControlledByKeyboard == -2)) {
                     Shoot(false);
                 }
             }
@@ -334,16 +334,20 @@ public class PlayerTank : Tank {
             //if (padIndex < 0)
             //    return; // KBM player will use actual mouse
 
+            // NOTE FOR FUTURE: if you mess with bone transforms, Tank.SetBoneTransforms is the other end of this tweak
+
             var cursorToAimAt = TankGame.PlayerMice[mouseIndex];
 
             if (cursorToAimAt != null) {
                 var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position, -11f);
 
+                var mouseWorld2d = new Vector2(mouseWorldPos.X, mouseWorldPos.Z);
                 // hacky ass fix
                 if (float.IsNaN(mouseWorldPos.X)) return;
-                // if (float.IsNaN(mouseWorldPos.X)) mouseWorldPos = Vector3.Zero;
+
+                // back to where we were but at least we don't have bogus transforms in the tank model files anymore
                 if (!LevelEditorUI.IsActive)
-                    TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
+                    TurretRotation = -(mouseWorld2d - Position).ToRotation() + MathHelper.PiOver2;
                 else
                     TurretRotation = ChassisRotation;
             }
@@ -351,7 +355,7 @@ public class PlayerTank : Tank {
         // handle POV mode aiming
         // also pov mode should not be used in local games for now (i do not want to make splitscreen pls)
         else if (!GameUI.Paused) {
-            if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !PlaceMine.JustPressed) {
+            if (!DebugManager.IsFreecamEnabled && !InputUtils.Click() && !PlaceMine.JustPressed) {
                 var mouseState = Mouse.GetState();
                 var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
 
@@ -374,8 +378,10 @@ public class PlayerTank : Tank {
     }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
-            GameHandler.AllPlayerTanks[PlayerId] = null;
-            GameHandler.AllTanks[WorldId] = null;
+            if (!IgnoreRegister) {
+                GameHandler.AllPlayerTanks[PlayerId] = null;
+                GameHandler.AllTanks[WorldId] = null;
+            }
             DrawParamsTank.TankTexture?.Dispose();
         }
         base.Remove(nullifyMe);

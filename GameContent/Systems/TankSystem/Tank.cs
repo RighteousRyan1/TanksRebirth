@@ -17,10 +17,8 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.Internals.Common.Framework.Collisions;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
 public abstract class Tank(bool ignoresRegister) {
@@ -29,6 +27,8 @@ public abstract class Tank(bool ignoresRegister) {
     public struct TankDrawParams {
         public Texture2D? ShadowTexture;
         public Texture2D? TankTexture;
+        /// <summary>If the tank has multiple parts to it (i.e: not a default tank that just uses a different texture), this maps out textures to each mesh.</summary>
+        public ModelTextureMap TextureMap;
 
         public float ShadowAlpha;
         public float TankAlpha;
@@ -438,7 +438,7 @@ public abstract class Tank(bool ignoresRegister) {
         if (GameScene.Theme == MapTheme.Christmas)
             Props.Add(VanillaCosmetics.SantaHat);
 
-        foreach (var cos in Props)
+        foreach (var cos in Props.ToList())
             AddCosmetic(cos);
             //if (cos is Prop2D cos2d)
             //    AddProp2D(cos2d);
@@ -628,7 +628,7 @@ public abstract class Tank(bool ignoresRegister) {
     }
     public void DoDamageTextPopup(Color color) {
         var part = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 15, 0),
-            TankGame.GameLanguage.Hit);
+            TankGame.GameLanguage.Gameplay.Hit);
 
         part.IsIn2DSpace = true;
         part.ToScreenSpace = true;
@@ -636,7 +636,7 @@ public abstract class Tank(bool ignoresRegister) {
         part.Color = color;
 
         part.HasAdditiveBlending = false;
-        part.Origin2D = FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
+        part.Origin2D = FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.Gameplay.Hit) / 2;
         part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
         part.Alpha = 0;
 
@@ -1013,11 +1013,14 @@ public abstract class Tank(bool ignoresRegister) {
     public virtual void Remove(bool nullifyMe) {
         if (CollisionsWorld.BodyList.Contains(Physics))
             CollisionsWorld.Remove(Physics);
+
         RemoveCosmetics();
         CampaignGlobals.OnMissionStart -= OnMissionStart;
     }
     public void SetBoneTransforms() {
-        cannonMesh!.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0));
+        // commented = old
+        cannonMesh!.ParentBone.Transform = // Matrix.CreateRotationY(TurretRotation + ChassisRotation + (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0));
+            Matrix.CreateRotationY(TurretRotation + ChassisRotation + (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0));
         DrawParamsTank.Model!.Root.Transform = DrawParams.World;
 
         DrawParamsTank.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);

@@ -16,12 +16,11 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Graphics;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
-// unfortunately godclassed asf
 public static partial class MainMenuUI {
+    public const float DEFAULT_BLUR = 0.0075f;
     // no eulerangles due to porting headaches
     public readonly struct MenuGraphicsState(Vector3 position, Vector3 angles, float blurFactor) {
         public readonly Vector3 Position = position;
@@ -34,12 +33,9 @@ public static partial class MainMenuUI {
     public static Animator CameraRotationAnimator;
 
     public static OggAudio TickSound;
-
     public static OggMusic Theme;
 
     static bool _musicFading;
-
-    public const float DEFAULT_BLUR = 0.0075f;
     static float _goalBlur;
 
     public delegate void MenuOpenDelegate();
@@ -113,7 +109,7 @@ public static partial class MainMenuUI {
 
         _menuElements = [PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton,
             CreateServerButton, UsernameInput, IPInput, PortInput, PasswordInput, ServerNameInput,
-            DifficultiesButton ];
+            DifficultiesButton, StatsMenu, CreditsButton, ModsMenuButton];
 
         foreach (var e in _menuElements) {
             e.OnMouseOver = (uiElement) => SoundPlayer.PlaySoundInstance(TickSound, SoundContext.Effect);
@@ -289,6 +285,9 @@ public static partial class MainMenuUI {
                     break;
                 case UIState.ModsMenu:
                     DrawModMenu(spriteBatch);
+                    break;
+                case UIState.Credits:
+                    DrawCredits(spriteBatch);
                     break;
             }
         }

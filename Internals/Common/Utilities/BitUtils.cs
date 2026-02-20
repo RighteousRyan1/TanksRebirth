@@ -15,6 +15,7 @@ public static class BitUtils {
 
         Span<byte> _buffer = stackalloc byte[0x4]; // 4 bytes 
 
+        // reverse for big endian order. realistically this code should never run cuz computers know better
         for (var i = 0x0; i < 0x4; i++)
             _buffer[i ^ 0x3] = buffer[offset + i];
 

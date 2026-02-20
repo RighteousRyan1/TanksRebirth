@@ -44,6 +44,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using System.Linq;
+using TanksRebirth.GameContent.Systems.CommandsSystem;
 
 namespace TanksRebirth;
 
@@ -94,7 +95,7 @@ public class TankGame : Game {
     /// <summary>The index/vertex buffer used to render to a framebuffer.</summary>
     public static SpriteBatch SpriteRenderer;
 
-    public static AutoUpdater AutoUpdater;
+    public static VersionChecker VersionChecker;
     public static AchievementPopupHandler VanillaAchievementPopupHandler;
 
     public static RenderTarget2D GameFrameBuffer;
@@ -592,19 +593,16 @@ public class TankGame : Game {
 
             s.Stop();
 
-            // it isnt really an autoupdater tho.
             Task.Run(() => {
-                AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", RuntimeData.GameVersion);
+                VersionChecker = new("https://github.com/RighteousRyan1/TanksRebirth", RuntimeData.GameVersion);
 
-                if (!AutoUpdater.IsOutdated) {
+                if (!VersionChecker.IsOutdated) {
                     ClientLog.Write("Game is up to date.", LogType.Info);
                     return;
                 }
 
-                ClientLog.Write($"Game is out of date (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn);
-                //CommandGlobals.IsUpdatePending = true;
-                ChatSystem.SendMessage($"Outdated game version detected (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
-                //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
+                ClientLog.Write($"Game is out of date (current={RuntimeData.GameVersion}, recent={VersionChecker.GetRecentVersion()}).", LogType.Warn);
+                ChatSystem.SendMessage($"Outdated game version detected (current={RuntimeData.GameVersion}, recent={VersionChecker.GetRecentVersion()}).", Color.Red);
                 SoundPlayer.SoundError();
             });
             PlaceSecrets();
@@ -981,6 +979,9 @@ public class TankGame : Game {
     }
     public void PrepareAllRTs() {
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
+
+        // maybe freeze RT?
+
         PrepareGameBuffers(SpriteRenderer);
         MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);
 

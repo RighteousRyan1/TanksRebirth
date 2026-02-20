@@ -266,7 +266,7 @@ public static class CampaignCompleteUI {
         // IntermissionSystem.BackgroundColor looks too dull
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width.ToResolutionX(), WindowUtils.WindowHeight / 2), default, 0f);
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
-        var txt = TankGame.GameLanguage.FunFacts;
+        var txt = TankGame.GameLanguage.Misc.FunFacts;
         var measure = FontGlobals.RebirthFont.MeasureString(txt);
         DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(width.ToResolutionX() / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
             txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, Anchor.TopCenter, 0.4f);

@@ -146,7 +146,7 @@ public static class CosmeticsUI {
             }
         }
 
-        if (InputUtils.CanDetectClick() && _hoveredKey is not null) {
+        if (InputUtils.Click() && _hoveredKey is not null) {
             var ypr = Matrix.CreateFromYawPitchRoll(Chest.Rotation.Z, Chest.Rotation.Y, Chest.Rotation.X);
             var preSlotPos = Chest.KeySlotPos + Vector3.Transform(new Vector3(0, 0, 50), ypr);
             var lookAt = MathUtils.GetLookAtEulerAngles(preSlotPos, Chest.KeySlotPos);
@@ -176,7 +176,7 @@ public static class CosmeticsUI {
         var pos = Chest.ChestPosition;
 
         _dispPart = GameHandler.Particles.MakeParticle(Vector3.Zero, 
-            string.Format(TankGame.GameLanguage.KeysCount, TankGame.SaveFile.CollectedKeys));
+            string.Format(TankGame.GameLanguage.Misc.KeysCount, TankGame.SaveFile.CollectedKeys));
 
         _dispPart.IsIn2DSpace = true;
         _dispPart.ToScreenSpace = true;

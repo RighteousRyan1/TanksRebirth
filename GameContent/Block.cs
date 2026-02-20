@@ -11,6 +11,7 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.Core.Interfaces;
@@ -22,7 +23,7 @@ public struct BlockTemplate {
     public byte Stack;
     public int Type;
     public Vector2 Position;
-    public sbyte TpLink;
+    public byte TpLink;
 
     public readonly Block GetBlock() {
         Block c = new(Type, Stack, Position) {
@@ -45,33 +46,31 @@ public struct BlockTemplate {
 public class Block : IGameObject {
     // TODO: ModBlock instance for the modblock used on this block instance...? to save performance in the future, obviously... same with other modded types
     public delegate void DestroyDelegate(Block block);
-
     /// <summary>Called after this <see cref="Block"/> is destroyed.</summary>
     public static event DestroyDelegate? OnDestroy;
-
     public delegate void UpdateDelegate(Block block);
-
     /// <summary>Called after this <see cref="Block"/> is updated on the CPU.</summary>
     public static event UpdateDelegate? OnPostUpdate;
-
     public delegate void PostRenderDelegate(Block block);
-
     /// <summary>Called after this <see cref="Block"/> is rendered on the GPU.</summary>
     public static event PostRenderDelegate? OnPostRender;
-
     public delegate void InitializeDelegate(Block block);
-
     /// <summary>Called after this <see cref="Block"/> is initialized.</summary>
     public static event InitializeDelegate? OnInitialize;
 
+    public bool IgnoreRegister;
+
     public const float BLOCK_DEF_SCALING = 0.646f;
+
     Vector3 _offset;
     Vector3 _scaling = new(0.646f);
     public Texture2D Texture;
     Particle _shadow;
 
+    public ModelTextureMap TextureMap;
+
     /// <summary>The teleportation index for this <see cref="Block"/>. Make sure that no more than 2 teleporters share this same number.</summary>
-    public sbyte TpLink = -1;
+    public byte TpLink = 0;
     readonly int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
 
     public ModBlock ModdedData { get; private set; }
@@ -79,11 +78,17 @@ public class Block : IGameObject {
     /// <summary>The type of this <see cref="Block"/>. (i.e: Wood, Cork, Hole)</summary>
     public int Type { get; set; }
     /// <summary>All <see cref="Block"/>s stored in the same array.</summary>
-    public static Block[] AllBlocks = new Block[BlockMapPosition.MAP_WIDTH_169 * BlockMapPosition.MAP_HEIGHT * 5];
+    public static Block[] AllBlocks = new Block[BlockMapPosition.MAP_WIDTH_169 * BlockMapPosition.MAP_HEIGHT];
 
+    Vector2 _nonPhysPos;
     public Vector2 Position {
-        get => Physics.Position * Tank.UNITS_PER_METER;
-        set => Physics.Position = value / Tank.UNITS_PER_METER;
+        get => Physics != null ? Physics.Position * Tank.UNITS_PER_METER : _nonPhysPos;
+        set {
+            if (Physics != null)
+                Physics.Position = value / Tank.UNITS_PER_METER;
+            else
+                _nonPhysPos = value;
+        }
     }
     public Vector3 Position3D => Position.ExpandZ();
 
@@ -106,17 +111,20 @@ public class Block : IGameObject {
         set {
             value = (byte)MathHelper.Clamp(value, 0, 7);
             // integer division on purpose, every 3 height values after stack '1' creates a new full block
-            var fullBlockCount = 1 + ((value - 1) / 3);
-            var fullBlockHeight = fullBlockCount * SIDE_LENGTH;
-            // 1, 2, 1, 2, 3, 2
-            var slabCount = (value / 4) + (value - 1) % 3;
-            if (value > 6) slabCount++;
-            var fullSlabHeight = slabCount * SLAB_SIZE;
-            HeightFromGround = fullBlockHeight + fullSlabHeight;
+            HeightFromGround = GetHeightFromGround(value);
             _stack = value;
 
             // ViewBox = new BoundingBox()
         }
+    }
+    public static float GetHeightFromGround(int stack) {
+        var fullBlockCount = 1 + ((stack - 1) / 3);
+        var fullBlockHeight = fullBlockCount * SIDE_LENGTH;
+        // 1, 2, 1, 2, 3, 2
+        var slabCount = (stack / 4) + (stack - 1) % 3;
+        if (stack > 6) slabCount++;
+        var fullSlabHeight = slabCount * SLAB_SIZE;
+        return fullBlockHeight + fullSlabHeight;
     }
     // public BoundingBox ViewBox;
     /// <summary>The maximum height of any <see cref="Block"/>.</summary>
@@ -141,6 +149,31 @@ public class Block : IGameObject {
     public bool IsAlternateModel => Stack == 3 || Stack == 6;
 
     public static bool WouldUseAlternateModel(int stack) => stack == 3 || stack == 6;
+
+    public static BlockProperties GetProperties(int type) {
+        BlockProperties properties = new();
+        switch (type) {
+            case BlockID.Wood:
+                properties.IsSolid = true;
+                break;
+            case BlockID.Cork:
+                properties.IsSolid = true;
+                properties.IsDestructible = true;
+                break;
+            case BlockID.Hole:
+                properties.IsSolid = false;
+                properties.CanStack = false;
+                properties.HasShadow = false;
+                break;
+            case BlockID.Teleporter:
+                properties.IsSolid = false;
+                properties.IsCollidable = false;
+                properties.CanStack = false;
+                properties.HasShadow = false;
+                break;
+        }
+        return properties;
+    }
     public void Swap(int type) {
         Type = type;
 
@@ -152,34 +185,34 @@ public class Block : IGameObject {
 
         switch (type) {
             case BlockID.Wood:
-                Texture = GameScene.Assets["block.1"];
-                Properties.IsSolid = true;
                 Model = model.Asset;
+                Texture = GameScene.Assets["block.1"];
                 break;
             case BlockID.Cork:
-                Properties.IsDestructible = true;
-                Texture = GameScene.Assets["block.2"];
-                Properties.IsSolid = true;
                 Model = model.Asset;
+                Texture = GameScene.Assets["block.2"];
                 break;
             case BlockID.Hole:
                 Model = ModelGlobals.FlatFace.Asset;
-                Properties.IsSolid = false;
                 Texture = GameScene.Assets["block_harf.1"];
-                Properties.CanStack = false;
-                Properties.HasShadow = false;
                 break;
             case BlockID.Teleporter:
                 Model = ModelGlobals.Teleporter.Asset;
-                Properties.IsSolid = false;
-                Properties.IsCollidable = false;
                 Texture = GameScene.Assets["teleporter"];
-                Properties.CanStack = false;
-                break;
-            default:
-                ModdedData?.PostInitialize();
+
+                TextureMap = new() {
+                    ["Button"] = Texture,
+                    ["Ring"] = TextureGlobals.Pixels[Color.Red]
+                };
                 break;
         }
+        Properties = GetProperties(type);
+
+        TextureMap ??= new() {
+            ["base"] = Texture,
+            ["snow"] = GameScene.Assets["snow"]
+        };
+
         if (Properties.HasShadow) {
             // fix this, but dont worry about it for now
             _shadow = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_shadow"));
@@ -203,10 +236,13 @@ public class Block : IGameObject {
             };
             // TODO: Finish collisions
         }
+
+        ModdedData?.PostInitialize();
     }
 
     /// <summary>Construct a <see cref="Block"/>.</summary>
     public Block(int type, int height, Vector2 position, bool ignoreRegister = false) {
+        IgnoreRegister = ignoreRegister;
         Stack = (byte)MathHelper.Clamp(height, 0, 7);
         Type = type;
 
@@ -215,13 +251,6 @@ public class Block : IGameObject {
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/block_stack_alt_snowy" : "Assets/christmas/block_stack_snowy",
             _ => ""
         };
-
-        if (Properties.IsCollidable) {
-            Physics = Tank.CollisionsWorld.CreateRectangle(SIDE_LENGTH / Tank.UNITS_PER_METER, SIDE_LENGTH / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
-            Physics.Tag = this;
-        }
-        else
-            Position = position;
 
         for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
             var modBlock = ModLoader.ModBlocks[i];
@@ -233,16 +262,24 @@ public class Block : IGameObject {
             }
         }
 
-        Swap(type);
-
-        UpdateOffset();
+        Position = position;
 
         if (!ignoreRegister) {
+
             Id = Array.FindIndex(AllBlocks, block => block is null);
             AllBlocks[Id] = this;
+
+            OnInitialize?.Invoke(this);
         }
 
-        OnInitialize?.Invoke(this);
+        Swap(type);
+
+        if (Properties.IsCollidable) {
+            Physics = Tank.CollisionsWorld.CreateRectangle(SIDE_LENGTH / Tank.UNITS_PER_METER, SIDE_LENGTH / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Physics.Tag = this;
+        }
+
+        _offset.Y = GetOffsetY(Stack, Properties.CanStack);
     }
 
     /// <summary>Remove this <see cref="Block"/> from the game scene and memory.</summary>
@@ -251,77 +288,78 @@ public class Block : IGameObject {
 
         if (Physics != null && Tank.CollisionsWorld.BodyList.Contains(Physics))
             Tank.CollisionsWorld.Remove(Physics);
-        AllBlocks[Id] = null;
+
+        if (!IgnoreRegister) AllBlocks[Id] = null;
     }
 
     /// <summary>Make destruction particle effects and later, <see cref="Remove"/> this <see cref="Block"/>.</summary>
     public void Destroy() {
-        if (Properties.IsDestructible) {
-            const int PARTICLE_COUNT = 12;
+        if (!Properties.IsDestructible) return;
 
-            ModdedData?.OnDestroy();
+        DestructParticles();
 
-            for (int i = 0; i < PARTICLE_COUNT; i++) {
-                var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
-
-                var part = GameHandler.Particles.MakeParticle(Position3D, tex);
-                // var part = ParticleSystem.MakeParticle(Position3D, "wtf");
-
-                part.HasAdditiveBlending = false;
-
-                var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(4, 6), Client.ClientRandom.NextFloat(-3, 3));
-
-                part.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-                part.Scale = new(0.7f);
-
-                part.Color = Color.Coral;
-
-                part.UniqueBehavior = (p) => {
-                    vel.Y -= 0.2f;
-                    part.Position += vel;
-                    part.Alpha -= 0.025f;
-
-                    if (part.Alpha <= 0f)
-                        part.Destroy();
-                };
-            }
-        }
-
+        ModdedData?.OnDestroy();
         OnDestroy?.Invoke(this);
         Remove();
     }
+    public void DestructParticles() {
+        const int PARTICLE_COUNT = 12;
 
-    void UpdateOffset() {
-        _offset *= _scaling / BLOCK_DEF_SCALING;
-        if (!Properties.CanStack) {
-            _offset.Y -= 0.1f;
-            return;
+        for (int i = 0; i < PARTICLE_COUNT; i++) {
+            var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
+
+            var part = GameHandler.Particles.MakeParticle(Position3D, tex);
+            part.HasAdditiveBlending = false;
+
+            var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(4, 6), Client.ClientRandom.NextFloat(-3, 3));
+            part.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            part.Scale = new(0.7f);
+            part.Color = Color.Coral;
+
+            part.UniqueBehavior = (p) => {
+                vel.Y -= 0.2f;
+                part.Position += vel;
+                part.Alpha -= 0.025f;
+
+                if (part.Alpha <= 0f)
+                    part.Destroy();
+            };
+        }
+    }
+
+    public static float GetOffsetY(int stack, bool canStack) {
+        // offset *= scale / BLOCK_DEF_SCALING;
+        float offset = 0f;
+        if (!canStack) {
+            offset -= 0.1f;
+            return offset;
         }
 
-        switch (Stack) {
+        switch (stack) {
             case 1:
-                _offset = new(0, FULL_SIZE - SIDE_LENGTH, 0);
+                offset = FULL_SIZE - SIDE_LENGTH;
                 break;
             case 2:
-                _offset = new(0, FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE), 0);
+                offset = FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE);
                 break;
             case 3:
-                _offset = new(0, FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE * 3), 0);
+                offset = FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE * 3);
                 break;
             case 4:
-                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE), 0);
+                offset = FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE);
                 break;
             case 5:
-                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 2), 0);
+                offset = FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 2);
                 break;
             case 6:
-                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 4), 0);
+                offset = FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 4);
                 break;
             case 7:
-                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 3 + SLAB_SIZE * 2), 0);
+                offset = FULL_SIZE - (SIDE_LENGTH * 3 + SLAB_SIZE * 2);
                 break;
         }
+
+        return offset;
     }
 
     void IGameObject.OnDestroy() {
@@ -334,68 +372,29 @@ public class Block : IGameObject {
 
     public void OnPreRender() { }
 
+    // somethind buhhstid with snowy block models
     public void OnRender() {
+        Projection = CameraGlobals.GameProjection;
+        View = CameraGlobals.GameView;
+        World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
-        if (Type != BlockID.Teleporter) {
-            World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
+        foreach (var mesh in Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = World;
+                effect.View = View;
+                effect.Projection = Projection;
 
-            Projection = CameraGlobals.GameProjection;
-            View = CameraGlobals.GameView;
+                effect.TextureEnabled = true;
+                effect.Texture = TextureMap[mesh.Name];
 
-            foreach (var mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.View = View;
-                    effect.World = World;
-                    effect.Projection = Projection;
+                effect.SetDefaultGameLighting_IngameEntities(10f);
 
-                    effect.TextureEnabled = true;
-                    if (mesh.Name != "snow")
-                        effect.Texture = Texture;
-                    else
-                        effect.Texture = GameScene.Assets["snow"];
-
-                    effect.SetDefaultGameLighting_IngameEntities(10f);
-
-                    effect.DirectionalLight0.Direction *= 0.1f;
-
-                    effect.Alpha = 1f;
-                }
-                mesh.Draw();
+                effect.DirectionalLight0.Direction *= 0.1f;
+                effect.Alpha = 1f;
             }
+            mesh.Draw();
         }
-        else {
-            foreach (var mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.View = CameraGlobals.GameView;
-                    effect.World = World;
-                    effect.Projection = CameraGlobals.GameProjection;
 
-                    effect.TextureEnabled = true;
-
-                    // are the mesh definitions confused?
-                    // the .fbx file has them named as they should be
-                    if (mesh.Name == "Teleporter_Button") {
-                        World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(Position3D);
-                        effect.Texture = Texture;
-                    }
-                    else if (mesh.Name == "Teleporter_Shadow") {
-                        World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(Position3D);
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
-                    }
-                    else if (mesh.Name == "Teleporter_Ring") {
-                        World = Matrix.CreateScale(1f) * Matrix.CreateTranslation(Position3D);
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
-                    }
-
-                    effect.SetDefaultGameLighting_IngameEntities(8f);
-
-                    effect.DirectionalLight0.Direction *= 0.1f;
-
-                    effect.Alpha = 1f;
-                }
-                mesh.Draw();
-            }
-        }
         ModdedData?.PostRender();
         OnPostRender?.Invoke(this);
     }
@@ -410,27 +409,20 @@ public class Block : IGameObject {
 
         if (Type == BlockID.Teleporter) {
             foreach (var tnk in GameHandler.AllTanks) {
-                if (tnk is null)
-                    continue;
-
-                if (--_tankCooldowns[tnk.WorldId] > 0)
-                    continue;
-
-                if (!(Vector2.Distance(tnk.Position, Position) < SIDE_LENGTH))
-                    continue;
+                if (tnk is null) continue;
+                if (--_tankCooldowns[tnk.WorldId] > 0) continue;
+                if (Vector2.Distance(tnk.Position, Position) >= SIDE_LENGTH) continue;
 
                 var otherTp = AllBlocks.FirstOrDefault(bl => bl != null && bl != this && bl.TpLink == TpLink);
 
-                if (Array.IndexOf(AllBlocks, otherTp) <= -1)
-                    continue;
+                if (Array.IndexOf(AllBlocks, otherTp) <= -1) continue;
 
                 otherTp!._tankCooldowns[tnk.WorldId] = 120;
-
                 tnk.Position = otherTp.Position;
-                tnk.Physics.Position = otherTp.Position / Tank.UNITS_PER_METER;
             }
         }
-        UpdateOffset();
+
+        _offset.Y = GetOffsetY(Stack, Properties.CanStack);
         ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
     }

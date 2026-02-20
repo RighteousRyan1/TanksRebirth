@@ -311,13 +311,13 @@ public static class IntermissionHandler {
     static void CountdownAnimator_OnKeyFrameFinish(int frameIndex) {
         // just started, also localize
         if (frameIndex == -1) {
-            PrepareDisplay = TankGame.GameLanguage.MissionReady;
+            PrepareDisplay = TankGame.GameLanguage.Gameplay.MissionReady;
         }
         if (frameIndex == 1) {
-            PrepareDisplay = TankGame.GameLanguage.MissionSet;
+            PrepareDisplay = TankGame.GameLanguage.Gameplay.MissionSet;
         }
         else if (frameIndex == 3) {
-            PrepareDisplay = TankGame.GameLanguage.MissionStart;
+            PrepareDisplay = TankGame.GameLanguage.Gameplay.MissionStart;
         }
     }
 

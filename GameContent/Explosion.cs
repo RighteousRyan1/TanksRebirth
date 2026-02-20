@@ -7,6 +7,7 @@ using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
@@ -129,36 +130,43 @@ public class Explosion : IAITankDanger {
         Explosions[index] = this;
     }
     
-    // TODO: convert to 3d collisions
     public void Update() {
         DamageRadiusScale = MathUtils.SoftStep(DamageRadiusScale, MaxScale, 0.2f * RuntimeData.DeltaTime);
+        var damageRadiusReal = DamageRadiusScale * MAGIC_EXPLOSION_NUMBER;
+        damageRadiusReal *= damageRadiusReal;
 
         if (!IntermissionSystem.IsAwaitingNewMission) {
             foreach (var mine in Mine.AllMines) {
-                if (mine is not null && Vector2.Distance(mine.Position, Position) <= DamageRadiusScale * MAGIC_EXPLOSION_NUMBER) // magick
-                    mine.Detonate();
+                if (mine == null) continue;
+                if (Vector3.DistanceSquared(mine.Position3D, Position3D) > damageRadiusReal) continue;
+                
+                mine.Detonate();
             }
             foreach (var block in Block.AllBlocks) {
-                if (block is not null && Vector2.Distance(block.Position, Position) <= DamageRadiusScale * MAGIC_EXPLOSION_NUMBER && block.Properties.IsDestructible)
-                    block.Destroy();
+                if (block == null) continue;
+                if (!block.Properties.IsDestructible) continue;
+                if (Vector3.DistanceSquared(block.Position3D, Position3D) > damageRadiusReal) continue;
+
+                block.Destroy();
             }
             foreach (var shell in Shell.AllShells) {
-                if (shell is not null && Vector2.Distance(shell.Position, Position) < DamageRadiusScale * MAGIC_EXPLOSION_NUMBER)
-                    shell.Destroy(Shell.DestructionContext.WithExplosion);
+                if (shell == null) continue;
+                if (Vector3.Distance(shell.Position3D, Position3D) > damageRadiusReal) continue;
+
+                shell.Destroy(Shell.DestructionContext.WithExplosion);
             }
             foreach (var tank in GameHandler.AllTanks) {
                 if (tank is null) continue;
                 if (tank.IsDestroyed || HasHit[tank.WorldId]) continue;
-                if (Vector2.Distance(tank.Position, Position) > DamageRadiusScale * MAGIC_EXPLOSION_NUMBER) continue;
+                if (Vector3.DistanceSquared(tank.Position3D, Position3D) > damageRadiusReal) continue;
 
                 HasHit[tank.WorldId] = true;
 
                 // Tank.Damage prevents damage within the method
-                if (Owner is null)
+                if (Owner == null)
                     tank.Damage(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion"), true);
-                else if (Owner is not null) {
+                else
                     tank.Damage(new TankHurtContextExplosion(this), true);
-                }
             }
         }
         if (LifeTime > LingerDuration)

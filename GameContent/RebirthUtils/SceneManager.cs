@@ -221,8 +221,8 @@ public static class SceneManager {
                 GameHandler.AllTanks[a]?.Remove(true);
         }
         else {
-            for (int a = 0; a < GameHandler.AllPlayerTanks.Length; a++)
-                GameHandler.AllPlayerTanks[a]?.Remove(true);
+            for (int a = 0; a < GameHandler.AllTanks.Length; a++)
+                GameHandler.AllTanks[a]?.Remove(true);
         }
     }
     public static void ClearTankTracks() {

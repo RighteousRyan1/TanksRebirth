@@ -262,8 +262,10 @@ public partial class AITank : Tank {
     }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
-            GameHandler.AllAITanks[AITankId] = null!;
-            GameHandler.AllTanks[WorldId] = null!;
+            if (!IgnoreRegister) {
+                GameHandler.AllAITanks[AITankId] = null!;
+                GameHandler.AllTanks[WorldId] = null!;
+            }
 
             // NO DISPOSING FOR NOW, it causes weird BUGS with modded tanks.... WACK!
             // _tankTexture?.Dispose();
@@ -359,7 +361,7 @@ public partial class AITank : Tank {
 
         if (TankGame.SaveFile.CollectedKeys >= 10) {
             SoundPlayer.SoundError();
-            var str = TankGame.GameLanguage.KeysWarning;
+            var str = TankGame.GameLanguage.Misc.KeysWarning;
             var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), str);
 
             p.Scale = new(0.65f);

@@ -1,0 +1,59 @@
+// 0 = Credits
+// 1 = Developed By
+// 2 = Developer
+// 3 = Graphics Design
+// 4 = Contributors
+// 5 = Special Thanks
+// 6 = Shoutouts
+// Format: # = big, ~ = rainbow, @ = small
+// . = rainbow border, $ = really big
+// * = v. big rainbow border, ; = big rainbow border
+// Read as text, split by newline. all centered
+*--- {0} ---
+
+
+
+
+;{1}
+
+RighteousRyan - {2}
+BigKitty1011 - {3}
+
+
+
+
+;{4}
+
+~Dottik
+Arram
+~TheGoldfishKing
+LolXD87
+AnotherGuy
+Dymkar
+Arctan Dev
+4mbr0s3-2
+vsjoqvist
+Tomat
+nakamurash
+timweh
+Guthen
+Vicerix
+
+
+
+
+;{5}
+
+Nintendo (2006)
+Tooni
+cavespider3
+
+
+
+
+;{6}
+
+Aehmttw - Tanks: The Crusades
+SilokHawk
+Scruffy
+Ausyellow

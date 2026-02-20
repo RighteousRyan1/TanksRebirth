@@ -44,11 +44,11 @@ public static partial class LevelEditorUI {
                 LevelContentsPanel.Y + 60.ToResolutionY()),
             () => new(LevelContentsPanel.Width - 40.ToResolutionX(),
                 50.ToResolutionY()));
-        MissionName.DefaultString = TankGame.GameLanguage.Name;
+        MissionName.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.Name;
 
         MissionGrantsLife = new("", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution());
         MissionGrantsLife.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 120.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        MissionGrantsLife.Tooltip = TankGame.GameLanguage.GrantsBonusLifeFlavor;
+        MissionGrantsLife.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.GrantsBonusLifeFlavor;
         MissionGrantsLife.OnLeftClick = (a) => {
             // long ahh statement
            loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife = 
@@ -57,7 +57,7 @@ public static partial class LevelEditorUI {
         };
 
 
-        SaveMenuReturn = new(TankGame.GameLanguage.Return, FontGlobals.RebirthFont, Color.White);
+        SaveMenuReturn = new(TankGame.GameLanguage.Menu.Return, FontGlobals.RebirthFont, Color.White);
         SaveMenuReturn.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(),
                 LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
             () => new(200.ToResolutionX(),
@@ -72,7 +72,7 @@ public static partial class LevelEditorUI {
             _missionButtons[id].Color = SelectedColor;
         };
 
-        SaveLevelConfirm = new(TankGame.GameLanguage.Save, FontGlobals.RebirthFont, Color.White);
+        SaveLevelConfirm = new(TankGame.GameLanguage.LevelEdit.PropertyMenu.Save, FontGlobals.RebirthFont, Color.White);
         SaveLevelConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 40.ToResolutionX() + SaveMenuReturn.Size.X,
                 LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
             () => new(200.ToResolutionX(),
@@ -130,7 +130,7 @@ public static partial class LevelEditorUI {
 
         float width = 300;
 
-        SwapMenu = new(TankGame.GameLanguage.CampaignDetails, FontGlobals.RebirthFont, Color.White);
+        SwapMenu = new(TankGame.GameLanguage.LevelEdit.PropertyMenu.CampaignDetails, FontGlobals.RebirthFont, Color.White);
         SwapMenu.SetDimensions(() => new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width - width.ToResolutionX() - padX.ToResolutionX(),
                 LevelContentsPanel.Y + LevelContentsPanel.Height - height.ToResolutionY() - 10.ToResolutionY()),
             () => new(width.ToResolutionX(),
@@ -146,48 +146,48 @@ public static partial class LevelEditorUI {
                 LevelContentsPanel.Y + 60.ToResolutionY()),
             () => new(LevelContentsPanel.Width - 40.ToResolutionX(),
                 50.ToResolutionY()));
-        CampaignName.DefaultString = TankGame.GameLanguage.Name;
-        CampaignName.Tooltip = TankGame.GameLanguage.CampaignNameFlavor;
+        CampaignName.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.Name;
+        CampaignName.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.CampaignNameFlavor;
 
         CampaignDescription = new(FontGlobals.RebirthFont, Color.White, 1f, 100);
         CampaignDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 120.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignDescription.DefaultString = TankGame.GameLanguage.Description;
-        CampaignDescription.Tooltip = TankGame.GameLanguage.DescriptionFlavor;
+        CampaignDescription.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.Description;
+        CampaignDescription.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.DescriptionFlavor;
 
         CampaignAuthor = new(FontGlobals.RebirthFont, Color.White, 1f, 25);
         CampaignAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 180.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignAuthor.DefaultString = TankGame.GameLanguage.Author;
-        CampaignAuthor.Tooltip = TankGame.GameLanguage.AuthorFlavor;
+        CampaignAuthor.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.Author;
+        CampaignAuthor.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.AuthorFlavor;
 
         CampaignTags = new(FontGlobals.RebirthFont, Color.White, 1f, 35);
         CampaignTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 240.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignTags.DefaultString = TankGame.GameLanguage.Tags;
-        CampaignTags.Tooltip = TankGame.GameLanguage.TagsFlavor;
+        CampaignTags.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.Tags;
+        CampaignTags.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.TagsFlavor;
 
         CampaignVersion = new(FontGlobals.RebirthFont, Color.White, 1f, 10);
         CampaignVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 300.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignVersion.DefaultString = TankGame.GameLanguage.Version;
-        CampaignVersion.Tooltip = TankGame.GameLanguage.VersionFlavor;
+        CampaignVersion.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.Version;
+        CampaignVersion.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.VersionFlavor;
 
         CampaignLoadingBGColor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
         CampaignLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 360.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignLoadingBGColor.DefaultString = TankGame.GameLanguage.BGColor;
-        CampaignLoadingBGColor.Tooltip = TankGame.GameLanguage.BGColorFlavor;
+        CampaignLoadingBGColor.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.BGColor;
+        CampaignLoadingBGColor.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.BGColorFlavor;
 
         CampaignLoadingBannercolor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
         CampaignLoadingBannercolor.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignLoadingBannercolor.DefaultString = TankGame.GameLanguage.BannerColor;
-        CampaignLoadingBannercolor.Tooltip = TankGame.GameLanguage.BannerColorFlavor;
+        CampaignLoadingBannercolor.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.BannerColor;
+        CampaignLoadingBannercolor.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.BannerColorFlavor;
 
         CampaignStartingLives = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
         CampaignStartingLives.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 480.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignStartingLives.DefaultString = TankGame.GameLanguage.StartingLives;
-        CampaignStartingLives.Tooltip = TankGame.GameLanguage.StartingLivesFlavor;
+        CampaignStartingLives.DefaultString = TankGame.GameLanguage.LevelEdit.PropertyMenu.StartingLives;
+        CampaignStartingLives.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.StartingLivesFlavor;
 
         CampaignMajorVictory = new("", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution());
         CampaignMajorVictory.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 540.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
         CampaignMajorVictory.OnLeftClick = (a) => _hasMajorVictory = !_hasMajorVictory;
-        CampaignMajorVictory.Tooltip = TankGame.GameLanguage.HasMajorVictoryThemeFlavor;
+        CampaignMajorVictory.Tooltip = TankGame.GameLanguage.LevelEdit.PropertyMenu.HasMajorVictoryThemeFlavor;
 
         SetSaveMenuVisibility(false);
 

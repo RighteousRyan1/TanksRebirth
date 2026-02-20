@@ -399,7 +399,7 @@ public sealed record ChatSystem {
     static void HandleTextInputState(bool isHoveringTypeRect, Rectangle typeRect) {
         // line overflow handling removed (handled by wrapping in draw)
 
-        if (InputUtils.CanDetectClick()) {
+        if (InputUtils.Click()) {
             if (isHoveringTypeRect && !ActiveHandle) {
                 TankGame.Instance.Window.TextInput += HandleInput;
                 ActiveHandle = true;
@@ -428,8 +428,7 @@ public sealed record ChatSystem {
         var font = FontGlobals.RebirthFont;
         var viewport = TankGame.Instance.GraphicsDevice.Viewport;
 
-        // Helper to calculate size
-        string textMsg = $"{TankGame.GameLanguage.Press} [{ToggleChat.Assigned}] {TankGame.GameLanguage.ToToggleChat}";
+        string textMsg = string.Format(TankGame.GameLanguage.Misc.ToggleChat, $"[{ToggleChat.Assigned}]"); // Press [KeyName] to toggle chat
         var textSize = font.MeasureString(textMsg) * scale;
         var alertSize = ChatAlert.Size() * scale;
 
