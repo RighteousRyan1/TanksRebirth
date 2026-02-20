@@ -92,7 +92,7 @@ public class Particle {
     /// <summary>The 3D scaling of this <see cref="Particle"/>.</summary>
     public Vector3 Scale;
     /// <summary>Light power multiplier for this <see cref="Particle"/>.</summary>
-    public float LightPower;
+    public float LightPower = 1f;
     /// <summary>The <see cref="ParticleSystem"/> this <see cref="Particle"/> exists in.</summary>
     public ParticleManager System { get; }
 
@@ -135,11 +135,10 @@ public class Particle {
         //if (System.Scissor.HasValue) {
         //    TankGame.Instance.GraphicsDevice.ScissorRectangle = System.Scissor.Value;
         //}
-
         //TankGame.SpriteRenderer.Begin(blendState: HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: System.Rasterizer);
         Matrix world;
 
-        if (FaceTowardsMe) {
+        /*if (FaceTowardsMe) {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateBillboard(Position,
@@ -148,14 +147,20 @@ public class Particle {
                                             CameraGlobals.RebirthFreecam.World.Down,
                                             CameraGlobals.RebirthFreecam.World.Forward);
         }
-        else {
+        else {*/
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateTranslation(Position);
-        }
+
+            if (FaceTowardsMe) world *= Matrix.CreateBillboard(Position,
+                                            CameraGlobals.RebirthFreecam.Position,
+                                            // up is wrong for some reason
+                                            CameraGlobals.RebirthFreecam.World.Down,
+                                            CameraGlobals.RebirthFreecam.World.Forward);
+        //}
         foreach (ModelMesh mesh in Model.Meshes) {
-            if (MeshesToIgnore.Contains(mesh.Name))
-                continue;
+            if (MeshesToIgnore.Contains(mesh.Name)) continue;
+
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = world;
                 effect.View = System.SystemView;
@@ -166,8 +171,9 @@ public class Particle {
 
                 effect.Alpha = Alpha;
 
+                //effect.LightingEnabled = true;
+                //effect.DirectionalLight0
                 effect.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
-
                 effect.SetDefaultGameLighting_IngameEntities(LightPower);
             }
             mesh.Draw();

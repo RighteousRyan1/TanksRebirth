@@ -38,7 +38,8 @@ public class ReflectionDictionary<TClass> where TClass : class, new() {
         Values = [.. _dictionary.Values];
     }
 
-    private void Initialize(in FieldInfo[] fields, in PropertyInfo[] properties) {
+    // INumber?
+    void Initialize(in FieldInfo[] fields, in PropertyInfo[] properties) {
         if (_members.HasFlag(MemberType.Fields))
             foreach (var field in fields)
                 if (field.FieldType == typeof(int))
@@ -155,5 +156,9 @@ public class ReflectionDictionary<TClass> where TClass : class, new() {
         Keys = _dictionary.Keys.ToArray();
         Values = _dictionary.Values.ToArray();
         return true;
+    }
+
+    public KeyValuePair<string, int> this[int index] {
+        get => _dictionary.ElementAt(index);
     }
 }

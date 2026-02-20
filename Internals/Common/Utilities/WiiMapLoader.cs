@@ -73,17 +73,17 @@ public readonly struct WiiMap
         var validation = ValidateWiiMap();
         if (validation == WiiMapValidationResult.FailureTooManyPlayers) {
             LevelEditorUI.Alert("Too many players for Tanks! file format.", 240f);
-            LevelEditorUI.GUICategory = LevelEditorUI.UICategory.LevelEditor;
+            LevelEditorUI.EditState = LevelEditorUI.LevelEditState.LevelEditor;
             return;
         }
         else if (validation == WiiMapValidationResult.FailureTooManyAI) {
             LevelEditorUI.Alert("Too many AI for Tanks! file format.", 240f);
-            LevelEditorUI.GUICategory = LevelEditorUI.UICategory.LevelEditor;
+            LevelEditorUI.EditState = LevelEditorUI.LevelEditState.LevelEditor;
             return;
         }
         else if (validation == (WiiMapValidationResult.FailureTooManyPlayers | WiiMapValidationResult.FailureTooManyAI)) {
             LevelEditorUI.Alert("Too many AI AND players for Tanks! file format.", 240f);
-            LevelEditorUI.GUICategory = LevelEditorUI.UICategory.LevelEditor;
+            LevelEditorUI.EditState = LevelEditorUI.LevelEditState.LevelEditor;
             return;
         }
         

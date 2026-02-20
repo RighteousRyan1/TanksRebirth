@@ -27,6 +27,7 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent.Systems.AI;
 
 // eventually: AITank will be the basis for all AI controlled tanks...
+// or maybe not?
 // e.g: VioletTank : AITank, NecromancerTank : AITank, etc.
 // this will allow for easier management of AI tanks and their unique behaviors without adding bloat for specific tank kinds
 public partial class AITank : Tank {

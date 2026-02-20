@@ -1,10 +1,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Globals;
@@ -12,6 +10,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
@@ -21,12 +20,12 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals.Common.Framework.Collisions;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
+// TODO: fix some shells instantly being destroyed from outer wall ricochets
 public class Shell : IAITankDanger {
     public const int COLL_RECT_DIM = 3;
     public const int TOO_SHORT_LIFETIME = 5;
@@ -62,14 +61,10 @@ public class Shell : IAITankDanger {
     public delegate void PreCreateDelegate(Shell shell);
 
     public static event PreCreateDelegate? PreCreate;
-    public delegate void BlockRicochetDelegate(Block block, Shell shell);
 
-    /// <summary>Only called when it bounces from block-bounce code.</summary>
-    public static event BlockRicochetDelegate? OnRicochetWithBlock;
+    public delegate void RicochetDelegate(Shell shell, Block? block);
 
-    public delegate void RicochetDelegate(Shell shell);
-
-    /// <summary>Only called when it bounces from wall-bounce code.</summary>
+    /// <summary>If <see cref="Block"/> is <see langword="null"/>, then it ricocheted off the bounding wall.</summary>
     public static event RicochetDelegate? OnRicochet;
 
     public delegate void PostUpdateDelegate(Shell shell);
@@ -290,16 +285,16 @@ public class Shell : IAITankDanger {
         //}
 
         if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
-            OnRicochet?.Invoke(this);
-            Ricochet(true);
+            Ricochet(Vector2.UnitX);
 
             ModdedData?.OnRicochet(null);
+            OnRicochet?.Invoke(this, null);
         }
 
         if (Position.Y is < GameScene.MIN_Z or > GameScene.MAX_Z) {
-            OnRicochet?.Invoke(this);
-            Ricochet(false);
+            Ricochet(Vector2.UnitY);
 
+            OnRicochet?.Invoke(this, null);
             ModdedData?.OnRicochet(null);
         }
 
@@ -313,18 +308,18 @@ public class Shell : IAITankDanger {
         switch (dir) {
             case CollisionDirection.Up:
             case CollisionDirection.Down:
-                Ricochet(false);
+                Ricochet(Vector2.UnitY);
                 block.ModdedData?.OnRicochet(this);
                 ModdedData?.OnRicochet(block);
-                OnRicochetWithBlock?.Invoke(block, this);
+                OnRicochet?.Invoke(this, null);
                 break;
             case CollisionDirection.Left:
             case CollisionDirection.Right:
                 // TODO: fix this pls
-                Ricochet(true);
+                Ricochet(Vector2.UnitX);
                 block.ModdedData?.OnRicochet(this);
                 ModdedData?.OnRicochet(block);
-                OnRicochetWithBlock?.Invoke(block, this);
+                OnRicochet?.Invoke(this, null);
                 break;
         }
 
@@ -509,9 +504,11 @@ public class Shell : IAITankDanger {
     /// <summary>
     /// Ricochets this <see cref="Shell"/>.
     /// </summary>
-    /// <param name="horizontal">Whether or not the ricochet is done off of a horizontal axis.</param>
-    public void Ricochet(bool horizontal) {
+    /// <param name="normal">The normal to reflect off of.</param>
+    public void Ricochet(Vector2 normal) {
         const string ricochetSound = "Assets/sounds/bullet_ricochet.ogg";
+
+        // ChatSystem.SendMessage("PENIS BIGGA @ " + DateTime.Now.Nanosecond, ColorUtils.DiscoPartyColor);
 
         if (RicochetsRemaining <= 0) {
             Destroy(DestructionContext.WithObstacle);
@@ -520,12 +517,10 @@ public class Shell : IAITankDanger {
 
         if (LifeTime < TOO_SHORT_LIFETIME) {
             Destroy(DestructionContext.WithObstacle);
+            return;
         }
 
-        if (horizontal)
-            Velocity.X = -Velocity.X;
-        else
-            Velocity.Y = -Velocity.Y;
+        Velocity = Vector2.Reflect(Velocity, normal);
 
 
         var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);

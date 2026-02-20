@@ -42,8 +42,7 @@ public struct BlockTemplate {
 }
 
 /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
-public class Block : IGameObject
-{
+public class Block : IGameObject {
     // TODO: ModBlock instance for the modblock used on this block instance...? to save performance in the future, obviously... same with other modded types
     public delegate void DestroyDelegate(Block block);
 
@@ -65,19 +64,15 @@ public class Block : IGameObject
     /// <summary>Called after this <see cref="Block"/> is initialized.</summary>
     public static event InitializeDelegate? OnInitialize;
 
-    public delegate void RicochetDelegate(Block block, Shell shell);
-
-    public static event RicochetDelegate? OnRicochet;
-
-    Vector3 _offset;
     public const float BLOCK_DEF_SCALING = 0.646f;
+    Vector3 _offset;
     Vector3 _scaling = new(0.646f);
-    Texture2D _texture;
+    public Texture2D Texture;
     Particle _shadow;
 
     /// <summary>The teleportation index for this <see cref="Block"/>. Make sure that no more than 2 teleporters share this same number.</summary>
     public sbyte TpLink = -1;
-    private int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
+    readonly int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
 
     public ModBlock ModdedData { get; private set; }
 
@@ -109,6 +104,7 @@ public class Block : IGameObject
     public byte Stack {
         get => _stack;
         set {
+            value = (byte)MathHelper.Clamp(value, 0, 7);
             // integer division on purpose, every 3 height values after stack '1' creates a new full block
             var fullBlockCount = 1 + ((value - 1) / 3);
             var fullBlockHeight = fullBlockCount * SIDE_LENGTH;
@@ -144,8 +140,7 @@ public class Block : IGameObject
     /// <summary>Whether or not this <see cref="Block"/> is using its alternate model.</summary>
     public bool IsAlternateModel => Stack == 3 || Stack == 6;
 
-    /// <summary>Change this <see cref="Block"/>'s texture.</summary>
-    public void SwapTexture(Texture2D texture) => _texture = texture;
+    public static bool WouldUseAlternateModel(int stack) => stack == 3 || stack == 6;
     public void Swap(int type) {
         Type = type;
 
@@ -157,20 +152,20 @@ public class Block : IGameObject
 
         switch (type) {
             case BlockID.Wood:
-                _texture = GameScene.Assets["block.1"];
+                Texture = GameScene.Assets["block.1"];
                 Properties.IsSolid = true;
                 Model = model.Asset;
                 break;
             case BlockID.Cork:
                 Properties.IsDestructible = true;
-                _texture = GameScene.Assets["block.2"];
+                Texture = GameScene.Assets["block.2"];
                 Properties.IsSolid = true;
                 Model = model.Asset;
                 break;
             case BlockID.Hole:
                 Model = ModelGlobals.FlatFace.Asset;
                 Properties.IsSolid = false;
-                _texture = GameScene.Assets["block_harf.1"];
+                Texture = GameScene.Assets["block_harf.1"];
                 Properties.CanStack = false;
                 Properties.HasShadow = false;
                 break;
@@ -178,7 +173,7 @@ public class Block : IGameObject
                 Model = ModelGlobals.Teleporter.Asset;
                 Properties.IsSolid = false;
                 Properties.IsCollidable = false;
-                _texture = GameScene.Assets["teleporter"];
+                Texture = GameScene.Assets["teleporter"];
                 Properties.CanStack = false;
                 break;
             default:
@@ -211,7 +206,7 @@ public class Block : IGameObject
     }
 
     /// <summary>Construct a <see cref="Block"/>.</summary>
-    public Block(int type, int height, Vector2 position) {
+    public Block(int type, int height, Vector2 position, bool ignoreRegister = false) {
         Stack = (byte)MathHelper.Clamp(height, 0, 7);
         Type = type;
 
@@ -240,11 +235,13 @@ public class Block : IGameObject
 
         Swap(type);
 
-        Id = Array.FindIndex(AllBlocks, block => block is null);
-
-        AllBlocks[Id] = this;
-
         UpdateOffset();
+
+        if (!ignoreRegister) {
+            Id = Array.FindIndex(AllBlocks, block => block is null);
+            AllBlocks[Id] = this;
+        }
+
         OnInitialize?.Invoke(this);
     }
 
@@ -353,7 +350,7 @@ public class Block : IGameObject
 
                     effect.TextureEnabled = true;
                     if (mesh.Name != "snow")
-                        effect.Texture = _texture;
+                        effect.Texture = Texture;
                     else
                         effect.Texture = GameScene.Assets["snow"];
 
@@ -379,7 +376,7 @@ public class Block : IGameObject
                     // the .fbx file has them named as they should be
                     if (mesh.Name == "Teleporter_Button") {
                         World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(Position3D);
-                        effect.Texture = _texture;
+                        effect.Texture = Texture;
                     }
                     else if (mesh.Name == "Teleporter_Shadow") {
                         World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(Position3D);

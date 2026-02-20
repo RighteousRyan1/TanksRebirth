@@ -64,7 +64,7 @@ public static partial class LevelEditorUI {
                 50.ToResolutionY()));
 
         SaveMenuReturn.OnLeftClick = (l) => {
-            GUICategory = UICategory.LevelEditor;
+            EditState = LevelEditState.LevelEditor;
             var id = loadedCampaign.CurrentMissionId;
             if (MissionName.GetRealText() != string.Empty)
                 loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
@@ -125,7 +125,7 @@ public static partial class LevelEditorUI {
                 }
             }
 
-            // GUICategory = UICategory.LevelEditor;
+            // EditState = LevelEditState.LevelEditor;
         };
 
         float width = 300;

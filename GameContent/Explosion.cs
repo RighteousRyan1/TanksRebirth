@@ -128,7 +128,8 @@ public class Explosion : IAITankDanger {
 
         Explosions[index] = this;
     }
-
+    
+    // TODO: convert to 3d collisions
     public void Update() {
         DamageRadiusScale = MathUtils.SoftStep(DamageRadiusScale, MaxScale, 0.2f * RuntimeData.DeltaTime);
 

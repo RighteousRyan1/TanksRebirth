@@ -24,6 +24,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Changes
 
+- The level editor has gotten a number of various improvments
 - Debug tools are now locked behind debug builds of the game
 - Increased the maximum tank count to 60
 - Made mines not destroy everything instantly, but rather grow, similar to the original

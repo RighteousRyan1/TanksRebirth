@@ -271,7 +271,7 @@ public class GameHandler {
         // only render the level editor if it's active
         // change depth stencil...?
         if (LevelEditorUI.IsActive) {
-            LevelEditorUI.Render();
+            LevelEditorUI.Render(spriteBatch);
         }
 
         // only draw if ingame + is multiplayer.

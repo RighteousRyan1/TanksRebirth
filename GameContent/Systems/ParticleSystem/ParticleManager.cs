@@ -67,9 +67,10 @@ public class ParticleManager {
     public void RenderModelParticles() {
         for (int i = 0; i < CurrentParticles.Count; i++) {
             var particle = CurrentParticles[i];
-            if (particle is not null)
-                if (particle.Model != null)
-                    particle.DrawModel();
+            if (particle is null) continue;
+            if (particle.Model == null) continue;
+            
+            particle.DrawModel();
         }
     }
     public void UpdateParticles() {

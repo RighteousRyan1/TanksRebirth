@@ -35,7 +35,7 @@ public class ModBlock : ILoadable, IModContent
     public virtual void PostInitialize() {
         if (_texture is null || Texture is null)
             return;
-        Block.SwapTexture(_texture);
+        Block.Texture = _texture;
     }
     /// <summary>Called each update of the block.</summary>
     public virtual void PostUpdate() { }

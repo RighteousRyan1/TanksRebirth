@@ -8,8 +8,7 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics;
 /// <summary>Represents a system in which to render lighting for the world.</summary>
-public static class Lighting
-{
+public static class Lighting {
     /// <summary>A custom time of day for the lighting and brightness.</summary>
     public struct LightProfile(float brightness, Color color) {
         public float Brightness = brightness;
@@ -78,8 +77,7 @@ public static class Lighting
         effect.DiffuseColor = new(ColorBrightness);
     }
 
-    public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect, float powerMultiplier = 1f, float ambientMultiplier = 1f, bool specular = false, Vector3 lightDir = default)
-    {
+    public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect, float powerMultiplier = 1f, float ambientMultiplier = 1f, bool specular = false, Vector3 lightDir = default) {
         effect.LightingEnabled = true;
         effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
         effect.EnableDefaultLighting();
@@ -93,12 +91,10 @@ public static class Lighting
         if (lightDir == default)
             lightDir = Vector3.Down;
 
+        // poor practice but it makes it look correct
         effect.DirectionalLight0.Direction = lightDir * lightingConstant;
-
         effect.SpecularColor = specular ? (Color.White.ToVector3() * LightPower) : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
-
         effect.AmbientLightColor = LightColor.ToVector3() * ambientMultiplier;
-
         effect.DiffuseColor = new(ColorBrightness);
     }
 

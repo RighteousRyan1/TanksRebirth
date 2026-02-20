@@ -723,6 +723,7 @@ public class PlayerTank : Tank {
             }
         }
     }
+    // TODO: emissive color is (0,0,0,0). Maybe that's why i'm "multiplying my lighting" instead of using a regular color approach
     public override void Render() {
         base.Render();
 
@@ -755,11 +756,11 @@ public class PlayerTank : Tank {
                 effect.Texture = DrawParamsTank.TankTexture;
 
                 effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
-                mesh.Draw();
             }
+            mesh.Draw();
         }
     }
-    static Dictionary<int, float[]> _bulletAnimationStates = [];
+    static readonly Dictionary<int, float[]> _bulletAnimationStates = [];
     void DrawExtras(SpriteBatch spriteBatch) {
         if (IsDestroyed || IgnoreRegister) return;
 

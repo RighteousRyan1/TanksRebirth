@@ -24,6 +24,8 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using System.Diagnostics;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.Internals.Common.Framework.Collections;
 
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
@@ -36,30 +38,49 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
  * 5) When in the level editor, the GC gains ~10MB per second. Find out why. (Collections are often)
  */
 public static partial class LevelEditorUI {
-    public enum UICategory {
+    public enum LevelEditState {
         LevelEditor,
         SavingThings,
     }
     public static readonly byte[] LevelFileHeader = [84, 65, 78, 75]; // T, A, N, K
     public const int EDITOR_VERSION = 5;
-
     public const int MAX_MISSION_CHARS = 30;
-    public static bool IsTestingLevel { get; private set; }
-
+    public const float BAR_WIDTH = 256.0f;
+    public const float BAR_START_X = 34.0f;
     public static bool IsActive { get; private set; }
     public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/music/mainmenu/editor.ogg", 0.7f);
 
-    public static Category CurCategory { get; private set; }
+    static EditorCategory _curc;
+    public static EditorCategory CurCategory {
+        get => _curc;
+        set {
+            _curc = value;
+
+            _barOffset = 0;
+
+            foreach (var pList in _categoryParticles) {
+                var isCorrect = _curc == pList.Key;
+                foreach (var p in pList.Value) {
+                    if (isCorrect) p.Alpha = 1;
+                    else {
+                        p.Alpha = 0;
+                        p.Scale = Vector3.Zero;
+                    }
+                }
+            }
+        }
+    }
     public static int SelectedTankTier { get; private set; }
     public static int SelectedTankTeam { get; private set; }
     public static int SelectedPlayerType { get; private set; }
     public static int SelectedBlockType { get; private set; }
-    public static int BlockHeight { get; private set; }
+    public static int BlockStack { get; private set; }
     public static bool IsEditing { get; internal set; }
+    public static bool IsTestingLevel { get; private set; }
     public static bool HoveringAnyTank;
 
     internal static Mission cachedMission;
-    public enum Category {
+    public enum EditorCategory {
         EnemyTanks,
         Terrain,
         PlayerTanks
@@ -106,20 +127,20 @@ public static partial class LevelEditorUI {
     public static bool ShouldDrawBarUI {
         get => _sdbui;
         set {
-            if (GUICategory == UICategory.SavingThings)
+            if (EditState == LevelEditState.SavingThings)
                 SetSaveMenuVisibility(value);
             SetBarUIVisibility(value);
             _sdbui = value;
         }
     }
 
-    private static UICategory _category;
-    public static UICategory GUICategory {
+    private static LevelEditState _category;
+    public static LevelEditState EditState {
         get => _category;
         set {
             _category = value;
 
-            if (_category == UICategory.SavingThings) {
+            if (_category == LevelEditState.SavingThings) {
                 SetSaveMenuVisibility(true);
                 SetLevelEditorVisibility(false);
             }
@@ -130,8 +151,8 @@ public static partial class LevelEditorUI {
         }
     }
 
-    static List<UITextButton> _missionButtons = [];
-    static List<UITextButton> _listModifyButtons = [];
+    static readonly List<UITextButton> _missionButtons = [];
+    static readonly List<UITextButton> _listModifyButtons = [];
     static Rectangle _missionTab = new(0, 150, 350, 535);
     static Rectangle _missionButtonScissor;
     static float _missionsOffset;
@@ -183,8 +204,8 @@ public static partial class LevelEditorUI {
     public static void Initialize() {
         if (_initialized) {
             foreach (var field in typeof(LevelEditorUI).GetFields()) {
-                if (field.GetValue(null) is UIElement) {
-                    ((UIElement)field.GetValue(null)).Remove();
+                if (field.GetValue(null) is UIElement element) {
+                    element.Remove();
                     field.SetValue(null, null);
                 }
             }
@@ -192,8 +213,10 @@ public static partial class LevelEditorUI {
         TeamColorsLocalized.Clear();
         for (int i = 0; i < TeamID.Collection.Count; i++) {
             var name = TeamID.Collection.GetKey(i);
-            TeamColorsLocalized.Add((string)typeof(Language).GetProperty(name).GetValue(TankGame.GameLanguage));
+            TeamColorsLocalized.Add((string)typeof(Language).GetProperty(name!)!.GetValue(TankGame.GameLanguage)!);
         }
+
+        // maybe init/de-init EditorParticleSystem?
 
         #region Enumerable Init
 
@@ -203,26 +226,12 @@ public static partial class LevelEditorUI {
                 var fileName = Path.GetFileNameWithoutExtension(file);
                 RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(file, false, false));
             }
-            var names = TankID.Collection.Keys;
-            for (int i = 0; i < names.Length; i++) {
-                var nTL = names[i];
-
-                if (RenderTextures.ContainsKey(nTL))
-                    _renderNamesTanks.Add(nTL);
-            }
-            names = BlockID.Collection.Keys;
+            var names = BlockID.Collection.Keys;
             for (int i = 0; i < names.Length; i++) {
                 var nTL = names[i];
 
                 if (RenderTextures.ContainsKey(nTL))
                     _renderNamesBlocks.Add(nTL);
-            }
-            names = PlayerID.Collection.Keys;
-            for (int i = 0; i < names.Length; i++) {
-                var nTL = names[i];
-
-                if (RenderTextures.ContainsKey(nTL + "Plr"))
-                    _renderNamesPlayers.Add(nTL + "Plr");
             }
         }
 
@@ -315,14 +324,14 @@ public static partial class LevelEditorUI {
 
         TerrainCategory = new(TankGame.GameLanguage.Terrain, FontGlobals.RebirthFont, Color.White);
         TerrainCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
-        TerrainCategory.OnLeftClick = (l) => { CurCategory = Category.Terrain; };
+        TerrainCategory.OnLeftClick = (l) => { CurCategory = EditorCategory.Terrain; };
 
         EnemyTanksCategory = new(TankGame.GameLanguage.AIControlled, FontGlobals.RebirthFont, Color.White);
         EnemyTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
-        EnemyTanksCategory.OnLeftClick = (l) => { CurCategory = Category.EnemyTanks; };
+        EnemyTanksCategory.OnLeftClick = (l) => { CurCategory = EditorCategory.EnemyTanks; };
         PlayerTanksCategory = new(TankGame.GameLanguage.Players, FontGlobals.RebirthFont, Color.White);
         PlayerTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.65f), () => new Vector2(200, 50).ToResolution());
-        PlayerTanksCategory.OnLeftClick = (l) => { CurCategory = Category.PlayerTanks; };
+        PlayerTanksCategory.OnLeftClick = (l) => { CurCategory = EditorCategory.PlayerTanks; };
 
         AutoOrientTanks = new(TankGame.GameLanguage.AutoOrientTanks, FontGlobals.RebirthFont, Color.White);
         AutoOrientTanks.SetDimensions(() => new Vector2(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.575f), 
@@ -331,7 +340,7 @@ public static partial class LevelEditorUI {
         AutoOrientTanks.TextScale = () => new Vector2(0.8f);
         AutoOrientTanks.OnLeftClick = (e) => {
             PlacementSquare.Placements.ForEach(p => {
-
+                // maybe in the original game this was based off the top-left of the blocks?
                 var tnkRot = WiiMap.GetAutoTankRotation(p.Position.FlattenZ());
 
                 var flashColor = tnkRot switch {
@@ -364,9 +373,9 @@ public static partial class LevelEditorUI {
         Properties.SetDimensions(() => new(WindowUtils.WindowWidth * 0.425f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
         Properties.OnLeftClick = (a) => {
             if (!_saveMenuOpen)
-                GUICategory = UICategory.SavingThings;
+                EditState = LevelEditState.SavingThings;
             else
-                GUICategory = UICategory.LevelEditor;
+                EditState = LevelEditState.LevelEditor;
         };
 
         LoadLevel = new(TankGame.GameLanguage.Load, FontGlobals.RebirthFont, Color.White);
@@ -374,37 +383,37 @@ public static partial class LevelEditorUI {
         LoadLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.575f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
         LoadLevel.OnLeftClick = (a) => {
             var res = Dialog.FileOpen("mission,campaign,bin", TankGame.SaveDirectory);
-            if (res.Path != null && res.IsOk) {
-                try {
-                    var ext = Path.GetExtension(res.Path);
+            if (res.Path == null || !res.IsOk) return;
 
-                    if (ext == ".mission") {
-                        //GameProperties.LoadedCampaign.LoadMission(Mission.Load(res.Path, null));
-                        //GameProperties.LoadedCampaign.SetupLoadedMission(true);
-                        Mission.LoadDirectly(Mission.Load(res.Path, null));
-                        //_loadedCampaign = null;
-                    }
-                    else if (ext == ".campaign") {
-                        loadedCampaign = Campaign.Load(res.Path);
-                        loadedCampaign.LoadMission(0);
-                        loadedCampaign.SetupLoadedMission(true);
-                        MissionName.Text = loadedCampaign.CachedMissions[0].Name;
-                        SetupMissionsBar(loadedCampaign);
-                        _missionButtons[0].Color = Color.SkyBlue;
-                        CampaignStartingLives.Text = loadedCampaign.MetaData.StartingLives.ToString();
-                    }
-                    else if (ext == ".bin") {
-                        var map = new WiiMap(res.Path);
-                        ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
+            try {
+                var ext = Path.GetExtension(res.Path);
 
-                        WiiMap.ApplyToGameWorld(map);
-                    }
-
-                    ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);
-                } catch (Exception e) when (!Debugger.IsAttached) {
-                    ChatSystem.SendMessage("Failed to load.", Color.Red);
-                    ChatSystem.SendMessage(e.Message, Color.Red);
+                if (ext == ".mission") {
+                    //GameProperties.LoadedCampaign.LoadMission(Mission.Load(res.Path, null));
+                    //GameProperties.LoadedCampaign.SetupLoadedMission(true);
+                    Mission.LoadDirectly(Mission.Load(res.Path, null));
+                    //_loadedCampaign = null;
                 }
+                else if (ext == ".campaign") {
+                    loadedCampaign = Campaign.Load(res.Path);
+                    loadedCampaign.LoadMission(0);
+                    loadedCampaign.SetupLoadedMission(true);
+                    MissionName.Text = loadedCampaign.CachedMissions[0].Name;
+                    SetupMissionsBar(loadedCampaign);
+                    _missionButtons[0].Color = Color.SkyBlue;
+                    CampaignStartingLives.Text = loadedCampaign.MetaData.StartingLives.ToString();
+                }
+                else if (ext == ".bin") {
+                    var map = new WiiMap(res.Path);
+                    ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
+
+                    WiiMap.ApplyToGameWorld(map);
+                }
+
+                ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);
+            } catch (Exception e) when (!Debugger.IsAttached) {
+                ChatSystem.SendMessage("Failed to load.", Color.Red);
+                ChatSystem.SendMessage(e.Message, Color.Red);
             }
         };
         LoadLevel.Tooltip = TankGame.GameLanguage.LoadMissionFlavor;
@@ -413,7 +422,7 @@ public static partial class LevelEditorUI {
     }
     public static void TryOpen(bool fromMainMenu = true) {
         if (fromMainMenu) {
-            //OpenPeripherals();
+            OpenPeripherals();
             float time = 180;
             IntermissionSystem.TimeBlack = time;
             _queueOpen = true;
@@ -474,7 +483,7 @@ public static partial class LevelEditorUI {
     public static Color HoverBoxColor = Color.SkyBlue;
 
     // FIXME: this code hurts my eyes. who wrote this?
-    public static void Render() {
+    public static void Render(SpriteBatch sb) {
         if (!_initialized)
             return;
 
@@ -498,14 +507,14 @@ public static partial class LevelEditorUI {
 
         var measure = FontGlobals.RebirthFont.MeasureString(AlertText);
 
-        DrawAlerts();
+        DrawAlerts(sb);
         if (!ShouldDrawBarUI) return;
 
         #region Main UI
 
-        int xOff = 0;
+        float xOff = 0;
         _clickRect = new(0, (int)(WindowUtils.WindowBottom.Y * 0.8f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.2f));
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _clickRect, null, Color.White, 0f, Vector2.Zero, default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], _clickRect, null, Color.White, 0f, Vector2.Zero, default, 0f);
 
         DrawTankDescriptionFlavor();
 
@@ -513,23 +522,25 @@ public static partial class LevelEditorUI {
         // but whatever.
         // Ryan, 2/11/25: this code is fucking archaic.
 
-        DrawLevelInfo();
+        DrawLevelInfo(sb);
 
         // render peripherals
         DrawCampaigns();
-        DrawPlacementInfo();
+        DrawPlacementInfo(sb);
 
-        if (CurCategory == Category.EnemyTanks) {
+        if (CurCategory == EditorCategory.EnemyTanks) {
             // Note the idOffset of 1 to account for selected index logic
-            xOff = DrawCategoryRow(_renderNamesTanks, SelectedTankTier, 1);
+            // xOff = DrawCategoryRow(_renderNamesTanks, SelectedTankTier, 1);
+            xOff = DrawCategoryRow(_tankCategoryParticles, TankID.Collection, SelectedTankTier, 1);
             _maxScroll = xOff;
         }
-        else if (CurCategory == Category.Terrain) {
-            xOff = DrawCategoryRow(_renderNamesBlocks, SelectedBlockType, 0);
+        else if (CurCategory == EditorCategory.Terrain) {
+            // xOff = DrawCategoryRow(_renderNamesBlocks, SelectedBlockType, 0);
+            xOff = DrawCategoryRow(_blockCategoryParticles, BlockID.Collection, SelectedBlockType, 0, 0.8f, 1.1f);
             _maxScroll = xOff;
         }
-        else if (CurCategory == Category.PlayerTanks) {
-            xOff = DrawCategoryRow(_renderNamesPlayers, SelectedPlayerType, 0);
+        else if (CurCategory == EditorCategory.PlayerTanks) {
+            xOff = DrawCategoryRow(_plrCategoryParticles, PlayerID.Collection, SelectedPlayerType, 0);
             _maxScroll = xOff;
         }
 
@@ -545,7 +556,7 @@ public static partial class LevelEditorUI {
         // used to have an Active check, but since we only call this method when Active is true, don't bother
         if (HoveringAnyTank) {
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/leveledit/rotate");
-            TankGame.SpriteRenderer.Draw(tex,
+            sb.Draw(tex,
                 MouseUtils.MousePosition + new Vector2(20, -20).ToResolution(),
                 null,
                 Color.White,
@@ -557,8 +568,8 @@ public static partial class LevelEditorUI {
         }
         var txt = !_viewMissionDetails ? TankGame.GameLanguage.CampaignDetails : TankGame.GameLanguage.MissionDetails;
 
-        if (GUICategory == UICategory.SavingThings) {
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White],
+        if (EditState == LevelEditState.SavingThings) {
+            sb.Draw(TextureGlobals.Pixels[Color.White],
                 LevelContentsPanel,
                 null,
                 Color.Gray,
@@ -566,7 +577,7 @@ public static partial class LevelEditorUI {
                 Vector2.Zero,
                 default,
                 0f);
-            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont,
+            sb.DrawString(FontGlobals.RebirthFont,
                     txt,
                     new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width / 2, LevelContentsPanel.Y + 10.ToResolutionY()),
                     Color.White,
@@ -600,8 +611,8 @@ public static partial class LevelEditorUI {
         if (!_clickRect.Contains(MouseUtils.MousePosition.ToPoint()))
             return -1;
 
-        float startX = 34.ToResolutionX() + _barOffset;
-        float strideX = 234.ToResolutionX();
+        float startX = BAR_START_X.ToResolutionX() + _barOffset;
+        float strideX = BAR_WIDTH.ToResolutionX();
         float relativeX = MouseUtils.MousePosition.X - startX;
 
         // Mouse is too far to the left
@@ -610,33 +621,29 @@ public static partial class LevelEditorUI {
         // Math trick: Divide the relative mouse position by the stride to get the exact index!
         int hoveredIndex = (int)(relativeX / strideX);
 
-        int maxItems = CurCategory switch {
-            Category.EnemyTanks => _renderNamesTanks.Count,
-            Category.Terrain => _renderNamesBlocks.Count,
-            Category.PlayerTanks => _renderNamesPlayers.Count,
-            _ => 0
-        };
+        int maxItems = _categoryParticles[CurCategory].Count;
 
-        // Ensure we aren't clicking in empty space to the right of the last item
+        // Ensure we aren't clicking in empty space to the right of the last p
         return hoveredIndex < maxItems ? hoveredIndex : -1;
     }
-    static int DrawCategoryRow(List<string> textures, int selectedIndex, int idOffset = 0) {
-        int xOff = 0;
-        for (int i = 0; i < textures.Count; i++) {
+    // TODO: teleporters dont work? make holes better to view?
+    static float DrawCategoryRow<T>(List<Particle> pEntries, ReflectionDictionary<T> dict, int selectedIndex, int idOffset = 0, float minScale = 6.5f, float maxScale = 8.5f) where T : class, new() {
+        float xOff = 0;
+
+        for (int i = 0; i < pEntries.Count; i++) {
             bool isSelected = selectedIndex == (i + idOffset);
 
-            TankGame.SpriteRenderer.Draw(RenderTextures[textures[i]],
-                new Vector2(24.ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.75f),
-                null,
-                isSelected ? SelectionColor : Color.White,
-                0f,
-                Vector2.Zero,
-                Vector2.One.ToResolution(),
-                default,
-                0f);
+            var pos = new Vector2((BAR_START_X + BAR_WIDTH / 2).ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.925f);
+            pEntries[i].Position = DrawUtils.CenteredOrthoToScreen(pos).Expand();
+
+
+            DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, pos, Vector2.UnitY, dict.GetKey(i + idOffset)!,
+                isSelected ? ColorUtils.DiscoPartyColor : Color.White, Color.Black, Vector2.One * 0.8f, 1f, Anchor.TopCenter, shadowAlpha: 0.5f);
+
+            pEntries[i].Scale = Vector3.One * MathHelper.Lerp(pEntries[i].Scale.X, isSelected ? maxScale : minScale, 0.1f * RuntimeData.DeltaTime);
 
             // this code hurts me. emotionally
-            xOff += (int)234.ToResolutionX();
+            xOff += BAR_WIDTH.ToResolutionX();
         }
         return xOff;
     }
@@ -656,8 +663,7 @@ public static partial class LevelEditorUI {
         }
 
         HoveringAnyTank = false;
-        // TODO: why is this here and not LevelEditor
-        // ... or literally anywhere else
+
         if (!MainMenuUI.IsActive && (CameraGlobals.OverheadView || IsActive)) {
             // this used to be in the fkn loop. come on ryan.
             var mouseRay = RayUtils.GetMouseToWorldRay();
@@ -711,21 +717,21 @@ public static partial class LevelEditorUI {
             _missionsOffset = -_missionsMaxOff + _missionButtonScissor.Height;
 
         LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
-        PlacementSquare.PlacesBlock = CurCategory == Category.Terrain;
+        PlacementSquare.PlacesBlock = CurCategory == EditorCategory.Terrain;
 
         // much better code now
         switch (CurCategory) {
-            case Category.EnemyTanks:
+            case EditorCategory.EnemyTanks:
                 EnemyTanksCategory.Color = Color.DeepSkyBlue;
                 TerrainCategory.Color = Color.White;
                 PlayerTanksCategory.Color = Color.White;
                 break;
-            case Category.Terrain:
+            case EditorCategory.Terrain:
                 EnemyTanksCategory.Color = Color.White;
                 TerrainCategory.Color = Color.DeepSkyBlue;
                 PlayerTanksCategory.Color = Color.White;
                 break;
-            case Category.PlayerTanks:
+            case EditorCategory.PlayerTanks:
                 EnemyTanksCategory.Color = Color.White;
                 TerrainCategory.Color = Color.White;
                 PlayerTanksCategory.Color = Color.DeepSkyBlue;
@@ -750,18 +756,18 @@ public static partial class LevelEditorUI {
             int hoveredIndex = GetHoveredBarIndex();
 
             if (hoveredIndex != -1) {
-                int xOff = hoveredIndex * (int)234.ToResolutionX();
+                float xOff = hoveredIndex * BAR_WIDTH.ToResolutionX();
                 _curHoverRect = new Rectangle(
-                    (int)(34.ToResolutionX() + xOff + _barOffset),
+                    (int)(BAR_START_X.ToResolutionX() + xOff + _barOffset),
                     (int)(WindowUtils.WindowBottom.Y * 0.8f),
-                    (int)234.ToResolutionX(),
+                    (int)BAR_WIDTH.ToResolutionX(),
                     (int)(WindowUtils.WindowHeight * 0.2f)
                 );
 
                 _curDescription = CurCategory switch {
-                    Category.EnemyTanks => GetTankFlavor(hoveredIndex + 1),
-                    Category.Terrain => GetBlockFlavor(hoveredIndex),
-                    Category.PlayerTanks => GetPlayerFlavor(hoveredIndex),
+                    EditorCategory.EnemyTanks => GetTankFlavor(hoveredIndex + 1),
+                    EditorCategory.Terrain => GetBlockFlavor(hoveredIndex),
+                    EditorCategory.PlayerTanks => GetPlayerFlavor(hoveredIndex),
                     _ => string.Empty
                 };
             }
@@ -770,11 +776,11 @@ public static partial class LevelEditorUI {
                 _origClick = MouseUtils.MousePosition - new Vector2(_barOffset, 0);
 
                 if (hoveredIndex != -1) {
-                    if (CurCategory == Category.EnemyTanks)
+                    if (CurCategory == EditorCategory.EnemyTanks)
                         SelectedTankTier = hoveredIndex + 1;
-                    else if (CurCategory == Category.Terrain)
+                    else if (CurCategory == EditorCategory.Terrain)
                         SelectedBlockType = hoveredIndex;
-                    else if (CurCategory == Category.PlayerTanks)
+                    else if (CurCategory == EditorCategory.PlayerTanks)
                         SelectedPlayerType = hoveredIndex;
                 }
             }
@@ -789,9 +795,9 @@ public static partial class LevelEditorUI {
                 }
             }
 
-            BlockHeight = MathHelper.Clamp(BlockHeight, 1, 7);
+            BlockStack = MathHelper.Clamp(BlockStack, 1, 7);
 
-            if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks) {
+            if (CurCategory == EditorCategory.EnemyTanks || CurCategory == EditorCategory.PlayerTanks) {
                 // tank place handling, etc
                 if (InputUtils.KeyJustPressed(Keys.Up))
                     SelectedTankTeam--;
@@ -800,15 +806,15 @@ public static partial class LevelEditorUI {
 
                 SelectedTankTeam = MathHelper.Clamp(SelectedTankTeam, TeamID.NoTeam, TeamID.Magenta);
             }
-            else if (CurCategory == Category.Terrain) {
+            else if (CurCategory == EditorCategory.Terrain) {
                 if (InputUtils.KeyJustPressed(Keys.Up))
-                    BlockHeight++;
+                    BlockStack++;
                 if (InputUtils.KeyJustPressed(Keys.Down))
-                    BlockHeight--;
+                    BlockStack--;
                 if (SelectedBlockType == BlockID.Hole || SelectedBlockType == BlockID.Teleporter)
-                    BlockHeight = 1;
+                    BlockStack = 1;
 
-                BlockHeight = MathHelper.Clamp(BlockHeight, 1, 7);
+                BlockStack = MathHelper.Clamp(BlockStack, 1, 7);
             }
         }
         else if (IsEditing && !IsActive && cachedMission != default && CampaignGlobals.InMission)

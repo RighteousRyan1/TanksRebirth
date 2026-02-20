@@ -119,14 +119,14 @@ public class PlacementSquare {
     /// </summary>
     /// <param name="place">Whether or not to place the block or remove the block. If false, the block is removed.</param>
     public void DoPlacementAction(bool place) {
-        if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0 || LevelEditorUI.GUICategory == LevelEditorUI.UICategory.SavingThings)
+        if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0 || LevelEditorUI.EditState == LevelEditorUI.LevelEditState.SavingThings)
             return;
         if (PlacesBlock) {
             if (!HasBlock && HasItem)
                 return;
 
             if (place) {
-                var block = new Block(LevelEditorUI.IsActive ? LevelEditorUI.SelectedBlockType : DebugManager.blockType, LevelEditorUI.IsActive ? LevelEditorUI.BlockHeight : DebugManager.blockHeight, Position.FlattenZ());
+                var block = new Block(LevelEditorUI.IsActive ? LevelEditorUI.SelectedBlockType : DebugManager.blockType, LevelEditorUI.IsActive ? LevelEditorUI.BlockStack : DebugManager.blockHeight, Position.FlattenZ());
                 BlockId = block.Id;
 
                 HasBlock = true;
@@ -160,7 +160,7 @@ public class PlacementSquare {
             }
 
             var team = LevelEditorUI.IsActive ? LevelEditorUI.SelectedTankTeam : DebugManager.tankToSpawnTeam;
-            if (LevelEditorUI.CurCategory == LevelEditorUI.Category.EnemyTanks) {
+            if (LevelEditorUI.CurCategory == LevelEditorUI.EditorCategory.EnemyTanks) {
                 if (LevelEditorUI.IsActive && LevelEditorUI.SelectedTankTier < TankID.Brown)
                     return;
                 if (AIManager.CountAll() >= GameHandler.MAX_AI_TANKS) {
