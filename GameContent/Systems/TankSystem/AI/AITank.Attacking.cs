@@ -146,7 +146,7 @@ public partial class AITank {
                 var mine = Mine.AllMines[j];
                 if (mine is null) continue;
 
-                if (GameUtils.Distance_WiiTanksUnits(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.Value_WiiTanksUnits(70)) {
+                if (GameUtils.TanksDistance(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.TanksUnits(70)) {
                     contaminated = true;
                     break;
                 }
@@ -172,7 +172,7 @@ public partial class AITank {
 
                 // check against radius. ensures the tank doesn't move towards an already laid mine
                 // 70 is the magic number for the default mine radius, multiplied by the scalar
-                if (GameUtils.Distance_WiiTanksUnits(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.Value_WiiTanksUnits(70)) {
+                if (GameUtils.TanksDistance(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.TanksUnits(70)) {
                     // Console.WriteLine("Direction " + dirs[i].Direction + " is contaminated");
                     goodDirs[i].Direction = CollisionDirection.None;
                 }
@@ -200,8 +200,7 @@ public partial class AITank {
 
         if (!randomSuccess) return;
 
-        // do not hurt the worker thread plskthx
-        TankGame.MainThreadTasks.Enqueue(LayMine);
+        LayMine();
 
         // Pick a random valid direction
         int skips = Client.ClientRandom.Next(0, goodDirsCount);
@@ -241,7 +240,7 @@ public partial class AITank {
         var turretDir = Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi);
         if (Properties.ShellType == ShellID.Explosive) {
             tanksDef = GetTanksInPath(turretDir, out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
-            if (ricP.Length > 0 && GameUtils.Distance_WiiTanksUnits(ricP[^1], Position) < 150f)
+            if (ricP.Length > 0 && GameUtils.TanksDistance(ricP[^1], Position) < 150f)
                 tooCloseToExplosiveShell = true;
         }
         else {
@@ -346,8 +345,8 @@ public partial class AITank {
         // no need to check friendliesNearby because we return earlier in this method if there are any
         if (SeesTarget && CurShootCooldown <= 0) {
             if (Parameters.PredictsPositions || (!findsSelf && !findsFriendly)) {
-                TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
-                //Shoot(false);
+                // TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
+                Shoot(false);
             }
         }
     }
@@ -424,8 +423,6 @@ public partial class AITank {
     // maybe use WiiTanksDistance or whatever
     /// <summary>Makes this <see cref="AITank"/> attempt to shoot to destroy the given <see cref="Shell"/>.</summary>
     public void DoDeflection(Shell shell) {
-        Vector2 deltaP = shell.Position - TurretPosition;
-
         float t = GeometryUtils.QuadraticCoeff(TurretPosition, shell.Position, shell.Velocity, Properties.ShellSpeed);
 
         if (t < 0f) t = 0f;
@@ -447,7 +444,8 @@ public partial class AITank {
         // bool futureVisible = 
         // only shoot if it's aiming where it should
         if (angleDiff <= 0.05f) {
-            TankGame.MainThreadTasks.Enqueue(() => Shoot());
+            //TankGame.MainThreadTasks.Enqueue(() => Shoot());
+            Shoot();
         }
     }
 
@@ -555,7 +553,7 @@ public partial class AITank {
                 if (enemy is null || enemy.IsDestroyed || _tanksInPathBuffer.Contains(enemy)) continue;
 
                 // 15 is just an eensy weensy magical number.
-                if (i > 15 && GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss) {
+                if (i > 15 && GameUtils.TanksDistance(enemy.Position, pathPos) <= realMiss) {
                     var pathAngle = pathDir.ToRotation();
                     var toEnemy = pathPos.DirectionTo(enemy.Position).ToRotation();
 
@@ -564,7 +562,7 @@ public partial class AITank {
                 }
 
                 // this used to be a circle check, but it was probably overkill? we'll see
-                var closeEnough = GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= 8f; // realMiss;
+                var closeEnough = GameUtils.TanksDistance(enemy.Position, pathPos) <= 8f; // realMiss;
                 if (closeEnough) {
                     _tankPointsBuffer.Add(pathPos);
                     _tanksInPathBuffer.Add(enemy);

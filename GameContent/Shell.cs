@@ -55,28 +55,22 @@ public class Shell : IAITankDanger {
         public Model Model;
     }
     public delegate void PostCreateDelegate(Shell shell);
-
     public static event PostCreateDelegate? PostCreate;
 
     public delegate void PreCreateDelegate(Shell shell);
-
     public static event PreCreateDelegate? PreCreate;
 
     public delegate void RicochetDelegate(Shell shell, Block? block);
-
     /// <summary>If <see cref="Block"/> is <see langword="null"/>, then it ricocheted off the bounding wall.</summary>
     public static event RicochetDelegate? OnRicochet;
 
     public delegate void PostUpdateDelegate(Shell shell);
-
     public static event PostUpdateDelegate? OnPostUpdate;
 
     public delegate void PostRenderDelegate(Shell shell);
-
     public static event PostRenderDelegate? OnPostRender;
 
     public delegate void DestroyDelegate(Shell shell, DestructionContext context);
-
     public static event DestroyDelegate? OnDestroy;
 
     // this used to be 1500. why?
@@ -185,28 +179,15 @@ public class Shell : IAITankDanger {
     }
 
     /// <summary>
-    /// Creates a new <see cref="Shell"/>.
+    /// Creates a new <see cref="Shell"/>. This is unsafe as if you call this from Tank code, it will cause errors. Use <see cref="Create"/> instead.
     /// </summary>
-    /// <param name="position">The position of the created <see cref="Shell"/>.</param>
-    /// <param name="velocity">The velocity of the created <see cref="Shell"/>.</param>
-    /// <param name="type">The type of <see cref="Shell"/> to be fired.</param>
-    /// <param name="owner">Which <see cref="Tank"/> owns this <see cref="Shell"/>.</param>
-    /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
-    /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-    /// <param name="playSpawnSound">Play the shooting sound associated with this <see cref="Shell"/>.</param>
-    public Shell(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0,
-        HomingProperties homing = default, bool playSpawnSound = true) {
+    Shell(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0) {
         Type = type;
         RicochetsRemaining = ricochets;
         Position = position;
         DrawParamsShell.Model = ModelGlobals.Bullet.Asset;
-
-        AITank.Dangers.Add(this);
-
-        Properties.HomeProperties = homing;
         Owner = owner;
         // if explosive, black
-
         Velocity = velocity;
 
         PreCreate?.Invoke(this);
@@ -224,44 +205,56 @@ public class Shell : IAITankDanger {
         // ths calls OnCreate for ModdedData
         Swap(type);
 
-        if (playSpawnSound) {
-            if (Type <= ShellID.Explosive) {
-                ShootSound = Type switch {
+        CampaignGlobals.OnMissionEnd += StopSounds;
+        //TankGame.OnFocusLost += TankGame_OnFocusLost;
+        //TankGame.OnFocusRegained += TankGame_OnFocusRegained;
+
+        int index = Array.IndexOf(AllShells, null);
+        Id = index;
+        AllShells[index] = this;
+
+        if (owner == null) return;
+
+        var idx = Array.IndexOf(Owner.OwnedShells, null);
+        if (idx > -1) Owner.OwnedShells[idx] = this;
+
+        SetUID(GenerateUID(owner));
+        AITank.Dangers.Add(this);
+        PostCreate?.Invoke(this);
+    }
+    /// <summary>
+    /// Creates a <see cref="Shell"/>. This method is thread-agnostic.
+    /// </summary>
+    /// <param name="position">The position to spawn at.</param>
+    /// <param name="velocity">The initial velocity.</param>
+    /// <param name="type">The shell kind.</param>
+    /// <param name="owner">The tank (if any) that owns this <see cref="Shell"/>.</param>
+    /// <param name="ricochets">How many ricochets it will have.</param>
+    /// <param name="playSpawnSound">If <see langword="true"/>, <see cref="ShootSound"/> will be assigned to, and played.</param>
+    /// <returns>The created <see cref="Shell"/>.</returns>
+    public static Shell Create(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0, bool playSpawnSound = true) {
+        var shell = TankGame.ThreadAgnostic(() => {
+            var s = new Shell(position, velocity, type, owner, ricochets);
+
+            if (!playSpawnSound) return s;
+
+            if (s.Type <= ShellID.Explosive) {
+                s.ShootSound = s.Type switch {
                     ShellID.Player => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg"),
                     ShellID.Standard => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
                     ShellID.Rocket => new OggAudio("Content/Assets/sounds/tnk_shoot_rocket.ogg"),
                     ShellID.TrailedRocket => new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket.ogg"),
                     ShellID.Supressed => new OggAudio("Content/Assets/sounds/tnk_shoot_silencer.ogg"),
                     ShellID.Explosive => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
-                    _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
+                    _ => throw new NotImplementedException($"Sound for the shell type {s.Type} is not implemented... yet."),
                 };
+                SoundPlayer.PlaySoundInstance(s.ShootSound, SoundContext.Effect, volume: 1f, pitchOverride: GameUtils.NaturalPitchShift);
             }
-            if (owner is not null) {
-                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 1f, pitchOverride: GameUtils.NaturalPitchShift);
-                //if (CameraGlobals.IsUsingFirstPresonCamera)
-                //    SoundUtils.CreateSpatialSound(ShootSound, owner.TurretPosition3D, CameraGlobals.RebirthFreecam.Position);
-            }
-        }
 
-        CampaignGlobals.OnMissionEnd += StopSounds;
-        //TankGame.OnFocusLost += TankGame_OnFocusLost;
-        //TankGame.OnFocusRegained += TankGame_OnFocusRegained;
+            return s;
+        });
 
-        int index = Array.IndexOf(AllShells, null);
-
-        Id = index;
-
-        AllShells[index] = this;
-
-        if (owner == null) return;
-
-        var idx = Array.IndexOf(Owner.OwnedShells, null);
-
-        if (idx > -1)
-            Owner.OwnedShells[idx] = this;
-
-        SetUID(GenerateUID(owner));
-        PostCreate?.Invoke(this);
+        return shell;
     }
     void StopSounds(int delay, MissionEndContext context, bool result1up) {
         TrailSound?.Instance?.Stop();
@@ -323,7 +316,7 @@ public class Shell : IAITankDanger {
 
         LifeTime += RuntimeData.DeltaTime;
 
-        while (LifeTime > Properties.HomeProperties.Cooldown) { // Use loop to reduce nesting smh.
+        while (LifeTime > Properties.Homing.Cooldown) { // Use loop to reduce nesting smh.
             if (Owner == null)
                 break;
 
@@ -333,24 +326,24 @@ public class Shell : IAITankDanger {
                 var target = Unsafe.Add(ref tanksSSpace, i);
 
                 if (target is null || target.IsDestroyed || target == Owner ||
-                    !(Vector2.Distance(Position, target.Position) <= Properties.HomeProperties.Radius)) continue;
+                    !(Vector2.Distance(Position, target.Position) <= Properties.Homing.Radius)) continue;
 
                 if (target.Team == Owner.Team && target.Team != TeamID.NoTeam) continue;
 
-                if (Properties.HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
-                    Properties.HomeProperties.Target = target.Position;
-                if (!Properties.HomeProperties.HeatSeeks)
-                    Properties.HomeProperties.Target = target.Position;
+                if (Properties.Homing.HeatSeeks && target.Velocity != Vector2.Zero)
+                    Properties.Homing.Target = target.Position;
+                if (!Properties.Homing.HeatSeeks)
+                    Properties.Homing.Target = target.Position;
             }
 
-            if (Properties.HomeProperties.Target != Vector2.Zero) {
+            if (Properties.Homing.Target != Vector2.Zero) {
                 bool success = false;
                 Tank.CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
                     // pretty self-explanatory
                     if (fixture.Body.Tag is Tank t) {
                         if (!t.IsOnSameTeamAs(Team)) {
                             float distanceToHit = Vector2.Distance(Position / Tank.UNITS_PER_METER, point);
-                            if (distanceToHit <= Properties.HomeProperties.Radius / Tank.UNITS_PER_METER) {
+                            if (distanceToHit <= Properties.Homing.Radius / Tank.UNITS_PER_METER) {
                                 success = true;
                             }
                             return fraction;
@@ -359,13 +352,13 @@ public class Shell : IAITankDanger {
                     }
                     success = false;
                     return 0f;
-                }, Position / Tank.UNITS_PER_METER, Properties.HomeProperties.Target / Tank.UNITS_PER_METER);
+                }, Position / Tank.UNITS_PER_METER, Properties.Homing.Target / Tank.UNITS_PER_METER);
 
                 if (success) {
-                    float dist = Vector2.Distance(Position, Properties.HomeProperties.Target);
-                    Velocity += MathUtils.DirectionTo(Position, Properties.HomeProperties.Target) * Properties.HomeProperties.Power / dist;
+                    float dist = Vector2.Distance(Position, Properties.Homing.Target);
+                    Velocity += MathUtils.DirectionTo(Position, Properties.Homing.Target) * Properties.Homing.Power / dist;
 
-                    var trueSpeed = Vector2.Normalize(Velocity) * Properties.HomeProperties.Speed;
+                    var trueSpeed = Vector2.Normalize(Velocity) * Properties.Homing.Speed;
                     Velocity = trueSpeed;
                 }
             }
@@ -690,8 +683,8 @@ public class Shell : IAITankDanger {
         DrawParams.View = CameraGlobals.GameView;
 
         // TODO: wtf? DoRaycast failing?
-        //if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.HomeProperties.Speed > 0)
-        //    Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius, true);
+        //if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.Homing.Speed > 0)
+        //    Collision.DoRaycast(Position, Properties.Homing.Target, (int)Properties.Homing.Radius, true);
         if (DebugManager.DebuggingEnabled) {
             DebugManager.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}" +
@@ -740,7 +733,7 @@ public class Shell : IAITankDanger {
 
         var rotToTarget = MathUtils.DirectionTo(Position, targetPosition).ToRotation();
 
-        var inDistance = GameUtils.Distance_WiiTanksUnits(Position, targetPosition) < distance;
+        var inDistance = GameUtils.TanksDistance(Position, targetPosition) < distance;
 
         var angleBetween = MathUtils.AbsoluteAngleBetween(rotation, rotToTarget);
 

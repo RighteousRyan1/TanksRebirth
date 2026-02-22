@@ -3,7 +3,8 @@ using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
 
-public struct AIParameters() {
+// ref struct at some point
+public class AIParameters {
     /// <summary>The amount of distance to check (in units) in all directions for obstacles to ensure laying a mine is safe. Word 2.</summary>
     public float ObstacleAwarenessMine { get; set; }
     /// <summary>The maximum amount of time before this <see cref="AITank"/> can lay a mine. Word 4.</summary>
@@ -39,7 +40,7 @@ public struct AIParameters() {
     public float AggressivenessBias { get; set; }
     /// <summary>Acts as the maximum amount of queued "movements" this tank needs to take before it can move randomly. Word 22.</summary>
     // note: all tanks use this value at 4
-    public int MaxQueuedMovements { get; set; }
+    public int MaxQueuedMovements { get; set; } = 4;
     /// <summary>How far from this tank that it is aware of obstacles and navigates around them. Word 28.</summary>
     public uint ObstacleAwarenessMovement { get; set; }
     /// <summary>How inaccurate (in radians) this tank is trying to aim at its target. Word 29.</summary>

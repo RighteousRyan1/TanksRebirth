@@ -31,7 +31,7 @@ public partial class AITank {
 
             // mines and explosions should be treated differently and specially
             if (danger is Mine || danger is Explosion) {
-                var isCloseEnough = GameUtils.Distance_WiiTanksUnits(Position, danger.Position) <=
+                var isCloseEnough = GameUtils.TanksDistance(Position, danger.Position) <=
                     (isHostile ? Parameters.AwarenessHostileMine : Parameters.AwarenessFriendlyMine);
 
                 if (isCloseEnough) {
@@ -70,14 +70,14 @@ public partial class AITank {
 
             if (currentDanger is null) continue;
 
-            var distanceToDanger = GameUtils.Distance_WiiTanksUnits(Position, currentDanger.Position);
+            var distanceToDanger = GameUtils.TanksDistance(Position, currentDanger.Position);
 
             if (!(distanceToDanger < distance)) continue;
 
             dangersNear.Add(currentDanger);
 
             if (closest == null || distanceToDanger <
-                GameUtils.Distance_WiiTanksUnits(Position, closest.Position)) {
+                GameUtils.TanksDistance(Position, closest.Position)) {
                 closest = currentDanger;
             }
         }

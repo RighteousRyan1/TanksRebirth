@@ -1,10 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -17,5 +12,6 @@ public static class BinaryUtils
         writer.Write(color.G);
         writer.Write(color.B);
     }
+    /// <summary>Reads a color from a binary sequence.</summary>
     public static Color ReadColor(this BinaryReader reader) => new(reader.ReadByte(), reader.ReadByte(), reader.ReadByte());
 }

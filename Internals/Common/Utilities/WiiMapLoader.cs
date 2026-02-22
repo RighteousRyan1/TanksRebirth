@@ -15,8 +15,7 @@ using TanksRebirth.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
-public readonly struct WiiMap
-{
+public readonly struct WiiMap {
     public readonly struct WiiMapTileData {
         public readonly BlockMapPosition Position;
         public readonly int Type;
@@ -86,7 +85,7 @@ public readonly struct WiiMap
             LevelEditorUI.EditState = LevelEditorUI.LevelEditState.LevelEditor;
             return;
         }
-        
+
         var rawData = new byte[LargeMapBytepool];
         var byteOffset = 0x3; // 3 bytes
 
@@ -122,12 +121,12 @@ public readonly struct WiiMap
 
                 switch (tank) {
                     case PlayerTank player: {
-                        if (player.PlayerType < 2) {
-                            rawData[byteOffset - 0x1] = 1;
-                            SetBit(rawData, player.PlayerType + 44);
+                            if (player.PlayerType < 2) {
+                                rawData[byteOffset - 0x1] = 1;
+                                SetBit(rawData, player.PlayerType + 44);
+                            }
+                            break;
                         }
-                        break;
-                    }
                     case AITank ai:
                         rawData[byteOffset - 0x1] = 1;
                         SetBit(rawData, ai.AITankId + 144);
@@ -143,7 +142,7 @@ public readonly struct WiiMap
     }
 
     private static WiiMapValidationResult ValidateWiiMap() {
-        var result = WiiMapValidationResult.Success;
+        WiiMapValidationResult result = 0;
         var tankAiCount = 0;
         var playerCount = 0;
         for (var i = 0; i < PlacementSquare.Placements.Count; i++) {
@@ -156,13 +155,8 @@ public readonly struct WiiMap
                     tankAiCount++;
             }
         }
-        if (tankAiCount > 8) result = WiiMapValidationResult.FailureTooManyAI;
-        if (playerCount > 2) {
-            if (result == WiiMapValidationResult.Success)
-                result = WiiMapValidationResult.FailureTooManyPlayers;
-            else
-                result |= WiiMapValidationResult.FailureTooManyPlayers;
-        }
+        if (tankAiCount > 8) result |= WiiMapValidationResult.FailureTooManyAI;
+        if (playerCount > 2) result |= WiiMapValidationResult.FailureTooManyPlayers;
 
         return result;
     }
@@ -206,22 +200,22 @@ public readonly struct WiiMap
 
         switch (mapTile.Stack) {
             case PLAYER_TANK_ID: { // Player Tank, That's us!
-                var pl = DebugManager.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
-                pl.ChassisRotation = tnkRot;
-                pl.DesiredChassisRotation = tnkRot;
-                pl.TurretRotation = tnkRot;
-                tile.TankId = pl.WorldId;
-                break;
-            }
+                    var pl = DebugManager.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
+                    pl.ChassisRotation = tnkRot;
+                    pl.DesiredChassisRotation = tnkRot;
+                    pl.TurretRotation = tnkRot;
+                    tile.TankId = pl.WorldId;
+                    break;
+                }
             case ENEMY_TANK_ID: { // Enemy Tank.
-                var ai = DebugManager.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
-                ai.ChassisRotation = tnkRot;
-                ai.DesiredChassisRotation = tnkRot;
-                ai.TurretRotation = tnkRot;
-                tile.TankId = ai.WorldId;
-                ai.ReassignId(mapTile.Type);
-                break;
-            }
+                    var ai = DebugManager.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
+                    ai.ChassisRotation = tnkRot;
+                    ai.DesiredChassisRotation = tnkRot;
+                    ai.TurretRotation = tnkRot;
+                    tile.TankId = ai.WorldId;
+                    ai.ReassignId(mapTile.Type);
+                    break;
+                }
         }
 
         tile.HasBlock = false;
@@ -265,7 +259,7 @@ public readonly struct WiiMap
 
 [Flags]
 public enum WiiMapValidationResult {
-    Success, 
-    FailureTooManyAI, 
+    Success,
+    FailureTooManyAI,
     FailureTooManyPlayers
 }

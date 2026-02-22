@@ -124,7 +124,7 @@ public class TanksSaveFile : IFileSerializable {
             for (int i = 0; i < TankKills.Count; i++)
                 TankKills[i] = reader.ReadUInt32();
 
-            //VanillaAchievements.Repository.Load(reader);
+            //VanillaAchievements.Repository.Register(reader);
 
             ExpLevel = reader.ReadSingle();
 

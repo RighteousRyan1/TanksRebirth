@@ -69,7 +69,7 @@ public struct ComputerSpecs : IEquatable<ComputerSpecs>
                 string name = CleanCpuName(hardware.Name);
                 /*int coreCount = hardware.Sensors
                     // uhhh, why is this not getting cores.
-                    .Where(s => s.SensorType == SensorType.Load && s.Name == "")
+                    .Where(s => s.SensorType == SensorType.Register && s.Name == "")
                     .Select(s => s.Name)
                     .Distinct()
                     .Count();*/

@@ -515,8 +515,8 @@ public partial class AITank : Tank {
             if (tank is null || tank == this || tank.IsDestroyed)
                 continue;
 
-            float distToBody = GameUtils.Distance_WiiTanksUnits(Position, tank.Position);
-            float distToTurret = GameUtils.Distance_WiiTanksUnits(TurretPosition, tank.Position);
+            float distToBody = GameUtils.TanksDistance(Position, tank.Position);
+            float distToTurret = GameUtils.TanksDistance(TurretPosition, tank.Position);
 
             if (distToBody <= Parameters.TankAwarenessMine)
                 TanksNearMineAwareness.Add(tank);
@@ -525,6 +525,8 @@ public partial class AITank : Tank {
                 TanksNearShootAwareness.Add(tank);
         }
 
+        var t = this;
+        // if (ModdedData?.CustomAI() == false) return;
         if (ModdedData is not null) {
             if (!ModdedData.CustomAI())
                 return;
@@ -625,7 +627,7 @@ public partial class AITank : Tank {
 
         const int circleResolution = 64;
 
-        float radius = GameUtils.Value_WiiTanksUnits(awareness + TNK_WIDTH) / 2f;
+        float radius = GameUtils.TanksUnits(awareness + TNK_WIDTH) / 2f;
 
         // slightly above the tank Y to prevent z-fighting
         float heightOffset = 0.2f;
@@ -662,7 +664,7 @@ public partial class AITank : Tank {
         var forward = Vector2.UnitY.RotatedBy(ChassisRotation + forwardOffset);
 
         // not to game units...?
-        var gameUnits = GameUtils.Value_WiiTanksUnits(distance + TNK_WIDTH);
+        var gameUnits = GameUtils.TanksUnits(distance + TNK_WIDTH);
         var end2D = Position + forward * gameUnits;
         var end = new Vector3(end2D.X, heightOffset, end2D.Y) + offset;
 
@@ -694,8 +696,6 @@ public partial class AITank : Tank {
             var drawInfo = new Dictionary<(string Name, float Value, bool TrackTurret), Color>() {
                 [(nameof(Parameters.ObstacleAwarenessMine), ObstacleAwarenessMineReal / 2, false)] = Color.Yellow,
 
-                [(nameof(Parameters.ObstacleAwarenessMovement), Parameters.ObstacleAwarenessMovement * 2, false)] = Color.Purple,
-
                 [(nameof(Parameters.AwarenessFriendlyShell), Parameters.AwarenessFriendlyShell, false)] = Color.Green,
                 [(nameof(Parameters.AwarenessFriendlyMine), Parameters.AwarenessFriendlyMine, false)] = Color.LimeGreen,
 
@@ -721,18 +721,18 @@ public partial class AITank : Tank {
 
                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, realI * 20);
                 DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
-                    $"{info.Key.Name}: {info.Key.Value} ({GameUtils.Value_WiiTanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
+                    $"{info.Key.Name}: {info.Key.Value} ({GameUtils.TanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
                 DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
             }
 
-            DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2 * Speed, Color.Black);
+            DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2, Color.Black);
             // DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2 * Speed, Color.Magenta, forwardOffset: ChassisRotation - DesiredChassisRotation);
 
             drawInfo.Clear();
 
             if (Parameters.PredictsPositions && TargetTank is not null)
-                calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
+                calculation = Position.DistanceTo(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
 
             if (Parameters.SmartRicochets)
                 GetTanksInPath(Vector2.UnitY.RotatedBy(_seekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
@@ -779,7 +779,7 @@ public partial class AITank : Tank {
             goodDirs[i] = (collDir, dir);
 
             // Value_ToWiiTanksUnits...?
-            var gameUnits = GameUtils.Value_WiiTanksUnits(TNK_WIDTH + distance);
+            var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
             var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
 
             lock (_rayCastLock) {

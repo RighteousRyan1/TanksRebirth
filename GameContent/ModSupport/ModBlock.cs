@@ -58,6 +58,8 @@ public class ModBlock : ILoadable, IModContent {
         Type = BlockID.Collection.ForcefullyInsert(name);
 
         _texture = Mod.ImportAsset<Texture2D>(Texture);
+
+        ModRegistry.idToModBlock.Add(Type, this);
     }
     internal void Unload() {
         BlockID.Collection.TryRemove(Type - unloadOffset);

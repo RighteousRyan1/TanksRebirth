@@ -66,7 +66,7 @@ public static class CameraGlobals {
     public static float AddativeZoom = 1f;
     public static float POVCameraRotation;
 
-    public static Vector2 CameraFocusOffset;
+    public static Vector3 CameraFocusOffset;
     public static Vector2 OrthoRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
     public static Vector3 POVCameraPosition = new(0, 100, 0);
 
@@ -146,13 +146,14 @@ public static class CameraGlobals {
     static void UpdateOverheadCamera() {
         UpdateOverhead();
 
+        // default orthographic view. maybe i should split into cameras, like ICamera?
         GameView =
             Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
             Matrix.CreateLookAt(new(0f, 0f, 100f), Vector3.Zero, Vector3.Up) *
             Matrix.CreateTranslation(
                 CameraFocusOffset.X,
                 -CameraFocusOffset.Y - 110f,
-                0f) *
+                -CameraFocusOffset.Z) *
             Matrix.CreateRotationY(OrthoRotationVector.X) *
             Matrix.CreateRotationX(OrthoRotationVector.Y);
 
@@ -164,7 +165,7 @@ public static class CameraGlobals {
             RebirthFreecam.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition;
         }
 
-        RebirthFreecam.HasLookAt = false;
+        RebirthFreecam.UseFocus = false;
         RebirthFreecam.FieldOfView = 100f;
 
         GameView = RebirthFreecam.View;
@@ -177,8 +178,8 @@ public static class CameraGlobals {
         float realMoveSpeed = 5f * RuntimeData.DeltaTime;
         const float rotationSpeed = 0.01f;
 
-        RebirthFreecam.HasLookAt = false;
-        RebirthFreecam.FarViewDistance = 75000;
+        RebirthFreecam.UseFocus = false;
+        RebirthFreecam.Far = 75000;
         RebirthFreecam.MinPitch = -180f;
         RebirthFreecam.MaxPitch = 180f;
 

@@ -226,7 +226,7 @@ public static class CosmeticsUI {
             // helps calculate the goal position
             float angle = MathHelper.Lerp(startRads, endRads, k);
 
-            var destination = new Vector3(50, 50, 0).RotateXY(angle + MathHelper.PiOver4);
+            var destination = new Vector3(50, 50, 0).Rotate(Vector3.UnitZ, angle + MathHelper.PiOver4);
             destination = destination.RotateXZ(-MathHelper.PiOver4);
             // destination = destination.RotateXZ(radLerp);
 

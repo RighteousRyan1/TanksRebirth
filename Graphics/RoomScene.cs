@@ -333,7 +333,7 @@ public static class RoomScene {
             bs.Radius *= Scale * 100;
             if (!CameraGlobals.ViewFrustum.Intersects(bs))
                 continue;
-            // var inv = 1f - MathUtils.InverseLerp(100, 2000, Vector3.Distance(CameraGlobals.RebirthFreecam.Position, bs.Center), true);
+            // var inv = 1f - MathUtils.InverseLerp(100, 2000, Vector3.DistanceTo(CameraGlobals.RebirthFreecam.Position, bs.Center), true);
             // DebugManager.DrawBoundingSphere(bs, Color.Red * inv, CameraGlobals.GameView, CameraGlobals.GameProjection);
             foreach (BasicEffect effect in mesh.Effects) {
                 MeshEffectSet(mesh, effect);

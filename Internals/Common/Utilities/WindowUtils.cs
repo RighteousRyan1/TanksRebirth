@@ -1,13 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
+// this is demanding a rewrite.
 public static class WindowUtils {
     // probably prefer a constant "RenderScale" instead of calling ToResolution literally fucking everywhere...
     public static Vector2 RenderResolution => new(1920, 1080);

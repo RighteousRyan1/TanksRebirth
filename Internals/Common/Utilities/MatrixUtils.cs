@@ -1,9 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Utilities;
@@ -43,6 +39,9 @@ public static class MatrixUtils {
         return mouseRay.Position + mouseRay.Direction * distance.Value;
     }
 
+    /// <summary>
+    /// Gets a ray that is representative of where the mouse would cast towards the world.
+    /// </summary>
     public static Ray GetMouseToWorldRay() {
         var nearPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
         var farPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
@@ -53,7 +52,7 @@ public static class MatrixUtils {
     /// Extracts the camera rotation (pitch, yaw, roll) from a view matrix.
     /// </summary>
     public static EulerAngles GetRotationFromView(Matrix view) {
-        Matrix camWorld = Matrix.Invert(view);
+        var camWorld = Matrix.Invert(view);
 
         // quat that represents the rotation
         var q = Quaternion.CreateFromRotationMatrix(camWorld);
@@ -84,6 +83,13 @@ public static class MatrixUtils {
         };
     }
 
+    /// <summary>
+    /// Checks if two given matrices are "identical."
+    /// </summary>
+    /// <param name="m1">The first matrix.</param>
+    /// <param name="m2">The second matrix.</param>
+    /// <param name="epsilon">The "give" for the equality check. If too low, this check can fail even though the matrices are indeed equal, due to IEEE inaccuracy.</param>
+    /// <returns></returns>
     public static bool AreMatricesEqual(Matrix m1, Matrix m2, float epsilon = 0.0001f) {
         return Math.Abs(m1.M11 - m2.M11) < epsilon &&
                Math.Abs(m1.M12 - m2.M12) < epsilon &&

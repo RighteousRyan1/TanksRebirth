@@ -3,6 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities; 
 public static class TextureUtils {
+    /// <summary>
+    /// Duplicates texture data from a texture and returns it to the user.
+    /// </summary>
     public static Texture2D Duplicate(this Texture2D t, GraphicsDevice device) {
         // Get pixel data from the original texture
         Color[] data = new Color[t.Width * t.Height];

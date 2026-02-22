@@ -19,8 +19,7 @@ public enum Anchor
     LeftCenter,
     RightCenter,
 }
-public static class GameUtils
-{
+public static class GameUtils {
     public static float NaturalPitchVariance = 0.1f;
     public static float NaturalPitchShift => Client.ClientRandom.NextFloat(-NaturalPitchVariance, NaturalPitchVariance);
     public static IAITankDanger? Closest(this IList<IAITankDanger> positions, Vector2 source) {
@@ -58,6 +57,6 @@ public static class GameUtils
 
     // divide since the distance is bigger from regular distance calculations
     public const float WII_TANKS_UNIT_CONVERSION = 0.71428571428f;
-    public static float Distance_WiiTanksUnits(Vector2 position, Vector2 endPoint) => Vector2.Distance(position, endPoint) / WII_TANKS_UNIT_CONVERSION;
-    public static float Value_WiiTanksUnits(float value) => value * WII_TANKS_UNIT_CONVERSION;
+    public static float TanksDistance(Vector2 position, Vector2 endPoint) => Vector2.Distance(position, endPoint) / WII_TANKS_UNIT_CONVERSION;
+    public static float TanksUnits(float value) => value * WII_TANKS_UNIT_CONVERSION;
 }

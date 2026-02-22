@@ -29,6 +29,8 @@ public sealed class TankID {
     public const int Gold = 17;
     public const int Obsidian = 18;
 
+    public static readonly int VanillaCount = Obsidian + 1;
+
     // ...future tanks will go here
 
     /* IDEAS:

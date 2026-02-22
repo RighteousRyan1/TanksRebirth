@@ -61,6 +61,8 @@ public class ModShell : ILoadable, IModContent {
         Type = ShellID.Collection.ForcefullyInsert(name);
         _texture = Mod.ImportAsset<Texture2D>(Texture);
         LoadSounds();
+
+        ModRegistry.idToModShell.Add(Type, this);
     }
     internal void Unload() {
         ShellID.Collection.TryRemove(Type - unloadOffset);

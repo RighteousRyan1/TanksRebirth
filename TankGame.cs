@@ -52,7 +52,7 @@ namespace TanksRebirth;
 public class TankGame : Game {
     // ### STRINGS ###
     public string MOTD { get; private set; }
-    public static string GameDirectory { get; private set; }
+    public readonly string GameDirectory;
     public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(TanksRebirth)}.dll", string.Empty);
     public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "Tanks Rebirth");
 
@@ -89,9 +89,6 @@ public class TankGame : Game {
     public static readonly FpsTracker FPSTracker = new();
     public readonly GraphicsDeviceManager Graphics;
 
-    public static OrthographicCamera OrthographicCamera;
-    public static SpectatorCamera SpectatorCamera;
-    public static PerspectiveCamera PerspectiveCamera;
     /// <summary>The index/vertex buffer used to render to a framebuffer.</summary>
     public static SpriteBatch SpriteRenderer;
 
@@ -119,6 +116,31 @@ public class TankGame : Game {
     /// <summary>A queue of actions to be taken on the main thread.
     /// <br></br>This is particularly useful for performing things on the main thread when you are processing on other threads.</summary>
     public static ConcurrentQueue<Action> MainThreadTasks = [];
+    public static Task<T> MainThreadEnqueue<T>(Func<T> func) {
+        var tcs = new TaskCompletionSource<T>();
+
+        MainThreadTasks.Enqueue(() =>
+        {
+            try {
+                var result = func();
+                tcs.SetResult(result);
+            } catch (Exception ex) {
+                tcs.SetException(ex);
+            }
+        });
+
+        return tcs.Task;
+    }
+    /// <summary>
+    /// Does a specified action and returns the result. If the context is on the main thread, the function is preformed regularly, otherwise, it waits for a function to execute on the main thread and returns the result.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="func"></param>
+    /// <returns></returns>
+    public static T ThreadAgnostic<T>(Func<T> func) {
+        if (RuntimeData.IsMainThread) return func();
+        else return MainThreadEnqueue(() => func()).GetAwaiter().GetResult();
+    }
 
     public TankGame() : base() {
         // prepare IO
@@ -131,6 +153,8 @@ public class TankGame : Game {
         ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "tanks_rebirth_client");
         IngameConsole = new GameConsole(this);
         ClientLog.OnLogWrite += WriteToIngameConsole;
+
+        GameDirectory = Directory.GetCurrentDirectory();
 
         // logging speaks for itself
         Task.Run(() => {
@@ -206,7 +230,6 @@ public class TankGame : Game {
 
             ClientLog.Write("Save file loaded.", LogType.Info);
 
-            GameDirectory = Directory.GetCurrentDirectory();
             CameraGlobals.Initialize(GraphicsDevice);
             if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
                 ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
@@ -422,10 +445,6 @@ public class TankGame : Game {
             var s = Stopwatch.StartNew();
 
             RuntimeData.MainThreadId = Environment.CurrentManagedThreadId;
-
-            OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
-            SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
-            PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
             Task.Run(() => {
                 RuntimeData.CompSpecs = ComputerSpecs.GetSpecs(out bool error);

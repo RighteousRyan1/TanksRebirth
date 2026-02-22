@@ -330,7 +330,7 @@ public static class DebugManager {
             if (InputUtils.MouseRight && InputUtils.MouseLeft) {
                 CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
                 CameraGlobals.AddativeZoom = LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
-                CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
+                CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector3(0, CameraGlobals.LVL_EDIT_Y_OFF, 0) : Vector3.Zero;
             }
 
             if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
@@ -338,8 +338,20 @@ public static class DebugManager {
             if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
                 CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaTime;
 
-            if (InputUtils.MouseMiddle)
-                CameraGlobals.CameraFocusOffset += MouseUtils.MouseVelocity;
+            if (InputUtils.MouseMiddle) {
+                var mtx = CameraGlobals.GameView;
+                Vector3 cameraRight = mtx.Right;
+                Vector3 cameraUp = mtx.Up;
+
+                cameraRight.Normalize();
+                cameraUp.Normalize();
+
+                Vector3 movement = (cameraRight * MouseUtils.MouseVelocity.X) + (cameraUp * MouseUtils.MouseVelocity.Y);
+                ChatSystem.SendMessage($"movement: {movement}");
+                ChatSystem.SendMessage($"right:    {cameraRight}");
+
+                CameraGlobals.CameraFocusOffset += movement;
+            }
         }
         else {
             var fc = CameraGlobals.RebirthFreecam;
@@ -434,8 +446,8 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.Home))
             SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
-        if (InputUtils.KeyJustPressed(Keys.OemSemicolon)) new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
-        if (InputUtils.KeyJustPressed(Keys.OemQuotes)) new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Rocket, null!, 0);
+        if (InputUtils.KeyJustPressed(Keys.OemSemicolon)) Mine.Create(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
+        if (InputUtils.KeyJustPressed(Keys.OemQuotes)) Shell.Create(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Rocket, null!, 0);
         if (InputUtils.KeyJustPressed(Keys.End)) SpawnCrateAtMouse();
 
         if (InputUtils.KeyJustPressed(Keys.OemQuestion)) new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
@@ -577,7 +589,6 @@ public static class DebugManager {
         if (DebugLevel == Id.FreeCamTest) {
             spriteBatch.DrawString(FontGlobals.RebirthFont,
                $"Position: {CameraGlobals.RebirthFreecam.Position}" +
-            $"\nVelocity: {CameraGlobals.RebirthFreecam.Velocity}" +
             $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
             $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}�" +
             $"\nForward: {CameraGlobals.GameView.Forward}" +

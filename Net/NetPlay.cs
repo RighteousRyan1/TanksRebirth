@@ -344,7 +344,7 @@ public static class NetPlay {
                 var detTime = reader.GetFloat();
                 var mineOwner = reader.GetInt();
 
-                new Mine(GameHandler.AllTanks[mineOwner], minePos, detTime);
+                Mine.Create(GameHandler.AllTanks[mineOwner], minePos, detTime);
 
                 break;
             case PacketID.SendCampaignByName:

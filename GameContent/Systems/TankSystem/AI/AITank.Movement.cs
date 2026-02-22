@@ -100,7 +100,7 @@ public partial class AITank {
         var checkDist = Parameters.ObstacleAwarenessMovement / 2;
         // var rayNormal = Vector2.Zero;
         // strictly 
-        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist * Speed);
+        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist /* Speed*/);
 
         // don't bother doing anything else since it's not blocked
         if (!IsTooCloseToObstacle) {
@@ -131,7 +131,7 @@ public partial class AITank {
             dir = CollisionDirection.Right;
         else if (checkLeft && !checkRight)
             dir = CollisionDirection.Left;*/
-            var dir = fracL > fracR ? CollisionDirection.Left : CollisionDirection.Right;
+        var dir = fracL > fracR ? CollisionDirection.Left : CollisionDirection.Right;
 
         // if the rays are highly similar in distance, reverse, since you're most likely heading into a wall directly
         if (fracL.IsWithinRange(fracR, 0.00125f)) {
@@ -150,7 +150,7 @@ public partial class AITank {
 
         // old = Vector2.UnitY.RotatedBy(-rayNormal.ToRotation() - MathHelper.PiOver2);
         var movementDirection = Vector2.UnitY.RotatedBy(ChassisRotation + vecRot);
-        
+
         PivotQueue.Enqueue(movementDirection);
     }
     /// <summary>Makes this <see cref="AITank"/> perform a random turn.</summary>
@@ -201,7 +201,7 @@ public partial class AITank {
         var dir = Vector2.UnitY.RotatedBy(ChassisRotation + offset);
 
         // switch to using game units if necessary?
-        var gameUnits = GameUtils.Value_WiiTanksUnits(TNK_WIDTH + distance);
+        var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
         var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
 
         // exceptions thrown here, "Stack is empty", assuming race conditions? (and sometimes nullreference?)

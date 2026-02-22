@@ -97,18 +97,14 @@ public sealed class Mine : IAITankDanger {
     /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
     /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
     /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-    public Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 1f) { // radius, old = 65
+    Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 1f) { // radius, old = 65
         Owner = owner;
         ExplosionRadius = radius;
-
-        AITank.Dangers.Add(this);
-
-        DrawParamsMine.Model = ModelGlobals.Mine.Asset;
-
         DetonateTime = detonateTime;
         DetonateTimeMax = detonateTime;
-
         Position = pos;
+
+        DrawParamsMine.Model = ModelGlobals.Mine.Asset;
 
         if (owner != null) {
             var placeSound = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
@@ -126,10 +122,22 @@ public sealed class Mine : IAITankDanger {
         MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits;
 
         int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
-
         Id = index;
-
         AllMines[index] = this;
+
+        AITank.Dangers.Add(this);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="Mine"/>. This method is thread-agnostic.
+    /// </summary>
+    /// <param name="owner">The <see cref="Tank"/> which owns this <see cref="Mine"/>.</param>
+    /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
+    /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
+    /// <param name="explosionRadius">The radius of this <see cref="Mine"/>'s explosion.</param>
+    public static Mine Create(Tank? owner, Vector2 position, float detonateTime, float explosionRadius = 1f) {
+        var mine = TankGame.ThreadAgnostic(() => new Mine(owner, position, detonateTime, explosionRadius));
+        return mine;
     }
     /// <summary>Detonates this <see cref="Mine"/>.</summary>
     public void Detonate() {
@@ -193,7 +201,7 @@ public sealed class Mine : IAITankDanger {
             }
 
             if (Position != _oldPosition) // magicqe number
-                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.Properties.IsDestructible);
+                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.DistanceTo(b.Position) <= ExplosionRadius - 6f && b.Properties.IsDestructible);
 
             // NOTE: this scope may be inconsistent over a server? check soon.
             if (DetonateTime > MineReactTime) {
@@ -203,7 +211,7 @@ public sealed class Mine : IAITankDanger {
                     if (tank.IsDestroyed) continue;
                     if (Owner is null) continue;
 
-                    var dist = GameUtils.Distance_WiiTanksUnits(tank.Position, Position);
+                    var dist = GameUtils.TanksDistance(tank.Position, Position);
                     if (dist > MineReactRadius) continue;
 
                     // don't try any further, we don't want to explode if these conditions are true

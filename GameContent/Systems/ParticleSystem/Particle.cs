@@ -141,7 +141,7 @@ public class Particle {
         //TankGame.SpriteRenderer.Begin(blendState: HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: System.Rasterizer);
         Matrix world;
 
-        /*if (FaceTowardsMe) {
+        if (FaceTowardsMe) {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateBillboard(Position,
@@ -150,17 +150,17 @@ public class Particle {
                                             CameraGlobals.RebirthFreecam.World.Down,
                                             CameraGlobals.RebirthFreecam.World.Forward);
         }
-        else {*/
+        else {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateTranslation(Position);
 
-            if (FaceTowardsMe) world *= Matrix.CreateBillboard(Position,
+            /*if (FaceTowardsMe) world *= Matrix.CreateBillboard(Position,
                                             CameraGlobals.RebirthFreecam.Position,
                                             // up is wrong for some reason
                                             CameraGlobals.RebirthFreecam.World.Down,
-                                            CameraGlobals.RebirthFreecam.World.Forward);
-        //}
+                                            CameraGlobals.RebirthFreecam.World.Forward);*/
+        }
         foreach (ModelMesh mesh in Model.Meshes) {
             if (MeshesToIgnore.Contains(mesh.Name)) continue;
 

@@ -15,7 +15,8 @@ public enum ResistanceFlags : byte {
     /// <summary>An invulnerability to every flag within <see cref="ResistanceFlags"/>.</summary>
     All = Shells | Explosions
 }
-public struct TankProperties() {
+// ref struct?
+public class TankProperties {
     /// <summary>Whether or not the tank should become invisible at mission start. Word 1</summary>
     public bool Invisible { get; set; }
     /// <summary>The maximum amount of mines this <see cref="Tank"/> can place. Word 3.</summary>
@@ -100,5 +101,5 @@ public struct TankProperties() {
     /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
     public Shell.HomingProperties ShellHoming = new();
 
-    public readonly int SafeGetArmorHitPoints() => Armor == null ? 0 : Armor.HitPoints;
+    public int SafeGetArmorHitPoints() => Armor == null ? 0 : Armor.HitPoints;
 }

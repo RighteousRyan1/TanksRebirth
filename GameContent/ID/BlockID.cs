@@ -9,5 +9,7 @@ public class BlockID
     public const int Hole = 2;
     public const int Teleporter = 3;
 
+    public static readonly int VanillaCount = Teleporter + 1;
+
     public static ReflectionDictionary<BlockID> Collection { get; internal set; } = new(MemberType.Fields);
 }

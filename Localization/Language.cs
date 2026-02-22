@@ -231,7 +231,7 @@ public class Language {
 #pragma warning restore
 
     /// <summary>
-    /// Load a language localization file. 
+    /// Register a language localization file. 
     /// </summary>
     /// <param name="code">The language code to load.</param>
     /// <param name="lang">The <see cref="Language"/> instance to return.</param>
@@ -252,6 +252,7 @@ public class Language {
             JsonHandler<Language> handler = new(lang, path);
             lang = handler.Deserialize();
         }
+        lang.ActiveLang = code;
     }
 
     public static void GenerateLocalizationTemplate(string path) {

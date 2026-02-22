@@ -15,7 +15,7 @@ public static class TextureGlobals {
         FootprintStandard = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_footprint");
         FootprintThick = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_footprint_alt");
     }
-    /// <summary>Load pixel textures for each default MonoGame color.
+    /// <summary>Register pixel textures for each default MonoGame color.
     /// Will be loaded as White by default, and then asynchronously loaded as their proper color. NVM</summary>
     public static void CreateDynamicTexturesAsync(GraphicsDevice device) {
         /*var whitePixel = new Texture2D(device, 1, 1);

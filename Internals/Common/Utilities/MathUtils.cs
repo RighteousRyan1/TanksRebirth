@@ -93,13 +93,10 @@ public static class MathUtils {
         }
         return returnRect;
     }
+    /// <summary>Converts a direction vector to an angle.</summary>
     public static float ToRotation(this Vector2 vector) => MathF.Atan2(vector.Y, vector.X);
-    public static float AngleBetween(float a, float b) {
-        return (a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI;
-    }
-    public static float AbsoluteAngleBetween(float a, float b) {
-        return MathF.Abs((a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI);
-    }
+    public static float AngleBetween(float a, float b) => (a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI;
+    public static float AbsoluteAngleBetween(float a, float b) => MathF.Abs((a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI);
     public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);
     /// <summary>
     /// Rotates a point around a center point by a given angle in radians.
@@ -159,54 +156,42 @@ public static class MathUtils {
         result3d.Y = spinPoint3d.Y;
         return result3d;
     }
-    public static Vector3 RotateXY(this Vector3 spinPoint3d, float radians, Vector3 center3d = default) {
-        Vector2 spinPoint = spinPoint3d.Flatten();
-        Vector2 center = center3d.Flatten();
+    public static Vector3 Rotate(this Vector3 vector, Vector3 axis, float angleInDegrees) {
+        // Convert degrees to radians
+        float radians = angleInDegrees * (MathF.PI / 180f);
 
-        float cos = MathF.Cos(radians);
-        float sin = MathF.Sin(radians);
-        Vector2 newPoint = spinPoint - center;
-        Vector2 result = center;
-        result.X += newPoint.X * cos - newPoint.Y * sin;
-        result.Y += newPoint.X * sin + newPoint.Y * cos;
+        // Create the rotation quaternion
+        // Note: Axis must be normalized
+        Quaternion rotation = Quaternion.CreateFromAxisAngle(Vector3.Normalize(axis), radians);
 
-        Vector3 result3d = result.Expand();
-        result3d.Z = spinPoint3d.Z;
-        return result3d;
+        // Transform the vector by the rotation
+        return Vector3.Transform(vector, rotation);
     }
-    public static Vector3 RotateYZ(this Vector3 spinPoint3d, float radians, Vector3 center3d = default) {
-        Vector2 spinPoint = spinPoint3d.Flatten(0);
-        Vector2 center = center3d.Flatten(0);
-
-        float cos = MathF.Cos(radians);
-        float sin = MathF.Sin(radians);
-        Vector2 newPoint = spinPoint - center;
-        Vector2 result = center;
-        result.X += newPoint.X * cos - newPoint.Y * sin;
-        result.Y += newPoint.X * sin + newPoint.Y * cos;
-
-        Vector3 result3d = result.Expand();
-        result3d.Z = spinPoint3d.Z;
-        return result3d;
-    }
-    public static EulerAngles AsEulerAngles(this Vector3 vector) {
-        return new(vector.Z, vector.Y, vector.X);
-    }
+    public static EulerAngles AsEulerAngles(this Vector3 vector) => new(vector.Z, vector.Y, vector.X);
     public static EulerAngles ToEulerAngles(this Vector3 vector) {
         float roll = MathF.Atan2(vector.Y, vector.Z);
         float pitch = MathF.Atan2(-vector.X, MathF.Sqrt(vector.Y * vector.Y + vector.Z * vector.Z));
         float yaw = 0f;
         return new EulerAngles(roll, pitch, yaw);
     }
-    public static float Distance(this Vector2 initial, Vector2 other) => Vector2.Distance(initial, other);
+    public static float DistanceTo(this Vector2 initial, Vector2 other) => Vector2.Distance(initial, other);
     public static float MaxDistanceValue(Vector2 initial, Vector2 end, float maxDist) {
-        var init = initial.Distance(end);
-
+        var init = initial.DistanceTo(end);
         float actual = 1f - init / maxDist <= 0 ? 0 : 1f - init / maxDist;
-
         return actual;
     }
-    public static float CreateGradientValue(float value, float min, float max) {
+    /// <summary>
+    /// Creates a tent-shaped triangle wave that maps a value to a 0.0 to 1.0 range, peaking at the midpoint.
+    /// </summary>
+    /// <remarks>
+    /// As the value moves from <paramref name="min"/> to <paramref name="max"/>, the output ramps from 0.0 up to 1.0 at the center, 
+    /// then back down to 0.0. This is useful for "in-and-out" animations or proximity effects.
+    /// </remarks>
+    /// <param name="value">The current input value to evaluate.</param>
+    /// <param name="min">The inclusive lower bound of the range.</param>
+    /// <param name="max">The inclusive upper bound of the range.</param>
+    /// <returns>A value between 0.0f and 1.0f representing the progress through the triangle wave.</returns>
+    public static float TriangleWave(float value, float min, float max) {
         float mid = (max + min) / 2;
         float returnValue;
 
@@ -218,7 +203,18 @@ public static class MathUtils {
         returnValue = (value - min) / (max - min) * 2;
         return MathHelper.Clamp(returnValue, 0f, 1f);
     }
-    public static float CreateGradientValueWithNegative(float value, float min, float max) {
+    /// <summary>
+    /// Linearly normalizes a value from a specific range into a -1.0 to 1.0 range.
+    /// </summary>
+    /// <remarks>
+    /// This performs a linear remapping where the midpoint of the range becomes 0.0. 
+    /// Commonly used for calculating relative offsets, steering inputs, or normalized screen coordinates.
+    /// </remarks>
+    /// <param name="value">The current input value to evaluate.</param>
+    /// <param name="min">The lower bound of the source range (maps to -1.0).</param>
+    /// <param name="max">The upper bound of the source range (maps to 1.0).</param>
+    /// <returns>A value clamped between -1.0f and 1.0f.</returns>
+    public static float InverseTriangleWave(float value, float min, float max) {
         float mid = (max + min) / 2f;
         float halfRange = (max - min) / 2f;
 
@@ -226,46 +222,52 @@ public static class MathUtils {
         float result = (value - mid) / halfRange;
         return MathHelper.Clamp(result, -1f, 1f);
     }
-    public static float CreateGradientCapped(float value, float min, float max) {
-        if (value > ((min + max) / 2))
-            return 1;
-        return CreateGradientValue(value, min, max);
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsWithinRange(this float value, float target, float tolerance) => MathF.Abs(value - target) <= tolerance;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)] public static bool IsWithinRange(this float value, float target, float tolerance) => MathF.Abs(value - target) <= tolerance;
+    /// <summary>
+    /// Calculates the linear parameter (0.0 to 1.0) that produces the given <paramref name="value"/> within the range [<paramref name="begin"/>, <paramref name="end"/>].
+    /// </summary>
+    /// <remarks>
+    /// This is the mathematical inverse of a Lerp. It determines where a value sits relative to a range. 
+    /// For example, if the range is 10 to 20 and the value is 15, this returns 0.5.
+    /// </remarks>
+    /// <param name="begin">The start of the range (maps to 0.0).</param>
+    /// <param name="end">The end of the range (maps to 1.0).</param>
+    /// <param name="value">The value to evaluate.</param>
+    /// <param name="clamped">If true, the result is restricted to the [0, 1] range.</param>
+    /// <returns>A percentage representing the value's position in the range.</returns>
     public static float InverseLerp(float begin, float end, float value, bool clamped = false) {
-        if (clamped) {
-            if (begin < end) {
-                if (value < begin)
-                    return 0f;
-                if (value > end)
-                    return 1f;
-            }
-            else {
-                if (value < end)
-                    return 1f;
-                if (value > begin)
-                    return 0f;
-            }
-        }
-        return (value - begin) / (end - begin);
+        float result = (value - begin) / (end - begin);
+
+        return clamped ? MathHelper.Clamp(result, 0f, 1f) : result;
     }
-    public static float ModifiedInverseLerp(float begin, float end, float value, bool clamped = false) => InverseLerp(begin, end, value, clamped) * 2 - 0.5f;
+
+    /// <summary>
+    /// Smoothly interpolates between two angles, ensuring the rotation takes the shortest path around a circle.
+    /// </summary>
+    /// <remarks>
+    /// This method handles the wrap-around point of a circle (0 to 2π) so that the interpolation 
+    /// doesn't spin the long way around when passing the threshold.
+    /// </remarks>
+    /// <param name="curAngle">The current angle in radians.</param>
+    /// <param name="targetAngle">The desired target angle in radians.</param>
+    /// <param name="amount">The interpolation factor (0.0 to 1.0).</param>
+    /// <returns>The interpolated angle, wrapped between -π and π.</returns>
     public static float AngleLerp(this float curAngle, float targetAngle, float amount) {
-        float angle;
-        if (targetAngle < curAngle) {
-            float num = targetAngle + MathHelper.TwoPi;
-            angle = (num - curAngle > curAngle - targetAngle) ? MathHelper.Lerp(curAngle, targetAngle, amount) : MathHelper.Lerp(curAngle, num, amount);
-        }
-        else {
-            if (!(targetAngle > curAngle)) {
-                return curAngle;
-            }
-            float num = targetAngle - (float)Math.PI * 2f;
-            angle = (targetAngle - curAngle > curAngle - num) ? MathHelper.Lerp(curAngle, num, amount) : MathHelper.Lerp(curAngle, targetAngle, amount);
-        }
-        return MathHelper.WrapAngle(angle);
+        float delta = targetAngle - curAngle;
+        delta = (delta % MathHelper.TwoPi + MathHelper.Pi * 3) % MathHelper.TwoPi - MathHelper.Pi;
+        return MathHelper.WrapAngle(curAngle + delta * amount);
     }
+    /// <summary>
+    /// Increments or decrements a value toward a goal by a fixed step, snapping exactly to the goal if it would be overshot.
+    /// </summary>
+    /// <remarks>
+    /// Unlike a linear interpolation (Lerp), this provides constant-speed movement that guarantees 
+    /// hitting the <paramref name="goal"/> precisely.
+    /// </remarks>
+    /// <param name="value">The current value.</param>
+    /// <param name="goal">The target value to reach.</param>
+    /// <param name="step">The maximum amount to move the value by.</param>
+    /// <returns>The updated value moved toward the goal.</returns>
     public static float RoughStep(float value, float goal, float step) {
         if (value < goal) {
             value += step;
@@ -284,11 +286,11 @@ public static class MathUtils {
 
         return value;
     }
-    public static float SoftStep(float value, float goal, float step) {
-        return MathHelper.Lerp(value, goal, MathHelper.Clamp(step, 0f, 1f));
-    }
-    public static Vector3 ExpandZ(this Vector2 vector)
-    => new(vector.X, 0, vector.Y);
+    /// <summary>
+    /// Shorthand for Lerp, but is easier to understand.
+    /// </summary>
+    public static float SoftStep(float value, float goal, float step) => MathHelper.Lerp(value, goal, MathHelper.Clamp(step, 0f, 1f));
+    public static Vector3 ExpandZ(this Vector2 vector) => new(vector.X, 0, vector.Y);
     public static Vector3 Expand(this Vector2 vector) => new(vector, 0);
     public static Vector2 Flatten(this Vector3 vector, int excludedAxis = 2) {
         return excludedAxis switch {
@@ -299,16 +301,9 @@ public static class MathUtils {
         };
     }
     public static Vector2 FlattenZ(this Vector3 vector) => vector.Flatten(1);
-    public static Vector2 FlattenZ_InvertZ(this Vector3 vector) => new(vector.X, -vector.Z);
     public static Rectangle GetScreenRect() => new(0, 0, TankGame.Instance.Window.ClientBounds.Width, TankGame.Instance.Window.ClientBounds.Height);
     public static float Damp(float source, float destination, float smoothing, float dt) => MathHelper.Lerp(source, destination, 1f - MathF.Pow(smoothing, dt));
     public static Vector2 Damp(Vector2 source, Vector2 destination, float smoothing, float dt) => new(Damp(source.X, destination.X, smoothing, dt), Damp(source.Y, destination.Y, smoothing, dt));
-    public static Vector4 RoundV4(Vector4 value) => new Vector4(
-            MathF.Round(value.X),
-            MathF.Round(value.Y),
-            MathF.Round(value.Z),
-            MathF.Round(value.W));
-
     public static Vector3 ToVector3(this Vector4 value) => new Vector3(value.X, value.Y, value.Z) / value.W;
     private static Vector2 BezierDestructive(float amount, Span<Vector2> points) {
         for (int i = points.Length - 1; i > 0; i--)
@@ -316,9 +311,20 @@ public static class MathUtils {
                 points[j] = new(MathHelper.Lerp(points[j].X, points[j + 1].X, amount), MathHelper.Lerp(points[j].Y, points[j + 1].Y, amount));
         return points[0];
     }
+    /// <summary>
+    /// Calculates a point on a Bézier curve of any degree using De Casteljau's algorithm.
+    /// </summary>
+    /// <remarks>
+    /// To minimize Garbage Collection pressure, this method uses <c>stackalloc</c> for curves with 32 points or fewer. 
+    /// For larger curves, it utilizes <see cref="GC.AllocateUninitializedArray{T}"/> to reduce allocation overhead.
+    /// </remarks>
+    /// <param name="progress">The interpolation progress (typically 0.0 to 1.0).</param>
+    /// <param name="points">The control points defining the Bézier curve.</param>
+    /// <returns>The calculated <see cref="Vector2"/> position along the curve at the given <paramref name="progress"/>.</returns>
     public static Vector2 Bezier(float progress, ReadOnlySpan<Vector2> points) {
         // allow for a small element count before allocating 
-        if (points.Length <= 33) {
+        // used to be <= 33. lol
+        if (points.Length <= 32) {
             [MethodImpl(MethodImplOptions.NoInlining)]
             static Vector2 ByStackalloc(float progress, ReadOnlySpan<Vector2> points) {
                 Span<Vector2> copy = stackalloc Vector2[32];
@@ -333,18 +339,6 @@ public static class MathUtils {
         for (int j = 0, jj = points.Length - 1; j < jj; j++)
             copy[j] = new(MathHelper.Lerp(points[j].X, points[j + 1].X, progress), MathHelper.Lerp(points[j].Y, points[j + 1].Y, progress));
         return BezierDestructive(progress, copy);
-    }
-    public static int RoundToClosest(this int i, int multiple) {
-        if (multiple <= 0 || multiple % 10 != 0)
-            throw new ArgumentOutOfRangeException(nameof(multiple), "Must round to a positive multiple of 10");
-
-        return (i + 5 * multiple / 10) / multiple * multiple;
-    }
-    public static float RoundToClosest(this float g, int multiple) {
-        if (multiple <= 0 || multiple % 10 != 0)
-            throw new ArgumentOutOfRangeException(nameof(multiple), "Must round to a positive multiple of 10");
-
-        return (g + 5 * multiple / 10) / multiple * multiple;
     }
 
     public static float WrapTauAngle(this float angle) {
@@ -362,7 +356,7 @@ public static class MathUtils {
         return points[0];
     }
     /// <summary>
-    /// de Casteljau Bézier evaluation for 3D control points.
+    /// A de Casteljau Bézier evaluation for 3D control points.
     /// Accepts ReadOnlySpan to avoid copies at the callsite- internally does one level then runs in-place.
     /// </summary>
     public static Vector3 Bezier3D(float t, ReadOnlySpan<Vector3> points) {
@@ -372,7 +366,9 @@ public static class MathUtils {
         if (n == 2) return Vector3.Lerp(points[0], points[1], t);
 
         // small-count fast path
-        if (n <= 33) {
+
+        // same here?
+        if (n <= 32) {
             [MethodImpl(MethodImplOptions.NoInlining)]
             static Vector3 ByStackalloc(float tt, ReadOnlySpan<Vector3> src) {
                 Span<Vector3> copy = stackalloc Vector3[32]; // enough for first level

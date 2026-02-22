@@ -56,7 +56,7 @@ public class Campaign
         CurrentTrackedSpawns = [];
         MetaData = CampaignMetaData.GetDefault();
     }
-    /// <summary>Load a specific mission into the current mission.</summary>
+    /// <summary>Register a specific mission into the current mission.</summary>
     /// <param name="mission">The mission.</param>
     public void LoadMission(Mission mission) {
         if (string.IsNullOrEmpty(mission.Name))
@@ -65,7 +65,7 @@ public class Campaign
         CurrentTrackedSpawns = new (BlockMapPosition, bool)[mission.Tanks.Length];
         LoadedMission = mission;
     }
-    /// <summary>Load a mission already in memory by ID.</summary>
+    /// <summary>Register a mission already in memory by ID.</summary>
     /// <param name="id">The index of the mission in the <see cref="CachedMissions"/> array.</param>
     public void LoadMission(int id) {
         LoadedMission = CachedMissions[id];

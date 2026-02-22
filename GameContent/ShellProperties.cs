@@ -7,9 +7,9 @@ namespace TanksRebirth.GameContent;
 [Flags]
 public enum VisualFlags : byte {
     /// <summary>Whether or not to emit smoke puffs.</summary>
-    SmokePuff = 1 << 0,
+    SmokePuff  = 1 << 0,
     /// <summary>Whether or not to emit flames from behind it.</summary>
-    Flaming = 1 << 1,
+    Flaming    = 1 << 1,
     /// <summary>Whether or not to emit a blazing trail.</summary>
     SmokeTrail = 1 << 2,
 }
@@ -28,5 +28,5 @@ public struct ShellProperties() {
     /// <summary>The amount of times this bullet can penetrate other ones. A value of -1 will penetrate infinitely.</summary>
     public int Penetration { get; set; }
     /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
-    public HomingProperties HomeProperties = default;
+    public HomingProperties Homing = default;
 }

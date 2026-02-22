@@ -89,8 +89,8 @@ public class ModTank : ILoadable, IModContent {
     /// <br></br>Metadata will STILL be updated if returned false. (i.e: <see cref="AITank.NearbyDangers"/>, <see cref="AITank.TanksNearMineAwareness"/>, etc)
     /// <br></br>Return true if you wish to keep standard tank behavior, return false if you wish to not use it.</summary>
     public virtual bool CustomAI() => true;
-    // Pre/Post render soon...
 
+    // Pre/Post render soon...
     internal static int unloadOffset = 0;
     internal void Unload() {
         var name = Name[LangCode.English]!;
@@ -108,16 +108,18 @@ public class ModTank : ILoadable, IModContent {
         Tank.Assets.Remove("tank_" + name.ToLower());
     }
 
-    internal void Load() {
+    internal void Register() {
         _music = [];
 
         var name = Name[LangCode.English]!;
 
         // this might entirely need to be saved when converting to ModName.TankName saving/loading
         Type = TankID.Collection.ForcefullyInsert(name);
+        ModRegistry.idToModTank.Add(Type, this);
         TankMusicSystem.MaxSongNumPerTank[Type] = Songs;
         AITank.TankDestructionColors[Type] = AssociatedColor;
         DifficultyAlgorithm.TankDiffs[Type] = 0f; // introduce property?
+
         if (Songs > 1) {
             for (int i = 0; i < Songs; i++) {
                 var fileName = $"{name.ToLower()}{i + 1}";

@@ -3,12 +3,11 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
 
+// work on 2d drawing the hp bar
 public class TankArmor {
     /// <summary>The tank who has this armor.</summary>
     public Tank Host;
@@ -20,39 +19,18 @@ public class TankArmor {
     readonly Texture2D _maskingTexture;
     readonly Model _model;
 
-    readonly Particle _healthBarTotal;
-    readonly Particle _healthBarCurrent;
-
     public TankArmor(Tank host, int hitPoints) {
         _model = ModelGlobals.Armor.Asset;
         Host = host;
         HitPoints = _hitpointsMax = hitPoints;
         _maskingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
-
-        _healthBarTotal = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
-        _healthBarCurrent = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
-
-        _healthBarTotal.HasAdditiveBlending = false;
-        _healthBarCurrent.HasAdditiveBlending = false;
-
-        _healthBarTotal.Color = Color.Red;
-        _healthBarCurrent.Color = Color.Lime;
-
-        _healthBarCurrent.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        _healthBarTotal.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
     }
     public void Render(bool canRenderHealthBar = true) {
         if (HideArmor) return;
-        /*void DrawHealthBar(Vector2 position, float width, float height)
-        {
-            //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)(position.X - _hitpointsMax / 2 * width), (int)position.Y, (int)(HitPoints * width), (int)height), Color.Red);
-            //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)(position.X - _hitpointsMax / 2 * width), (int)position.Y, (int)(HitPoints * width), (int)height), Color.Lime);
-        }*/
 
         if (canRenderHealthBar && _hitpointsMax > 3) {
-            SetHealthBar(5, 2);
-            _healthBarTotal.Position = Host.Position3D + new Vector3(0, 40, 0);
-            _healthBarCurrent.Position = Host.Position3D + new Vector3(0, 40, 0);
+            // SetHealthBar(5, 2);
+            // draw health bar in 2d
         }
         // DrawHealthBar(MatrixUtils.ConvertWorldToScreen(new Vector3(0, 20, 0f), Host.World, CameraGlobals.GameView, TankGame.GameProjection) - new Vector2(0, 20), 50, 10);
 
@@ -112,15 +90,8 @@ public class TankArmor {
             }
         }
     }
-    void SetHealthBar(float xScl, float yScl) {
-        _healthBarTotal.Scale = new(xScl, yScl, 1f);
-        _healthBarCurrent.Scale = new(xScl * (HitPoints + 1) / (_hitpointsMax + 1), yScl, 1f);
-    }
     /// <summary>Remove this <see cref="TankArmor"/> from memory.</summary>
     public void Remove() {
-        _healthBarTotal.Destroy();
-        _healthBarCurrent.Destroy();
-
         // i think this works
         Host.Properties.Armor = null;
     }

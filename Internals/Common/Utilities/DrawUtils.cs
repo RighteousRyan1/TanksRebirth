@@ -7,6 +7,20 @@ using TanksRebirth.GameContent.Globals;
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class DrawUtils {
+    public static float StringSizeProportional(int length,
+        int baseLength,
+        float baseScale,
+        float minScale = 0.25f) {
+        if (length <= 0)
+            return baseScale;
+
+        if (length <= baseLength)
+            return baseScale;
+
+        float scale = baseScale * ((float)baseLength / length);
+
+        return Math.Max(scale, minScale);
+    }
     /// <summary>Converts a centered-orthographic coordinate to screen coordinates.</summary>
     public static Vector2 CenteredOrthoToScreen(Vector2 orthoPos) {
         // i think this works. probably not lol.

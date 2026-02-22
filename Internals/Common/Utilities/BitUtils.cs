@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class BitUtils {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="buffer">The buffer of data that contains convertible data.</param>
+    /// <param name="offset">The location in <paramref name="buffer"/> of the data to parse to <see cref="int"/>.</param>
+    /// <returns>The converted <see cref="int"/>.</returns>
     public static int GetInt(this byte[] buffer, int offset) {
         if (offset >= buffer.Length)
             return 0;

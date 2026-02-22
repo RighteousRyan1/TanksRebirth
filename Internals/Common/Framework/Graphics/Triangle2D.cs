@@ -101,9 +101,9 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
 
         public float SideAdditionPostulate()
         {
-            /*var dist_0_1 = Vector2.Distance(verticePositions[0], verticePositions[1]);
-            var dist_1_2 = Vector2.Distance(verticePositions[1], verticePositions[2]);
-            var dist_2_0 = Vector2.Distance(verticePositions[2], verticePositions[0]);*/
+            /*var dist_0_1 = Vector2.DistanceTo(verticePositions[0], verticePositions[1]);
+            var dist_1_2 = Vector2.DistanceTo(verticePositions[1], verticePositions[2]);
+            var dist_2_0 = Vector2.DistanceTo(verticePositions[2], verticePositions[0]);*/
 
             var dist_0_1 = FindSideLength(0);
             var dist_1_2 = FindSideLength(1);

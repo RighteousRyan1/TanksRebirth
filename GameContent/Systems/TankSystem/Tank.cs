@@ -751,8 +751,7 @@ public abstract class Tank(bool ignoresRegister) {
 
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
     public virtual void Shoot(bool fxOnly = false, bool netSend = true) {
-        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission || !Properties.HasTurret)
-            return;
+        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission || !Properties.HasTurret) return;
 
         if (CurShootCooldown > 0) return;
 
@@ -812,11 +811,10 @@ public abstract class Tank(bool ignoresRegister) {
 
             var newAngle = flip ? -angle : angle;
 
-            var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
-                homing: Properties.ShellHoming) {
-                // this could be magical and lead to *super specific* edge cases but otherwise this is a decent way to put it
-                VolleyId = (int)RuntimeData.UpdateCount % 10000
-            };
+            var shell = Shell.Create(Position, Vector2.Zero, Properties.ShellType, this);
+            // this could be magical and lead to *super specific* edge cases but otherwise this is a decent way to put it
+            shell.VolleyId = (int)RuntimeData.UpdateCount % 10000;
+            shell.Properties.Homing = Properties.ShellHoming;
 
             var newPos = Position + new Vector2(0, 20).RotatedBy(-TurretRotation + newAngle);
             shell.Position = new Vector2(newPos.X, newPos.Y);
@@ -901,7 +899,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         TimeSinceLastAction = 0;
 
-        var mine = new Mine(this, Position, 600);
+        var mine = Mine.Create(this, Position, 600);
 
         // horrendous code
         if (this is PlayerTank pt) {

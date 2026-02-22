@@ -1,9 +1,5 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TanksRebirth.GameContent;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics;

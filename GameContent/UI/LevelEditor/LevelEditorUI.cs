@@ -34,7 +34,7 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
 /* TODO:
  * Make more modular...
  * 1) Block stacks are essentially their own data structure, so more can be added
- * 2) LevelEditorTankElement - One for each enemy tank. Will support mods
+ * 2) LevelEditorTankElement - One for each enemy block. Will support mods
  * 3) LevelEditorTerrainElement - One for each obstacle. Will support mods
  * 4) Make these elements not textures, but rather rendered as their appropriate models with text underneath, for modularity
  * 5) When in the level editor, the GC gains ~10MB per second. Find out why. (Collections are often)
@@ -413,7 +413,7 @@ public static partial class LevelEditorUI {
                 var ext = Path.GetExtension(res.Path);
 
                 if (ext == ".mission") {
-                    //GameProperties.LoadedCampaign.LoadMission(Mission.Load(res.Path, null));
+                    //GameProperties.LoadedCampaign.LoadMission(Mission.Register(res.Path, null));
                     //GameProperties.LoadedCampaign.SetupLoadedMission(true);
                     Mission.LoadDirectly(Mission.Load(res.Path, null));
                     //_loadedCampaign = null;
@@ -663,8 +663,14 @@ public static partial class LevelEditorUI {
             float addend = isSelected ? MathHelper.TwoPi : 0;
             pEntries[i].Yaw = MathHelper.Lerp(pEntries[i].Yaw, ElementRotation + addend, 0.15f * RuntimeData.DeltaTime);
 
-            DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, posForText, Vector2.UnitY, dict.GetKey(i + idOffset)!,
-                Color.White, isSelected ? ColorUtils.DiscoPartyColor : Color.Black, new Vector2(0.6f).ToResolution(), 1f, Anchor.Center, shadowAlpha: 0.5f);
+            // draw the name of the block
+            string tankName = dict.GetKey(i + idOffset)!;
+            float strSzX = DrawUtils.StringSizeProportional(tankName.Length, 8, 0.6f, 0.1f);
+            DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, posForText, Vector2.UnitY, tankName,
+                Color.White, isSelected ? ColorUtils.DiscoPartyColor : Color.Black, new Vector2(strSzX).ToResolution(), 1f, Anchor.Center, shadowAlpha: 0.5f);
+
+            // EditorParticleSystem.MakeSmallExplosion(posForModel.Expand(), 10, 10, 1f, 2);
+            // EditorParticleSystem.MakeShineSpot(posForModel.Expand(), Color.Red, 10f);
 
             var apprScale = isSelected ? maxScale : minScale;
             pEntries[i].Scale = Vector3.Lerp(pEntries[i].Scale, Vector3.One.ToResolution() * apprScale, 0.1f * RuntimeData.DeltaTime);
@@ -814,7 +820,7 @@ public static partial class LevelEditorUI {
             BlockStack = MathHelper.Clamp(BlockStack, 1, 7);
 
             if (CurCategory == EditorCategory.EnemyTanks || CurCategory == EditorCategory.PlayerTanks) {
-                // tank place handling, etc
+                // block place handling, etc
                 if (InputUtils.KeyJustPressed(Keys.Up))
                     SelectedTankTeam--;
                 if (InputUtils.KeyJustPressed(Keys.Down))
@@ -840,7 +846,12 @@ public static partial class LevelEditorUI {
         ReturnToEditor.IsVisible = IsEditing && !IsActive && !MainMenuUI.IsActive;
     }
 
-    const string CUSTOM_CONTENT_WARNING = "Descriptions for custom content not yet supported.";
+    //internal static Dictionary<int, string> TankTypeToDescription = [];
+    //internal static Dictionary<int, string> BlockTypeToDescription = [];
+
+    //public static void Populate
+
+    const string CUSTOM_CONTENT_WARNING = "This custom content does not have a description.";
     static string GetTankFlavor(int id) {
         return id switch {
             TankID.Brown => TankGame.GameLanguage.LevelEdit.TankPlace.BrownFlavor,
@@ -861,7 +872,7 @@ public static partial class LevelEditorUI {
             TankID.Emerald => TankGame.GameLanguage.LevelEdit.TankPlace.EmeraldFlavor,
             TankID.Gold => TankGame.GameLanguage.LevelEdit.TankPlace.GoldFlavor,
             TankID.Obsidian => TankGame.GameLanguage.LevelEdit.TankPlace.ObsidianFlavor,
-            _ => CUSTOM_CONTENT_WARNING
+            _ => ModRegistry.TryGetModTankById(id, out var tank) ? (tank.Description?[TankGame.GameLanguage.ActiveLang] ?? CUSTOM_CONTENT_WARNING) : CUSTOM_CONTENT_WARNING
         };
     }
 
@@ -870,7 +881,7 @@ public static partial class LevelEditorUI {
             BlockID.Wood => TankGame.GameLanguage.LevelEdit.ObstaclePlace.WoodFlavor,
             BlockID.Cork => TankGame.GameLanguage.LevelEdit.ObstaclePlace.CorkFlavor,
             BlockID.Hole => TankGame.GameLanguage.LevelEdit.ObstaclePlace.HoleFlavor,
-            _ => CUSTOM_CONTENT_WARNING
+            _ => ModRegistry.TryGetModBlockById(id, out var block) ? block.Description[TankGame.GameLanguage.ActiveLang] : CUSTOM_CONTENT_WARNING
         };
     }
 

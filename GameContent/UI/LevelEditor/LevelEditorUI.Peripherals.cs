@@ -114,7 +114,7 @@ public static partial class LevelEditorUI {
             var elem = TankID.Collection[i];
 
             // i fear there's no better way to do this?
-            var tnkDummy = new AITank(i, false, true);
+            var tnkDummy = new AITank(i, true, true);
             var tnkPart = EditorParticleSystem.MakeParticle(Vector3.Zero, tnkDummy.DrawParamsTank.Model, tnkDummy.DrawParamsTank.TankTexture);
             tnkDummy.Remove(true); // eradicate it after dummy init
 
@@ -245,6 +245,7 @@ public static partial class LevelEditorUI {
         // hacky ahh...
         TankGame.Instance.GraphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Black, 1f, 0);
         TankGame.Instance.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        TankGame.Instance.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 
         RenderEditorParticles(sb);
 

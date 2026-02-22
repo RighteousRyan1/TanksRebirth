@@ -135,8 +135,7 @@ public static class ModLoader {
 
             TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", LogType.Info);
             return true;
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             var trace = new StackTrace(e, true);
             var frame = trace.GetFrame(0);
             int line = frame?.GetFileLineNumber() ?? -1;
@@ -230,7 +229,7 @@ public static class ModLoader {
         });
         LoadedMods.Clear();
         // for when the unloading process is done.
-        ModRegistry._singletonMap.Clear();
+        ModRegistry.singletonMap.Clear();
         _loadedAlcs.Clear();
         ResetContentDictionaries();
         ModTank.unloadOffset = 0;
@@ -311,7 +310,7 @@ public static class ModLoader {
             TankGame.ClientLog.Write("No mods to unload. Skipping...", LogType.Warn);
         }
 
-            LoadType = Debugger.IsAttached ? "Debug" : "Release";
+        LoadType = Debugger.IsAttached ? "Debug" : "Release";
 
         ActionsNeeded = 0;
         ActionsComplete = 0;
@@ -526,7 +525,7 @@ public static class ModLoader {
         modTank.Mod = mod;
 
         // load each tank and its data, add to moddedTypes the singleton of the ModTank.
-        ModRegistry._singletonMap.Add(type, modTank);
+        ModRegistry.singletonMap.Add(type, modTank);
 
         modTank.Name ??= new();
         modTank.Texture ??= tankName;
@@ -534,7 +533,7 @@ public static class ModLoader {
         // doesn't insert anything if there is already something for English
         modTank.Name.TryAdd(LangCode.English, $"{mod.InternalName}.{tankName}");
         DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
-        modTank!.Load();
+        modTank!.Register();
         TankGame.ClientLog.Write($"Loaded modded tank '{modTank.Name[LangCode.English]}'", LogType.Info);
     }
     public static void LoadModBlock(TanksMod mod, Type type) {
@@ -548,7 +547,8 @@ public static class ModLoader {
         modBlock!.Mod = mod;
 
         // again, but with modlbocks
-        ModRegistry._singletonMap.Add(type, modBlock);
+        ModRegistry.singletonMap.Add(type, modBlock);
+
         modBlock.Name.TryAdd(LangCode.English, $"{mod.InternalName}.{blockName}");
         modBlock.Register();
         TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name[LangCode.English]}'", LogType.Info);
@@ -565,7 +565,8 @@ public static class ModLoader {
         modShell!.Mod = mod;
 
         // again, but with modshels
-        ModRegistry._singletonMap.Add(type, modShell);
+        ModRegistry.singletonMap.Add(type, modShell);
+
         modShell.Name.TryAdd(LangCode.English, $"{mod.InternalName}.{shellName}");
         TankGame.MainThreadTasks.Enqueue(modShell.Register);
         TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name[LangCode.English]}'", LogType.Info);

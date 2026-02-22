@@ -1,56 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class RandomUtils
-{
-    public static float NextFloat(this Random random, float min, float max)
-    => (float)(random.NextDouble() * (max - min) + min);
-    public static double NextDouble(this Random random, double min, double max)
-        => random.NextDouble() * (max - min) + min;
-    public static short Next(this Random random, short min, short max)
-        => (short)random.Next(min, max);
-    public static byte Next(this Random random, byte min, byte max)
-        => (byte)random.Next(min, max);
-    public static T PickRandom<T>(T[] input) => input[Client.ClientRandom.Next(0, input.Length)];
-    public static List<T> PickRandomClient<T>(T[] input, int amount)
-    {
-        List<T> values = [];
-        List<int> chosenTs = [];
-        for (int i = 0; i < amount; i++)
-        {
-        ReRoll:
-            int rand = Client.ClientRandom.Next(0, input.Length);
+// this works, i guess.
+public static class EnumCache<TEnum> where TEnum : struct, Enum {
+    public static readonly TEnum[] Values = Enum.GetValues<TEnum>();
+}
+public static class RandomUtils {
+    /// <summary>
+    /// Generates a random <see langword="float"/> within the range [<paramref name="min"/>, <paramref name="max"/>).
+    /// </summary>
+    /// <param name="random">The random.</param>
+    /// <param name="min">The inclusive minimum.</param>
+    /// <param name="max">The exclusive maximum.</param>
+    /// <returns>The random number.</returns>
+    public static float NextFloat(this Random random, float min, float max) => random.NextSingle() * (max - min) + min;
+    /// <summary>
+    /// Generates a random <see langword="double"/> within the range [<paramref name="min"/>, <paramref name="max"/>).
+    /// </summary>
+    /// <param name="random">The random.</param>
+    /// <param name="min">The inclusive minimum.</param>
+    /// <param name="max">The exclusive maximum.</param>
+    /// <returns>The random number.</returns>
+    public static double NextDouble(this Random random, double min, double max) => random.NextDouble() * (max - min) + min;
 
-            if (!chosenTs.Contains(rand))
-            {
-                chosenTs.Add(rand);
-                values.Add(input[rand]);
-            }
-            else
-                goto ReRoll;
-        }
-        chosenTs.Clear();
-        return values;
-    }
-    public static List<T> PickRandomServer<T>(T[] input, int amount) {
-        List<T> values = [];
-        List<int> chosenTs = [];
+    /// <summary>
+    /// Selects a specified number of unique random elements from an array.
+    /// </summary>
+    /// <remarks>
+    /// This implementation uses a partial Fisher-Yates shuffle to ensure O(n) performance 
+    /// and zero re-rolls, even when picking a large percentage of the input.
+    /// </remarks>
+    public static List<T> Sample<T>(this Random random, T[] input, int amount) {
+        if (amount > input.Length)
+            amount = input.Length;
+
+        if (amount <= 0)
+            return [];
+
+        T[] copy = [.. input];
+        List<T> results = new(amount);
+
+        // shuffle-ish
         for (int i = 0; i < amount; i++) {
-        ReRoll:
-            int rand = Server.ServerRandom.Next(0, input.Length);
-
-            if (!chosenTs.Contains(rand)) {
-                chosenTs.Add(rand);
-                values.Add(input[rand]);
-            }
-            else
-                goto ReRoll;
+            int nextIndex = random.Next(i, copy.Length);
+            (copy[i], copy[nextIndex]) = (copy[nextIndex], copy[i]);
+            results.Add(copy[i]);
         }
-        chosenTs.Clear();
-        return values;
+
+        return results;
     }
-    public static TEnum PickRandom<TEnum>() where TEnum : struct, Enum => (TEnum)(object)Server.ServerRandom.Next(0, Enum.GetNames<TEnum>().Length);
+    /// <summary>
+    /// Picks a random value from the specified <see langword="enum"/> type.
+    /// </summary>
+    public static TEnum NextEnum<TEnum>(this Random random) where TEnum : struct, Enum {
+        var values = EnumCache<TEnum>.Values;
+        return values[random.Next(values.Length)];
+    }
+
+    /// <summary>
+    /// Picks a single random element from a collection.
+    /// </summary>
+    /// <remarks>
+    /// Using ReadOnlySpan allows this to work on arrays or slices of memory with zero overhead.
+    /// </remarks>
+    public static T NextArrayValue<T>(this Random random, ReadOnlySpan<T> input) => input[random.Next(input.Length)];
 }

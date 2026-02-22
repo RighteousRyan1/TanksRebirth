@@ -28,9 +28,8 @@ public class ReflectionDictionary<TClass> where TClass : class, new() {
     /// </summary>
     /// <param name="members">The kind(s) of members to allow for insertion into the dictionary.</param>
     public ReflectionDictionary(MemberType members) {
-        var fields = typeof(TClass).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-        var properties =
-            typeof(TClass).GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        var fields = typeof(TClass).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy).Where(f => f.IsLiteral && !f.IsInitOnly).ToArray();
+        var properties = typeof(TClass).GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         _dictionary = new(fields.Length);
         _members = members;
         Initialize(fields, properties);

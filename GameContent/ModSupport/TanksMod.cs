@@ -42,7 +42,7 @@ public abstract class TanksMod : ILoadable {
     /// <br></br>Do note that this parameter should only be true for things like 3D models, shaders, and others of the like which are not loaded pre-compiled.</param>
     /// <returns>The imported asset.</returns>
     public T ImportAsset<T>(string path, bool raw = false) where T : class {
-        var defaultContentPath = Path.Combine(TankGame.GameDirectory, TankGame.Instance.Content.RootDirectory);
+        var defaultContentPath = Path.Combine(TankGame.Instance.GameDirectory, TankGame.Instance.Content.RootDirectory);
         TankGame.Instance.Content.RootDirectory = ModPath;
 
         T asset;

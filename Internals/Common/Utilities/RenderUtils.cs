@@ -4,8 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class RenderUtils
-{
+public static class RenderUtils {
     public static Vector2 Size(this Texture2D tex) => new(tex.Width, tex.Height);
     public static Vector2 GetTextureAnchor(this Anchor a, Texture2D tex) {
         return a switch {
