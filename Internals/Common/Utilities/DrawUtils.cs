@@ -112,7 +112,7 @@ public static class DrawUtils {
 
         if (shadowAlpha > 0) {
             spriteBatch.Draw(texture,
-                position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
+                position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale),
                 srcRect,
                 Color.Black * alpha * shadowAlpha,
                 rotation,

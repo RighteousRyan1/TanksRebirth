@@ -66,6 +66,7 @@ public static class CameraGlobals {
     public static float AddativeZoom = 1f;
     public static float POVCameraRotation;
 
+    public const float CAMERA_DEF_OFF_Y = -110;
     public static Vector3 CameraFocusOffset;
     public static Vector2 OrthoRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
     public static Vector3 POVCameraPosition = new(0, 100, 0);
@@ -147,17 +148,19 @@ public static class CameraGlobals {
         UpdateOverhead();
 
         // default orthographic view. maybe i should split into cameras, like ICamera?
+
         GameView =
             Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
             Matrix.CreateLookAt(new(0f, 0f, 100f), Vector3.Zero, Vector3.Up) *
             Matrix.CreateTranslation(
                 CameraFocusOffset.X,
-                -CameraFocusOffset.Y - 110f,
+                -CameraFocusOffset.Y + CAMERA_DEF_OFF_Y,
                 -CameraFocusOffset.Z) *
             Matrix.CreateRotationY(OrthoRotationVector.X) *
             Matrix.CreateRotationX(OrthoRotationVector.Y);
 
-        GameProjection = Matrix.CreateOrthographic(1920, 1080, -3500, 75000f);
+        var defRes = WindowUtils.RenderResolution;
+        GameProjection = Matrix.CreateOrthographic(defRes.X, defRes.Y, -3500, 75000f);
     }
     static void UpdateMainMenuCamera() {
         if (MainMenuUI.CameraPositionAnimator.CurrentPosition != Vector3.Zero) {

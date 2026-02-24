@@ -13,6 +13,7 @@ using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.Core.Interfaces;
 using TanksRebirth.Net;
@@ -43,7 +44,7 @@ public struct BlockTemplate {
 }
 
 /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
-public class Block : IGameObject {
+public class Block : IGameObject, IHasModContent<ModBlock> {
     // TODO: ModBlock instance for the modblock used on this block instance...? to save performance in the future, obviously... same with other modded types
     public delegate void DestroyDelegate(Block block);
     /// <summary>Called after this <see cref="Block"/> is destroyed.</summary>
@@ -73,7 +74,7 @@ public class Block : IGameObject {
     public byte TpLink = 0;
     readonly int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
 
-    public ModBlock ModdedData { get; private set; }
+    public ModBlock ModdedData { get; internal set; }
 
     /// <summary>The type of this <see cref="Block"/>. (i.e: Wood, Cork, Hole)</summary>
     public int Type { get; set; }
@@ -252,15 +253,7 @@ public class Block : IGameObject {
             _ => ""
         };
 
-        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-            var modBlock = ModLoader.ModBlocks[i];
-
-            // associate values properly for modded data
-            if (Type == modBlock.Type) {
-                ModdedData = modBlock.Clone();
-                ModdedData.Block = this;
-            }
-        }
+        this.AttachModdedContent();
 
         Position = position;
 

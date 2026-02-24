@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
 
 namespace TanksRebirth.GameContent.ModSupport;
@@ -21,22 +22,36 @@ public static class ModRegistry {
 
         throw new ModRuntimeException($"Modded type '{typeof(T).Name}' not found.");
     }
+    /// <summary>
+    /// Retrieves a list of all modded content for a given <see cref="IModContent"/>.
+    /// </summary>
+    /// <typeparam name="T">The modded content kind.</typeparam>
+    public static List<T> GetContent<T>() where T : IModContent {
+        return [.. singletonMap.Values.OfType<T>()];
+    }
+    /// <summary>
+    /// Retrieves a list of all modded content for a given <see cref="IModContent"/> for a given <see cref="TanksMod"/>.
+    /// </summary>
+    /// <typeparam name="T">The modded content kind.</typeparam>
+    public static List<T> GetContent<T>(TanksMod mod) where T : IModContent {
+        return [.. singletonMap.Values.OfType<T>()];
+    }
 
-    public static bool TryGetModTankById(int id, out ModTank tank) {
+    public static bool TryGetModTankById(int id, out ModTank? tank) {
         tank = null;
         if (id < TankID.VanillaCount) return false;
 
         tank = idToModTank[id];
         return true;
     }
-    public static bool TryGetModBlockById(int id, out ModBlock block) {
+    public static bool TryGetModBlockById(int id, out ModBlock? block) {
         block = null;
         if (id < BlockID.VanillaCount) return false;
 
         block = idToModBlock[id];
         return true;
     }
-    public static bool TryGetModShellById(int id, out ModShell block) {
+    public static bool TryGetModShellById(int id, out ModShell? block) {
         block = null;
         if (id < BlockID.VanillaCount) return false;
 
@@ -46,15 +61,27 @@ public static class ModRegistry {
 
     // Backend/non-api
 
-    /*public static void AttachModdedContent(Block block) {
-        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-            var modBlock = ModLoader.ModBlocks[i];
-
+    internal static void AttachModdedContent(this Block block) {
+        if (idToModBlock.TryGetValue(block.Type, out var modBlock)) {
             // associate values properly for modded data
-            if (block.Type == modBlock.Type) {
-                block.ModdedData = modBlock.Clone();
-                block.ModdedData.Block = this;
-            }
+            block.ModdedData = modBlock.Clone();
+            block.ModdedData.Block = block;
         }
-    }*/
+    }
+
+    internal static void AttachModContent(this AITank tank) {
+        if (idToModTank.TryGetValue(tank.AiTankType, out var modTank)) {
+            // associate values properly for modded data
+            tank.ModdedData = modTank.Clone();
+            tank.ModdedData.AITank = tank;
+        }
+    }
+
+    internal static void AttachModContent(this Shell shell) {
+        if (idToModShell.TryGetValue(shell.Type, out var modShell)) {
+            // associate values properly for modded data
+            shell.ModdedData = modShell.Clone();
+            shell.ModdedData.Shell = shell;
+        }
+    }
 }

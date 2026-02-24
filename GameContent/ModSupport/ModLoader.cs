@@ -27,26 +27,33 @@ namespace TanksRebirth.GameContent.ModSupport;
 
 // fuck IDE0044
 #pragma warning disable CA2211, IDE0044
-public enum LoadStatus
-{
+public enum LoadStatus {
+    /// <summary>No mod is being loaded.</summary>
     Inactive,
+    /// <summary>Every mod is being unloaded.</summary>
     Unloading,
+    /// <summary>A mod is being loaded.</summary>
     Loading,
+    /// <summary>A mod is being compiled.</summary>
     Compiling,
+    /// <summary>All mods are finished loading.</summary>
     Complete
 }
 public static class ModLoader {
     public delegate void FinishModLoading();
+    /// <summary>Fired when every mod is finished loading.</summary>
     public static event FinishModLoading? OnFinishModLoading;
     public delegate void PostLoadModContent(TanksMod mod);
+    /// <summary>Fired when a specific mod is loaded</summary>
     public static event PostLoadModContent? OnPostModLoad;
 
     static JsonSerializerOptions _indented = new() { WriteIndented = true };
 
+    /// <summary>All mods currently loaded into Tanks Rebirth.</summary>
     public static List<TanksMod> LoadedMods { get; set; } = [];
     static List<AssemblyLoadContext> _loadedAlcs = [];
 
-    static IModContent _loadingContent;
+    static IModContent? _loadingContent;
 
     /// <summary>True if mods are loading.</summary>
     public static bool IsLoadingMods { get; private set; }

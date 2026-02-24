@@ -872,7 +872,7 @@ public static partial class LevelEditorUI {
             TankID.Emerald => TankGame.GameLanguage.LevelEdit.TankPlace.EmeraldFlavor,
             TankID.Gold => TankGame.GameLanguage.LevelEdit.TankPlace.GoldFlavor,
             TankID.Obsidian => TankGame.GameLanguage.LevelEdit.TankPlace.ObsidianFlavor,
-            _ => ModRegistry.TryGetModTankById(id, out var tank) ? (tank.Description?[TankGame.GameLanguage.ActiveLang] ?? CUSTOM_CONTENT_WARNING) : CUSTOM_CONTENT_WARNING
+            _ => ModRegistry.TryGetModTankById(id, out var tank) ? (tank!.Description?[TankGame.GameLanguage.ActiveLang] ?? CUSTOM_CONTENT_WARNING) : CUSTOM_CONTENT_WARNING
         };
     }
 
@@ -881,7 +881,7 @@ public static partial class LevelEditorUI {
             BlockID.Wood => TankGame.GameLanguage.LevelEdit.ObstaclePlace.WoodFlavor,
             BlockID.Cork => TankGame.GameLanguage.LevelEdit.ObstaclePlace.CorkFlavor,
             BlockID.Hole => TankGame.GameLanguage.LevelEdit.ObstaclePlace.HoleFlavor,
-            _ => ModRegistry.TryGetModBlockById(id, out var block) ? block.Description[TankGame.GameLanguage.ActiveLang] : CUSTOM_CONTENT_WARNING
+            _ => ModRegistry.TryGetModBlockById(id, out var block) ? block!.Description[TankGame.GameLanguage.ActiveLang] : CUSTOM_CONTENT_WARNING
         };
     }
 

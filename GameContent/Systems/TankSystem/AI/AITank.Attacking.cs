@@ -291,11 +291,9 @@ public partial class AITank {
         for (int i = 0; i < tanksDef.Count; i++) {
             var tnk = tanksDef[i];
             if (tnk == null) continue;
-            if (tnk.Team != Team || tnk.Team == TeamID.NoTeam) {
-                if (tnk != this) findsEnemy = true;
-            }
+            if (!tnk.IsOnSameTeamAs(Team) && tnk != this) findsEnemy = true;
             if (tnk == this) findsSelf = true;
-            if (tnk.Team == Team && tnk.Team != TeamID.NoTeam) findsFriendly = true;
+            if (tnk.IsOnSameTeamAs(Team)) findsFriendly = true;
         }
 
         if (findsEnemy && !tooCloseToExplosiveShell)
@@ -475,7 +473,13 @@ public partial class AITank {
         int tpTriggerIndex = -1;
         Vector2 teleportedTo = Vector2.Zero;
 
-        var pathHitbox = new Rectangle();
+        var pathHitbox = new Rectangle() {
+            Width = Shell.COLL_RECT_DIM,
+            Height = Shell.COLL_RECT_DIM
+        };
+
+        // TODO: find out why marine tanks don't shoot in shotguns mode
+        // -> by that same coin, fix shot paths not drawing
 
         for (int i = 0; i < MAX_PATH_UNITS; i++) {
             uninterruptedIterations++;
@@ -498,8 +502,6 @@ public partial class AITank {
             // path used to be XY - 5, WH = 8
             pathHitbox.X = (int)pathPos.X - Shell.COLL_RECT_DIM / 2;
             pathHitbox.Y = (int)pathPos.Y - Shell.COLL_RECT_DIM / 2;
-            pathHitbox.Width = Shell.COLL_RECT_DIM;
-            pathHitbox.Height = Shell.COLL_RECT_DIM;
 
             Vector2 dummy = Vector2.Zero;
             Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummy, out var dir, out var block, out bool corner, false, pattern);
@@ -569,6 +571,7 @@ public partial class AITank {
                 }
             }
 
+            // convert this (and the actual math) to triangle fans
             if (draw) {
                 var screenPos = MatrixUtils.ConvertWorldToScreen(
                     Vector3.Zero,
@@ -584,7 +587,7 @@ public partial class AITank {
                     Color.White * 0.5f,
                     0,
                     whitePixel.Size() / 2,
-                    realMiss,
+                    realMiss / 20,
                     default,
                     default
                 );

@@ -1,18 +1,11 @@
-using Microsoft.Win32;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Linq;
-using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.TankSystem.AI;
-using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -28,9 +21,9 @@ public class Explosion : IAITankDanger {
     public Tank? Owner;
 
     // 500 -> 80
-    public const int MINE_EXPLOSIONS_MAX = 80;
+    public const int EXPLOSIONS_MAX = 80;
 
-    public static Explosion[] Explosions = new Explosion[MINE_EXPLOSIONS_MAX];
+    public static Explosion[] Explosions = new Explosion[EXPLOSIONS_MAX];
     public Vector2 Position { get; set; }
     public bool IsPlayerSourced { get; set; }
     /// <summary>
@@ -151,7 +144,7 @@ public class Explosion : IAITankDanger {
             }
             foreach (var shell in Shell.AllShells) {
                 if (shell == null) continue;
-                if (Vector3.Distance(shell.Position3D, Position3D) > damageRadiusReal) continue;
+                if (Vector3.DistanceSquared(shell.Position3D, Position3D) > damageRadiusReal) continue;
 
                 shell.Destroy(Shell.DestructionContext.WithExplosion);
             }

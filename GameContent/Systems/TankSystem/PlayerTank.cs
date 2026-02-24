@@ -883,7 +883,7 @@ public class PlayerTank : Tank {
         if (Properties.Invisible && CampaignGlobals.InMission)
             return;
 
-        Properties.Armor?.Render();
+        Extras.Armor?.Render();
     }
     public override string ToString()
         => $"pos: {Position} | vel: {Velocity} | dead: {IsDestroyed} | rotation: {ChassisRotation} | OwnedBullets: {OwnedShellCount}";

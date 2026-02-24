@@ -20,13 +20,14 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
 // TODO: fix some shells instantly being destroyed from outer wall ricochets
-public class Shell : IAITankDanger {
+public class Shell : IAITankDanger, IHasModContent<ModShell> {
     public const int COLL_RECT_DIM = 3;
     public const int TOO_SHORT_LIFETIME = 5;
     public enum DestructionContext {
@@ -81,7 +82,7 @@ public class Shell : IAITankDanger {
 
     /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
     public Tank? Owner;
-    public ModShell? ModdedData { get; private set; }
+    public ModShell? ModdedData { get; internal set; }
 
     public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, Tank.TNK_DMG_COLL_Y, 0);
     public Vector3 Velocity3D => Velocity.ExpandZ();
@@ -192,15 +193,7 @@ public class Shell : IAITankDanger {
 
         PreCreate?.Invoke(this);
 
-        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-            var modShell = ModLoader.ModShells[i];
-
-            // associate values properly for modded data
-            if (Type == modShell.Type) {
-                ModdedData = modShell.Clone();
-                ModdedData.Shell = this;
-            }
-        }
+        this.AttachModContent();
 
         // ths calls OnCreate for ModdedData
         Swap(type);

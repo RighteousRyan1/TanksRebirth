@@ -43,6 +43,13 @@ public abstract class Tank(bool ignoresRegister) {
         public const float AI_AMB_MUL = 0.9f;
     }
 
+    public static bool ShowTeamVisuals = false;
+    public static World CollisionsWorld = new(Vector2.Zero);
+    public const float UNITS_PER_METER = 20f;
+    public const float TNK_WIDTH = 25;
+    public const float TNK_HEIGHT = 25;
+    public const float TNK_DMG_COLL_Y = 11.0f;
+
     #region TexPack
 
     public static Dictionary<string, Texture2D?> Assets = [];
@@ -137,20 +144,12 @@ public abstract class Tank(bool ignoresRegister) {
 
     #endregion
 
-    public bool CamTooClose;
-
     int _oldShellLimit;
 
+    public TankExtras Extras = new();
+
+    public bool CamTooClose;
     public Shell? LastShotShell;
-
-    public static bool ShowTeamVisuals = false;
-
-    public static World CollisionsWorld = new(Vector2.Zero);
-    public const float UNITS_PER_METER = 20f;
-
-    public const float TNK_WIDTH = 25;
-    public const float TNK_HEIGHT = 25;
-    public const float TNK_DMG_COLL_Y = 11.0f;
 
     /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="IProp"/>s.</summary>
     public List<IProp> Props = [];
@@ -235,7 +234,6 @@ public abstract class Tank(bool ignoresRegister) {
     #endregion
 
     internal Matrix[] boneTransforms = [];
-
     internal ModelMesh? cannonMesh;
 
     public static int[] GetActiveTeams(Func<Tank, bool>? predicate) {
@@ -458,6 +456,7 @@ public abstract class Tank(bool ignoresRegister) {
             Properties.ShellSpread = 0.15f;
             Properties.ShellShootCount = 3;
             Properties.ShellLimit *= 3;
+            Properties.Recoil = 1f;
 
             if (this is AITank tank)
                 tank.Parameters.DetectionForgivenessHostile *= 2;
@@ -604,9 +603,9 @@ public abstract class Tank(bool ignoresRegister) {
         bool willDestroy = true;
 
         // this method returns 0 if Armor is null
-        var hp = Properties.SafeGetArmorHitPoints();
+        var hp = Extras.SafeGetArmorHitPoints();
         if (hp > 0) {
-            Properties.Armor!.HitPoints--;
+            Extras.Armor!.HitPoints--;
             var ding = SoundPlayer.PlaySoundInstance(
                 $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect);
 
@@ -681,13 +680,12 @@ public abstract class Tank(bool ignoresRegister) {
         //if (CameraGlobals.IsUsingFirstPresonCamera)
         //    SoundUtils.CreateSpatialSound(destroy, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
 
-        Properties.Armor?.Remove();
+        Extras.Armor?.Remove();
 
         DoDestructionEffects();
 
         // if Damage ends up calling Destroy, Damage itself will not invoke OnDamage, but Destroy will.
         OnDamage?.Invoke(this, true, context);
-
         Remove(false);
     }
     public void DoDestructionEffects() {
@@ -704,11 +702,8 @@ public abstract class Tank(bool ignoresRegister) {
                 Client.ClientRandom.NextFloat(-3, 3));
 
             rock.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
             rock.Scale = new(0.55f);
-
             rock.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
-
             rock.Color = Properties.DestructionColor;
 
             rock.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
@@ -758,7 +753,7 @@ public abstract class Tank(bool ignoresRegister) {
         bool notEnoughShots = (Properties.ShellLimit - OwnedShellCount) < Properties.ShellShootCount;
         if (notEnoughShots) return;
 
-        DoShootParticles();
+        TankGame.MainThreadTasks.Enqueue(DoShootParticles);
 
         var force = (Position - TurretPosition) * Properties.Recoil;
         KnockbackVelocity = force / UNITS_PER_METER;
@@ -799,6 +794,8 @@ public abstract class Tank(bool ignoresRegister) {
         float angle = 0f;
 
         var rotatedPos = Vector2.UnitY.RotatedBy(TurretRotation);
+
+        var volley = (int)RuntimeData.UpdateCount % 10000;
         for (int i = 0; i < Properties.ShellShootCount; i++) {
             // i == 0 : null, 0 rads
             // i == 1 : flipped, -0.15 rads
@@ -813,7 +810,7 @@ public abstract class Tank(bool ignoresRegister) {
 
             var shell = Shell.Create(Position, Vector2.Zero, Properties.ShellType, this);
             // this could be magical and lead to *super specific* edge cases but otherwise this is a decent way to put it
-            shell.VolleyId = (int)RuntimeData.UpdateCount % 10000;
+            shell.VolleyId = volley;
             shell.Properties.Homing = Properties.ShellHoming;
 
             var newPos = Position + new Vector2(0, 20).RotatedBy(-TurretRotation + newAngle);

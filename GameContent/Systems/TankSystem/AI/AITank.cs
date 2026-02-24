@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
@@ -30,8 +31,8 @@ namespace TanksRebirth.GameContent.Systems.AI;
 // or maybe not?
 // e.g: VioletTank : AITank, NecromancerTank : AITank, etc.
 // this will allow for easier management of AI tanks and their unique behaviors without adding bloat for specific tank kinds
-public partial class AITank : Tank {
-    public ModTank? ModdedData { get; private set; }
+public partial class AITank : Tank, IHasModContent<ModTank> {
+    public ModTank? ModdedData { get; internal set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an <see cref="AITank"/> behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
@@ -138,15 +139,7 @@ public partial class AITank : Tank {
         DrawParams.LightPower = TankDrawParams.AI_AMB_MUL;
 
         // create modded data
-        for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
-            var modTank = ModLoader.ModTanks[i];
-
-            // associate values properly for modded data
-            if (AiTankType == modTank.Type) {
-                ModdedData = modTank.Clone();
-                ModdedData.AITank = this;
-            }
-        }
+        this.AttachModContent();
 
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
         if (!UsesCustomModel) {
@@ -173,7 +166,6 @@ public partial class AITank : Tank {
             int worldIndex = Array.IndexOf(GameHandler.AllTanks, null);
             if (worldIndex < 0) {
                 WorldId = -1;
-                GC.Collect(); // guh?
                 return;
             }
 
@@ -231,10 +223,10 @@ public partial class AITank : Tank {
             Parameters.DeflectsBullets = true;
 
         if (Modifiers.Map[Modifiers.ARMOR]) {
-            if (properties.Armor == null)
-                properties.Armor = new(this, 3);
+            if (Extras.Armor == null)
+                Extras.Armor = new(this, 3);
             else
-                properties.Armor = new(this, properties.Armor.HitPoints + 3);
+                Extras.Armor = new(this, Extras.Armor.HitPoints + 3);
         }
 
         if (Modifiers.Map[Modifiers.PREDICTIONS])
@@ -684,8 +676,7 @@ public partial class AITank : Tank {
         }
     }
     void DrawExtras() {
-        if (IsDestroyed || IgnoreRegister)
-            return;
+        if (IsDestroyed || IgnoreRegister) return;
 
         // did i ever make any good programming choices before this past year or so?
         // this code looks like it was written by a 12 year old with a broken arm - GitHub Copilot
@@ -731,6 +722,8 @@ public partial class AITank : Tank {
 
             drawInfo.Clear();
 
+            GetTanksInPath(Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+
             if (Parameters.PredictsPositions && TargetTank is not null)
                 calculation = Position.DistanceTo(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
 
@@ -748,10 +741,10 @@ public partial class AITank : Tank {
             //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Projection), 6, centered: true);
         }*/
 
-        if (Properties.Invisible && (CampaignGlobals.InMission || MainMenuUI.IsActive))
+        if (Properties.Invisible)
             return;
 
-        Properties.Armor?.Render();
+        Extras.Armor?.Render();
     }
 
     // strictly call this on the server.

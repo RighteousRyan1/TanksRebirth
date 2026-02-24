@@ -86,9 +86,6 @@ public class TankProperties {
     /// <summary>The color of particle <see cref="Tank"/> emits upon destruction.</summary>
     public Color DestructionColor { get; set; } = Color.Black;
 
-    /// <summary>The armor properties this <see cref="Tank"/> has.</summary>
-    public TankArmor? Armor { get; set; }
-
     /// <summary>How much this <see cref="Tank"/> is launched backward after firing a shell.</summary>
     public float Recoil { get; set; } = 0f;
 
@@ -100,6 +97,4 @@ public class TankProperties {
 
     /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
     public Shell.HomingProperties ShellHoming = new();
-
-    public int SafeGetArmorHitPoints() => Armor == null ? 0 : Armor.HitPoints;
 }

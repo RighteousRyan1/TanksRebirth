@@ -220,7 +220,7 @@ public static class CosmeticsUI {
         var diff = (endRads - startRads) / (numKeys - 1);
 
         for (int i = 0; i < numKeys; i++) {
-            var keyPart = GameHandler.Particles.MakeParticle(origPos, ModelGlobals.Key.Asset, tex);
+            Particle keyPart = GameHandler.Particles.MakeParticle(origPos, ModelGlobals.Key.Asset, tex);
 
             float k = numKeys == 1 ? 0.5f : (float)i / (numKeys - 1);
             // helps calculate the goal position
