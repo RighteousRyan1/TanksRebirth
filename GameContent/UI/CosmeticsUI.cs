@@ -9,7 +9,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -85,33 +85,6 @@ public static class CosmeticsUI {
                 Console.WriteLine($"{prop.Name} | {rarity} | {percent:0.00}");
 
                 displayTank.AddCosmetic(prop);
-
-
-
-                /*Particle cosPart;
-
-                if (prop is Prop3D p3d) {
-                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel.Asset, p3d.ModelTexture);
-                    cosPart.Scale = Vector3.One * prop.Scale;
-                }
-                else {
-                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, ((Prop2D)prop).Texture);
-                    cosPart.Scale = new Vector3(0.4f) * prop.Scale;
-                }
-                
-                // for some reason lighting just... isnt applied. ok. whatever. fix later.
-                cosPart.Alpha = 1f;
-                cosPart.HasAdditiveBlending = false;
-
-                // this might just need to be a way to render a cosmetic at a position rather than a particle explicitly
-                cosPart.UniqueBehavior = (p) => {
-                    // p.Position.Y += 0.1f * RuntimeData.DeltaTime;
-                    p.Position = Chest.ChestPosition + new Vector3(0, 75, 0);
-                    if (p.LifeTime > 180)
-                        p.Destroy();
-
-
-                };*/
             }
 
             _prevTotalAnim = _keyAnimation.TotalProgress;

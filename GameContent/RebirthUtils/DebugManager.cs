@@ -11,10 +11,10 @@ using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common;
@@ -644,7 +644,7 @@ public static class DebugManager {
         var drop = Crate.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
         drop.Scale = 1.25f;
         drop.TankToSpawn = new TankTemplate() {
-            AiTier = AITank.PickRandomTier(),
+            AiTier = TankID.ClientRandomTier(),
             Team = TeamID.NoTeam
         };
     }
@@ -682,7 +682,7 @@ public static class DebugManager {
         for (int i = 0; i < 5; i++) {
             var random = new BlockMapPosition(Client.ClientRandom.Next(0, 23), Client.ClientRandom.Next(0, 18));
             var rot = GeometryUtils.GetPiRandom();
-            var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier()) {
+            var t = new AITank(useCurTank ? tankToSpawnType : TankID.ClientRandomTier()) {
                 ChassisRotation = rot,
                 TurretRotation = rot,
                 IsDestroyed = false,
@@ -715,7 +715,7 @@ public static class DebugManager {
         var drop = Crate.SpawnCrate(new(BlockMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : Client.ClientRandom.Next(-300, 301)), BlockMapPosition.Convert3D(random).Z), 2f);
         drop.Scale = 1.25f;
         drop.TankToSpawn = new TankTemplate() {
-            AiTier = tierOverride == default ? AITank.PickRandomTier() : tierOverride,
+            AiTier = tierOverride == default ? TankID.ClientRandomTier() : tierOverride,
             Team = teamOverride == default ? Client.ClientRandom.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride
         };
     }

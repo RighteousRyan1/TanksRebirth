@@ -8,7 +8,7 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 

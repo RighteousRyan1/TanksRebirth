@@ -6,7 +6,8 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -22,7 +23,7 @@ public static partial class MainMenuUI {
             return;
         }
         // do not count player tanks into the check
-        var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out _, (t) => t is not PlayerTank);
+        var missionComplete = CampaignProgression.VanillaCheckCompletion(curMenuMission, out _, (t) => t is not PlayerTank);
 
         if (missionComplete)
             LoadTemplateMission();

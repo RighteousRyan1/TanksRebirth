@@ -1,7 +1,7 @@
-﻿using Microsoft.Xna.Framework;
-using TanksRebirth.GameContent.Systems.AI;
+using Microsoft.Xna.Framework;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
+
+namespace TanksRebirth.GameContent.Tanks.AI;
 
 // ref struct at some point
 public class AIParameters {
@@ -89,4 +89,6 @@ public class AIParameters {
     public bool SmartTargeting { get; set; }
     /// <summary>The 'base' experience value the player gains killing this tank.</summary>
     public float BaseXP { get; set; }
+
+    public AIParameters Clone() => (AIParameters)MemberwiseClone();
 }

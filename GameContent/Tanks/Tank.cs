@@ -16,11 +16,12 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Tanks.AI;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem;
+namespace TanksRebirth.GameContent.Tanks;
 public abstract class Tank(bool ignoresRegister) {
     /// <summary>If true, this tank is not registered with the game entity lists and is managed manually.</summary>
     public bool IgnoreRegister = ignoresRegister;
@@ -448,6 +449,7 @@ public abstract class Tank(bool ignoresRegister) {
             Properties.ShellLimit = 50;
             Properties.ShootStun = 0;
 
+            // just slap ts in AITank???
             if (this is AITank tank)
                 tank.Parameters.DetectionForgivenessHostile *= 2;
         }
@@ -456,7 +458,7 @@ public abstract class Tank(bool ignoresRegister) {
             Properties.ShellSpread = 0.15f;
             Properties.ShellShootCount = 3;
             Properties.ShellLimit *= 3;
-            Properties.Recoil = 1f;
+            Properties.Recoil = 2f;
 
             if (this is AITank tank)
                 tank.Parameters.DetectionForgivenessHostile *= 2;
@@ -750,7 +752,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         if (CurShootCooldown > 0) return;
 
-        bool notEnoughShots = (Properties.ShellLimit - OwnedShellCount) < Properties.ShellShootCount;
+        bool notEnoughShots = Properties.ShellLimit - OwnedShellCount < Properties.ShellShootCount;
         if (notEnoughShots) return;
 
         TankGame.MainThreadTasks.Enqueue(DoShootParticles);

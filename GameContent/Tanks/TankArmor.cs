@@ -6,9 +6,8 @@ using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Globals.Assets;
 using System;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Systems.AI;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem;
+namespace TanksRebirth.GameContent.Tanks;
 
 // work on 2d drawing the hp bar
 public class TankArmor {
@@ -89,7 +88,7 @@ public class TankArmor {
         var tex = TextureGlobals.Pixels[Color.White];
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tex,
             screenPos, Vector2.UnitY, damageColor, dims, 1f, anchor, shadowAlpha: 0.5f, shadowDistScale: 0.5f);
-        TankGame.SpriteRenderer.Draw(tex, screenPos, null, healthColor, 0f, tex.Size() / 2, new Vector2(dims.X * (float)HitPoints / _hitpointsMax, dims.Y), default, 0);
+        TankGame.SpriteRenderer.Draw(tex, screenPos, null, healthColor, 0f, tex.Size() / 2, new Vector2(dims.X * HitPoints / _hitpointsMax, dims.Y), default, 0);
     }
     /// <summary>Remove this <see cref="TankArmor"/> from memory.</summary>
     public void Remove() {

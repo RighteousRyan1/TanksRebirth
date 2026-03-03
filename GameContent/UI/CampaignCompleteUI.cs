@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -20,8 +19,9 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 
 namespace TanksRebirth.GameContent.UI;
 

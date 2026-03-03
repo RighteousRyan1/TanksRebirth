@@ -35,6 +35,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - MASSIVE revamps to the game stats menu, multiplayer menu, and the chat window
 - Hit/hurtboxes now occur on 3 dimensions instead of previously 2, to allow for modders to do potentially cool things, and also makes debugging much easier
 - Bullet count UI for players has been slightly revamped
+- The "Shotguns" modifier has been improved and changed
+	- Tanks now have recoil when firing
+	- Shot spread is much tighter
 
 # Changes Important for Modders
 

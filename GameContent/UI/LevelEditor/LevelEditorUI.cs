@@ -17,17 +17,16 @@ using FontStashSharp;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using NativeFileDialogSharp;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Localization;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using System.Diagnostics;
-using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.GameContent.ModSupport;
 using System.Reflection;
+using TanksRebirth.GameContent.Systems.LevelSystem;
 
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
@@ -840,7 +839,7 @@ public static partial class LevelEditorUI {
             }
         }
         else if (IsEditing && !IsActive && cachedMission != default && CampaignGlobals.InMission)
-            if (IntermissionHandler.NothingCanHappenAnymore(cachedMission, out _))
+            if (CampaignProgression.VanillaCheckCompletion(cachedMission, out _))
                 QueueEditorReEntry(120f);
 
         ReturnToEditor.IsVisible = IsEditing && !IsActive && !MainMenuUI.IsActive;

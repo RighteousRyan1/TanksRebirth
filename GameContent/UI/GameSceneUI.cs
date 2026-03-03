@@ -2,9 +2,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
@@ -24,7 +24,7 @@ public static class GameSceneUI {
 
         if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
             var xpBar = GameHandler.ExpBar;
-            xpBar.Position = new(WindowUtils.WindowWidth / 2 - xpBar.Scale.X / 2, 50);
+            xpBar.Position = new(WindowUtils.WindowWidth / 2, 50);
             xpBar.Scale = new(600, 20);
             xpBar.Alignment = Anchor.LeftCenter;
             xpBar.FillColor = Color.Green;
@@ -60,7 +60,7 @@ public static class GameSceneUI {
             LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.General.Mission}"}";
         var infoMeasure = font.MeasureString(missionInfo) * infoScale;
         var infoScaling = 1f - ((float)missionInfo.Length / LevelEditorUI.MAX_MISSION_CHARS) + 0.4f;
-        var tanksRemaining = $"× {AIManager.CountAll()}";
+        var tanksRemaining = $"ï¿½ {AIManager.CountAll()}";
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
             Vector2.UnitY, IntermissionSystem.BannerColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);

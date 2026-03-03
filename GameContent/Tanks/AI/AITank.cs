@@ -13,9 +13,9 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.Tanks.AI.VanillaAI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
@@ -25,7 +25,7 @@ using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems.AI;
+namespace TanksRebirth.GameContent.Tanks.AI;
 
 // eventually: AITank will be the basis for all AI controlled tanks...
 // or maybe not?
@@ -33,6 +33,8 @@ namespace TanksRebirth.GameContent.Systems.AI;
 // this will allow for easier management of AI tanks and their unique behaviors without adding bloat for specific tank kinds
 public partial class AITank : Tank, IHasModContent<ModTank> {
     public ModTank? ModdedData { get; internal set; }
+
+    public IAISystem? TankAI { get; set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an <see cref="AITank"/> behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
@@ -233,6 +235,8 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             Parameters.PredictsPositions = true;
         properties.TreadVolume = 0.05f;
 
+        TankAI = new VanillaAISystem();
+
         base.ApplyDefaults(ref properties);
 
         ModdedData?.PostApplyDefaults();
@@ -241,7 +245,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     public List<Tank> TanksNearShootAwareness = [];
     public List<Block> BlocksNear = [];
     public override void Update() {
-        // why did i not do this sooner?
+        // why did j not do this sooner?
         ModdedData?.PreUpdate();
         base.Update();
         ModdedData?.PostUpdate();
@@ -442,7 +446,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (LevelEditorUI.IsEditing) return;
         var rand = Client.ClientRandom.NextFloat(0.75f, 1.25f);
         var gain = Parameters.BaseXP * rand;
-        // i will keep this commented if anything else happens.
+        // j will keep this commented if anything else happens.
         //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
         GameHandler.ExpBar.GainExperience(gain);
 
@@ -488,87 +492,15 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         }
     }
     /// <summary>The main AI loop of this <see cref="AITank"/>.</summary>
-    public void DoAI() {
-        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission) return;
-
-        TurretRotationMultiplier = 1f;
-
-        Array.ForEach(Behaviors, x => x.Value += RuntimeData.DeltaTime);
-
-        #region HandleTanksNear
-        TanksNearMineAwareness.Clear();
-        TanksNearShootAwareness.Clear();
-
-        Span<Tank?> allTanks = GameHandler.AllTanks;
-        ref var search = ref MemoryMarshal.GetReference(allTanks);
-
-        for (int i = 0; i < allTanks.Length; i++) {
-            var tank = Unsafe.Add(ref search, i);
-            if (tank is null || tank == this || tank.IsDestroyed)
-                continue;
-
-            float distToBody = GameUtils.TanksDistance(Position, tank.Position);
-            float distToTurret = GameUtils.TanksDistance(TurretPosition, tank.Position);
-
-            if (distToBody <= Parameters.TankAwarenessMine)
-                TanksNearMineAwareness.Add(tank);
-
-            if (distToTurret <= Parameters.TankAwarenessShoot)
-                TanksNearShootAwareness.Add(tank);
-        }
-
-        var t = this;
-        // if (ModdedData?.CustomAI() == false) return;
-        if (ModdedData is not null) {
-            if (!ModdedData.CustomAI())
-                return;
-        }
-        #endregion
-
-        var isShellNear = NearbyDangers.Count > 0 && ClosestDanger is Shell;
-
-        // only use if checking the respective boolean!
-        var shell = (ClosestDanger as Shell)!;
-
-        // isShellNear already accounts for the direction arc
-        if (Parameters.DeflectsBullets && isShellNear && Properties.ShellLimit - OwnedShellCount > 0) {
-            DoDeflection(shell);
-        }
-
-        HandleTurret();
-        if (DoMovements) {
-            if (Properties.Stationary)
-                return;
-
-            // facing down = 0 radians/2pi radians
-
-            // "DoMovement" handles danger avoidance.
-            // IsSurviving is only set every movement opportunity
-            DoMovement();
-
-            // checks if it is entirely unable to lay mines first
-            TryMineLay();
-        }
-
-        #region TankRotation
-
-        // i really hope to remove this hardcode.
-        if (DoMoveTowards) {
-            var dir = Vector2.UnitY.RotatedBy(ChassisRotation);
-            Velocity = Vector2.Normalize(dir);
-
-            Velocity *= Speed;
-            ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
-        }
-
-        #endregion
+    public void AILoop() {
+        TankAI?.AILoop(this);
     }
 
     public BasicEffect TankBasicEffectHandler = new(TankGame.Instance.GraphicsDevice);
     public override void Render() {
         base.Render();
         if (IsDestroyed) return;
-        // find out why i put this here lmao
+        // find out why j put this here lmao
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();
 
@@ -678,7 +610,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     void DrawExtras() {
         if (IsDestroyed || IgnoreRegister) return;
 
-        // did i ever make any good programming choices before this past year or so?
+        // did j ever make any good programming choices before this past year or so?
         // this code looks like it was written by a 12 year old with a broken arm - GitHub Copilot
         // even ai hates my code.
         if (DebugManager.DebugLevel == DebugManager.Id.AIData) {
@@ -741,14 +673,22 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Projection), 6, centered: true);
         }*/
 
+        /*if (Properties.Stationary) return;
+
+        Parameters.RandomTimerMinMove = 60;
+        Parameters.RandomTimerMaxMove = 60;
+
+        for (int i = 0; i < SubPivotQueue.Count; i++) {
+            var dir = SubPivotQueue.ElementAt(i);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{MathHelper.ToDegrees(dir.ToRotation())}",
+                WindowUtils.WindowTop + new Vector2(20, i * 20), Color.Black, Color.White, Vector2.One, 0f, Anchor.TopCenter, 0.5f);
+        }*/
+
         if (Properties.Invisible)
             return;
 
         Extras.Armor?.Render();
     }
-
-    // strictly call this on the server.
-    public static int PickRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
 
     static readonly object _rayCastLock = new();
     /// <summary>Performs a raycast in all 4 cardinal directions of the tank (rotation-agnostic).</summary>
@@ -795,7 +735,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                     // Console.WriteLine();
 
                     return fraction;
-                    // divide by 2 because it's a radius, i think
+                    // divide by 2 because it's a radius, j think
                 }, Physics.Position, endpoint);
             }
         }

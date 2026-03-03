@@ -3,11 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
 using TanksRebirth.Internals.Common.Utilities;
 
-namespace TanksRebirth.GameContent.Systems.AI; 
+namespace TanksRebirth.GameContent.Tanks.AI;
 public partial class AITank {
     public bool IsInDanger;
     public volatile List<IAITankDanger> NearbyDangers;

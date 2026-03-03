@@ -7,7 +7,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -16,7 +16,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems;
+namespace TanksRebirth.GameContent.Systems.LevelSystem;
 public static class IntermissionHandler {
     public const int DEF_INTERMISSION_TIME = 600;
     public const int DEF_PLUSLIFE_TIME = 240;
@@ -35,7 +35,7 @@ public static class IntermissionHandler {
     public static MissionEndContext LastResult = (MissionEndContext)(-1);
 
     // bool major = (if true, play M100 fanfare, else M20)
-    public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) {
+    public static void DoEndMissionWorkload(int delay, MissionEndContext context) {
         TankMusicSystem.StopAll();
 
         // Server.SyncSeeds();
@@ -114,59 +114,6 @@ public static class IntermissionHandler {
         else
             IntermissionSystem.BeginOperation(delay);
     }
-    /// <summary>
-    /// A method that returns whether or not there was a victory- be it for the enemy or the player.
-    /// </summary>
-    /// <param name="mission">The mission to check.</param>
-    /// <param name="predicate">Functional checking for each tank to include into the check.</param>
-    /// <param name="finalTeam">The final team, with respect to the predicate.</param>
-    /// <returns>Whether or not one team or one player dominates the map.</returns>
-    public static bool NothingCanHappenAnymore(Mission mission, out int finalTeam, Func<Tank, bool>? predicate = null) {
-        finalTeam = -1;
-
-        if (mission.Tanks is null)
-            return true;
-
-        var teamSet = new HashSet<int>();
-        int aliveTankCount = 0;
-
-        foreach (var tank in GameHandler.AllTanks) {
-            if (tank is null || tank.IsDestroyed)
-                continue;
-
-            if (predicate is not null && !predicate(tank))
-                continue;
-
-            aliveTankCount++;
-            teamSet.Add(tank.Team);
-        }
-
-        if (teamSet.Count == 0)
-            return true; // no teams alive
-
-        if (teamSet.Count == 1) {
-            finalTeam = teamSet.First();
-            if (finalTeam == TeamID.NoTeam)
-                return aliveTankCount <= 1;
-            return true;
-        }
-
-        return false; // multiple teams still active
-    }
-    public static void CheckMissionCompletion() {
-        // if (Client.IsConnected() && !Client.IsHost()) return;
-
-        if (CampaignGlobals.LoadedCampaign.CachedMissions[0].Name is null)
-            return;
-
-        var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out var finalTeam);
-        var myTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
-        bool victory = myTank is null || myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
-
-        if (nothingAnymore) {
-            PrepareIntermission(victory);
-        }
-    }
     public static void PrepareIntermission(bool victory) {
         IntermissionSystem.IsAwaitingNewMission = true;
         CampaignGlobals.InMission = false;
@@ -242,7 +189,7 @@ public static class IntermissionHandler {
                 if (Modifiers.Map[Modifiers.INF_LIFE])
                     endContext = MissionEndContext.Lose;
             }
-            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);
+            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext);
         }
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>
@@ -272,7 +219,7 @@ public static class IntermissionHandler {
                 CampaignGlobals.DoMissionStartInvoke();
 
                 // if for some reason we return back to a mission with no enemies left
-                CheckMissionCompletion();
+                CampaignProgression.CheckMissionCompletion();
                 TankMusicSystem.PlayAll();
             }
         }

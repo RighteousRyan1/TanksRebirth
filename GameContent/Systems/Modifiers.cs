@@ -5,7 +5,8 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
+
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 

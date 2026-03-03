@@ -1,4 +1,4 @@
-﻿namespace TanksRebirth.GameContent.Systems.TankSystem; 
+﻿namespace TanksRebirth.GameContent.Tanks;
 
 /// <summary>
 /// Extra fun stuff that <see cref="Tank"/>s use that change organically (via typical in-game actions) during gameplay.

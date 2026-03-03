@@ -1,5 +1,4 @@
-﻿using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
+﻿using TanksRebirth.GameContent.Tanks.AI;
 
 namespace TanksRebirth.GameContent;
 

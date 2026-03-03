@@ -2,13 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public enum Anchor
-{
+public enum Anchor {
     TopLeft,
     TopRight,
     BottomLeft,

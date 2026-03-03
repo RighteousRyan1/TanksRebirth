@@ -1,26 +1,17 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
+namespace TanksRebirth.GameContent.Tanks.AI;
 
 public static class AIManager {
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
@@ -35,8 +26,8 @@ public static class AIManager {
     public static AIParameters GetAIParameters(int tankType) {
         var aiParams = new AIParameters();
 
-        if (AIParameterDefaults.TryGetValue(tankType, out AIParameters value))
-            return value;
+        if (AIParameterDefaults.TryGetValue(tankType, out AIParameters? value))
+            return value.Clone();
 
         /*if (!AIParameterDefaults.TryGetValue(tankType, out AIParameters? value)) {
             var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
@@ -532,8 +523,8 @@ public static class AIManager {
     public static TankProperties GetAITankProperties(int tankType) {
         var properties = new TankProperties();
 
-        if (AIPropertyDefaults.TryGetValue(tankType, out TankProperties value))
-            return value;
+        if (AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value))
+            return value.Clone();
 
         /*if (!AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value)) {
             var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
@@ -897,7 +888,7 @@ public static class AIManager {
     /// Gets the highest tier that is present in-game, following the pattern you give.
     /// </summary>
     /// <param name="predicate">The pattern to take account for when searching. If null, just finds the highest active.</param>
-    /// <returns></returns>
+    /// <returns>The highest tier that follows the given pattern.</returns>
     public static int GetHighestTierActive(Func<AITank, bool>? predicate = null) {
         var highest = TankID.None;
 
@@ -1004,7 +995,7 @@ public static class AIManager {
             var tank = GameHandler.AllAITanks[i];
             if (tank.IsDestroyed) return;
 
-            tank.DoAI();
+            tank.AILoop();
 
             // only does anything if you're in a multiplayer context.
             Client.SyncAITank(tank);
@@ -1027,7 +1018,7 @@ public static class AIManager {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
-                tank.DoAI();
+                tank.AILoop();
 
                 // only does anything if you're in a multiplayer context.
                 Client.SyncAITank(tank);
@@ -1051,7 +1042,7 @@ public static class AIManager {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
-                tank.DoAI();
+                tank.AILoop();
 
                 // only does anything if you're in a multiplayer context.
                 Client.SyncAITank(tank);
@@ -1075,7 +1066,7 @@ public static class AIManager {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
-                tank.DoAI();
+                tank.AILoop();
 
                 // only does anything if you're in a multiplayer context.
                 Client.SyncAITank(tank);
@@ -1158,7 +1149,7 @@ public static class AIManager {
                     if (tank is null || tank.IsDestroyed)
                         continue;
 
-                    tank.DoAI();
+                    tank.AILoop();
                     Client.SyncAITank(tank);
                 }
             }

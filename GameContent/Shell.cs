@@ -10,11 +10,10 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
@@ -249,7 +248,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         return shell;
     }
-    void StopSounds(int delay, MissionEndContext context, bool result1up) {
+    void StopSounds(int delay, MissionEndContext context) {
         TrailSound?.Instance?.Stop();
         ShootSound?.Instance?.Stop();
     }
@@ -556,7 +555,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         ref var bulletSSpace = ref MemoryMarshal.GetReference((Span<Shell>)AllShells);
 
-        // prevents collisions between shells spawned in the same volley
+        // prevents collisions between shells spawned in the same volley (until they separate)
         bool hasSibling = false;
         bool stillIntersecting = false;
 
@@ -573,7 +572,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
             hasSibling = true;
 
-            if (s.Hitbox.Intersects(Hitbox)) {
+            if (s.Hitbox.Intersects(Hitbox with { Radius = Hitbox.Radius + 0.5f })) {
                 stillIntersecting = true;
                 break;
             }

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem;
+namespace TanksRebirth.GameContent.Tanks;
 
 public class TankDeathMark {
     private const int MAX_DEATH_MARKS = 1000;
@@ -19,9 +19,8 @@ public class TankDeathMark {
     public Matrix View;
     public Matrix Projection;
 
-    public Particle check;
-
-    public Texture2D texture;
+    public Particle? check;
+    public Texture2D? texture;
 
     /// <summary>The tank that died here.</summary>
     public TankTemplate StoredTank;

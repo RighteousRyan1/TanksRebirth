@@ -2,17 +2,17 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.PingSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -74,11 +74,11 @@ public class GameHandler {
         CosmeticsUI.Initialize();
     }
 
-    private static void AttemptIntermission(Tank victim, bool destroy, ITankHurtContext context) {
+    static void AttemptIntermission(Tank victim, bool destroy, ITankHurtContext context) {
         if (!destroy) return;
 
         if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive)
-            IntermissionHandler.CheckMissionCompletion();
+            CampaignProgression.CheckMissionCompletion();
     }
 
     internal static void GameLoopLogic(GameTime gameTime) {

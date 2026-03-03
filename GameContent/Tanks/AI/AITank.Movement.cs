@@ -1,16 +1,13 @@
 using Microsoft.Xna.Framework;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Enums;
-using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems.AI; 
+namespace TanksRebirth.GameContent.Tanks.AI;
 
 public partial class AITank {
     public bool IsTooCloseToObstacle;
@@ -108,6 +105,7 @@ public partial class AITank {
             return;
         }
 
+        #region Perpendicular Wall Hit
         float angleDiff = MathHelper.PiOver4 / 2; // normally MathHelper.PiOver2
 
         float fracL = -1f;
@@ -125,7 +123,6 @@ public partial class AITank {
                 fracR = fraction;
                 return fraction;
             });
-
         /*var dir = CollisionDirection.Down;
         if (!checkLeft && checkRight)
             dir = CollisionDirection.Right;
@@ -138,15 +135,19 @@ public partial class AITank {
             // backwards, not down, lol
             dir = CollisionDirection.Down;
         }
+        #endregion
 
         float vecRot;
 
-        var redirectAngle = 1.3f; // MathHelper.PiOver2; // normally /2
-
-        if (dir != CollisionDirection.Down)
+        if (dir != CollisionDirection.Down) {
+            var redirectAngle = 1.3f; // MathHelper.PiOver2; // normally /2
             vecRot = dir == CollisionDirection.Left ? -redirectAngle : redirectAngle;
-        else
+        }
+        else {
             vecRot = MathHelper.Pi + Client.ClientRandom.NextFloat(-0.5f, 0.5f);
+        }
+
+        PivotQueue.Clear();
 
         // old = Vector2.UnitY.RotatedBy(-rayNormal.ToRotation() - MathHelper.PiOver2);
         var movementDirection = Vector2.UnitY.RotatedBy(ChassisRotation + vecRot);
@@ -155,15 +156,16 @@ public partial class AITank {
     }
     /// <summary>Makes this <see cref="AITank"/> perform a random turn.</summary>
     public void DoRandomMove() {
-        // previous impl
         var randomTurn = Client.ClientRandom.NextFloat(-Parameters.MaxAngleRandomTurn, Parameters.MaxAngleRandomTurn);
 
+        // aggressiveness
         if (TargetTank is not null) {
+            // dirvec to target -> gets that angle
+            // difference in angle -> multiplies by aggressiveness
             var toTarget = Vector2.Normalize(TargetTank.Position - Position);
             float targetAngle = toTarget.ToRotation() - MathHelper.PiOver2;
 
             // shortest signed angle difference
-            // MathHelper.WrapAngle() ?
             float angleDifference = MathHelper.WrapAngle(targetAngle - ChassisRotation);
 
             // negatives don't work?
@@ -172,20 +174,17 @@ public partial class AITank {
             randomTurn += angleDifference * Parameters.AggressivenessBias;
         }
 
-        /*float finalAngle = TankRotation + randomTurn;
+        // this causes extremely weak movement...
+        /*float finalAngle = ChassisRotation + randomTurn;
         Vector2 direction = Vector2.UnitY.RotatedBy(finalAngle);
 
-        PivotQueue.Add((direction, PivotType.RandomTurn));
+        PivotQueue.Enqueue(direction);*/
 
-        // add to list
-        Console.WriteLine();
-        Console.WriteLine("Random movement: " + MathHelper.ToDegrees(direction.ToRotation()));
-        Console.WriteLine();*/
+        //ChatSystem.SendMessage("Start: " + MathHelper.ToDegrees(ChassisRotation), ColorUtils.DiscoPartyColor);
+        //ChatSystem.SendMessage("End: " + MathHelper.ToDegrees(direction.ToRotation()), ColorUtils.DiscoPartyColor);
 
-        //var eventualRotation = DesiredChassisRotation + randomTurn / 2;
-
-        //PivotQueue.Enqueue((Vector2.UnitY.RotatedBy(eventualRotation), PivotType.RandomTurn));
-
+        // is / 2 necessary?
+        // i think so for now. once i figure out how to get the queue to work with random movments, it will look crisp 
         DesiredChassisRotation += randomTurn / 2;
     }
     // if raycasting based on radii, divide what is input to distance by two
@@ -242,7 +241,23 @@ public partial class AITank {
     public bool TryWorkSubQueue() {
         if (SubPivotQueue.Count == 0) return false;
 
-        DesiredChassisRotation = /*SubPivotQueue[0]*/SubPivotQueue.Dequeue().ToRotation() - MathHelper.PiOver2;
+        /*var aggro = 0f;
+        if (TargetTank is not null) {
+            // dirvec to target -> gets that angle
+            // difference in angle -> multiplies by aggressiveness
+            var toTarget = Vector2.Normalize(TargetTank.Position - Position);
+            float targetAngle = toTarget.ToRotation() - MathHelper.PiOver2;
+
+            // shortest signed angle difference
+            float angleDifference = MathHelper.WrapAngle(targetAngle - ChassisRotation);
+
+            // negatives don't work?
+
+            // applies bias toward or away from the target's angle
+            aggro += angleDifference * Parameters.AggressivenessBias;
+        }*/
+
+        DesiredChassisRotation = SubPivotQueue.Dequeue().ToRotation() - MathHelper.PiOver2;
 
         // drop the first element again, but for the sub-queue
         // SubPivotQueue.RemoveAt(0);

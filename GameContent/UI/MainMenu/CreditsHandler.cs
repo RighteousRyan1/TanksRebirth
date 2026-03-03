@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
-using static TanksRebirth.GameContent.UI.MainMenu.MainMenuUI;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 

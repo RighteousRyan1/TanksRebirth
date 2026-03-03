@@ -10,8 +10,8 @@ using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 
 namespace TanksRebirth.GameContent;
 

@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;

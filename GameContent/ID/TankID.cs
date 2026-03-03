@@ -1,4 +1,5 @@
 ﻿using TanksRebirth.Internals.Common.Framework.Collections;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.ID;
 
@@ -46,4 +47,9 @@ public sealed class TankID {
      */
 
     public static ReflectionDictionary<TankID> Collection { get; internal set; } = new(MemberType.Fields);
+
+    // methods...
+
+    public static int ServerRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
+    public static int ClientRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
 }

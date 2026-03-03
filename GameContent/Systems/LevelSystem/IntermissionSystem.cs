@@ -17,9 +17,9 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Enums;
 using TanksRebirth.Graphics.Shaders;
 using TanksRebirth.Internals.Common;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 
-namespace TanksRebirth.GameContent.Systems;
+namespace TanksRebirth.GameContent.Systems.LevelSystem;
 #pragma warning disable
 public static class IntermissionSystem {
     public static RenderTarget2D BackgroundBuffer;
@@ -754,9 +754,9 @@ public static class IntermissionSystem {
         if (GameUI.Paused) return;
 
         if (ShouldFade && ShouldFadeIn)
-            IntermissionSystem.TickAlpha(ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
+            TickAlpha(ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
         if (ShouldFade && !ShouldFadeIn)
-            IntermissionSystem.TickAlpha(-ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
+            TickAlpha(-ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
     }
     public static void PlayOpeningFanfare() {
         var missionStarting = "Assets/music/fanfares/mission_starting.ogg";

@@ -12,7 +12,8 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
-using TanksRebirth.GameContent.Systems.TankSystem.AI;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -24,7 +25,7 @@ using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem;
+namespace TanksRebirth.GameContent.Tanks;
 
 // pretty sure literally everything breaks if you try local multiplayer input in a multiplayer server. get to that later!
 public enum PlayerInput {
@@ -814,7 +815,7 @@ public class PlayerTank : Tank {
             float bulletStartY = startY + nameSize.Y + 8f;
             for (int i = 0; i < Properties.ShellLimit; i++) {
                 // fade in or fade out?
-                float targetState = (i < OwnedShellCount) ? 0f : 1f;
+                float targetState = i < OwnedShellCount ? 0f : 1f;
 
                 // speed of fade in/out
                 float speed = 0.08f * RuntimeData.DeltaTime;
@@ -833,7 +834,7 @@ public class PlayerTank : Tank {
 
                 // draw
                 float xPos = startX - offX;
-                float yPos = bulletStartY + (i * (offY + spacing));
+                float yPos = bulletStartY + i * (offY + spacing);
                 var position = new Vector2(xPos, yPos);
 
                 DrawUtils.DrawTextureWithBorder(spriteBatch, tex, position, colorToUse, 

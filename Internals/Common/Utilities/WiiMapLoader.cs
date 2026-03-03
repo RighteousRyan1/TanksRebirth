@@ -2,31 +2,23 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.IsolatedStorage;
 using System.Linq;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
 public readonly struct WiiMap {
-    public readonly struct WiiMapTileData {
-        public readonly BlockMapPosition Position;
-        public readonly int Type;
+    public readonly struct WiiMapTileData(BlockMapPosition pos, int type, int stack) {
+        public readonly BlockMapPosition Position = pos;
+        public readonly int Type = type;
         /// <summary>-1 for player tank, -2 for enemy tank.</summary>
-        public readonly int Stack;
-
-        public WiiMapTileData(BlockMapPosition pos, int type, int stack) {
-            Position = pos;
-            Type = type;
-            Stack = stack;
-        }
+        public readonly int Stack = stack;
     }
 
     public const int LargeMapBytepool = 1512;
@@ -91,7 +83,7 @@ public readonly struct WiiMap {
 
         void SetBit(byte[] dataCollection, int data) {
             dataCollection[byteOffset] = (byte)data;
-            byteOffset += 0x4; // 4 bytes per tile (int == 32 bits (32 / 8 = 4))
+            byteOffset += 0x4; // 4 bytes per tile
         }
 
         SetBit(rawData, (byte)(largeMap ? BlockMapPosition.MAP_WIDTH_169 : BlockMapPosition.MAP_WIDTH_43));
@@ -208,7 +200,7 @@ public readonly struct WiiMap {
                     break;
                 }
             case ENEMY_TANK_ID: { // Enemy Tank.
-                    var ai = DebugManager.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
+                    var ai = DebugManager.SpawnTankAt(tile.Position, TankID.ClientRandomTier(), TeamID.Blue);
                     ai.ChassisRotation = tnkRot;
                     ai.DesiredChassisRotation = tnkRot;
                     ai.TurretRotation = tnkRot;

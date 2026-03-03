@@ -1,10 +1,11 @@
-﻿using LiteNetLib;
+using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using System.Linq;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
+
 
 namespace TanksRebirth.Net;
 

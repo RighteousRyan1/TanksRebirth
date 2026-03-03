@@ -1,18 +1,12 @@
 using HidSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Graphics.PackedVector;
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using TanksRebirth.Graphics;
-using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Utilities;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem;
+namespace TanksRebirth.GameContent.Tanks;
 
 // TODO: this can definitely become a rendertarget translated into 3d space.
 

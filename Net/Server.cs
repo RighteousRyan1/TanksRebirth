@@ -1,20 +1,17 @@
 ﻿using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using Mono.Unix.Native;
 using System;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth.Net;
 
 #pragma warning disable CA2211
 // moderately confused as to why this class isn't static... ¯\_(ツ)_/¯
-public class Server
-{
+public class Server {
     public delegate void ServerStartDelegate(Server server);
     /// <summary>Fired when a server is created. Here you can hook into <see cref="NetListener"/>'s "NetworkReceiveEvent" to handle your packets.</summary>
     public static event ServerStartDelegate? OnServerStart;
@@ -43,10 +40,9 @@ public class Server
     /// <summary>Should only be used for events in a multiplayer context in order for events to happen the same way on all clients.</summary>
     public static Random ServerRandom { get; private set; } = new();
 
-    public static Client[] ConnectedClients;
+    public static Client[]? ConnectedClients;
 
-    public static void CreateServer(byte maxClients = 4)
-    {
+    public static void CreateServer(byte maxClients = 4) {
         MaxClients = maxClients;
 
         NetListener = new();
@@ -107,6 +103,9 @@ public class Server
         SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_leave.ogg", SoundContext.Effect, 0.75f);
     }
 
+    /// <summary>
+    /// Syncs the seed of <see cref="ServerRandom"/>
+    /// </summary>
     public static void SyncSeeds() {
         if (!Client.IsConnected()) return;
         if (!Client.IsHost()) return;

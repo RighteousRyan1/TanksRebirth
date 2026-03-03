@@ -16,6 +16,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.UI;
+using TanksRebirth.GameContent.Systems.LevelSystem;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 

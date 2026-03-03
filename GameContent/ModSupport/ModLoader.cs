@@ -232,6 +232,7 @@ public static class ModLoader {
             content.Shells.Clear();
 
             mod.OnUnload();
+            ModRegistry.UnregisterAllConditionsForMod(mod);
             UnloadModContent(mod);
         });
         LoadedMods.Clear();

@@ -6,39 +6,36 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.Enums;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.GameContent.Systems.TankSystem;
 
-namespace TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Tanks;
 
+namespace TanksRebirth.GameContent.Systems.LevelSystem;
+
+// IDEA: convert to json loading? or something of the like?
 
 /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
 public class Campaign
 {
     public delegate void MissionLoadDelegate(Tank[] tanks, Block[] blocks);
-    public static event MissionLoadDelegate OnMissionLoad;
+    public static event MissionLoadDelegate? OnMissionLoad;
 
     public delegate void PreLoadTankDelegate(ref TankTemplate template);
-    public static event PreLoadTankDelegate OnPreLoadTank;
+    public static event PreLoadTankDelegate? OnPreLoadTank;
 
     public delegate void PreLoadBlockDelegate(ref BlockTemplate template);
-    public static event PreLoadBlockDelegate OnPreLoadBlock;
+    public static event PreLoadBlockDelegate? OnPreLoadBlock;
 
     /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
     public static string[] GetCampaignNames()
@@ -215,7 +212,7 @@ public class Campaign
                     companionPos = LoadedMission.Tanks[nextPlayerIdx].Position;
                 }
 
-                var randomTier = AITank.PickRandomTier();
+                var randomTier = TankID.ServerRandomTier();
                 var tnk = new AITank(randomTier) {
                     // target = rot - pi
                     // turret =  -rot
@@ -325,7 +322,7 @@ public class Campaign
     /// <param name="campaign"></param>
     public static void Save(string fileName, Campaign campaign) {
         var endsWith = fileName.EndsWith(".campaign");
-        var newFileName = endsWith ? fileName : (fileName + ".campaign");
+        var newFileName = endsWith ? fileName : fileName + ".campaign";
         using var writer = new BinaryWriter(File.Open(newFileName, FileMode.OpenOrCreate));
 
         writer.Write(LevelEditorUI.LevelFileHeader);

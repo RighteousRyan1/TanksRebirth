@@ -9,7 +9,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;

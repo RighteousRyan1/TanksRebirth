@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem;
+namespace TanksRebirth.GameContent.Tanks;
 
 /// <summary>
 /// A bitfield representing what kind of resistance a tank has.
@@ -97,4 +97,6 @@ public class TankProperties {
 
     /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
     public Shell.HomingProperties ShellHoming = new();
+
+    public TankProperties Clone() => (TankProperties)MemberwiseClone();
 }

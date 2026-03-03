@@ -1,4 +1,4 @@
-﻿using LiteNetLib;
+using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using System;
@@ -10,8 +10,10 @@ using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Systems.PingSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
+
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework.Audio;

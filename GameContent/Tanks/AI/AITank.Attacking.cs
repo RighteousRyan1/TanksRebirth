@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Mono.Unix.Native;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,13 +10,12 @@ using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.PingSystem;
-using TanksRebirth.GameContent.Systems.TankSystem;
+
 using TanksRebirth.Graphics;
-using TanksRebirth.Internals.Common.Framework.Collisions;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems.AI;
+namespace TanksRebirth.GameContent.Tanks.AI;
 public partial class AITank {
     bool _predicts;
     bool _isSeeking;
@@ -341,12 +342,10 @@ public partial class AITank {
         // Console.WriteLine(TanksSpotted.Length);
 
         // no need to check friendliesNearby because we return earlier in this method if there are any
-        if (SeesTarget && CurShootCooldown <= 0) {
-            if (Parameters.PredictsPositions || (!findsSelf && !findsFriendly)) {
-                // TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
-                Shoot(false);
-            }
-        }
+        if (!SeesTarget || CurShootCooldown > 0) return;
+        if (!Parameters.PredictsPositions && (findsSelf || findsFriendly)) return;
+
+        Shoot(false);
     }
     /// <summary>Gets the a <see cref="Tank"/> that is hostile and is targetable (with respect to <see cref="Parameters"/>).</summary>
     public Tank? GetAppropriateTarget() {
@@ -447,9 +446,17 @@ public partial class AITank {
         }
     }
 
-    // TODO: literally fix everything about these turret rotation values.
+
+    // let's just... keep this hidden for now.
+    /*struct PathSegment {
+        public Vector2 Start;
+        public Vector2 End;
+        public float StartRadius;
+        public float EndRadius;
+        public Vector2 Direction;
+    }*/
     List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
-        bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
+  bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
         const int MAX_PATH_UNITS = 1000;
         const int PATH_UNIT_LENGTH = 8;
 
@@ -574,22 +581,22 @@ public partial class AITank {
             // convert this (and the actual math) to triangle fans
             if (draw) {
                 var screenPos = MatrixUtils.ConvertWorldToScreen(
-                    Vector3.Zero,
-                    Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y),
-                    CameraGlobals.GameView,
-                    CameraGlobals.GameProjection
+                  Vector3.Zero,
+                  Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y),
+                  CameraGlobals.GameView,
+                  CameraGlobals.GameProjection
                 );
 
                 TankGame.SpriteRenderer.Draw(
-                    whitePixel,
-                    screenPos,
-                    null,
-                    Color.White * 0.5f,
-                    0,
-                    whitePixel.Size() / 2,
-                    realMiss / 20,
-                    default,
-                    default
+                  whitePixel,
+                  screenPos,
+                  null,
+                  Color.White * 0.5f,
+                  0,
+                  whitePixel.Size() / 2,
+                  realMiss,
+                  default,
+                  default
                 );
             }
 
@@ -600,4 +607,245 @@ public partial class AITank {
         ricochetPoints = [.. _ricochetPointsBuffer];
         return _tanksInPathBuffer;
     }
+    /*List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
+        bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
+        const int MAX_PATH_UNITS = 1000;
+        const int PATH_UNIT_LENGTH = 8;
+
+        _tanksInPathBuffer.Clear();
+        _ricochetPointsBuffer.Clear();
+        _tankPointsBuffer.Clear();
+
+        pattern ??= c => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
+
+        Vector2 pathPos = Position + offset.RotatedBy(-TurretRotation);
+        pathDir.Y *= -1;
+
+        // normalize to accurately calculate future normals
+        Vector2 normalizedDir = Vector2.Normalize(pathDir);
+        pathDir = normalizedDir * PATH_UNIT_LENGTH;
+
+        int ricochetCount = 0;
+        int uninterruptedIterations = 0;
+
+        bool teleported = false;
+        int tpTriggerIndex = -1;
+        Vector2 teleportedTo = Vector2.Zero;
+
+        var pathHitbox = new Rectangle() {
+            Width = Shell.COLL_RECT_DIM,
+            Height = Shell.COLL_RECT_DIM
+        };
+
+        List<PathSegment> segments = [];
+        Vector2 currentSegStart = pathPos;
+        float currentSegStartRadius = 1f;
+
+        for (int i = 0; i < MAX_PATH_UNITS; i++) {
+            uninterruptedIterations++;
+            float currentRadius = 1f + missDist * 2 * uninterruptedIterations;
+            bool segmentBroken = false;
+
+            if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
+                _ricochetPointsBuffer.Add(pathPos);
+                pathDir.X *= -1;
+                ricochetCount++;
+                segmentBroken = true;
+            }
+            else if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
+                _ricochetPointsBuffer.Add(pathPos);
+                pathDir.Y *= -1;
+                ricochetCount++;
+                segmentBroken = true;
+            }
+
+            pathHitbox.X = (int)pathPos.X - Shell.COLL_RECT_DIM / 2;
+            pathHitbox.Y = (int)pathPos.Y - Shell.COLL_RECT_DIM / 2;
+
+            Vector2 dummy = Vector2.Zero;
+            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummy, out var dir, out var block, out bool corner, false, pattern);
+
+            if (corner) break;
+
+            if (block is not null) {
+                if (block.Type == BlockID.Teleporter && !teleported) {
+                    var dest = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
+                    if (dest is not null) {
+                        teleported = true;
+                        teleportedTo = dest.Position;
+                        tpTriggerIndex = i + 1;
+                        segmentBroken = true;
+                    }
+                }
+                else if (block.Properties.AllowShotPathBounce) {
+                    _ricochetPointsBuffer.Add(pathPos);
+                    ricochetCount += block.Properties.PathBounceCount;
+
+                    switch (dir) {
+                        case CollisionDirection.Up:
+                        case CollisionDirection.Down:
+                            pathDir.Y *= -1;
+                            break;
+                        case CollisionDirection.Left:
+                        case CollisionDirection.Right:
+                            pathDir.X *= -1;
+                            break;
+                    }
+                    segmentBroken = true;
+                }
+            }
+
+            // if bounce or tp, seal segment
+            if (segmentBroken) {
+                segments.Add(new PathSegment {
+                    Start = currentSegStart,
+                    End = pathPos,
+                    StartRadius = currentSegStartRadius,
+                    EndRadius = currentRadius,
+                    Direction = normalizedDir
+                });
+
+                if (doBounceReset) uninterruptedIterations = 0;
+
+                normalizedDir = Vector2.Normalize(pathDir);
+                currentSegStart = teleported && i == tpTriggerIndex ? teleportedTo : pathPos;
+                currentSegStartRadius = 1f + missDist * 2 * uninterruptedIterations;
+            }
+
+            if (teleported && i == tpTriggerIndex) pathPos = teleportedTo;
+
+            bool hitsInstant = i == 0 && Block.AllBlocks.Any(x => x != null && x.Hitbox.Intersects(pathHitbox) && pattern(x));
+            bool hitsTooEarly = i < (int)Properties.ShellSpeed / 2 && ricochetCount > 0;
+            bool ricochetLimitReached = ricochetCount > Properties.RicochetCount;
+
+            if (hitsInstant || hitsTooEarly || ricochetLimitReached) break;
+
+            pathPos += pathDir;
+        }
+
+        // seal final segment
+        segments.Add(new PathSegment {
+            Start = currentSegStart,
+            End = pathPos,
+            StartRadius = currentSegStartRadius,
+            EndRadius = 1f + missDist * 2 * uninterruptedIterations,
+            Direction = normalizedDir
+        });
+
+        // triangle fan detection
+        foreach (var enemy in GameHandler.AllTanks) {
+            // MUST check 'enemy == this' so the tank doesn't detect its own barrel!
+            if (enemy is null || enemy.IsDestroyed || enemy == this || _tanksInPathBuffer.Contains(enemy)) continue;
+
+            // should probably just convert ts to a method...
+            foreach (var seg in segments) {
+                // closest point from the segment to the tank
+                var AP = enemy.Position - seg.Start;
+                var AB = seg.End - seg.Start;
+                float magAB2 = AB.LengthSquared();
+
+                if (magAB2 == 0) continue;
+
+                // t is the normalized distance along the segment
+                float t = Vector2.Dot(AP, AB) / magAB2;
+
+                if (t < 0f || t > 1f) continue;
+
+                var closestPoint = seg.Start + AB * t;
+
+                // exact cone radius at this point
+                float tRadius = MathHelper.Lerp(seg.StartRadius, seg.EndRadius, t);
+
+                float shellRadius = Shell.COLL_RECT_DIM / 2f;
+                float enemyRadius = TNK_WIDTH / 2f;
+                float trueDetectionRadius = tRadius + shellRadius + enemyRadius;
+
+                if (Vector2.DistanceSquared(enemy.Position, closestPoint) <= trueDetectionRadius * trueDetectionRadius) {
+                    if (IsSpaceClear(closestPoint, enemy.Position)) {
+                        _tanksInPathBuffer.Add(enemy);
+                        _tankPointsBuffer.Add(closestPoint);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (draw && segments.Count > 0) {
+            DrawPathPolygon(segments);
+        }
+
+        tankCollPoints = [.. _tankPointsBuffer];
+        ricochetPoints = [.. _ricochetPointsBuffer];
+        return _tanksInPathBuffer;
+
+        // this implementation is... kind of problematic.
+        bool IsSpaceClear(Vector2 pathPoint, Vector2 targetCenter) {
+            Vector2 dir = targetCenter - pathPoint;
+            float dist = dir.Length();
+            if (dist <= 0) return true;
+            dir /= dist;
+
+            float stepSize = Shell.COLL_RECT_DIM / 2f;
+            Rectangle rect = new(0, 0, Shell.COLL_RECT_DIM, Shell.COLL_RECT_DIM);
+            var blocks = Block.AllBlocks;
+
+            for (float d = 0; d < dist; d += stepSize) {
+                Vector2 pos = pathPoint + dir * d;
+                rect.X = (int)pos.X - Shell.COLL_RECT_DIM / 2;
+                rect.Y = (int)pos.Y - Shell.COLL_RECT_DIM / 2;
+
+                for (int i = 0; i < blocks.Length; i++) {
+                    var b = blocks[i];
+                    if (b != null && pattern!(b) && b.Hitbox.Intersects(rect))
+                        return false; // A block is between the path and the tank
+                }
+            }
+            return true;
+        }
+    }*/
+
+
+    // probably gonna move this into Tank...
+    /*void DrawPathPolygon(List<PathSegment> segments) {
+        List<VertexPositionColor> vertices = [];
+        Color pathColor = Color.Red * 0.2f;
+
+
+        // a little bit higher to prevent z fighting
+        // maybe keep slightly offset based on tank id?
+        float heightY = 11.5f + (AITankId * 0.01f);
+
+        foreach (var seg in segments) {
+            // left and right perpendicular vectors
+            Vector2 normal = new(-seg.Direction.Y, seg.Direction.X);
+
+            // Convert expanding 2D cone limits to 3D world vertices
+            Vector3 backLeft = new(seg.Start.X - normal.X * seg.StartRadius, heightY, seg.Start.Y - normal.Y * seg.StartRadius);
+            Vector3 backRight = new(seg.Start.X + normal.X * seg.StartRadius, heightY, seg.Start.Y + normal.Y * seg.StartRadius);
+            Vector3 frontLeft = new(seg.End.X - normal.X * seg.EndRadius, heightY, seg.End.Y - normal.Y * seg.EndRadius);
+            Vector3 frontRight = new(seg.End.X + normal.X * seg.EndRadius, heightY, seg.End.Y + normal.Y * seg.EndRadius);
+
+            // triangle 1
+            vertices.Add(new(backLeft, pathColor));
+            vertices.Add(new(backRight, pathColor));
+            vertices.Add(new(frontLeft, pathColor));
+
+            // triangle 2
+            vertices.Add(new(backRight, pathColor));
+            vertices.Add(new(frontRight, pathColor));
+            vertices.Add(new(frontLeft, pathColor));
+        }
+
+        var effect = TankBasicEffectHandler;
+        effect.World = Matrix.Identity;
+        effect.View = CameraGlobals.GameView;
+        effect.Projection = CameraGlobals.GameProjection;
+        effect.VertexColorEnabled = true;
+        effect.TextureEnabled = false;
+
+        foreach (var pass in effect.CurrentTechnique.Passes) {
+            pass.Apply();
+            TankGame.Instance.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices.ToArray(), 0, vertices.Count / 3);
+        }
+    }*/
 }

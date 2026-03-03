@@ -1,11 +1,12 @@
 using System;
 using Microsoft.Xna.Framework;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.Internals.Common.Framework;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem;
+namespace TanksRebirth.GameContent.Tanks;
 
 public struct TankTemplate {
     /// <summary>If false, the template will contain data for an AI tank.</summary>
@@ -19,7 +20,7 @@ public struct TankTemplate {
     private float _backingRotationField;
 
     public float Rotation { // Rounded to avoid issues when calculating rotation.
-        get => _backingRotationField;
+        readonly get => _backingRotationField;
         set => _backingRotationField = MathF.Round(value, 5);
     }
 
@@ -27,9 +28,9 @@ public struct TankTemplate {
 
     public Range<int> RandomizeRange;
 
-    public Tank GetTank() => IsPlayer ? GetPlayerTank() : GetAiTank();
+    public readonly Tank GetTank() => IsPlayer ? GetPlayerTank() : GetAiTank();
 
-    public AITank GetAiTank() {
+    public readonly AITank GetAiTank() {
         if (IsPlayer)
             throw new Exception($"{nameof(IsPlayer)} is true. This method cannot execute.");
 
@@ -51,7 +52,7 @@ public struct TankTemplate {
         return ai;
     }
 
-    public PlayerTank GetPlayerTank() {
+    public readonly PlayerTank GetPlayerTank() {
         if (!IsPlayer)
             throw new Exception($"{nameof(IsPlayer)} is false. This method cannot execute.");
 
@@ -59,7 +60,7 @@ public struct TankTemplate {
 
         // change player based on chosen difficulties
         if (Modifiers.Map[Modifiers.RANDOM_PLAYER])
-            player = new PlayerTank(PlayerType, false, AITank.PickRandomTier());
+            player = new PlayerTank(PlayerType, false, TankID.ServerRandomTier());
         else if (Modifiers.Map[Modifiers.DISGUISE])
             player = new PlayerTank(PlayerType, false, Modifiers.DisguiseValue);
         else

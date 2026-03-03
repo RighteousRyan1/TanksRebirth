@@ -121,35 +121,24 @@ public static class Collision {
         direction = CollisionDirection.None;
 
         var collisionInfo = new CollisionInfo { Value = 1f };
-        int collisionCount = 0;
 
-        // Cache blocks array to avoid repeated property access
         var blocks = Block.AllBlocks;
-        var blocksLength = blocks.Length;
+        int blocksLength = blocks.Length;
 
-        // Use for loop instead of foreach for better performance
         for (int i = 0; i < blocksLength; i++) {
-            var cube = blocks[i];
-            if (cube == null) continue;
+            var thisBlock = blocks[i];
 
-            if (movingBox.Intersects(cube.Hitbox)) {
-                collisionCount++;
-                if (exclude?.Invoke(cube) == true && collisionCount == 1) {
-                    cornerCollision = true;
-                    break;
-                }
-                else if (exclude == null) {
-                    cornerCollision = true;
-                    break;
-                }
+            // early continue for non-solids
+            if (thisBlock == null || (exclude != null && !exclude(thisBlock))) continue;
+
+            // 2. Track pure overlaps (getting stuck or corner pinches)
+            if (movingBox.Intersects(thisBlock.Hitbox)) {
+                cornerCollision = true;
             }
 
-            // Skip collision calculation if excluded
-            if (exclude != null && !exclude(cube)) continue;
-
-            if (IsColliding(movingBox, cube.Hitbox, velocity, out var info) && info.Value < collisionInfo.Value) {
+            if (IsColliding(movingBox, thisBlock.Hitbox, velocity, out var info) && info.Value < collisionInfo.Value) {
                 collisionInfo = info;
-                block = cube;
+                block = thisBlock;
             }
         }
 

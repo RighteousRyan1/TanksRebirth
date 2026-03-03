@@ -1,15 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -29,7 +24,7 @@ public class IngamePing {
     bool _delete;
 
     static Texture2D? _pingTexture;
-    Texture2D? _pingGraphic;
+    readonly Texture2D? _pingGraphic;
 
     readonly Model _model;
 

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
-using TanksRebirth.GameContent.Systems.AI;
 
-namespace TanksRebirth.GameContent.Systems.TankSystem.AI;
+namespace TanksRebirth.GameContent.Tanks.AI;
 
 /// <summary>
 /// An interface that, when applied, tells <see cref="AITank"/>s that this is a dangerous object and to avoid it.
