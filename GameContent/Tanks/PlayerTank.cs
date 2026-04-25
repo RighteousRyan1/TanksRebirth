@@ -43,7 +43,6 @@ public ref struct PlayerBinds {
     public Keybind ToggleShootPath;
 }
 public class PlayerTank : Tank {
-    static bool _justCenteredMouse = false;
 
     public static int NumLocalPlayers => PlayerControlledByKeyboard == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
     #region The Rest
@@ -360,20 +359,13 @@ public class PlayerTank : Tank {
                 var mouseState = Mouse.GetState();
                 var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
 
-                if (_justCenteredMouse) {
-                    // skip to avoid jumps
-                    _justCenteredMouse = false;
+                if (mouseState.X == screenCenter.X && mouseState.Y == screenCenter.Y)
                     return;
-                }
 
                 // subtract mouse delta eventually
                 int deltaX = mouseState.X - screenCenter.X;
-
                 TurretRotation += -deltaX / 312f.ToResolutionX();
-
-                // recenter
                 Mouse.SetPosition(screenCenter.X, screenCenter.Y);
-                _justCenteredMouse = true;
             }
         }
     }
