@@ -2,90 +2,118 @@
 using Microsoft.Xna.Framework;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Tanks.AI.VanillaAI;
 
 public unsafe struct AIBehaviorState {
-    public fixed char Label[16];
+    const int LBLEN = 16;
+    public fixed char Label[LBLEN];
     public float Value;
+
+    public void SetLabel(string text) {
+        int len = Math.Min(text.Length, LBLEN);
+
+        for (int i = 0; i < len; i++) {
+            Label[i] = text[i];
+        }
+    }
 
     public readonly bool TimerSatisfies(float rem) => Value % rem < RuntimeData.DeltaTime;
 }
+
+// TODO: class vs struct?
+// TODO: Convert to VanillaAISytem and make it system-agnostic.
+// Convert the rest of the AITank."" to this sytem.
 public partial struct VanillaAISystem : IAISystem {
+    public AITank Tank { get; set; }
+    // 0, 1, 2, 3
     public AIBehaviorState ChassisMovement;
     public AIBehaviorState TurretMovement;
     public AIBehaviorState ShellFire;
     public AIBehaviorState MinePlace;
 
-    public readonly void AILoop(AITank ai) {
-        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission) return;
+    public VanillaAISystem(AITank tank) {
+        Tank = tank;
 
-        ai.TurretRotationMultiplier = 1f;
+        ChassisMovement.SetLabel("ChassisMovement");
+        TurretMovement.SetLabel ("TurretMovement");
+        ShellFire.SetLabel("ShellFire");
+        MinePlace.SetLabel("MinePlace");
 
-        // Array.ForEach(ai.Behaviors, x => x.Value += RuntimeData.DeltaTime);
+
+        NearbyDangers = [];
+    }
+
+    public void AILoop() {
+        ChassisMovement.Value += RuntimeData.DeltaTime;
+        TurretMovement.Value  += RuntimeData.DeltaTime;
+        ShellFire.Value       += RuntimeData.DeltaTime;
+        MinePlace.Value       += RuntimeData.DeltaTime;
+
+        TurretRotationMultiplier = 1f;
+
+        // Array.ForEach(Tank.Behaviors, x => x.Value += RuntimeData.DeltaTime);
 
         // nearby friendlies checks
-        ai.TanksNearMineAwareness.Clear();
-        ai.TanksNearShootAwareness.Clear();
+        Tank.TanksNearMineAwareness.Clear();
+        Tank.TanksNearShootAwareness.Clear();
 
         Span<Tank?> allTanks = GameHandler.AllTanks;
         ref var search = ref MemoryMarshal.GetReference(allTanks);
 
         for (int i = 0; i < allTanks.Length; i++) {
             var tank = Unsafe.Add(ref search, i);
-            if (tank is null || tank == ai || tank.IsDestroyed)
+            if (tank is null || tank == Tank || tank.IsDestroyed)
                 continue;
 
-            float distToBody = GameUtils.TanksDistance(ai.Position, tank.Position);
-            float distToTurret = GameUtils.TanksDistance(ai.TurretPosition, tank.Position);
+            float distToBody = GameUtils.TanksDistance(Tank.Position, tank.Position);
+            float distToTurret = GameUtils.TanksDistance(Tank.TurretPosition, tank.Position);
 
-            if (distToBody <= ai.Parameters.TankAwarenessMine)
-                ai.TanksNearMineAwareness.Add(tank);
+            if (distToBody <= Tank.Parameters.TankAwarenessMine)
+                Tank.TanksNearMineAwareness.Add(tank);
 
-            if (distToTurret <= ai.Parameters.TankAwarenessShoot)
-                ai.TanksNearShootAwareness.Add(tank);
+            if (distToTurret <= Tank.Parameters.TankAwarenessShoot)
+                Tank.TanksNearShootAwareness.Add(tank);
         }
 
         // if (ModdedData?.CustomAI() == false) return;
-        if (ai.ModdedData is not null) {
-            if (!ai.ModdedData.CustomAI())
+        if (Tank.ModdedData is not null) {
+            if (!Tank.ModdedData.CustomAI())
                 return;
         }
 
-        var isShellNear = ai.NearbyDangers.Count > 0 && ai.ClosestDanger is Shell;
+        var isShellNear = NearbyDangers.Count > 0 && ClosestDanger is Shell;
 
         // only use if checking the respective boolean!
-        var shell = (ai.ClosestDanger as Shell)!;
+        var shell = (ClosestDanger as Shell)!;
 
         // isShellNear already accounts for the direction arc
-        if (ai.Parameters.DeflectsBullets && isShellNear && ai.Properties.ShellLimit - ai.OwnedShellCount > 0) {
-            ai.DoDeflection(shell);
+        if (Tank.Parameters.DeflectsBullets && isShellNear && Tank.Properties.ShellLimit - Tank.OwnedShellCount > 0) {
+            DoDeflection(shell);
         }
 
-        ai.HandleTurret();
-        if (ai.DoMovements) {
-            if (ai.Properties.Stationary)
+        HandleTurret();
+        if (DoMovements) {
+            if (Tank.Properties.Stationary)
                 return;
 
             // facing down = 0 radians/2pi radians
 
             // "DoMovement" handles danger avoidance.
             // IsSurviving is only set every movement opportunity
-            ai.DoMovement();
+            DoMovement();
 
             // checks if it is entirely unable to lay mines first
-            ai.TryMineLay();
+            TryMineLay();
         }
 
         // i really hope to remove this hardcode.
-        if (ai.DoMoveTowards) {
-            var dir = Vector2.UnitY.RotatedBy(ai.ChassisRotation);
+        if (DoMoveTowards) {
+            var dir = Vector2.UnitY.RotatedBy(Tank.ChassisRotation);
 
-            ai.Velocity = Vector2.Normalize(dir) * ai.Speed;
-            ai.ChassisRotation = MathUtils.RoughStep(ai.ChassisRotation, ai.DesiredChassisRotation, ai.Properties.TurningSpeed * RuntimeData.DeltaTime);
+            Tank.Velocity = Vector2.Normalize(dir) * Tank.Speed;
+            Tank.ChassisRotation = MathUtils.RoughStep(Tank.ChassisRotation, Tank.DesiredChassisRotation, Tank.Properties.TurningSpeed * RuntimeData.DeltaTime);
         }
     }
 }

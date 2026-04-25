@@ -30,7 +30,7 @@ public static class AIManager {
             return value.Clone();
 
         /*if (!AIParameterDefaults.TryGetValue(tankType, out AIParameters? value)) {
-            var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
+            var json = File.ReadAllText("Tank/tank_" + TankID.Collection.GetKey(tankType) + ".json");
             using JsonDocument doc = JsonDocument.Parse(json);
 
             var parameters = doc.RootElement.GetProperty("Parameters");
@@ -527,7 +527,7 @@ public static class AIManager {
             return value.Clone();
 
         /*if (!AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value)) {
-            var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
+            var json = File.ReadAllText("Tank/tank_" + TankID.Collection.GetKey(tankType) + ".json");
             using JsonDocument doc = JsonDocument.Parse(json);
 
             var parameters = doc.RootElement.GetProperty("Properties");

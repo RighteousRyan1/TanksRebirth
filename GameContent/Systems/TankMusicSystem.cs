@@ -123,7 +123,7 @@ public static class TankMusicSystem {
             return;
         }
 
-        // maybe only need to update some of these things in the event of an ai tank death?
+        // maybe only need to update some of these things in the event of an Tank tank death?
 
         var musicVolume = TankGame.Settings.MusicVolume * VolumeMultiplier;
         var tierHighestName = TankID.Collection.GetKey(TierHighest);

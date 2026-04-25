@@ -32,9 +32,11 @@ namespace TanksRebirth.GameContent.Tanks.AI;
 // e.g: VioletTank : AITank, NecromancerTank : AITank, etc.
 // this will allow for easier management of AI tanks and their unique behaviors without adding bloat for specific tank kinds
 public partial class AITank : Tank, IHasModContent<ModTank> {
-    public ModTank? ModdedData { get; internal set; }
-
+    /// <summary>A field containing data related to the AI of an <see cref="AITank"/>. By default, is a <see cref="VanillaAISystem"/>.
+    /// <br></br>If you wish to quickly access the <see cref="VanillaAISystem"/>, do pattern matching.
+    /// </summary>
     public IAISystem? TankAI { get; set; }
+    public ModTank? ModdedData { get; internal set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an <see cref="AITank"/> behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
@@ -48,11 +50,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
     public delegate void InstancedDestroy();
     public event InstancedDestroy? OnDestroy;
-    /// <summary>Each of these keep track of certain behaviors that take place during the AI Cycle, including, but not limited to:<para></para>
-    /// Navigation, Shell/Mine avoidance, Mine Laying, Shell Shooting</summary>
-    public AITimer[] Behaviors { get; private set; }
-    /// <summary>The invoked method for performing the actions of the tank's AI.</summary>
-    public Action? AIBehaviorAction;
     /// <summary>The position of this <see cref="AITank"/> in the <see cref="GameHandler.AllAITanks"/> array.</summary>
     public int AITankId { get; private set; }
     /// <summary>The AI Tank Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
@@ -81,6 +78,12 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         [TankID.Gold] = Color.Gold,
         [TankID.Obsidian] = Color.Black,
     };
+
+    public int CurrentRandomMove;
+    public int CurrentRandomMineLay;
+    public int CurrentRandomShoot;
+
+    public Tank? TargetTank;
     /// <summary>Change the texture of this <see cref="AITank"/>.</summary>
     /// <param name="texture">The new texture.</param>
     public void SwapTankTexture(Texture2D texture) => DrawParamsTank.TankTexture = texture;
@@ -124,10 +127,10 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (Modifiers.Map[Modifiers.MONOCHROME]) tier = Modifiers.MonochromeValue;
         if (Modifiers.Map[Modifiers.MASTER])     tier = Modifiers.VanillaToMasterModeConversions[tier];
 
-        NearbyDangers = [];
+        // NearbyDangers = [];
 
         AiTankType = tier;
-        Behaviors = new AITimer[4];
+        /*Behaviors = new AITimer[4];
 
         for (int i = 0; i < Behaviors.Length; i++)
             Behaviors[i] = new();
@@ -136,7 +139,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         Behaviors[0].Label = "TankChassisMovement";
         Behaviors[1].Label = "TankTurretMovement";
         Behaviors[2].Label = "TankShellFire";
-        Behaviors[3].Label = "TankMinePlacement";
+        Behaviors[3].Label = "TankMinePlacement";*/
 
         DrawParams.LightPower = TankDrawParams.AI_AMB_MUL;
 
@@ -182,7 +185,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     public override void Initialize() {
         base.Initialize();
 
-        Physics.OnCollision += Physics_OnCollision;
+        // Physics.OnCollision += Physics_OnCollision;
     }
 
     public override void ApplyDefaults(ref TankProperties properties) {
@@ -191,6 +194,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         Properties = AIManager.GetAITankProperties(AiTankType);
 
         // initialize these so we don't divide by zero in modulus operations
+
         CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
         CurrentRandomMineLay = Client.ClientRandom.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
         CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
@@ -235,7 +239,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             Parameters.PredictsPositions = true;
         properties.TreadVolume = 0.05f;
 
-        TankAI = new VanillaAISystem();
+        TankAI = new VanillaAISystem(this);
 
         base.ApplyDefaults(ref properties);
 
@@ -266,7 +270,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             // NO DISPOSING FOR NOW, it causes weird BUGS with modded tanks.... WACK!
             // _tankTexture?.Dispose();
         }
-        Physics.OnCollision -= Physics_OnCollision; 
+        // Physics.OnCollision -= Physics_OnCollision; 
         base.Remove(nullifyMe);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
@@ -473,27 +477,31 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         TanksNearMineAwareness.Clear();
         BlocksNear.Clear();
 
-        // get ai to target a player's ping
-        TargetTank = TryOverrideTarget(out bool wasOverwritten);
+        if (TankAI is not VanillaAISystem vais) return;
+
+        // get Tank to target a player's ping
+        TargetTank = vais.TryOverrideTarget(out bool wasOverwritten);
 
         if (!wasOverwritten)
-            TargetTank = GetAppropriateTarget();
+            TargetTank = vais.GetAppropriateTarget();
 
-        // measure the biggest WarinessRadius, player or ai, then check the larger, then do manual calculations.
+        // measure the biggest WarinessRadius, player or Tank, then check the larger, then do manual calculations.
         var radii = new float[] { Parameters.AwarenessFriendlyMine, Parameters.AwarenessHostileMine, Parameters.AwarenessFriendlyShell, Parameters.AwarenessHostileShell };
         var biggest = radii.Max();
 
-        NearbyDangers = GetEvasionData();
-        ClosestDanger = NearbyDangers.Closest(Position);
+        vais.NearbyDangers = vais.GetEvasionData();
+        vais.ClosestDanger = vais.NearbyDangers.Closest(Position);
 
-        if (NearbyDangers.Count > 0) {
-            WhileDangerDetected?.Invoke(this, ClosestDanger!);
+        if (vais.NearbyDangers.Count > 0) {
+            WhileDangerDetected?.Invoke(this, vais.ClosestDanger!);
             ModdedData?.DangerDetected();
         }
     }
     /// <summary>The main AI loop of this <see cref="AITank"/>.</summary>
     public void AILoop() {
-        TankAI?.AILoop(this);
+        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission) return;
+
+        TankAI?.AILoop();
     }
 
     public BasicEffect TankBasicEffectHandler = new(TankGame.Instance.GraphicsDevice);
@@ -610,14 +618,16 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     void DrawExtras() {
         if (IsDestroyed || IgnoreRegister) return;
 
+        if (TankAI is not VanillaAISystem vais) return; 
+
         // did j ever make any good programming choices before this past year or so?
         // this code looks like it was written by a 12 year old with a broken arm - GitHub Copilot
-        // even ai hates my code.
+        // even Tank hates my code.
         if (DebugManager.DebugLevel == DebugManager.Id.AIData) {
             float calculation = 0f;
 
             var drawInfo = new Dictionary<(string Name, float Value, bool TrackTurret), Color>() {
-                [(nameof(Parameters.ObstacleAwarenessMine), ObstacleAwarenessMineReal / 2, false)] = Color.Yellow,
+                [(nameof(Parameters.ObstacleAwarenessMine), vais.ObstacleAwarenessMineReal / 2, false)] = Color.Yellow,
 
                 [(nameof(Parameters.AwarenessFriendlyShell), Parameters.AwarenessFriendlyShell, false)] = Color.Green,
                 [(nameof(Parameters.AwarenessFriendlyMine), Parameters.AwarenessFriendlyMine, false)] = Color.LimeGreen,
@@ -654,13 +664,13 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             drawInfo.Clear();
 
-            GetTanksInPath(Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+            vais.GetTanksInPath(Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
             if (Parameters.PredictsPositions && TargetTank is not null)
                 calculation = Position.DistanceTo(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
 
             if (Parameters.SmartRicochets)
-                GetTanksInPath(Vector2.UnitY.RotatedBy(_seekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+                vais.GetTanksInPath(Vector2.UnitY.RotatedBy(vais.SeekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
         }
         /*if (DebugManager.DebugLevel == DebugManager.Id.AIData && !Properties.Stationary) {
             // magical numbers too lazy, look at update method to define
@@ -691,6 +701,38 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     }
 
     static readonly object _rayCastLock = new();
+
+    // if raycasting based on radii, divide what is input to distance by two
+    /// <summary>Performs a raycast to check for blocking objects, with respect to <see cref="Tank.ChassisRotation"/>.</summary>
+    /// <param name="distance">The distance ahead of the tank, in world units, not physics units.</param>
+    /// <param name="offset">The angle offset for the check.</param>
+    /// <param name="callback">Callback data to do custom logic with the raycast result.</param>
+    /// <returns>Whether or not the ray had an intersection.</returns>
+    public bool RaycastAheadOfTank(float distance, float offset = 0f, RayCastReportFixtureDelegate? callback = null) {
+        bool isPathBlocked = false;
+
+        // the tank by default faces down, so positive Y.
+        var dir = Vector2.UnitY.RotatedBy(ChassisRotation + offset);
+
+        // switch to using game units if necessary?
+        var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
+        var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
+
+        // exceptions thrown here, "Stack is empty", assuming race conditions? (and sometimes nullreference?)
+        lock (_rayCastLock) {
+            CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
+                callback?.Invoke(fixture, point, normal, fraction);
+
+                if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
+                    isPathBlocked = true;
+                }
+
+                return fraction;
+                // divide by 2 because it's a radius, i think
+            }, Physics.Position, endpoint);
+        }
+        return isPathBlocked;
+    }
     /// <summary>Performs a raycast in all 4 cardinal directions of the tank (rotation-agnostic).</summary>
     /// <param name="distance">The length of the raycast.</param>
     /// <param name="callback">Code-callback for performing special actions based on the raycast.</param>

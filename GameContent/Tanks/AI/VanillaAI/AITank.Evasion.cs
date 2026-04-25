@@ -5,8 +5,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TanksRebirth.Internals.Common.Utilities;
 
-namespace TanksRebirth.GameContent.Tanks.AI;
-public partial class AITank {
+namespace TanksRebirth.GameContent.Tanks.AI.VanillaAI;
+public partial struct VanillaAISystem {
     public bool IsInDanger;
     public volatile List<IAITankDanger> NearbyDangers;
     public IAITankDanger? ClosestDanger;
@@ -15,22 +15,22 @@ public partial class AITank {
     /// <summary>Makes this <see cref="AITank"/> profusely avoid the given location.</summary>
     public void Avoid(Vector2 location) {
         IsSurviving = true;
-        if (CurMineStun <= 0 && CurShootStun <= 0) {
-            var direction = Position - location;
-            DesiredChassisRotation = direction.ToRotation() - MathHelper.PiOver2;
+        if (Tank.CurMineStun <= 0 && Tank.CurShootStun <= 0) {
+            var direction = Tank.Position - location;
+            Tank.DesiredChassisRotation = direction.ToRotation() - MathHelper.PiOver2;
         }
     }
     /// <summary>Gets a list of dangerous objects near the <see cref="AITank"/>.</summary>
     public List<IAITankDanger> GetEvasionData() {
         _evasionDangersBuffer.Clear();
 
-        foreach (var danger in Dangers) {
-            var isHostile = !IsOnSameTeamAs(danger.Team);
+        foreach (var danger in AITank.Dangers) {
+            var isHostile = !Tank.IsOnSameTeamAs(danger.Team);
 
             // mines and explosions should be treated differently and specially
             if (danger is Mine || danger is Explosion) {
-                var isCloseEnough = GameUtils.TanksDistance(Position, danger.Position) <=
-                    (isHostile ? Parameters.AwarenessHostileMine : Parameters.AwarenessFriendlyMine);
+                var isCloseEnough = GameUtils.TanksDistance(Tank.Position, danger.Position) <=
+                    (isHostile ? Tank.Parameters.AwarenessHostileMine : Tank.Parameters.AwarenessFriendlyMine);
 
                 if (isCloseEnough) {
                     _evasionDangersBuffer.Add(danger);
@@ -38,7 +38,7 @@ public partial class AITank {
                 }
             }
             else if (danger is Shell shell) {
-                var isHeadingTowards = shell.IsHeadingTowards(Position, isHostile ? Parameters.AwarenessHostileShell : Parameters.AwarenessFriendlyShell, MathHelper.Pi);
+                var isHeadingTowards = shell.IsHeadingTowards(Tank.Position, isHostile ? Tank.Parameters.AwarenessHostileShell : Tank.Parameters.AwarenessFriendlyShell, MathHelper.Pi);
                 // already accounts for hostility via the above ^
                 if (isHeadingTowards) {
                     _evasionDangersBuffer.Add(danger);
@@ -59,23 +59,23 @@ public partial class AITank {
         IAITankDanger? closest = null;
         dangersNear = [];
 
-        Span<IAITankDanger> dangers = Dangers.ToArray();
+        Span<IAITankDanger> dangers = AITank.Dangers.ToArray();
 
         ref var dangersSearchSpace = ref MemoryMarshal.GetReference(dangers);
 
-        for (var i = 0; i < Dangers.Count; i++) {
+        for (var i = 0; i < AITank.Dangers.Count; i++) {
             var currentDanger = Unsafe.Add(ref dangersSearchSpace, i);
 
             if (currentDanger is null) continue;
 
-            var distanceToDanger = GameUtils.TanksDistance(Position, currentDanger.Position);
+            var distanceToDanger = GameUtils.TanksDistance(Tank.Position, currentDanger.Position);
 
             if (!(distanceToDanger < distance)) continue;
 
             dangersNear.Add(currentDanger);
 
             if (closest == null || distanceToDanger <
-                GameUtils.TanksDistance(Position, closest.Position)) {
+                GameUtils.TanksDistance(Tank.Position, closest.Position)) {
                 closest = currentDanger;
             }
         }

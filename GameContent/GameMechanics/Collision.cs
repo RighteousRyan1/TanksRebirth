@@ -114,7 +114,7 @@ public static class Collision {
                     info.Normal.X > 0f ? CollisionDirection.Left : CollisionDirection.Right;
     }
 
-    // i asked ai to optimize this method since i have no clue what the hell i wrote before
+    // i asked Tank to optimize this method since i have no clue what the hell i wrote before
     public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block block, out bool cornerCollision, bool setpos = true, Func<Block, bool> exclude = null) {
         cornerCollision = false;
         block = null;
