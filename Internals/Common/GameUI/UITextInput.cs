@@ -148,7 +148,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                 }
                 else if (e.Key == Keys.Tab)
                 {
-                    var reverse = InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.LeftShift) || InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.RightShift);
+                    var reverse = InputUtils.AreKeysDown([Keys.LeftShift, Keys.RightShift]);
                     SwitchFocus(reverse);
                 }
                 else if (e.Key == Keys.Enter)
