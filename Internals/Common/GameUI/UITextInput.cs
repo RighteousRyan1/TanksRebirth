@@ -24,8 +24,6 @@ namespace TanksRebirth.Internals.Common.GameUI
         /// <summary>Disfunctional right now.</summary>
         public bool UseDefaultStringWithText;
 
-        public Func<SpriteBatch, (SpriteFontBase Font, Vector2 Position, Vector2 Origin, Vector2 Scale)>? CursorDrawInfo;
-
         public UITextInput(SpriteFontBase font, Color color, float scale, int maxLength) : base("", font, color, scale) {
             MaxLength = maxLength;
             Id = AllUIElements.IndexOf(AllUIElements.Find(x => x == this));

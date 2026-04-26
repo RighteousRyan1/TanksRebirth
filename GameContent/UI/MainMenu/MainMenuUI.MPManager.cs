@@ -271,9 +271,9 @@ public static partial class MainMenuUI {
         float divisor = 8;
         float initialX = WindowUtils.WindowWidth / divisor;
         _panelWidth = initialX * (divisor - 2);
-        _panelHeaderHeight = 55f.ToResolutionY();
-        _panelHeight = 200f.ToResolutionY();
-        _panelPosition = new Vector2(initialX, 50);
+        _panelHeaderHeight = 50f.ToResolutionY();
+        _panelHeight = 250f.ToResolutionY();
+        _panelPosition = new Vector2(initialX, 50 + yOffset);
 
         var renderer = TankGame.SpriteRenderer;
         var whiteTex = TextureGlobals.Pixels[Color.White];
