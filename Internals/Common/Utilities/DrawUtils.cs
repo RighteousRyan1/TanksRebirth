@@ -281,7 +281,7 @@ public static class DrawUtils {
         }
     }
 
-    // eensy weensy bit of ai help cuz i was programming this at 3am
+    // eensy weensy bit of Tank help cuz i was programming this at 3am
     /// <summary>Draws a wireframe 3D bounding sphere.</summary>
     public static void DrawBoundingSphere(BoundingSphere sphere, Color color, Matrix view,
         Matrix projection, Matrix? world = null, int segments = 32) {

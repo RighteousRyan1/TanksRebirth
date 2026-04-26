@@ -2,23 +2,20 @@ using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Enums;
-
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Tanks.AI;
+namespace TanksRebirth.GameContent.Tanks.AI.VanillaAI;
 
-public partial class AITank {
+public partial struct VanillaAISystem {
     public bool IsTooCloseToObstacle;
 
     /// <summary>Whether or not this tank should perform movement logic.</summary>
     public bool DoMovements = true;
     /// <summary>Whether or not this tank should update its desired direction.</summary>
     public bool DoMoveTowards = true;
-
-    public int CurrentRandomMove;
-
+    
     public Vector2 AvoidPosition;
 
     // random movements do not happen until this queue is empty
@@ -36,17 +33,17 @@ public partial class AITank {
     public void DoMovement() {
         // IsTurning is on crack?
 
-        bool shouldMove = !IsTurning && CurMineStun <= 0 && CurShootStun <= 0;
+        bool shouldMove = !Tank.IsTurning && Tank.CurMineStun <= 0 && Tank.CurShootStun <= 0;
 
         if (!shouldMove) return;
-        if (!Behaviors[0].IsModOf(CurrentRandomMove)) return;
+        if (!ChassisMovement.TimerSatisfies(Tank.CurrentRandomMove)) return;
 
         // realistically... it will never avoid from its own position.
         // so this should be safe
         AvoidPosition = Vector2.Zero;
 
-        CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
-        Behaviors[0].Value = 0;
+        Tank.CurrentRandomMove = Client.ClientRandom.Next(Tank.Parameters.RandomTimerMinMove, Tank.Parameters.RandomTimerMaxMove);
+        ChassisMovement.Value = 0;
 
         if (PivotQueue.Count == 0 && SubPivotQueue.Count == 0 && !IsInDanger) {
             IsSurviving = false;
@@ -94,10 +91,10 @@ public partial class AITank {
         //uint framesLookAhead = AiParams.ObstacleAwarenessMovement / 2;
         //var tankDirection = Vector2.UnitY.RotatedBy(TargetTankRotation);
 
-        var checkDist = Parameters.ObstacleAwarenessMovement / 2;
+        var checkDist = Tank.Parameters.ObstacleAwarenessMovement / 2;
         // var rayNormal = Vector2.Zero;
         // strictly 
-        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist /* Speed*/);
+        IsTooCloseToObstacle = Tank.RaycastAheadOfTank(checkDist /* Speed*/);
 
         // don't bother doing anything else since it's not blocked
         if (!IsTooCloseToObstacle) {
@@ -111,14 +108,14 @@ public partial class AITank {
         float fracL = -1f;
         float fracR = -1f;
 
-        bool checkLeft = RaycastAheadOfTank(checkDist * 100, -angleDiff,
+        bool checkLeft = Tank.RaycastAheadOfTank(checkDist * 100, -angleDiff,
             (fixture, point, normal, fraction) => {
                 fracL = fraction;
 
                 return fraction;
             });
 
-        bool checkRight = RaycastAheadOfTank(checkDist * 100, angleDiff,
+        bool checkRight = Tank.RaycastAheadOfTank(checkDist * 100, angleDiff,
             (fixture, point, normal, fraction) => {
                 fracR = fraction;
                 return fraction;
@@ -150,28 +147,28 @@ public partial class AITank {
         PivotQueue.Clear();
 
         // old = Vector2.UnitY.RotatedBy(-rayNormal.ToRotation() - MathHelper.PiOver2);
-        var movementDirection = Vector2.UnitY.RotatedBy(ChassisRotation + vecRot);
+        var movementDirection = Vector2.UnitY.RotatedBy(Tank.ChassisRotation + vecRot);
 
         PivotQueue.Enqueue(movementDirection);
     }
     /// <summary>Makes this <see cref="AITank"/> perform a random turn.</summary>
-    public void DoRandomMove() {
-        var randomTurn = Client.ClientRandom.NextFloat(-Parameters.MaxAngleRandomTurn, Parameters.MaxAngleRandomTurn);
+    public readonly void DoRandomMove() {
+        var randomTurn = Client.ClientRandom.NextFloat(-Tank.Parameters.MaxAngleRandomTurn, Tank.Parameters.MaxAngleRandomTurn);
 
         // aggressiveness
-        if (TargetTank is not null) {
+        if (Tank.TargetTank is not null) {
             // dirvec to target -> gets that angle
             // difference in angle -> multiplies by aggressiveness
-            var toTarget = Vector2.Normalize(TargetTank.Position - Position);
+            var toTarget = Vector2.Normalize(Tank.TargetTank.Position - Tank.Position);
             float targetAngle = toTarget.ToRotation() - MathHelper.PiOver2;
 
             // shortest signed angle difference
-            float angleDifference = MathHelper.WrapAngle(targetAngle - ChassisRotation);
+            float angleDifference = MathHelper.WrapAngle(targetAngle - Tank.ChassisRotation);
 
             // negatives don't work?
 
             // applies bias toward or away from the target's angle
-            randomTurn += angleDifference * Parameters.AggressivenessBias;
+            randomTurn += angleDifference * Tank.Parameters.AggressivenessBias;
         }
 
         // this causes extremely weak movement...
@@ -185,51 +182,21 @@ public partial class AITank {
 
         // is / 2 necessary?
         // i think so for now. once i figure out how to get the queue to work with random movments, it will look crisp 
-        DesiredChassisRotation += randomTurn / 2;
+        Tank.DesiredChassisRotation += randomTurn / 2;
     }
-    // if raycasting based on radii, divide what is input to distance by two
-    /// <summary>Performs a raycast to check for blocking objects, with respect to <see cref="Tank.ChassisRotation"/>.</summary>
-    /// <param name="distance">The distance ahead of the tank, in world units, not physics units.</param>
-    /// <param name="offset">The angle offset for the check.</param>
-    /// <param name="callback">Callback data to do custom logic with the raycast result.</param>
-    /// <returns>Whether or not the ray had an intersection.</returns>
-    public bool RaycastAheadOfTank(float distance, float offset = 0f, RayCastReportFixtureDelegate? callback = null) {
-        bool isPathBlocked = false;
-
-        // the tank by default faces down, so positive Y.
-        var dir = Vector2.UnitY.RotatedBy(ChassisRotation + offset);
-
-        // switch to using game units if necessary?
-        var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
-        var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
-
-        // exceptions thrown here, "Stack is empty", assuming race conditions? (and sometimes nullreference?)
-        lock (_rayCastLock) {
-            CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
-                callback?.Invoke(fixture, point, normal, fraction);
-
-                if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
-                    isPathBlocked = true;
-                }
-
-                return fraction;
-                // divide by 2 because it's a radius, i think
-            }, Physics.Position, endpoint);
-        }
-        return isPathBlocked;
-    }
+   
     /// <summary>Attempts to dequeue from <see cref="PivotQueue"/> and split it into <see cref="AIParameters.MaxQueuedMovements"/> smaller turns.</summary>
     /// <returns>Whether or not the attempt was successful.</returns>
-    public bool TryGenerateSubQueue() {
+    public readonly bool TryGenerateSubQueue() {
         if (PivotQueue.Count == 0) return false;
         if (SubPivotQueue.Count > 0) return false;
         // grab from the top of the queue
         var pivot = PivotQueue.Dequeue(); //PivotQueue[0];
-        var desiredCuts = Parameters.MaxQueuedMovements;
+        var desiredCuts = Tank.Parameters.MaxQueuedMovements;
 
         for (int i = 0; i < desiredCuts; i++) {
             //SubPivotQueue.Add(Vector2.UnitY.RotatedBy(MathHelper.PiOver2 * i));
-            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.RotatedBy(ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
+            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.RotatedBy(Tank.ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
         }
         // drop the first element since this works as a queue under the hood
         // PivotQueue.RemoveAt(0);
@@ -257,7 +224,7 @@ public partial class AITank {
             aggro += angleDifference * Parameters.AggressivenessBias;
         }*/
 
-        DesiredChassisRotation = SubPivotQueue.Dequeue().ToRotation() - MathHelper.PiOver2;
+        Tank.DesiredChassisRotation = SubPivotQueue.Dequeue().ToRotation() - MathHelper.PiOver2;
 
         // drop the first element again, but for the sub-queue
         // SubPivotQueue.RemoveAt(0);
@@ -266,7 +233,7 @@ public partial class AITank {
     }
 
     // makes the tank turn if it happens to run into a block
-    protected bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
+    /*protected bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
 
         return true;
 
@@ -278,5 +245,5 @@ public partial class AITank {
         }
 
         return true;
-    }
+    }*/
 }
