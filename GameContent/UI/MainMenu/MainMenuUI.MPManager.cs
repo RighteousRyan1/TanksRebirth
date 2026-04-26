@@ -74,11 +74,11 @@ public static partial class MainMenuUI {
 
     // comment bs cleanup
     private static Func<Vector2> GetButtonSize(float padding) {
-        return () => new Vector2((_panelWidth - padding * 7) / 6, _panelHeaderHeight - padding * 2);
+        return () => new Vector2((_panelWidth - padding * 7) / 6, _panelHeaderHeight / 2);
     }
 
     private static Func<Vector2> GetFirstButtonPosition(float padding) {
-        return () => _panelPosition + new Vector2(padding, padding);
+        return () => _panelPosition + new Vector2(padding, _panelHeaderHeight / 4);
     }
 
     private static Func<Vector2> GetNextButtonPosition(dynamic previousButton, float padding) {
@@ -167,7 +167,7 @@ public static partial class MainMenuUI {
             Tooltip = "Create a server with the written IP and Port in the form of ip:port"
         };
         CreateServerButton.SetDimensions(
-            () => new Vector2(_panelPosition.X + _panelWidth / 2 - CreateServerButton.Size.X / 2, _panelPosition.Y + _panelHeaderHeight + _panelHeight - 45.ToResolutionY()),
+            () => new Vector2(_panelPosition.X + _panelWidth / 2 - CreateServerButton.Size.X / 2, _panelPosition.Y + _panelHeaderHeight + _panelHeight - 30.ToResolutionY()),
             () => UsernameInput.Size);
         CreateServerButton.OnLeftClick = (uiButton) => {
             if (UsernameInput.IsEmpty()) {
@@ -217,7 +217,7 @@ public static partial class MainMenuUI {
             MenuState = UIState.Campaigns;
         };
         StartMPGameButton.SetDimensions(
-            () => _panelPosition + new Vector2(_panelWidth / 3 - DisconnectButton.Size.X / 2, padding),
+            () => _panelPosition + new Vector2(_panelWidth / 3 - DisconnectButton.Size.X / 2, _panelHeaderHeight / 4),
             () => UsernameInput.Size);
     }
 
