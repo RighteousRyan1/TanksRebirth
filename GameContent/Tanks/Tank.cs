@@ -520,17 +520,12 @@ public abstract class Tank(bool ignoresRegister) {
                 ChassisRotation -= MathHelper.Pi;
                 DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
-        };
-
-        if (!IsTurning) {
-            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
-
-            if (Speed > Properties.MaxSpeed)
-                Speed = Properties.MaxSpeed;
-        }
-        else
             // used to be 1f - DeltaTime
-            Speed *= Properties.Deceleration * RuntimeData.DeltaTime;
+            Speed = Math.Max(0f, Speed - Properties.Deceleration * RuntimeData.DeltaTime);
+        }
+        else {
+            Speed = Math.Min(Properties.MaxSpeed, Speed + Properties.Acceleration * RuntimeData.DeltaTime);
+        }
 
         // bigkitty told me that stuns instantly apply zero-velocity
         if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary || !CampaignGlobals.InMission && !MainMenuUI.IsActive) {
