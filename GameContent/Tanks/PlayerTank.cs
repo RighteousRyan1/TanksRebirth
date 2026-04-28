@@ -197,7 +197,7 @@ public class PlayerTank : Tank {
         properties.MineStun = 1; // 8
         properties.Invisible = false;
         properties.Acceleration = 0.3f;
-        properties.Deceleration = 0.3f;
+        properties.Deceleration = 0.6f;
         properties.TurningSpeed = 0.1f;
 
         // this changes depending on input (or should it?)

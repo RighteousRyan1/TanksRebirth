@@ -521,7 +521,7 @@ public abstract class Tank(bool ignoresRegister) {
                 DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
             // used to be 1f - DeltaTime
-            Speed = Math.Max(0f, Speed - Properties.Deceleration * RuntimeData.DeltaTime);
+            Speed *= (float)Math.Pow(Properties.Deceleration, RuntimeData.DeltaTime);
         }
         else {
             Speed = Math.Min(Properties.MaxSpeed, Speed + Properties.Acceleration * RuntimeData.DeltaTime);
