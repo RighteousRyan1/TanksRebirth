@@ -118,6 +118,12 @@ public static class IntermissionHandler {
         IntermissionSystem.IsAwaitingNewMission = true;
         CampaignGlobals.InMission = false;
 
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is null) continue;
+            tank.Velocity = Vector2.Zero;
+            tank.Physics.LinearVelocity = Vector2.Zero;
+        }
+
         if (!CampaignGlobals.InMission && _wasInMission) {
             bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].GrantsExtraLife;
             int restartTime;

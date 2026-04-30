@@ -1,7 +1,7 @@
 using System;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TanksRebirth.Internals.UI;
 using FontStashSharp;
 using Microsoft.Xna.Framework.Input;
 using TextCopy;
@@ -48,27 +48,69 @@ namespace TanksRebirth.Internals.Common.GameUI
 
             if (InputUtils.Click()) {
                 if (MouseHovering) {
-                    if (currentActiveBox != Id) {
-                        ActiveHandle = true;
-                        TankGame.Instance.Window.TextInput += HandleText;
-                    }
-                    if (Text == DefaultString)
-                        Text = string.Empty;
-                    currentActiveBox = Id;
+                    Activate();
                 }
-                /*else {
-                    ActiveHandle = false;
-                    TankGame.Instance.Window.TextInput -= HandleText;
-                    if (Text == DefaultString)
-                        Text = string.Empty;
-                    currentActiveBox = -1;
-                }*/
+                else if (IsSelected()) {
+                    Deactivate();
+                }
             }
             if (string.IsNullOrEmpty(Text) && !IsSelected())
                 Text = DefaultString;
 
             base.Draw(spriteBatch);
             UniqueDraw?.Invoke(this, spriteBatch);
+        }
+
+        private void Activate()
+        {
+            if (currentActiveBox == Id)
+                return;
+
+            DeactivateCurrent();
+
+            currentActiveBox = Id;
+            ActiveHandle = true;
+            TankGame.Instance.Window.TextInput += HandleText;
+
+            if (Text == DefaultString)
+                Text = string.Empty;
+        }
+
+        private void Deactivate()
+        {
+            if (!ActiveHandle)
+                return;
+
+            TankGame.Instance.Window.TextInput -= HandleText;
+            ActiveHandle = false;
+
+            if (currentActiveBox == Id)
+                currentActiveBox = -1;
+
+            OnConfirmContents?.Invoke(this, new());
+        }
+
+        private static void DeactivateCurrent()
+        {
+            var selected = AllUIElements.OfType<UITextInput>().FirstOrDefault(x => x.IsSelected());
+            selected?.Deactivate();
+        }
+
+        private static void SwitchFocus(bool reverse)
+        {
+            var boxes = AllUIElements.OfType<UITextInput>().OrderBy(x => x.Id).ToList();
+            if (boxes.Count == 0)
+                return;
+
+            int selectedIndex = boxes.FindIndex(x => x.IsSelected());
+            int nextIndex = selectedIndex;
+
+            if (selectedIndex == -1)
+                nextIndex = reverse ? boxes.Count - 1 : 0;
+            else
+                nextIndex = (selectedIndex + (reverse ? -1 : 1) + boxes.Count) % boxes.Count;
+
+            boxes[nextIndex].Activate();
         }
 
         public bool IsEmpty() 
@@ -103,7 +145,10 @@ namespace TanksRebirth.Internals.Common.GameUI
                     OnConfirmContents?.Invoke(this, new());
                 }
                 else if (e.Key == Keys.Tab)
-                    Text += "   ";
+                {
+                    var reverse = InputUtils.AreAnyKeysDown([Keys.LeftShift, Keys.RightShift]);
+                    SwitchFocus(reverse);
+                }
                 else if (e.Key == Keys.Enter)
                 {
                     TankGame.Instance.Window.TextInput -= HandleText;

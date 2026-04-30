@@ -157,7 +157,8 @@ public static class InputUtils {
         }
     }
     public static bool KeyJustPressed(Keys key) => KeyboardMouse.CurrentKey.IsKeyDown(key) && KeyboardMouse.PreviousKey.IsKeyUp(key);
-    public static bool AreKeysDown(params Keys[] keys) => keys.All(key => KeyboardMouse.CurrentKey.IsKeyDown(key));
+    public static bool AreAllKeysDown(params Keys[] keys) => keys.All(key => KeyboardMouse.CurrentKey.IsKeyDown(key));
+    public static bool AreAnyKeysDown(params Keys[] keys) => keys.Any(key => KeyboardMouse.CurrentKey.IsKeyDown(key));
     public static bool AreKeysJustPressed(params Keys[] keys) {
         bool allAreDown = keys.All(key => KeyboardMouse.CurrentKey.IsKeyDown(key));
         bool notAllUp = keys.Any(key => KeyboardMouse.PreviousKey.IsKeyUp(key));

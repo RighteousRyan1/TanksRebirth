@@ -2,7 +2,6 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
@@ -74,32 +73,47 @@ public static partial class MainMenuUI {
     }
 
     // comment bs cleanup
+    private static Func<Vector2> GetButtonSize(float padding) {
+        return () => new Vector2((_panelWidth - padding * 7) / 6, _panelHeaderHeight / 2);
+    }
+
+    private static Func<Vector2> GetFirstButtonPosition(float padding) {
+        return () => _panelPosition + new Vector2(padding, _panelHeaderHeight / 4);
+    }
+
+    private static Func<Vector2> GetNextButtonPosition(dynamic previousButton, float padding) {
+        return () => previousButton.Position + new Vector2(previousButton.Size.X + padding, 0);
+    }
+
     public static void InitializeMP(SpriteFontBase font) {
         var uiColor = Color.LightGray;
+        var padding = 10f.ToResolutionX();
+        var buttonSize = GetButtonSize(padding);
+        
         UsernameInput = new(font, uiColor, 1f, 15) {
             IsVisible = false,
             DefaultString = "Username"
         };
-        UsernameInput.SetDimensions(() => _panelPosition + new Vector2(0, _panelHeaderHeight / 4), () => new Vector2(240.ToResolutionX(), _panelHeaderHeight / 2));
+        UsernameInput.SetDimensions(GetFirstButtonPosition(padding), buttonSize);
 
         IPInput = new(font, uiColor, 1f, 15) {
             IsVisible = false,
             DefaultString = "Server IP address"
         };
-        IPInput.SetDimensions(() => UsernameInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
+        IPInput.SetDimensions(GetNextButtonPosition(UsernameInput, padding), buttonSize);
 
         PortInput = new(font, uiColor, 1f, 5) {
             IsVisible = false,
             DefaultString = "Server Port"
         };
-        PortInput.SetDimensions(() => IPInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
+        PortInput.SetDimensions(GetNextButtonPosition(IPInput, padding), buttonSize);
 
         PasswordInput = new(font, uiColor, 1f, 10) {
             IsVisible = false,
             DefaultString = "Server Password",
             Tooltip = "Empty = none"
         };
-        PasswordInput.SetDimensions(() => PortInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
+        PasswordInput.SetDimensions(GetNextButtonPosition(PortInput, padding), buttonSize);
         DisconnectButton = new("Disconnect", font, uiColor, 1f) {
             IsVisible = false,
             OnLeftClick = (arg) => {
@@ -107,20 +121,20 @@ public static partial class MainMenuUI {
             }
         };
         DisconnectButton.SetDimensions(
-            () => _panelPosition + new Vector2(_panelWidth / 3 * 2 - DisconnectButton.Size.X / 2, _panelHeaderHeight / 4),
+            () => _panelPosition + new Vector2(_panelWidth / 3 * 2 - DisconnectButton.Size.X / 2, padding),
             () => UsernameInput.Size);
 
         ServerNameInput = new(font, uiColor, 1f, 10) {
             IsVisible = false,
             DefaultString = "Server Name"
         };
-        ServerNameInput.SetDimensions(() => PasswordInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
+        ServerNameInput.SetDimensions(GetNextButtonPosition(PasswordInput, padding), buttonSize);
 
         ConnectToServerButton = new(TankGame.GameLanguage.Menu.ConnectToServer, font, uiColor) {
             IsVisible = false,
             Tooltip = "Connect to the written IP and Port in the form of ip:port"
         };
-        ConnectToServerButton.SetDimensions(() => ServerNameInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
+        ConnectToServerButton.SetDimensions(GetNextButtonPosition(ServerNameInput, padding), buttonSize);
         ConnectToServerButton.OnLeftClick = (uiButton) => {
             if (UsernameInput.IsEmpty()) {
                 SoundPlayer.SoundError();
