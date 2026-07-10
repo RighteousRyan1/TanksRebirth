@@ -79,36 +79,36 @@ public class XpBar {
     public void Render(SpriteBatch sb) {
         var text = $"Level: {Level} | {MathF.Floor(Value / MaxValue * 100)}%";
         Alignment = Anchor.Center;
-        // draw empty xp (Text)
+        // draw empty xp (text)
         DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFont, text, Position - (Vector2.UnitY * 20).ToResolution(), Color.White, Color.Black, new Vector2(0.6f).ToResolution(),
             0f, Alignment, borderThickness: 0.5f);
 
         Vector2 origin = Alignment.GetAnchor(TextureGlobals.Pixels[Color.White].Size());
         float borderSize = 2f.ToResolutionX();
 
-        // 1. Draw the Outline/Backdrop
+        // outline
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, Color.Black * 0.85f, 0f, origin, (Scale + new Vector2(borderSize * 2)).ToResolution(), default, 0f);
 
-        // draw empty xp (Track)
+        // draw empty xp (track)
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, EmptyColor, 0f, origin, Scale.ToResolution(), default, 0f);
 
-        // 2. Add an inner shadow to the empty track for depth
+        // inner shadow
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, Color.Black * 0.3f, 0f, origin, new Vector2(Scale.X, Scale.Y * 0.25f).ToResolution(), default, 0f);
 
-        // Calculate widths dynamically based on MaxValue
+        // calculates widths dynamically based on MaxValue
         float approachRatio = MathF.Min(MaxValue, ApproachValue) / MaxValue;
         float currentRatio = Value / MaxValue;
 
-        // 3. Create a smooth sine-wave pulse for the approach bar
+        // sine wave pulse for approach bar
         float pulseAlpha = 0.6f + MathF.Sin(_glowTimer) * 0.4f;
 
-        // draw approaching xp value (Glow Trail)
+        // draw approaching xp value (glow trail)
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, GainedColor * pulseAlpha, 0f, origin, new Vector2(Scale.X * approachRatio, Scale.Y).ToResolution(), default, 0f);
 
-        // draw gained xp (Main Fill)
+        // draw gained xp (main fill)
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, FillColor, 0f, origin, new Vector2(Scale.X * currentRatio, Scale.Y).ToResolution(), default, 0f);
 
-        // 4. Draw a glossy highlight across the top edge of the filled bar
+        // glossy highlight (maybe remove?)
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, Color.White * 0.25f, 0f, origin, new Vector2(Scale.X * currentRatio, Scale.Y * 0.35f).ToResolution(), default, 0f);
     }
 }

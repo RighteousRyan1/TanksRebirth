@@ -29,11 +29,12 @@ namespace TanksRebirth.GameContent.UI;
 public static class CampaignCompleteUI {
     public static bool IsViewingResults;
     public static Rectangle ParseGradeRect(Grade grade) {
+        const int gradeSize = 128;
         // 128 being the width of each section.
         int col = (int)grade / 3;
         int row = (int)grade % 3;
 
-        return new(col * 128, row * 128, 128, 128);
+        return new(col * gradeSize, row * gradeSize, gradeSize, gradeSize);
     }
 
     static float _animationTime;

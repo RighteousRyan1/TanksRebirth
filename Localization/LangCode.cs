@@ -2,8 +2,7 @@ using System;
 
 namespace TanksRebirth.Localization;
 
-public struct LangCode
-{
+public struct LangCode {
     public string Language { get; set; }
     public string Country { get; set; }
 

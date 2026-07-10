@@ -1,25 +1,22 @@
 using Microsoft.Xna.Framework;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.UI.MainMenu;
-
-using TanksRebirth.GameContent.Tanks.AI;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.GameContent.Systems.LevelSystem;
 

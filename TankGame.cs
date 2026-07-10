@@ -232,8 +232,10 @@ public class TankGame : Game {
             if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
                 ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
                 SteamworksUtils.Initialize();
+
+                SteamworksUtils.SetSteamStatus("Tanks Rebirth");
             }
-            Window.Title = "Tanks! Rebirth";
+            Window.Title = "Tanks Rebirth";
 
             CurrentSessionTimer.Start();
             PingMenu.Initialize();

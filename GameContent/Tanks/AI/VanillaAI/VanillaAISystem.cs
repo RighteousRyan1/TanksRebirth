@@ -6,6 +6,9 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Tanks.AI.VanillaAI;
 
+// IDEA: make my own custom ai system!
+// maybe make them patrol, and if seeing an enemy, tries to follow where it was last seen
+
 public unsafe struct AIBehaviorState {
     const int LBLEN = 16;
     public fixed char Label[LBLEN];
