@@ -158,16 +158,16 @@ public static class GameUI {
         BackButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
         BackButton.OnLeftClick = (uiElement) => HandleBackButton();
 
-        KeyboardPlayerButton = new($"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}", font, Color.WhiteSmoke) {
+        KeyboardPlayerButton = new($"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.KbPlayer)}", font, Color.WhiteSmoke) {
             IsVisible = false
         };
         KeyboardPlayerButton.SetDimensions(() => new Vector2(WindowUtils.WindowWidth - 300.ToResolutionX(), 10.ToResolutionY()), () => new Vector2(250, 50).ToResolution());
         KeyboardPlayerButton.OnLeftClick = (ui) => {
-            PlayerTank.PlayerControlledByKeyboard++;
-            if (PlayerTank.PlayerControlledByKeyboard > InputUtils.NumGamepadsConnected)
-                PlayerTank.PlayerControlledByKeyboard = -1;
+            PlayerTank.KbPlayer++;
+            if (PlayerTank.KbPlayer > InputUtils.NumGamepadsConnected)
+                PlayerTank.KbPlayer = -1;
 
-            KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.PlayerControlledByKeyboard)}";
+            KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.KbPlayer)}";
         };
 
         // MainMenuUI.Initialize();

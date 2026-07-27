@@ -14,6 +14,7 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent.Systems.PingSystem;
 
 // TODO: finish images rendering
+// maybe allow pinging ingame objects like shells or mines, etc
 public class IngamePing {
     // 4 players, 7 pings possible per player. a few buffered spots since pings fade out over time
     public static IngamePing[] AllIngamePings = new IngamePing[32];
@@ -24,8 +25,7 @@ public class IngamePing {
     bool _delete;
 
     static Texture2D? _pingTexture;
-    readonly Texture2D? _pingGraphic;
-
+    readonly Texture2D _pingGraphic;
     readonly Model _model;
 
     public Vector3 Position { get; set; }
@@ -92,20 +92,18 @@ public class IngamePing {
     public void Update() {
         _lifeTime += RuntimeData.DeltaTime;
 
-        var easeSpeed = 0.025f;
+        var easeSpeed = 0.05f;
 
-        if (TrackedTank != null) {
+        if (TrackedTank != null)
             Position = TrackedTank.Position3D;
-        }
-
+        
         if (_lifeTime > MaxLifeTime) {
             _scaleEase -= RuntimeData.DeltaTime * easeSpeed;
-            if (_scaleEase <= 0) {
+            if (_scaleEase <= 0)
                 _delete = true;
-            }
-        } else {
+        } else
             _scaleEase += RuntimeData.DeltaTime * easeSpeed;
-        }
+
         _scaleEase = MathHelper.Clamp(_scaleEase, 0, 1);
     }
 
@@ -132,9 +130,10 @@ public class IngamePing {
             }
             mesh.Draw();
         }
+        var matProj = MatrixUtils.ConvertWorldToScreen(Position + new Vector3(0, fullEase * 2 * 30, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
         TankGame.SpriteRenderer.Draw(_pingGraphic, 
-            MatrixUtils.ConvertWorldToScreen(Position + new Vector3(0, fullEase * 2 * 30, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection), 
-            null, Color, 0f, _pingGraphic.Size() / 2, (Vector2.One * 0.25f * fullEase).ToResolution(), default, 0f);
+            matProj, null, Color, 0f, 
+            _pingGraphic.Size() / 2, (Vector2.One * 0.75f * fullEase).ToResolution(), default, 0f);
     }
     public static IngamePing CreateFromTankSender(Vector3 position3d, int pingId, int playerId, bool send = false) {
         if (send)

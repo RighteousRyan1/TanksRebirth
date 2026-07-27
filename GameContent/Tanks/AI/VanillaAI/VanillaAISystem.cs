@@ -41,8 +41,8 @@ public partial struct VanillaAISystem : IAISystem {
 
         ChassisMovement.SetLabel("ChassisMovement");
         TurretMovement.SetLabel ("TurretMovement");
-        ShellFire.SetLabel("ShellFire");
-        MinePlace.SetLabel("MinePlace");
+        ShellFire.SetLabel      ("ShellFire");
+        MinePlace.SetLabel      ("MinePlace");
 
 
         NearbyDangers = [];

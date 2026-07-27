@@ -486,14 +486,16 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             TargetTank = vais.GetAppropriateTarget();
 
         // measure the biggest WarinessRadius, player or Tank, then check the larger, then do manual calculations.
-        var radii = new float[] { Parameters.AwarenessFriendlyMine, Parameters.AwarenessHostileMine, Parameters.AwarenessFriendlyShell, Parameters.AwarenessHostileShell };
-        var biggest = radii.Max();
+        // var radii = new float[] { Parameters.AwarenessFriendlyMine, Parameters.AwarenessHostileMine, Parameters.AwarenessFriendlyShell, Parameters.AwarenessHostileShell };
+        //var biggest = radii.Max();
 
-        vais.NearbyDangers = vais.GetEvasionData();
-        vais.ClosestDanger = vais.NearbyDangers.Closest(Position);
+        //vais.NearbyDangers = vais.GetEvasionData();
+        //vais.ClosestDanger = vais.NearbyDangers.Closest(Position);
 
+        // strictly used for using callbacks and modded methods
         if (vais.NearbyDangers.Count > 0) {
             WhileDangerDetected?.Invoke(this, vais.ClosestDanger!);
+            // vais.Avoid(vais.ClosestDanger!.Position);
             ModdedData?.DangerDetected();
         }
     }

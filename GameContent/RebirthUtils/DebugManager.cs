@@ -506,7 +506,8 @@ public static class DebugManager {
                                                    $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
                                                    $"\nKeys U + I: Unload All Mods" +
                                                    $"\nKeys O + P: Reload All Mods" +
-                                                   $"\nKeys Q + E: Resynchronize Randoms", new Vector2(10, 500));
+                                                   $"\nKeys Q + E: Resynchronize Randoms" +
+                                                   $"\nKb Player: {PlayerTank.KbPlayer}", new Vector2(10, 500));
 
         DrawDebugString(spriteBatch, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
 

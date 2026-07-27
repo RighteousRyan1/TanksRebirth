@@ -4,6 +4,11 @@ using TanksRebirth.Internals;
 namespace TanksRebirth.GameContent.Globals.Assets;
 
 #pragma warning disable
+
+/// <summary>
+/// Stores a static reference to an asset, and can be loaded statically or re-loaded as a new asset.
+/// </summary>
+/// <typeparam name="T">The type of asset to store.</typeparam>
 public class Resource<T> where T : class {
     // add ContentManager property... maybe.
 

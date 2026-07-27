@@ -1,6 +1,5 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,29 +13,117 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals.UI;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 public static class SceneManager {
-
-    public static Lighting.LightProfile GameLight = new() {
-        Color = new(150, 150, 170),
-        Brightness = 0.75f,
-        //isNight = true
-    };
-
-    public static Color ThunderColor = Color.DeepSkyBlue;
-
-    private static bool _musicLoaded;
-
+    // delegates
     public delegate void LoadTankScene();
     public static event LoadTankScene? OnLoadTankScene;
     public delegate void MissionCleanupEvent();
     public static event MissionCleanupEvent? OnMissionCleanup;
 
+    // random scene stuff
+    public static Lighting.LightProfile GameLight = new() {
+        Color = new(150, 150, 170),
+        Brightness = 0.75f,
+    };
+    public static Color ThunderColor = Color.DeepSkyBlue;
+    static bool _musicLoaded;
+
+    // campaign ending
+    internal static float timeLeft;
+    static MissionEndContext _cxtlast;
+    static string msg = string.Empty;
+
+    // Animation state variables
+    static float _animTimer;
+
+    public static void InitResults(float time, MissionEndContext ctx) {
+        timeLeft = time;
+        _cxtlast = ctx;
+
+        _animTimer = 0f;
+
+        // TODO: localize this pls
+        msg = _cxtlast switch {
+            MissionEndContext.GameOver => "Game Over!",
+            MissionEndContext.Win => "Mission Complete!",
+            MissionEndContext.Lose => "You Died!",
+            MissionEndContext.CampaignCompleteMajor => "Campaign Complete!",
+            MissionEndContext.CampaignCompleteMinor => "Campaign Complete!",
+            _ => string.Empty
+        };
+        // MessageBox.Show("UH OH!!!", "YOU LOST!!!", ["You Suck", "Lol", "Go Home"]);
+    }
+
+    // this is so... so so bad (but it will be better)
+    public static void DrawResultsMessage(SpriteBatch sb) {
+        if (string.IsNullOrEmpty(msg)) return;
+
+        // extended timer to 2.0 to give the post-impact flash time to complete
+        _animTimer += 0.025f * RuntimeData.DeltaTime;
+        if (_animTimer > 2f) _animTimer = 2f;
+
+        // slides text
+        float slideProgress = MathHelper.Clamp(_animTimer, 0f, 1f);
+        float slideEase = Easings.ComputeEase(EasingFunction.OutCubic, slideProgress);
+
+        // flash + impact
+        float impactProgress = MathHelper.Clamp(_animTimer - 1f, 0f, 1f);
+        float impactEase = Easings.ComputeEase(EasingFunction.OutSine, impactProgress);
+
+        int midIndex = msg.Length / 2;
+        string leftHalf = msg[..midIndex];
+        string rightHalf = msg[midIndex..];
+
+        var leftSize = FontGlobals.RebirthFontLarge.MeasureString(leftHalf);
+        var rightSize = FontGlobals.RebirthFontLarge.MeasureString(rightHalf);
+
+        float gapX = MathHelper.Lerp(1200f, 0f, slideEase);
+        float alpha = MathHelper.Lerp(0f, 1f, slideEase);
+
+        // Fade out during the final segment of the timer (from 1.6f to 2.0f)
+        if (_animTimer > 1.6f) {
+            float fadeOutProgress = (_animTimer - 1.6f) / 0.4f;
+            alpha *= MathHelper.Lerp(1f, 0f, fadeOutProgress);
+        }
+
+        // uses 
+        Color textColor = Color.White;
+        float scale = 1f;
+
+        if (_animTimer >= 0.8f) {
+            // As impactEase approaches 1, it settles to Color.White and scale 1f
+            textColor = Color.Lerp(Color.Goldenrod, IntermissionSystem.BackgroundColor, impactEase);
+            scale = 1f + (0.15f * (1f - impactEase));
+        }
+
+        Vector2 leftPos = WindowUtils.WindowCenter - new Vector2(gapX + (rightSize.X / 2f), 0);
+        Vector2 rightPos = WindowUtils.WindowCenter + new Vector2(gapX + (leftSize.X / 2f), 0);
+
+        // afterimage
+        if (slideProgress < 1f) {
+            float velocityTrail1 = 100f * (1f - slideEase);
+            float velocityTrail2 = 220f * (1f - slideEase);
+
+            // first ghost layer, very transparent
+            DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, leftHalf, leftPos - new Vector2(velocityTrail2, 0), Color.Red * 0.2f * alpha, Color.Transparent, Vector2.One, 0f);
+            DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, rightHalf, rightPos + new Vector2(velocityTrail2, 0), Color.Red * 0.2f * alpha, Color.Transparent, Vector2.One, 0f);
+
+            // second ghost layer, more opaque
+            DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, leftHalf, leftPos - new Vector2(velocityTrail1, 0), Color.Red * 0.45f * alpha, Color.Transparent, Vector2.One, 0f);
+            DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, rightHalf, rightPos + new Vector2(velocityTrail1, 0), Color.Red * 0.45f * alpha, Color.Transparent, Vector2.One, 0f);
+        }
+
+        // draws the text
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, leftHalf, leftPos, textColor * alpha, Color.Black * alpha, Vector2.One * scale, 0f);
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, rightHalf, rightPos, textColor * alpha, Color.Black * alpha, Vector2.One * scale, 0f);
+
+        // make it look better with a banner
+        // DrawUtils.DrawStripe(sb, IntermissionSystem.BannerColor, WindowUtils.WindowHeight / 2, 1f, xOffset: 0f);
+    }
 
     /// <summary>
     /// Uses a multithreaded approach to start the campaign results screen.

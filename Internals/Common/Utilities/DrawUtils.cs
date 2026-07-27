@@ -281,7 +281,7 @@ public static class DrawUtils {
         }
     }
 
-    // eensy weensy bit of Tank help cuz i was programming this at 3am
+    // eensy weensy bit of ai help cuz i was programming this at 3am
     /// <summary>Draws a wireframe 3D bounding sphere.</summary>
     public static void DrawBoundingSphere(BoundingSphere sphere, Color color, Matrix view,
         Matrix projection, Matrix? world = null, int segments = 32) {
@@ -370,35 +370,35 @@ public static class DrawUtils {
         _debugEff.View = view;
         _debugEff.Projection = proj;
 
-        // Get the 8 corners of the frustum
-        // Indices:
-        // 0-3: Near Plane (TopLeft, TopRight, BottomRight, BottomLeft)
-        // 4-7: Far Plane (TopLeft, TopRight, BottomRight, BottomLeft)
+        // gets the 8 corners of the frustum
+        // indices:
+        // 0-3: near Plane (TopLeft, TopRight, BottomRight, BottomLeft)
+        // 4-7: far Plane (TopLeft, TopRight, BottomRight, BottomLeft)
         var corners = frustum.GetCorners();
 
-        // We need 12 lines x 2 vertices per line = 24 vertices
+        // needs 12 lines x 2 vertices per line = 24 vertices
         var verts = new VertexPositionColor[24];
 
-        // Helper to fill the array
+        // fills the array easily
         int i = 0;
         void AddLine(int indexA, int indexB) {
             verts[i++] = new VertexPositionColor(corners[indexA], color);
             verts[i++] = new VertexPositionColor(corners[indexB], color);
         }
 
-        // --- Near Plane ---
+        // near
         AddLine(0, 1);
         AddLine(1, 2);
         AddLine(2, 3);
         AddLine(3, 0);
 
-        // --- Far Plane ---
+        // far
         AddLine(4, 5);
         AddLine(5, 6);
         AddLine(6, 7);
         AddLine(7, 4);
 
-        // --- Connections (Near to Far) ---
+        // near to far
         AddLine(0, 4);
         AddLine(1, 5);
         AddLine(2, 6);
@@ -408,5 +408,14 @@ public static class DrawUtils {
             pass.Apply();
             device.DrawUserPrimitives(PrimitiveType.LineList, verts, 0, 12);
         }
+    }
+
+    public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
+
+        var scaling = new Vector2(3.25f, 3f);
+
+        spriteBatch.Draw(tex, new Vector2(-12 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
+        spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
     }
 }

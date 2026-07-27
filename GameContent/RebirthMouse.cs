@@ -28,7 +28,15 @@ public class RebirthMouse {
     public Texture2D MouseTexture;
 
     public Color MouseColor;
-    public Color TrailColor;
+
+    Color _tc;
+    public Color TrailColor {
+        get => _tc;
+        set {
+            _tc = value;
+            CursorTrail!.MainColor = value;
+        }
+    }
 
     public Effect _mouseShader;
 

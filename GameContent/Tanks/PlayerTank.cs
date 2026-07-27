@@ -44,7 +44,7 @@ public ref struct PlayerBinds {
 }
 public class PlayerTank : Tank {
 
-    public static int NumLocalPlayers => PlayerControlledByKeyboard == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
+    public static int NumLocalPlayers => KbPlayer == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
     #region The Rest
 
     // "My" denotes that it's for the client's tank team/tank type
@@ -88,12 +88,17 @@ public class PlayerTank : Tank {
 
     // -1 if all are controllers!
     // -2 is only the client tank
-    public static int PlayerControlledByKeyboard = PlayerID.Blue;
+    /// <summary>
+    /// The player index of the player tank being controlled by the keyboard.
+    /// <br></br>
+    /// -1 if all players are/should be controllers. -2 if in an online context.
+    /// </summary>
+    public static int KbPlayer = PlayerID.Blue;
 
     /// <summary>
     /// True if this player is the one controlled by keyboard+mouse.
     /// </summary>
-    public bool UsesKeyboard => PlayerId == PlayerControlledByKeyboard;
+    public bool UsesKeyboard => PlayerId == KbPlayer;
 
     /// <summary>
     /// Returns the gamepad index for this player, or -1 if this player uses keyboard/mouse.
@@ -101,13 +106,13 @@ public class PlayerTank : Tank {
     /// </summary>
     public int GamepadIndex {
         get {
-            if (PlayerControlledByKeyboard == -1)
+            if (KbPlayer == -1)
                 return PlayerId; // everyone is controller: 0->0, 1->1...
 
-            if (PlayerId == PlayerControlledByKeyboard)
+            if (PlayerId == KbPlayer)
                 return -1; // THIS player is keyboard+mouse, no gamepad index.
 
-            if (PlayerId < PlayerControlledByKeyboard)
+            if (PlayerId < KbPlayer)
                 return PlayerId; // before the KBM slot, indices are unchanged.
 
             // after the KBM slot, shift left by one
@@ -115,13 +120,18 @@ public class PlayerTank : Tank {
         }
     }
 
+    /// <summary>The input method of this player.</summary>
     public PlayerInput InputMethod = PlayerInput.KBM;
-
+    
+    /// <summary>The desired direction of the player tank, given the player's current input.</summary>
     public Vector2 DesiredDirection;
+    /// <summary>The minimum magnitude of the left stick for movement.</summary>
     public static float StickDeadzone { get; set; } = 0.12f;
+    /// <summary>The maximum magnitude of the left stick for movement.</summary>
     public static float StickAntiDeadzone { get; set; } = 0.85f;
     /// <summary>A <see cref="PlayerTank"/> instance which represents the current client's tank they *primarily* control. Will return null in cases where
-    /// the tank simply is inexistent (i.e: in the main menu). In a single-player context, this will always be the first player tank.</summary>
+    /// the tank simply is inexistent (i.e: in the main menu). In a single-player context, this will always be the first player tank.
+    /// As of alpha version 1.9, in a local multiplayer context, this will return the first player tank (usually blue).</summary>
     public static PlayerTank ClientTank => GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
     /// <summary>The amount of lives for every existing player. Access a certain player's life count via indexing this array with a PlayerID entry.
     /// <para>Note that lives are always synced on multiplayer.</para>
@@ -298,7 +308,7 @@ public class PlayerTank : Tank {
                 }
 
                 // THIS MUST HAVE A BETTER WAY
-                if (InputUtils.Click() && (UsesKeyboard || PlayerControlledByKeyboard == -2)) {
+                if (InputUtils.Click() && (UsesKeyboard || KbPlayer == -2)) {
                     Shoot(false);
                 }
             }
@@ -322,14 +332,15 @@ public class PlayerTank : Tank {
             var numMice = InputUtils.NumConnectedInputs;
 
             // ensures the mouse is not used if invalid
-            if (numMice - 1 > PlayerControlledByKeyboard) {
+            if (numMice - 1 > KbPlayer) {
                 TankGame.PlayerMice[PlayerId].Position = MouseUtils.MousePosition;
             }
         }
 
+        // TODO: somehow i broke something here. why
         var denyFpsAiming = !Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive;
         if (denyFpsAiming) {
-            var mouseIndex = PlayerControlledByKeyboard == -2 ? 0 : PlayerId;
+            var mouseIndex = KbPlayer == -2 ? 0 : PlayerId;
             //int padIndex = GamepadIndex;
             //if (padIndex < 0)
             //    return; // KBM player will use actual mouse
@@ -474,7 +485,7 @@ public class PlayerTank : Tank {
         }
     }
     void ControlHandle_Keybinding() {
-        if (PlayerId != PlayerControlledByKeyboard && PlayerControlledByKeyboard > -2)
+        if (PlayerId != KbPlayer && KbPlayer > -2)
             return;
 
         if (ShowShotPath.JustPressed)

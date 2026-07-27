@@ -524,7 +524,7 @@ public static class IntermissionSystem {
         // draws the plaid(?) banner across the screen
         for (int i = 0; i < 6; i++) {
             var off = 75f;
-            DrawStripe(spriteBatch, BannerColor, (off * i).ToResolutionY(), 1f);
+            DrawUtils.DrawStripe(spriteBatch, BannerColor, (off * i).ToResolutionY(), 1f);
         }
 
         // i got this by mathing 1080 * 0.18 - 1080 * 0.16 (what the old offset was)
@@ -790,15 +790,6 @@ public static class IntermissionSystem {
             Anchor.BottomLeft.GetAnchor(baseDims), Vector2.One.ToResolution(), SpriteEffects.FlipHorizontally, 0f);
         spriteBatch.Draw(BonusBannerBase, new Vector2(_renderEndX, baseDims.Y), null, Color.White, 0f,
             Vector2.Zero, Vector2.One.ToResolution(), SpriteEffects.FlipVertically | SpriteEffects.FlipHorizontally, 0f);
-    }
-
-    private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha) {
-        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
-
-        var scaling = new Vector2(3.25f, 3f);
-
-        spriteBatch.Draw(tex, new Vector2(-12, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
-        spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
     }
 
     public static void BeginOperation(float time) {

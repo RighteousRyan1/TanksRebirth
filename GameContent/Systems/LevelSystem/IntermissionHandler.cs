@@ -1,10 +1,8 @@
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Tanks;
@@ -17,6 +15,10 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.LevelSystem;
+
+// TODO: make an animation that shows the amount of tanks killed for a certain type and overall counting up.
+// i.e: 1 black tank -> 3 black tanks, as a smooth animation, like the game stats menu
+// new entries (like first brown tank killed) expand the panel and insert a new tank. probably could do a 3d render, just like the level editor
 public static class IntermissionHandler {
     public const int DEF_INTERMISSION_TIME = 600;
     public const int DEF_PLUSLIFE_TIME = 240;
@@ -35,38 +37,38 @@ public static class IntermissionHandler {
     public static MissionEndContext LastResult = (MissionEndContext)(-1);
 
     // bool major = (if true, play M100 fanfare, else M20)
-    public static void DoEndMissionWorkload(int delay, MissionEndContext context) {
+    public static void DoEndMissionWorkload(int delay, MissionEndContext result) {
         TankMusicSystem.StopAll();
 
         // Server.SyncSeeds();
 
-        LastResult = context;
+        LastResult = result;
 
         // initialize animators
         //PopupAnimators = new Animator[CampaignGlobals.DeltaMissionStats.NumStatsWithDelta];
 
-        //if (result1up && context != MissionEndContext.Lose)
+        //if (result1up && result != MissionEndContext.Lose)
         //delay += 200;
 
-        if (context == MissionEndContext.CampaignCompleteMajor) {
+        if (result == MissionEndContext.CampaignCompleteMajor) {
             TankGame.SaveFile.CampaignsCompleted++;
             string victory = "Assets/music/fanfares/mission_complete_M100.ogg";
             SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
         }
-        else if (context == MissionEndContext.CampaignCompleteMinor) {
+        else if (result == MissionEndContext.CampaignCompleteMinor) {
             TankGame.SaveFile.CampaignsCompleted++;
             var victory = "Assets/music/fanfares/mission_complete_M20.ogg";
             SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
         }
-        if (context == MissionEndContext.Win) {
+        if (result == MissionEndContext.Win) {
             TankGame.SaveFile.MissionsCompleted++;
         }
         if (!Client.IsConnected()) {
-            if (context == MissionEndContext.Lose) {
+            if (result == MissionEndContext.Lose) {
                 var deathSound = "Assets/music/fanfares/tank_player_death.ogg";
                 SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }
-            else if (context == MissionEndContext.GameOver) {
+            else if (result == MissionEndContext.GameOver) {
                 //PlayerTank.AddLives(-1);
 
                 var deathSound = "Assets/music/fanfares/gameover_playerdeath.ogg";
@@ -74,7 +76,7 @@ public static class IntermissionHandler {
             }
         }
         else {
-            if (context == MissionEndContext.Lose) {
+            if (result == MissionEndContext.Lose) {
                 // PlayerTank.AddLives(-1);
 
                 var deathSound = "Assets/music/fanfares/tank_player_death.ogg";
@@ -86,7 +88,7 @@ public static class IntermissionHandler {
                 SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }*/
         }
-        if (context == MissionEndContext.Win) {
+        if (result == MissionEndContext.Win) {
             TankGame.SaveFile.MissionsCompleted++;
             CampaignGlobals.LoadedCampaign.LoadNextMission();
             // hijack the next mission if random tanks is enabled.
@@ -106,13 +108,20 @@ public static class IntermissionHandler {
             }
         }
 
-        if (CampaignCompleteUI.FanfaresAndDurations.TryGetValue(context, out (OggAudio, TimeSpan) value)) {
+        if (CampaignCompleteUI.FanfaresAndDurations.TryGetValue(result, out (OggAudio, TimeSpan) value)) {
             value.Item1.Instance?.Play();
             value.Item1.Instance!.Volume = TankGame.Settings.MusicVolume;
-            SceneManager.DoEndScene(value.Item2, context);
+
+
+            SceneManager.InitResults((float)value.Item2.TotalSeconds * 60, result);
+            SceneManager.DoEndScene(value.Item2, result);
         }
-        else
+        else {
             IntermissionSystem.BeginOperation(delay);
+
+            // 2 seconds
+            SceneManager.InitResults(120f, result);
+        }
     }
     public static void PrepareIntermission(bool victory) {
         IntermissionSystem.IsAwaitingNewMission = true;

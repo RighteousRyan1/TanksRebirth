@@ -291,8 +291,7 @@ public class TankGame : Game {
     }
 
     void InputUtils_OnGamePadConnected(int player) {
-
-        var kbTnk = PlayerTank.PlayerControlledByKeyboard;
+        var kbTnk = PlayerTank.KbPlayer;
         var numGps = InputUtils.NumGamepadsConnected;
 
         var plrReal = player + 1;
@@ -308,7 +307,7 @@ public class TankGame : Game {
         // update game-related numbers
         SaveFile.TimePlayed += CurrentSessionTimer.Elapsed;
 
-        Settings.PlayerUsingKeyboard = PlayerTank.PlayerControlledByKeyboard;
+        Settings.PlayerUsingKeyboard = PlayerTank.KbPlayer;
 
         // save everything related to game-data
         SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
@@ -511,7 +510,7 @@ public class TankGame : Game {
             FontGlobals.LoadLocalizedFont(LangCode.English);
             FontGlobals.LoadLocalizedFont(Settings.Language);
 
-            PlayerTank.PlayerControlledByKeyboard = Settings.PlayerUsingKeyboard;
+            PlayerTank.KbPlayer = Settings.PlayerUsingKeyboard;
 
             FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
             FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
@@ -667,28 +666,33 @@ public class TankGame : Game {
             MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
             MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
 
+            // here is where the multiplayer mouse bug was. it's fixed. but why are the colors not changing for the trail?
             for (int i = 0; i < PlayerMice.Length; i++) {
                 if (PlayerMice[i] is null) continue;
                 PlayerMice[i].ShouldRender = true;
                 if (i >= PlayerTank.NumLocalPlayers) PlayerMice[i].ShouldRender = false;
             }
 
-            if (PlayerTank.PlayerControlledByKeyboard > -1) {
+            // ensures player mouse is controlled properly... could be hacky?
+            // if (Client.IsConnected()) PlayerTank.KbPlayer = NetPlay.CurrentClient.Id;
+            if (Client.IsConnected())
+                PlayerTank.KbPlayer = -2;
+
+            if (PlayerTank.KbPlayer > -1) {
                 var numMice = InputUtils.NumConnectedInputs;
                 // fallback if the mouse of the player being controlled by KBM is nonexistent
-                if (numMice - 1 < PlayerTank.PlayerControlledByKeyboard) {
-                    PlayerTank.PlayerControlledByKeyboard = InputUtils.NumGamepadsConnected;
+                if (numMice - 1 < PlayerTank.KbPlayer) {
+                    PlayerTank.KbPlayer = InputUtils.NumGamepadsConnected;
                 }
-                PlayerMice[PlayerTank.PlayerControlledByKeyboard].Position = MouseUtils.MousePosition;
+                PlayerMice[PlayerTank.KbPlayer].Position = MouseUtils.MousePosition;
             }
             // more hacks, more hacks. but it works
-            else if (MainMenuUI.IsActive || (PlayerTank.PlayerControlledByKeyboard <= -1 && GameUI.Paused)) {
+            else if (MainMenuUI.IsActive || PlayerTank.KbPlayer <= -1 || GameUI.Paused) {
+                var myClient = NetPlay.GetMyClientId();
                 PlayerMice[0].Position = MouseUtils.MousePosition;
-                PlayerMice[0].MouseColor = PlayerMice[0].TrailColor = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
+                PlayerMice[0].MouseColor = PlayerID.PlayerTankColors[myClient];
+                PlayerMice[0].TrailColor = PlayerID.PlayerTankColorsBright[myClient];
             }
-
-            if (Client.IsConnected())
-                PlayerTank.PlayerControlledByKeyboard = -2;
 
             HandleLogic(gameTime);
 
@@ -944,7 +948,12 @@ public class TankGame : Game {
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
         // if (LevelEditorUI.Active) LevelEditorUI.Render();
-        if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render();
+        if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render(SpriteRenderer);
+
+        if (SceneManager.timeLeft > 0) {
+            SceneManager.DrawResultsMessage(SpriteRenderer);
+            SceneManager.timeLeft -= RuntimeData.DeltaTime;
+        }
 
         // draw black before intermission graphics because we don't want to reveal the mission as it's loading
         IntermissionSystem.DrawBlack(SpriteRenderer);

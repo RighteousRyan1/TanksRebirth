@@ -24,6 +24,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Even more localization!
 	- Translators are still welcome to correct any faulty translations- some translations were done via machine translation
 - Some `Shell` and `Tank` properties are now bit flags
+- Added a new animation/text popup when a mission attempt is over
 
 # Changes
 
@@ -39,6 +40,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - The "Shotguns" modifier has been improved and changed
 	- Tanks now have recoil when firing
 	- Shot spread is much tighter
+- Pings now grow and shrink quicker
 
 # Changes Important for Modders
 
@@ -82,7 +84,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # TODO
 
-- [ ] Campaign fail/success display
 - [ ] Tank tread hyper-optimization (and visual re-haul)
 - [ ] Real-time multiplayer stats
 

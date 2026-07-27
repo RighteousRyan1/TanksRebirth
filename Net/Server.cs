@@ -103,6 +103,8 @@ public class Server {
         SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_leave.ogg", SoundContext.Effect, 0.75f);
     }
 
+    // TODO: make server random seed synced every frame
+
     /// <summary>
     /// Syncs the seed of <see cref="ServerRandom"/>
     /// </summary>

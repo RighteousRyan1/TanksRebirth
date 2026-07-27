@@ -38,6 +38,9 @@ public partial struct VanillaAISystem {
         if (!shouldMove) return;
         if (!ChassisMovement.TimerSatisfies(Tank.CurrentRandomMove)) return;
 
+        NearbyDangers = GetEvasionData();
+        ClosestDanger = NearbyDangers.Closest(Tank.Position);
+
         // realistically... it will never avoid from its own position.
         // so this should be safe
         AvoidPosition = Vector2.Zero;

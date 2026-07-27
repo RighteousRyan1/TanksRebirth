@@ -256,7 +256,7 @@ public static class CampaignCompleteUI {
         }
     }
     private static bool _soundPlayed;
-    public static void Render() {
+    public static void Render(SpriteBatch sb) {
         if (InputUtils.KeyJustPressed(Keys.Enter))
             ForceSkip = true;
 
@@ -265,11 +265,11 @@ public static class CampaignCompleteUI {
             _panelAlpha = _panelAlphaMax;
         float width = 400;
         // IntermissionSystem.BackgroundColor looks too dull
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width.ToResolutionX(), WindowUtils.WindowHeight / 2), default, 0f);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width.ToResolutionX(), WindowUtils.WindowHeight / 2), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
         var txt = TankGame.GameLanguage.Misc.FunFacts;
         var measure = FontGlobals.RebirthFont.MeasureString(txt);
-        DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(width.ToResolutionX() / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
+        DrawUtils.DrawStringWithShadow(sb, FontGlobals.RebirthFont, new Vector2(width.ToResolutionX() / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
             txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, Anchor.TopCenter, 0.4f);
 
         string[] funFacts =
@@ -282,12 +282,12 @@ public static class CampaignCompleteUI {
         for (int i = 0; i < funFacts.Length; i++) {
             var ff = funFacts[i];
 
-            DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
+            DrawUtils.DrawStringWithShadow(sb, FontGlobals.RebirthFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
                 ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, Anchor.LeftCenter, 0.4f);
         }
 
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight), default, 0f);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
 
         if (_shouldShowGrade) {
             _gradeAlpha += _gradeFadeSpeed / 2 * RuntimeData.DeltaTime;
@@ -303,7 +303,7 @@ public static class CampaignCompleteUI {
                 }
             }
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/grades");
-            TankGame.SpriteRenderer.Draw(tex, new Vector2(WindowUtils.WindowWidth / 3 * 2, 250.ToResolutionY()), ParseGradeRect(Grade), Color.White * _gradeAlpha, 0f, new Vector2(64, 64), new Vector2(_gradeScale).ToResolution(), default, 0f);
+            sb.Draw(tex, new Vector2(WindowUtils.WindowWidth / 3 * 2, 250.ToResolutionY()), ParseGradeRect(Grade), Color.White * _gradeAlpha, 0f, new Vector2(64, 64), new Vector2(_gradeScale).ToResolution(), default, 0f);
         }
 
         #region Tank Graphics

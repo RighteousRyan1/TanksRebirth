@@ -158,7 +158,7 @@ public static partial class MainMenuUI {
     internal static int plrsConfirmed;
     public static bool PrepareGameplay(string name, bool wasConfirmed = true, bool netRecieved = false, int? missionId = null) {
         if (missionId.HasValue) {
-            ChatSystem.SendMessage("We have received a custom mission identifier", Color.Green);
+            // ChatSystem.SendMessage("We have received a custom mission identifier", Color.Green);
             MissionCheckpoint = missionId.Value;
         }
 

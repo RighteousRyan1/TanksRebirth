@@ -487,11 +487,14 @@ public abstract class Tank(bool ignoresRegister) {
         // old boundingsphere impl
         // Hurtbox = new(Position3D + new Vector3(0, TNK_DMG_COLL_Y, 0), TNK_WIDTH * 0.4f);
 
-        // * 0.8f because we already divide by 2 in our calculations
+        // * 0.7f because we already divide by 2 in our calculations
         // but maybe it needs a little shrink...?
         float hurtBoxSize = TNK_WIDTH * 0.7f;
-        Hurtbox = new(Position3D - new Vector3(hurtBoxSize / 2, hurtBoxSize / 2, hurtBoxSize / 2),
-                Position3D + new Vector3(hurtBoxSize / 2, hurtBoxSize / 2, hurtBoxSize / 2));
+
+        // could opt for not offsetting the hitbox Y
+        var center = Position3D + new Vector3(0, 5, 0);
+        Hurtbox = new(center - new Vector3(hurtBoxSize / 2, hurtBoxSize / 2, hurtBoxSize / 2),
+                center + new Vector3(hurtBoxSize / 2, hurtBoxSize / 2, hurtBoxSize / 2));
 
         if (IsDestroyed) return;
 
