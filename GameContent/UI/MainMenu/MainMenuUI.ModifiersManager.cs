@@ -18,10 +18,26 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 
+// an idea...
+/*public static class ModifiersButtonRegistry {
+    public class ModifierButton : UITextButton {
+
+        ModifierButton(string text, SpriteFontBase font, Color color, Func<Vector2> textScale) 
+            : base(text, font, color, textScale) { }
+
+
+    }
+
+    static ModifiersButtonRegistry() {
+        // init all of it here... or sum.
+    }
+
+    public static List<ModifierButton> Buttons = [];
+}*/
+
 // todo: remake for a good visual polish?
 public static partial class MainMenuUI {
-
-    private static bool _diffButtonsInitialized;
+    static bool _diffButtonsInitialized;
     public static UITextButton TanksAreCalculators; // make them calculate shots abnormally
     public static UITextButton PieFactory;
     public static UITextButton UltraMines;
@@ -130,7 +146,7 @@ public static partial class MainMenuUI {
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);
         }
     }
-    private static void InitializeDifficultyButtons() {
+    static void InitializeDifficultyButtons() {
         _diffButtonsInitialized = true;
 
         SpriteFontBase font = FontGlobals.RebirthFont;
@@ -194,14 +210,14 @@ public static partial class MainMenuUI {
                     Modifiers.MonochromeValue = TankID.None;
                 else
                     Modifiers.MonochromeValue++;
-                Modifiers.Map["Monochrome"] = Modifiers.MonochromeValue != TankID.None;
+                Modifiers.Map[Modifiers.MONOCHROME] = Modifiers.MonochromeValue != TankID.None;
             },
             OnRightClick = (elem) => {
                 if (Modifiers.MonochromeValue - 1 < TankID.None)
                     Modifiers.MonochromeValue = TankID.Collection.Count - 1;
                 else
                     Modifiers.MonochromeValue--;
-                Modifiers.Map["Monochrome"] = Modifiers.MonochromeValue != TankID.None;
+                Modifiers.Map[Modifiers.MONOCHROME] = Modifiers.MonochromeValue != TankID.None;
             }
         };
         InfiniteLives = new("Infinite Lives", font, Color.White) {
@@ -238,14 +254,14 @@ public static partial class MainMenuUI {
                     Modifiers.RandomTanksUpper = TankID.None;
                 else
                     Modifiers.RandomTanksUpper++;
-                Modifiers.Map["RandomizedTanks"] = Modifiers.RandomTanksLower != TankID.None && Modifiers.RandomTanksUpper != TankID.None;
+                Modifiers.Map[Modifiers.RANDOM_ENEMY] = Modifiers.RandomTanksLower != TankID.None && Modifiers.RandomTanksUpper != TankID.None;
             },
             OnLeftClick = (elem) => {
                 if (Modifiers.RandomTanksLower + 1 >= TankID.Collection.Count)
                     Modifiers.RandomTanksLower = TankID.None;
                 else
                     Modifiers.RandomTanksLower++;
-                Modifiers.Map["RandomizedTanks"] = Modifiers.RandomTanksLower != TankID.None && Modifiers.RandomTanksUpper != TankID.None;
+                Modifiers.Map[Modifiers.RANDOM_ENEMY] = Modifiers.RandomTanksLower != TankID.None && Modifiers.RandomTanksUpper != TankID.None;
             },
             OnMiddleClick = (elem) => {
                 Modifiers.RandomTanksLower = TankID.None;

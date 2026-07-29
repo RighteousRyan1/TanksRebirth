@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
@@ -56,6 +57,14 @@ public record Modifiers {
         [TankID.White] = TankID.Gold,
         [TankID.Black] = TankID.Obsidian
     };
+
+    // registry
+    public static int Register(string key) {
+        Map.Add(key, false);
+        return Map.Count - 1;
+    }
+
+    // fun modifiers stuff
     public static TankTemplate[] HijackTanks(TankTemplate[] tanks) {
         for (int i = 0; i < tanks.Length; i++) {
             var t = tanks[i];

@@ -680,13 +680,14 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         if (DebugManager.DebuggingEnabled) {
             DebugManager.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}" +
-                $"\nTier: {Type}" +
+                $"\nTier: {ShellID.Collection.GetKey(Type)}" +
                 $"\nId: {Id}" +
                 $"\nSgid: {VolleyId}",
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
                 centered: true);
 
-            DebugManager.DrawBoundingSphere(Hitbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+            if (DebugManager.DebugLevel == DebugManager.Id.EntityData)
+                DebugManager.DrawBoundingSphere(Hitbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
         DrawShellMesh();
         ModdedData?.PostRender();

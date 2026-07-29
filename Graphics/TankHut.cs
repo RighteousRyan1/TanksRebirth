@@ -66,8 +66,10 @@ public class TankHut {
         effect.TextureEnabled = true;
         if (!mesh.Name.Equals("Black"))
             effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/scene/skybox/textures/" + GetMeshTexture(mesh));
-        else
+        else {
+            // handle opacity here for camera
             effect.Texture = TextureGlobals.Pixels[Color.Black];
+        }
         effect.SetDefaultGameLighting();
         effect.SpecularPower = 32f;
     }

@@ -487,9 +487,10 @@ public abstract class Tank(bool ignoresRegister) {
         // old boundingsphere impl
         // Hurtbox = new(Position3D + new Vector3(0, TNK_DMG_COLL_Y, 0), TNK_WIDTH * 0.4f);
 
-        // * 0.7f because we already divide by 2 in our calculations
+        // used to be 0.7
+        // * 0.65 because we already divide by 2 in our calculations
         // but maybe it needs a little shrink...?
-        float hurtBoxSize = TNK_WIDTH * 0.7f;
+        float hurtBoxSize = TNK_WIDTH * 0.65f;
 
         // could opt for not offsetting the hitbox Y
         var center = Position3D + new Vector3(0, 5, 0);
@@ -539,31 +540,44 @@ public abstract class Tank(bool ignoresRegister) {
         // try to make negative. go poopoo
         SetBoneTransforms();
 
+        static bool IsPeriodicTick(float period) =>
+            period > 0f && RuntimeData.RunTime % period < RuntimeData.DeltaTime;
+
         if (!Properties.Stationary) {
-            float treadPlaceTimer = 0;
-            if (Velocity.Length() != 0) {
-                treadPlaceTimer = MathF.Round(11 / Velocity.Length()) * DrawParams.Scaling.X;
-                // MAYBE: change back to <= delta time if it doesn't work.
-                if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
+            float speed = Velocity.Length();
+            bool isMoving = speed != 0f;
+            bool isRotating = IsTurning && ChassisRotation != _oldRotation;
+
+            float moveTreadTimer = 0f;
+            float turnTreadTimer = 0f;
+
+            if (isMoving) {
+                moveTreadTimer = MathF.Round(11 / speed) * DrawParams.Scaling.X;
+                if (IsPeriodicTick(moveTreadTimer))
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
-            if (IsTurning && ChassisRotation != _oldRotation) {
-                treadPlaceTimer = Properties.TurningSpeed * 150 * DrawParams.Scaling.X;
-                // MAYBE: change back to <= delta time if it doesn't work.
-                if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
+
+            if (isRotating) {
+                turnTreadTimer = Properties.TurningSpeed * 150 * DrawParams.Scaling.X;
+                if (IsPeriodicTick(turnTreadTimer))
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
-            if (!Properties.IsSilent && Velocity.Length() > 0.01) {
-                // why did i clamp? i hate old code
-                if (RuntimeData.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < RuntimeData.DeltaTime) {
-                    // can use reflection to go over or under the pitch limits, remember that
-                    Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
+
+            if (!Properties.IsSilent && speed > 0.01f) {
+                // NOTE: previously this used whichever of the two timers was computed
+                // last (turn overwrote move), which was likely accidental. Pick the
+                // one that's actually intended to drive tread audio timing:
+                float baseTimer = isRotating ? turnTreadTimer : moveTreadTimer;
+
+                // for some slight randomness (so the noises dont all overlap)
+                baseTimer %= WorldId % 10;
+
+                if (IsPeriodicTick(MathHelper.Clamp(baseTimer / 2, 4, 6))) {
+                    // shouldnt be necessary anymore given oggaudio update
+                    // Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
                     var treadPlace = $"Assets/sounds/tnk_tread_place_{Client.ClientRandom.Next(1, 5)}.ogg";
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.TreadPitch);
                     sfx.Instance.Pitch = Properties.TreadPitch;
-
-                    //if (CameraGlobals.IsUsingFirstPresonCamera)
-                    //    SoundUtils.CreateSpatialSound(sfx, Position3D, CameraGlobals.RebirthFreecam.Position);
                 }
             }
         }
@@ -934,7 +948,8 @@ public abstract class Tank(bool ignoresRegister) {
             $"{TanksSpotted.Length} tank(s) spotted"
         };
 
-        DebugManager.DrawBoundingBox(Hurtbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        if (DebugManager.DebugLevel == DebugManager.Id.EntityData)
+            DebugManager.DrawBoundingBox(Hurtbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 

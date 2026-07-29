@@ -213,7 +213,6 @@ public partial struct VanillaAISystem {
     }
     // TODO: make view distance, and make tanks in path public
     /// <summary>Updates meta-data related to aiming and shooting. The tank will not fire if <see cref="DoAttack"/> is false, but meta-data will still update.</summary>
-    /// <summary>Updates meta-data related to aiming and shooting. The tank will not fire if <see cref="DoAttack"/> is false, but meta-data will still update.</summary>
     public void UpdateAim() {
         _predicts = false;
         Tank.SeesTarget = false;
@@ -264,7 +263,7 @@ public partial struct VanillaAISystem {
 
                 tanksDef = GetTanksInPath(
                 Vector2.UnitY.RotatedBy(-Tank.TurretPosition.DirectionTo(Tank.TargetTank.Position).ToRotation() - MathHelper.PiOver2),
-                out var ricP, out var tnkCol, offset: Tank.Parameters.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
+                out var ricP, out var tnkCol, offset: Vector2.Zero,
                 missDist: Tank.Parameters.DetectionForgivenessHostile, doBounceReset: Tank.Parameters.BounceReset);
 
                 if (tanksDef.Contains(Tank.TargetTank)) {
@@ -326,6 +325,7 @@ public partial struct VanillaAISystem {
                 _isSeeking = false;
         }
         // tanks wont shoot when fleeing from a mine
+        // could move these conditions upwards...
         if (ClosestDanger is Mine && Tank.Parameters.CantShootWhileFleeing)
             return;
 
@@ -555,11 +555,17 @@ public partial struct VanillaAISystem {
             // check tanks BEFORE moving
             float realMiss = 1f + missDist * 2 * uninterruptedIterations;
 
+            // 11 = y offset of shells traveling
+            // var pathSphere = new BoundingSphere(new Vector3(pathPos.X, 11, pathPos.Y), realMiss);
+
+            var pos3d = new Vector3(pathPos.X, 11, pathPos.Y);
             foreach (var enemy in GameHandler.AllTanks) {
                 if (enemy is null || enemy.IsDestroyed || _tanksInPathBuffer.Contains(enemy)) continue;
 
-                // 15 is just an eensy weensy magical number.
-                if (i > 15 && GameUtils.TanksDistance(enemy.Position, pathPos) <= realMiss) {
+                var hurtboxMiddle = (enemy.Hurtbox.Max + enemy.Hurtbox.Min) * 0.5f;
+
+                // 5 is just an eensy weensy magical number.
+                if (i > 5 && Vector3.DistanceSquared(pos3d, hurtboxMiddle) < realMiss * realMiss/*enemy.Hurtbox.Intersects(pathSphere)*/ /*GameUtils.TanksDistance(enemy.Position, pathPos) <= realMiss*/) {
                     var pathAngle = pathDir.ToRotation();
                     var toEnemy = pathPos.DirectionTo(enemy.Position).ToRotation();
 

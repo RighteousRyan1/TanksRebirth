@@ -238,7 +238,8 @@ public sealed class Mine : IAITankDanger {
         DrawParams.Projection = CameraGlobals.GameProjection;
 
         if (DebugManager.DebuggingEnabled) {
-            DebugManager.DrawBoundingBox(HitBox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+            if (DebugManager.DebugLevel == DebugManager.Id.EntityData)
+                DebugManager.DrawBoundingBox(HitBox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
 
         DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",

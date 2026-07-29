@@ -252,6 +252,7 @@ public static class AIManager {
                 aiParams.RandomTimerMinMove = 5;
                 aiParams.AwarenessFriendlyMine = 120;
                 aiParams.AwarenessFriendlyShell = 120;
+                // aiParams.AwarenessHostileMine = 0; // i never knew they were supposed to be this dumb lol
                 aiParams.AwarenessHostileShell = 100;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = 0.2f;
@@ -713,7 +714,7 @@ public static class AIManager {
                 // note to self and others: this value is normally 5 (from the original game)
                 // but with the current implementation, it's hard to pinpoint why their movement is so jittery.
                 // for now, this is being increased to 8, and is not a permanent change
-                properties.MaximalTurn = MathHelper.ToRadians(8);
+                properties.MaximalTurn = MathHelper.ToRadians(5);
                 properties.ShellLimit = 3;
                 properties.ShellCooldown = 60;
                 properties.ShellSpeed = 6f;
