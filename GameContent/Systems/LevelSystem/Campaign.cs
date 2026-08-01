@@ -20,11 +20,10 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.LevelSystem;
 
-// IDEA: convert to json loading? or something of the like?
+// IDEA: convert to ubjson/json loading? or something of the like?
 
 /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
-public class Campaign
-{
+public class Campaign {
     public delegate void MissionLoadDelegate(Tank[] tanks, Block[] blocks);
     public static event MissionLoadDelegate? OnMissionLoad;
 
@@ -125,6 +124,7 @@ public class Campaign
                 CurrentTrackedSpawns[i].Alive = true;
             }
 
+            // prevents absurd rotations... from legacy tanks rebirth. doubt anyone's playing that anymore but whatever
             while (template.Rotation < 0) {
                 template.Rotation += MathHelper.Tau;
             }
@@ -174,7 +174,7 @@ public class Campaign
 
         if (lives <= 0) return;
 
-        if (isLocalGame) {
+        if (isLocalGame && !LevelEditorUI.IsActive) {
             int inputCheckValue = PlayerTank.NumLocalPlayers;
             var isValidLocalPlayer = template.PlayerType < inputCheckValue;
             if (!isValidLocalPlayer) return;
@@ -413,8 +413,7 @@ public class Campaign
         return campaign;
     }
     /// <summary>The metadata for any given campaign.</summary>
-    public struct CampaignMetaData
-    {
+    public struct CampaignMetaData {
         public string Name { get; set; }
         public string Description { get; set; }
         public string Author { get; set; }

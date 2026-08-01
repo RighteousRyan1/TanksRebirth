@@ -13,10 +13,9 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
-namespace TanksRebirth.GameContent.Systems;
+namespace TanksRebirth.GameContent.Systems.LevelSystem;
 
-public record struct Mission
-{
+public record struct Mission {
     /// <summary>The name of this <see cref="Mission"/>.</summary>
     public string Name { get; set; } = "No Name";
 

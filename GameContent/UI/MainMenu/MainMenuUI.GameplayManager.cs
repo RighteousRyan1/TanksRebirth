@@ -1,7 +1,6 @@
 using System.IO;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.GameContent.Systems.Coordinates;

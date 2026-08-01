@@ -777,7 +777,8 @@ public class PlayerTank : Tank {
         // todo: a good way of making the displays not overlap
 
         // draw every player's bullet count, even in MP
-        if (!MainMenuUI.IsActive) {
+        var goodToDraw = !MainMenuUI.IsActive && !LevelEditorUI.IsActive;
+        if (goodToDraw) {
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
             // based off of a normal shell limit of 5.
             var shellCountScale = MathF.Min(1f, 5f / Properties.ShellLimit);
