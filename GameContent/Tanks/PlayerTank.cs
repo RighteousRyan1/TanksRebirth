@@ -744,14 +744,14 @@ public class PlayerTank : Tank {
         if (Properties.Invisible && CampaignGlobals.InMission) return;
         foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
+                if (!Properties.HasTurret)
+                    if (mesh.Name == "Cannon")
+                        continue;
+
                 effect.World = boneTransforms[mesh.ParentBone.Index];
                 effect.View = DrawParams.View;
                 effect.Projection = DrawParams.Projection;
                 effect.TextureEnabled = true;
-
-                if (!Properties.HasTurret)
-                    if (mesh.Name == "Cannon")
-                        return;
 
                 if (mesh.Name == "Shadow") {
                     if (!CommandGlobals.DrawMeshShadows)
