@@ -5,10 +5,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Additions
 
 - Added local multiplayer support! It's rather rudimentary, so here's the parameters, *for now*:
-// UPDATE! should work fine...
-	- A player *must* use the keyboard
-	- All other players must use game pads (PlayStation/Xbox controllers)
-	- Does not work in multiplayer contexts (e.g: two local players cannot play with an online player)
+	- Either all players must use game pads, or one player uses a keyboard and the rest game pads (PlayStation/Xbox controllers)
+	- Does not work in multiplayer contexts (e.g: two local players cannot play with an online player) (yet?)
 - Added Wii remote support, check the [guide](https://github.com/RighteousRyan1/TanksRebirth/wiki/Wii-Remote-Support) on how to use one
 	- Also allows the use of a nunchuk
 	- Not the most stable, so please report Wiimote bugs in my server
@@ -23,7 +21,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Player bullet count UI is now shown for all players (including in online contexts)
 - Even more localization!
 	- Translators are still welcome to correct any faulty translations- some translations were done via machine translation
-- Some `Shell` and `Tank` properties are now bit flags
 - Added a new animation/text popup when a mission attempt is over
 
 # Changes
@@ -68,6 +65,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- You can see controls on the left
 - `LocalizedString` is now indexed directly instead of through the method
 - Added `Description` to `ModBlock` and `ModTank` for use in the level editor
+- Some `Shell` and `Tank` properties are now bit flags
 
 # Fixes
 
