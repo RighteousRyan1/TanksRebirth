@@ -33,19 +33,19 @@ public partial struct VanillaAISystem {
     public void DoMovement() {
         // IsTurning is on crack?
 
-        bool shouldMove = !Tank.IsTurning && Tank.CurMineStun <= 0 && Tank.CurShootStun <= 0;
+        bool shouldMove = !Owner.IsTurning && Owner.CurMineStun <= 0 && Owner.CurShootStun <= 0;
 
         if (!shouldMove) return;
-        if (!ChassisMovement.TimerSatisfies(Tank.CurrentRandomMove)) return;
+        if (!ChassisMovement.TimerSatisfies(Owner.CurrentRandomMove)) return;
 
         NearbyDangers = GetEvasionData();
-        ClosestDanger = NearbyDangers.Closest(Tank.Position);
+        ClosestDanger = NearbyDangers.Closest(Owner.Position);
 
         // realistically... it will never avoid from its own position.
         // so this should be safe
         AvoidPosition = Vector2.Zero;
 
-        Tank.CurrentRandomMove = Client.ClientRandom.Next(Tank.Parameters.RandomTimerMinMove, Tank.Parameters.RandomTimerMaxMove);
+        Owner.CurrentRandomMove = Client.ClientRandom.Next(Owner.Parameters.RandomTimerMinMove, Owner.Parameters.RandomTimerMaxMove);
         ChassisMovement.Value = 0;
 
         if (PivotQueue.Count == 0 && SubPivotQueue.Count == 0 && !IsInDanger) {
@@ -94,10 +94,10 @@ public partial struct VanillaAISystem {
         //uint framesLookAhead = AiParams.ObstacleAwarenessMovement / 2;
         //var tankDirection = Vector2.UnitY.RotatedBy(TargetTankRotation);
 
-        var checkDist = Tank.Parameters.ObstacleAwarenessMovement / 2;
+        var checkDist = Owner.Parameters.ObstacleAwarenessMovement / 2;
         // var rayNormal = Vector2.Zero;
         // strictly 
-        IsTooCloseToObstacle = Tank.RaycastAheadOfTank(checkDist /* Speed*/);
+        IsTooCloseToObstacle = Owner.RaycastAheadOfTank(checkDist /* Speed*/);
 
         // don't bother doing anything else since it's not blocked
         if (!IsTooCloseToObstacle) {
@@ -111,14 +111,14 @@ public partial struct VanillaAISystem {
         float fracL = -1f;
         float fracR = -1f;
 
-        bool checkLeft = Tank.RaycastAheadOfTank(checkDist * 100, -angleDiff,
+        bool checkLeft = Owner.RaycastAheadOfTank(checkDist * 100, -angleDiff,
             (fixture, point, normal, fraction) => {
                 fracL = fraction;
 
                 return fraction;
             });
 
-        bool checkRight = Tank.RaycastAheadOfTank(checkDist * 100, angleDiff,
+        bool checkRight = Owner.RaycastAheadOfTank(checkDist * 100, angleDiff,
             (fixture, point, normal, fraction) => {
                 fracR = fraction;
                 return fraction;
@@ -150,28 +150,28 @@ public partial struct VanillaAISystem {
         PivotQueue.Clear();
 
         // old = Vector2.UnitY.RotatedBy(-rayNormal.ToRotation() - MathHelper.PiOver2);
-        var movementDirection = Vector2.UnitY.RotatedBy(Tank.ChassisRotation + vecRot);
+        var movementDirection = Vector2.UnitY.RotatedBy(Owner.ChassisRotation + vecRot);
 
         PivotQueue.Enqueue(movementDirection);
     }
     /// <summary>Makes this <see cref="AITank"/> perform a random turn.</summary>
     public readonly void DoRandomMove() {
-        var randomTurn = Client.ClientRandom.NextFloat(-Tank.Parameters.MaxAngleRandomTurn, Tank.Parameters.MaxAngleRandomTurn);
+        var randomTurn = Client.ClientRandom.NextFloat(-Owner.Parameters.MaxAngleRandomTurn, Owner.Parameters.MaxAngleRandomTurn);
 
         // aggressiveness
-        if (Tank.TargetTank is not null) {
+        if (Owner.TargetTank is not null) {
             // dirvec to target -> gets that angle
             // difference in angle -> multiplies by aggressiveness
-            var toTarget = Vector2.Normalize(Tank.TargetTank.Position - Tank.Position);
+            var toTarget = Vector2.Normalize(Owner.TargetTank.Position - Owner.Position);
             float targetAngle = toTarget.ToRotation() - MathHelper.PiOver2;
 
             // shortest signed angle difference
-            float angleDifference = MathHelper.WrapAngle(targetAngle - Tank.ChassisRotation);
+            float angleDifference = MathHelper.WrapAngle(targetAngle - Owner.ChassisRotation);
 
             // negatives don't work?
 
             // applies bias toward or away from the target's angle
-            randomTurn += angleDifference * Tank.Parameters.AggressivenessBias;
+            randomTurn += angleDifference * Owner.Parameters.AggressivenessBias;
         }
 
         // this causes extremely weak movement...
@@ -185,7 +185,7 @@ public partial struct VanillaAISystem {
 
         // is / 2 necessary?
         // i think so for now. once i figure out how to get the queue to work with random movments, it will look crisp 
-        Tank.DesiredChassisRotation += randomTurn / 2;
+        Owner.DesiredChassisRotation += randomTurn / 2;
     }
    
     /// <summary>Attempts to dequeue from <see cref="PivotQueue"/> and split it into <see cref="AIParameters.MaxQueuedMovements"/> smaller turns.</summary>
@@ -195,11 +195,11 @@ public partial struct VanillaAISystem {
         if (SubPivotQueue.Count > 0) return false;
         // grab from the top of the queue
         var pivot = PivotQueue.Dequeue(); //PivotQueue[0];
-        var desiredCuts = Tank.Parameters.MaxQueuedMovements;
+        var desiredCuts = Owner.Parameters.MaxQueuedMovements;
 
         for (int i = 0; i < desiredCuts; i++) {
             //SubPivotQueue.Add(Vector2.UnitY.RotatedBy(MathHelper.PiOver2 * i));
-            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.RotatedBy(Tank.ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
+            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.RotatedBy(Owner.ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
         }
         // drop the first element since this works as a queue under the hood
         // PivotQueue.RemoveAt(0);
@@ -208,7 +208,7 @@ public partial struct VanillaAISystem {
     }
     /// <summary>Attempts to dequeue from <see cref="SubPivotQueue"/> and adjust this <see cref="AITank"/>'s <see cref="Tank.DesiredChassisRotation"/>.</summary>
     /// <returns>Whether or not the dequeue was successful.</returns>
-    public bool TryWorkSubQueue() {
+    public readonly bool TryWorkSubQueue() {
         if (SubPivotQueue.Count == 0) return false;
 
         /*var aggro = 0f;
@@ -227,7 +227,7 @@ public partial struct VanillaAISystem {
             aggro += angleDifference * Parameters.AggressivenessBias;
         }*/
 
-        Tank.DesiredChassisRotation = SubPivotQueue.Dequeue().ToRotation() - MathHelper.PiOver2;
+        Owner.DesiredChassisRotation = SubPivotQueue.Dequeue().ToRotation() - MathHelper.PiOver2;
 
         // drop the first element again, but for the sub-queue
         // SubPivotQueue.RemoveAt(0);
@@ -236,17 +236,21 @@ public partial struct VanillaAISystem {
     }
 
     // makes the tank turn if it happens to run into a block
-    /*protected bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
-
-        return true;
-
+    readonly bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
         if (other.Body.Tag is Block) {
             // contact.Manifold.LocalNormal
             // var pPos = Physics.Position;
-            var worldNormal = contact.Manifold.LocalNormal;
-            PivotQueue.Enqueue(worldNormal);
-        }
 
+            contact.GetWorldManifold(out var worldNormal, out var points);
+
+            var collPoint = points[0] * Tank.UNITS_PER_METER;
+
+            // GameHandler.Particles.MakeSmallExplosion(new Vector3(collPoint.X, 11, collPoint.Y), 10, 10, 0.5f, 1);
+
+            // optimally, i'd want to make it turn towards where the current path bounce endpoint is... or something like that
+            var oppNormal = Vector2.Normalize(Owner.Position - collPoint);
+            PivotQueue.Enqueue(oppNormal);
+        }   
         return true;
-    }*/
+    }
 }

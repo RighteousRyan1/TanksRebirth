@@ -28,16 +28,27 @@ public static partial class MainMenuUI
     // this code is becoming so shit i want to vomit but i don't know any better
 
     public enum UIState {
+        /// <summary>The "Loading Mods" menu state.</summary>
         LoadingMods,
+        /// <summary>The first menu the player sees after loading into the game.</summary>
         PrimaryMenu,
+        /// <summary>Where all of the buttons for controling the game are.</summary>
         PlayList,
+        /// <summary>Where the player's campaigns are.</summary>
         Campaigns,
-        Mulitplayer,
+        /// <summary>The multiplayer menu.</summary>
+        Multiplayer,
+        /// <summary>Where the player unlocks and manages their cosmetic items.</summary>
         Cosmetics,
-        Difficulties,
+        /// <summary>Where the player tweaks their gameplay experiences.</summary>
+        Modifiers,
+        /// <summary>Where the player changes their audio, graphics, and control settings.</summary>
         Settings,
+        /// <summary>How the player views their all-time stats.</summary>
         StatsMenu,
+        /// <summary>The menu where the player manages their mods.</summary>
         ModsMenu,
+        /// <summary>The credits scene.</summary>
         Credits
     }
     static UIState _menuState;
@@ -105,7 +116,7 @@ public static partial class MainMenuUI
         PlayButton_Multiplayer.OnLeftClick = (uiElement) => {
             SetPlayButtonsVisibility(false);
             SetMPButtonsVisibility(true);
-            MenuState = UIState.Mulitplayer;
+            MenuState = UIState.Multiplayer;
         };
 
         DifficultiesButton = new(TankGame.GameLanguage.Menu.Difficulties, font, Color.WhiteSmoke) {
@@ -115,7 +126,7 @@ public static partial class MainMenuUI
         DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
         DifficultiesButton.OnLeftClick = (element) => {
             ArrangeDifficultyButtons();
-            MenuState = UIState.Difficulties;
+            MenuState = UIState.Modifiers;
         };
 
         PlayButton_SinglePlayer = new(TankGame.GameLanguage.Menu.SinglePlayer, font, Color.WhiteSmoke) {
@@ -265,9 +276,9 @@ public static partial class MainMenuUI
         }
         // todo: do transitions
         SetPlayButtonsVisibility(MenuState == UIState.PlayList);
-        SetMPButtonsVisibility(MenuState == UIState.Mulitplayer);
+        SetMPButtonsVisibility(MenuState == UIState.Multiplayer);
         SetPrimaryMenuButtonsVisibility(MenuState == UIState.PrimaryMenu);
-        SetDifficultiesButtonsVisibility(MenuState == UIState.Difficulties);
+        SetDifficultiesButtonsVisibility(MenuState == UIState.Modifiers);
 
     }
     public static void OpenUI() {

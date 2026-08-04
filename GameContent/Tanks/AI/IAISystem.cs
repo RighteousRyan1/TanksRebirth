@@ -1,6 +1,7 @@
 ﻿namespace TanksRebirth.GameContent.Tanks.AI;
 
 public interface IAISystem {
-    AITank Tank { get; }
+    AITank Owner { get; }
     void AILoop();
+    void Initialize();
 }

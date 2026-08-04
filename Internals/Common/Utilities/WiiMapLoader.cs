@@ -191,7 +191,7 @@ public readonly struct WiiMap {
         var tnkRot = GetAutoTankRotation(tile.RelativePosition);
 
         switch (mapTile.Stack) {
-            case PLAYER_TANK_ID: { // Player Tank, That's us!
+            case PLAYER_TANK_ID: { // Player Owner, That's us!
                     var pl = DebugManager.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
                     pl.ChassisRotation = tnkRot;
                     pl.DesiredChassisRotation = tnkRot;
@@ -199,7 +199,7 @@ public readonly struct WiiMap {
                     tile.TankId = pl.WorldId;
                     break;
                 }
-            case ENEMY_TANK_ID: { // Enemy Tank.
+            case ENEMY_TANK_ID: { // Enemy Owner.
                     var ai = DebugManager.SpawnTankAt(tile.Position, TankID.ClientRandomTier(), TeamID.Blue);
                     ai.ChassisRotation = tnkRot;
                     ai.DesiredChassisRotation = tnkRot;

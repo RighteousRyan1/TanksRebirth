@@ -106,7 +106,7 @@ public class TankFootprint {
     public Vector2 Position;
     public float Rotation;
 
-    public readonly Tank Owner;
+    public readonly Owner Owner;
     public Texture2D Texture;
 
     // Particle _track;
@@ -124,11 +124,11 @@ public class TankFootprint {
     public static float Alpha = 0.7f;
 
     //public static DecalSystem DecalHandler; // = new(TankGame.SpriteRenderer, TankGame.Instance.GraphicsDevice);
-    public static TankFootprint Create(Tank? owner, float rotation, Texture2D texture) {
+    public static TankFootprint Create(Owner? owner, float rotation, Texture2D texture) {
         return new(owner, rotation, false);
     }
 
-    public TankFootprint(Tank owner, float rotation, bool alt = false) {
+    public TankFootprint(Owner owner, float rotation, bool alt = false) {
         Rotation = rotation;
         alternate = alt;
         Owner = owner;
@@ -217,7 +217,7 @@ public class TankFootprint {
     public Vector3 Position;
     public float Rotation;
 
-    public readonly Tank Owner;
+    public readonly Owner Owner;
     public Texture2D Texture;
 
     // Particle _track;
@@ -235,11 +235,11 @@ public class TankFootprint {
     public static float Alpha = 0.7f;
 
     //public static DecalSystem DecalHandler; // = new(TankGame.SpriteRenderer, TankGame.Instance.GraphicsDevice);
-    public static TankFootprint Create(Tank? owner, float rotation, Texture2D texture) {
+    public static TankFootprint Create(Owner? owner, float rotation, Texture2D texture) {
         return new(owner, rotation, false);
     }
 
-    public TankFootprint(Tank owner, float rotation, bool alt = false) {
+    public TankFootprint(Owner owner, float rotation, bool alt = false) {
         Rotation = rotation;
         alternate = alt;
         Owner = owner;

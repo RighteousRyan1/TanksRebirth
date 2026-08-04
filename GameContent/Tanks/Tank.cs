@@ -34,6 +34,7 @@ public abstract class Tank(bool ignoresRegister) {
         public float ShadowAlpha;
         public float TankAlpha;
 
+        // maybe turn into Resource<Model>
         /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
         public Model Model;
 
@@ -201,10 +202,10 @@ public abstract class Tank(bool ignoresRegister) {
     public BoundingBox Worldbox { get; set; }
 
     public BoundingBox Hurtbox;
-    // /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
+    // /// <summary>The 2D circle-represented hitbox of this <see cref="Owner"/>.</summary>
     // public Circle CollCircle => new() { Center = Position, Radius = TNK_WIDTH / 2 };
 
-    // /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
+    // /// <summary>The 2D rectangle-represented hitbox of this <see cref="Owner"/>.</summary>
     //public Rectangle CollRect => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2),
     //    (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
 
@@ -570,7 +571,7 @@ public abstract class Tank(bool ignoresRegister) {
                 float baseTimer = isRotating ? turnTreadTimer : moveTreadTimer;
 
                 // for some slight randomness (so the noises dont all overlap)
-                baseTimer %= WorldId % 10;
+                baseTimer %= (WorldId % 10) + 1;
 
                 if (IsPeriodicTick(MathHelper.Clamp(baseTimer / 2, 4, 6))) {
                     // shouldnt be necessary anymore given oggaudio update

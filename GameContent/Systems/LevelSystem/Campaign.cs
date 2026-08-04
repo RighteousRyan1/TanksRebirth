@@ -222,7 +222,7 @@ public class Campaign {
                 };
 
                 hasSpawnedCompanion = true;
-                // tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
+                // tnk.Physics.Position = template.Position / Owner.UNITS_PER_METER;
             }
 
             placement.TankId = tank.WorldId;

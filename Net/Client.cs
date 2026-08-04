@@ -317,7 +317,7 @@ public class Client {
     /// 
     /// Sends in this order: <para></para>
     ///     Sends Campaign properties (name, lives, bg color, strip color), Mission Count
-    ///     Then sends each: Block Count, Tank Count, Mission Name, Mission Note <para></para>
+    ///     Then sends each: Block Count, Owner Count, Mission Name, Mission Note <para></para>
     ///         Then sends each: Mission Block (Position, Type, Stack, TpLink) <para></para>
     ///             Finally, sends each: Mission TankTemplate (Position, Rotation, IsPlayer, Team)
     ///             if IsPlayer is true, send PlayerType, otherwise send AiTier

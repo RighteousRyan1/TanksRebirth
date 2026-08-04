@@ -1,4 +1,6 @@
 ﻿using FontStashSharp;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -6,11 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
+using TextCopy;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -25,9 +29,9 @@ public class GameConsole {
     string _lastCmd = string.Empty;
     readonly FontSystem _consoleFontSystem;
     public SpriteFontBase Font;
-    public readonly Color UserInputColor = Color.LightGreen;
-    public readonly Color ErrorColor = Color.Red;
-    public Color ConsoleBaseColor = Color.Black;
+    public static readonly Color UserInputColor = Color.LightGreen;
+    public static readonly Color ErrorColor = Color.Red;
+    public static Color ConsoleBaseColor = Color.Black;
     public float LogScale = 1f; // scale of the text in the log
 
     // suggestion stuff
@@ -62,6 +66,8 @@ public class GameConsole {
         _game.Window.TextInput += OnTextInput;
 
         _consoleFontSystem = new();
+
+        ScriptInit();
     }
 
     public void Log(string message, Color color) {
@@ -199,15 +205,15 @@ public class GameConsole {
         _logLines.Clear();
     }
 
-    public void ProcessCommand(string commandInput, bool log = true) {
+    public void ProcessCommand(string input, bool log = true) {
         if (log)
-            Log($"> {commandInput}", UserInputColor);
+            Log($"> {input}", UserInputColor);
 
-        if (string.IsNullOrWhiteSpace(commandInput)) return;
+        if (string.IsNullOrWhiteSpace(input)) return;
 
         // do help command specific shit
-        if (commandInput.StartsWith("help ", StringComparison.OrdinalIgnoreCase)) {
-            var targetCmdName = commandInput[5..].Trim(); // removes "help "
+        if (input.StartsWith("help ", StringComparison.OrdinalIgnoreCase)) {
+            var targetCmdName = input[5..].Trim(); // removes "help "
 
             // find matching command
             var cmdMatch = CommandGlobals.Commands.FirstOrDefault(c => c.Key.Name.Equals(targetCmdName, StringComparison.OrdinalIgnoreCase));
@@ -223,13 +229,13 @@ public class GameConsole {
             return;
         }
 
-        if (commandInput.Equals("help", StringComparison.OrdinalIgnoreCase)) {
+        if (input.Equals("help", StringComparison.OrdinalIgnoreCase)) {
             Log("Type 'help <command>' to see a description.", UserInputColor);
             return;
         }
 
         // splits command by whitespaces for arguments
-        var cmdSplit = commandInput.Split(' ');
+        var cmdSplit = input.Split(' ');
         var cmdName = cmdSplit[0];
 
         // attempts to find a command to execute
@@ -247,7 +253,7 @@ public class GameConsole {
                         return;
                     }
                     if (Client.IsHost())
-                        Client.SendCommandUsage(commandInput);
+                        Client.SendCommandUsage(input);
                 }
 
                 if (value.RequireCheats) {
@@ -265,7 +271,14 @@ public class GameConsole {
             }
         }
         else {
-            Log($"Unknown command: '{cmdName}'.", ErrorColor);
+            if (input.StartsWith('$')) {
+                var result = Exec(input[1..]).GetAwaiter().GetResult();
+
+                if (!result.IsOK)
+                    Log($"{result.Response}", ErrorColor);
+            }
+            else
+                Log($"Unknown command or script: '{cmdName}'.", ErrorColor);
         }
     }
 
@@ -318,6 +331,12 @@ public class GameConsole {
 
     public void Draw(SpriteBatch spriteBatch) {
         if (!IsOpen) return;
+
+        // copying
+        if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) ClipboardService.SetText(_currentInput);
+        // pasting
+        if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.V)) _currentInput += ClipboardService.GetText();
+
 
         // logging draw
         spriteBatch.Begin();
@@ -476,5 +495,66 @@ public class GameConsole {
         foreach (var line in ascii) {
             Log(line, Color.CornflowerBlue);
         }
+    }
+
+    // scripting
+
+    static ScriptOptions? _options;
+    static bool _scriptInit;
+
+    static void ScriptInit() {
+        if (_scriptInit) return;
+
+        _options = ScriptOptions.Default
+            .WithReferences(
+                typeof(object).Assembly,  // mscorlib / System
+                typeof(Vector2).Assembly, // MonoGame.Framework
+                typeof(TankGame).Assembly // TanksRebirth
+            )
+            .WithImports(
+                "System",
+                "System.Collections.Generic",
+                "System.Linq",
+                "Microsoft.Xna.Framework",
+                "TanksRebirth",
+                "TanksRebirth.GameContent.ID",
+                "TanksRebirth.GameContent.Tanks",
+                "TanksRebirth.GameContent.Tanks.AI",
+                "TanksRebirth.GameContent.Globals",
+                "TanksRebirth.GameContent.Systems",
+                "TanksRebirth.GameContent",
+                "TanksRebirth.Internals.Common.Utilities",
+                "TanksRebirth.Internals.Common",
+                "TanksRebirth.Net"
+            ).WithAllowUnsafe(true);
+
+        _scriptInit = true;
+    }
+    // $GameHandler.AllAITanks[0].Position = new Vector2(0, 0);
+    internal static async Task<ScriptResult> Exec(string code) {
+        if (!_scriptInit) ScriptInit();
+
+        var s_result = new ScriptResult();
+
+        try {
+            var result = await CSharpScript.EvaluateAsync(code, _options);
+
+            s_result.IsOK = true;
+
+            s_result.Response = result != null ? $"=> {result}" : "=> Done (void)";
+        } catch (CompilationErrorException e) {
+            // syntax errors, bad variable names, missing types, etc.
+            s_result.Response = $"[Compile Error]\n{string.Join("\n", e.Diagnostics)}";
+        } catch (Exception e) {
+            // runtime exceptions (e.g. NullReferenceException, IndexOutOfRangeException)
+            s_result.Response = $"[Runtime Error] {e.GetType().Name}: {e.Message}";
+        }
+
+        return s_result;
+    }
+
+    internal struct ScriptResult {
+        public string Response;
+        public bool IsOK;
     }
 }

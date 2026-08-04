@@ -822,10 +822,10 @@ public static class NetPlay {
     }
 }
 
-// [Tank = 0, Tank = 1, null = 2, null = 3, null = 4]
+// [Owner = 0, Owner = 1, null = 2, null = 3, null = 4]
 
 // find: null
 // null -> 2
-// new Tank id -> 2
+// new Owner id -> 2
 
-// [Tank = 0, Tank = 1, Tank = 2, null = 3, null = 4]
+// [Owner = 0, Owner = 1, Owner = 2, null = 3, null = 4]

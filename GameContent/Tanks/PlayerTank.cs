@@ -345,7 +345,7 @@ public class PlayerTank : Tank {
             //if (padIndex < 0)
             //    return; // KBM player will use actual mouse
 
-            // NOTE FOR FUTURE: if you mess with bone transforms, Tank.SetBoneTransforms is the other end of this tweak
+            // NOTE FOR FUTURE: if you mess with bone transforms, Owner.SetBoneTransforms is the other end of this tweak
 
             var cursorToAimAt = TankGame.PlayerMice[mouseIndex];
 
@@ -849,7 +849,7 @@ public class PlayerTank : Tank {
         // a bit hardcoded but whatever
         bool needClarification = 
             !MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0 
-            || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
+            || MainMenuUI.MenuState == MainMenuUI.UIState.Multiplayer;
 
         //  && PlayerId < Server.CurrentClientCount
         if (needClarification) {

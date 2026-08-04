@@ -655,10 +655,12 @@ public static partial class LevelEditorUI {
         for (int i = 0; i < pEntries.Count; i++) {
             bool isSelected = selectedIndex == (i + idOffset);
 
+            // draws the text for the tank name, then the model
             var posForText = new Vector2((BAR_START_X + BAR_WIDTH / 2).ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.95f);
             var posForModel = posForText + new Vector2(0, 150).ToResolution();
             pEntries[i].Position = DrawUtils.CenteredOrthoToScreen(posForModel).Expand();
 
+            // if selected, the tank rotates a full circle
             float addend = isSelected ? MathHelper.TwoPi : 0;
             pEntries[i].Yaw = MathHelper.Lerp(pEntries[i].Yaw, ElementRotation + addend, 0.15f * RuntimeData.DeltaTime);
 
@@ -871,7 +873,8 @@ public static partial class LevelEditorUI {
             TankID.Emerald => TankGame.GameLanguage.LevelEdit.TankPlace.EmeraldFlavor,
             TankID.Gold => TankGame.GameLanguage.LevelEdit.TankPlace.GoldFlavor,
             TankID.Obsidian => TankGame.GameLanguage.LevelEdit.TankPlace.ObsidianFlavor,
-            _ => ModRegistry.TryGetModTankById(id, out var tank) ? (tank!.Description?[TankGame.GameLanguage.ActiveLang] ?? CUSTOM_CONTENT_WARNING) : CUSTOM_CONTENT_WARNING
+            _ => ModRegistry.TryGetModTankById(id, out var tank) ? 
+            (tank!.Description?[TankGame.GameLanguage.ActiveLang] ?? CUSTOM_CONTENT_WARNING) : CUSTOM_CONTENT_WARNING
         };
     }
 
@@ -880,7 +883,8 @@ public static partial class LevelEditorUI {
             BlockID.Wood => TankGame.GameLanguage.LevelEdit.ObstaclePlace.WoodFlavor,
             BlockID.Cork => TankGame.GameLanguage.LevelEdit.ObstaclePlace.CorkFlavor,
             BlockID.Hole => TankGame.GameLanguage.LevelEdit.ObstaclePlace.HoleFlavor,
-            _ => ModRegistry.TryGetModBlockById(id, out var block) ? block!.Description[TankGame.GameLanguage.ActiveLang] : CUSTOM_CONTENT_WARNING
+            _ => ModRegistry.TryGetModBlockById(id, out var block) ? 
+            block!.Description[TankGame.GameLanguage.ActiveLang] : CUSTOM_CONTENT_WARNING
         };
     }
 

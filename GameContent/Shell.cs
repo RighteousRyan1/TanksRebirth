@@ -179,7 +179,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     }
 
     /// <summary>
-    /// Creates a new <see cref="Shell"/>. This is unsafe as if you call this from Tank code, it will cause errors. Use <see cref="Create"/> instead.
+    /// Creates a new <see cref="Shell"/>. This is unsafe as if you call this from Owner code, it will cause errors. Use <see cref="Create"/> instead.
     /// </summary>
     Shell(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0) {
         Type = type;

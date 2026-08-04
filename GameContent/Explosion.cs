@@ -154,7 +154,7 @@ public class Explosion : IAITankDanger {
 
                 HasHit[tank.WorldId] = true;
 
-                // Tank.Damage prevents damage within the method
+                // Owner.Damage prevents damage within the method
                 if (Owner == null)
                     tank.Damage(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion"), true);
                 else

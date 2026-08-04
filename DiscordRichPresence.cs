@@ -66,7 +66,7 @@ public static class DiscordRichPresence {
                     case MainMenuUI.UIState.Settings:
                         SetDetails("Making things juuuust right");
                         break;
-                    case MainMenuUI.UIState.Difficulties:
+                    case MainMenuUI.UIState.Modifiers:
                         var count = Modifiers.Map.Count(diff => diff.Value);
 
 
@@ -75,7 +75,7 @@ public static class DiscordRichPresence {
                     case MainMenuUI.UIState.Cosmetics:
                         SetDetails("Viewing what's to come");
                         break;
-                    case MainMenuUI.UIState.Mulitplayer:
+                    case MainMenuUI.UIState.Multiplayer:
                         if (Client.IsConnected()) {
                             var name = NetPlay.CurrentServer is not null ? NetPlay.CurrentServer.Name : "Loading...";
                             if (Client.IsHost())

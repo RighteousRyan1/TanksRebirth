@@ -51,7 +51,7 @@ public static class DebugManager {
         [Id.LevelEditDebug] = "lvlmake", // level editor debug
         [Id.Powerups] = "pwrup", // powerup
         [Id.AchievementData] = "achdat", // achievement data
-        [Id.AIData] = "tnknav" // Tank tank navigation
+        [Id.AIData] = "tnknav" // Owner tank navigation
     };
 
     static int mode;
@@ -287,7 +287,7 @@ public static class DebugManager {
             RuntimeData.RenderTimeGraph.Update();
             RuntimeData.LogicTimeGraph.Update();
         }
-        if (MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer) {
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Multiplayer) {
             if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
                 MainMenuUI.IPInput.Text = "localhost";
                 MainMenuUI.PortInput.Text = "7777";
@@ -354,7 +354,7 @@ public static class DebugManager {
             }
         }
         else {
-            var fc = CameraGlobals.RebirthFreecam;
+            ref var fc = ref CameraGlobals.RebirthFreecam;
             if (InputUtils.KeyJustPressed(Keys.Enter)) {
                 List<Vector3> pts = [];
 
@@ -733,7 +733,7 @@ public static class DebugManager {
         DrawUtils.DrawBoundingBox(box, color, view, projection, world);
     }
 
-    // eensy weensy bit of Tank help cuz i was programming this at 3am
+    // eensy weensy bit of Owner help cuz i was programming this at 3am
     /// <summary>Draws a wireframe 3D bounding sphere.</summary>
     public static void DrawBoundingSphere(BoundingSphere sphere, Color color, Matrix view,
         Matrix projection, Matrix? world = null, int segments = 32) {

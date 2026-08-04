@@ -101,7 +101,7 @@ public static partial class MainMenuUI {
     }
 
     public static void UpdateDifficulties() {
-        if (MenuState != UIState.Difficulties) return;
+        if (MenuState != UIState.Modifiers) return;
 
         DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Modifiers.DisguiseValue);
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Modifiers.MonochromeValue);
@@ -140,7 +140,7 @@ public static partial class MainMenuUI {
             Client.SendDiffiulties();
     }
     public static void RenderDifficultiesMenu() {
-        if (MenuState == UIState.Difficulties) {
+        if (MenuState == UIState.Modifiers) {
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                 "Ideas are welcome! Let us know in our DISCORD server!",
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);

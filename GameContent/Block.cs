@@ -132,9 +132,9 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
     public const byte MAX_BLOCK_HEIGHT = 7;
 
     /// <summary>The floating point square-rooted dimensions of any <see cref="Block"/>.</summary>
-    public const float SIDE_LENGTH = 21.7f; // 24.5 = 0.7 | 21 = 0.6
+    public const float SIDE_LENGTH = 21.6f; // 24.5 = 0.7 | 21 = 0.6
     /// <summary>The floating-point height of any <see cref="Block"/> that has a slab in its height.</summary>
-    public const float SLAB_SIZE = 11.5142857114f; // 13 = 0.7 | 11.14285714 = 0.6
+    public const float SLAB_SIZE = 11.25f; // 13 = 0.7 | 11.14285714 = 0.6
 
     // 36, 18 respectively for normal size
     /// <summary>The total height of a <see cref="Block"/> when its stack is <see cref="MAX_BLOCK_HEIGHT"/>.</summary>

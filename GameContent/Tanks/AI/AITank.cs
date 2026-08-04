@@ -52,7 +52,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     public event InstancedDestroy? OnDestroy;
     /// <summary>The position of this <see cref="AITank"/> in the <see cref="GameHandler.AllAITanks"/> array.</summary>
     public int AITankId { get; private set; }
-    /// <summary>The AI Tank Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
+    /// <summary>The AI Owner Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
     public int AiTankType { get; set; }
     /// <summary>Only use if you know what you're doing!</summary>
     /// <param name="newId">The new ID to be assigned to this <see cref="AITank"/>.</param>
@@ -87,7 +87,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     /// <summary>Change the texture of this <see cref="AITank"/>.</summary>
     /// <param name="texture">The new texture.</param>
     public void SwapTankTexture(Texture2D texture) => DrawParamsTank.TankTexture = texture;
-    /// <summary>The AI parameter collection of this AI Tank.</summary>
+    /// <summary>The AI parameter collection of this AI Owner.</summary>
     public AIParameters Parameters = new();
     /// <summary>The position of the target this <see cref="AITank"/> is currently attempting to aim at.</summary>
     public Vector2 AimTarget { get; set; }
@@ -122,7 +122,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     /// <param name="ignoreRegister">Whether or not this <see cref="AITank"/> is a gameplay tank or a manually-managed tank.</param>
     public AITank(int tier, bool applyDefaults = true, bool ignoreRegister = false) : base(ignoreRegister) {
         // looking at this code makes me want to barf.
-        // maybe move this stuff to events within Difficulties.cs
+        // maybe move this stuff to events within Modifiers.cs
         if (Modifiers.Map[Modifiers.BUMP])       tier++;
         if (Modifiers.Map[Modifiers.MONOCHROME]) tier = Modifiers.MonochromeValue;
         if (Modifiers.Map[Modifiers.MASTER])     tier = Modifiers.VanillaToMasterModeConversions[tier];
@@ -155,7 +155,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         // for debugging custom models
         // Model = GameResources.GetGameResource<Model>("Assets/models/rebirth_tanks/tank_necro");
-
         DrawParamsTank.ShadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
         if (applyDefaults)
@@ -184,8 +183,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     }
     public override void Initialize() {
         base.Initialize();
-
-        // Physics.OnCollision += Physics_OnCollision;
+        TankAI.Initialize();
     }
 
     public override void ApplyDefaults(ref TankProperties properties) {
@@ -297,7 +295,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (MainMenuUI.IsActive) return;
         if (LevelEditorUI.IsActive) return;
         if (LevelEditorUI.IsEditing) return;
-        if (context.Source is null && Client.IsConnected()) return;
+        if ((context is null || context.Source is null) && Client.IsConnected()) return;
 
         // count enemy team-kills only in single player
         if (context.Source is not PlayerTank && Client.IsConnected()) return;
@@ -479,13 +477,13 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         if (TankAI is not VanillaAISystem vais) return;
 
-        // get Tank to target a player's ping
+        // get Owner to target a player's ping
         TargetTank = vais.TryOverrideTarget(out bool wasOverwritten);
 
         if (!wasOverwritten)
             TargetTank = vais.GetAppropriateTarget();
 
-        // measure the biggest WarinessRadius, player or Tank, then check the larger, then do manual calculations.
+        // measure the biggest WarinessRadius, player or Owner, then check the larger, then do manual calculations.
         // var radii = new float[] { Parameters.AwarenessFriendlyMine, Parameters.AwarenessHostileMine, Parameters.AwarenessFriendlyShell, Parameters.AwarenessHostileShell };
         //var biggest = radii.Max();
 
@@ -624,7 +622,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         // did j ever make any good programming choices before this past year or so?
         // this code looks like it was written by a 12 year old with a broken arm - GitHub Copilot
-        // even Tank hates my code.
+        // even Owner hates my code.
         if (DebugManager.DebugLevel == DebugManager.Id.AIData) {
             float calculation = 0f;
 

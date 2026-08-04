@@ -29,7 +29,7 @@ public unsafe struct AIBehaviorState {
 // TODO: Convert to VanillaAISytem and make it system-agnostic.
 // Convert the rest of the AITank."" to this sytem.
 public partial struct VanillaAISystem : IAISystem {
-    public AITank Tank { get; set; }
+    public AITank Owner { get; set; }
     // 0, 1, 2, 3
     public AIBehaviorState ChassisMovement;
     public AIBehaviorState TurretMovement;
@@ -37,7 +37,7 @@ public partial struct VanillaAISystem : IAISystem {
     public AIBehaviorState MinePlace;
 
     public VanillaAISystem(AITank tank) {
-        Tank = tank;
+        Owner = tank;
 
         ChassisMovement.SetLabel("ChassisMovement");
         TurretMovement.SetLabel ("TurretMovement");
@@ -48,6 +48,9 @@ public partial struct VanillaAISystem : IAISystem {
         NearbyDangers = [];
     }
 
+    public readonly void Initialize() {
+        Owner.Physics.OnCollision += Physics_OnCollision;
+    }
     public void AILoop() {
         ChassisMovement.Value += RuntimeData.DeltaTime;
         TurretMovement.Value  += RuntimeData.DeltaTime;
@@ -56,33 +59,33 @@ public partial struct VanillaAISystem : IAISystem {
 
         TurretRotationMultiplier = 1f;
 
-        // Array.ForEach(Tank.Behaviors, x => x.Value += RuntimeData.DeltaTime);
+        // Array.ForEach(Owner.Behaviors, x => x.Value += RuntimeData.DeltaTime);
 
         // nearby friendlies checks
-        Tank.TanksNearMineAwareness.Clear();
-        Tank.TanksNearShootAwareness.Clear();
+        Owner.TanksNearMineAwareness.Clear();
+        Owner.TanksNearShootAwareness.Clear();
 
         Span<Tank?> allTanks = GameHandler.AllTanks;
         ref var search = ref MemoryMarshal.GetReference(allTanks);
 
         for (int i = 0; i < allTanks.Length; i++) {
             var tank = Unsafe.Add(ref search, i);
-            if (tank is null || tank == Tank || tank.IsDestroyed)
+            if (tank is null || tank == Owner || tank.IsDestroyed)
                 continue;
 
-            float distToBody = GameUtils.TanksDistance(Tank.Position, tank.Position);
-            float distToTurret = GameUtils.TanksDistance(Tank.TurretPosition, tank.Position);
+            float distToBody = GameUtils.TanksDistance(Owner.Position, tank.Position);
+            float distToTurret = GameUtils.TanksDistance(Owner.TurretPosition, tank.Position);
 
-            if (distToBody <= Tank.Parameters.TankAwarenessMine)
-                Tank.TanksNearMineAwareness.Add(tank);
+            if (distToBody <= Owner.Parameters.TankAwarenessMine)
+                Owner.TanksNearMineAwareness.Add(tank);
 
-            if (distToTurret <= Tank.Parameters.TankAwarenessShoot)
-                Tank.TanksNearShootAwareness.Add(tank);
+            if (distToTurret <= Owner.Parameters.TankAwarenessShoot)
+                Owner.TanksNearShootAwareness.Add(tank);
         }
 
         // if (ModdedData?.CustomAI() == false) return;
-        if (Tank.ModdedData is not null) {
-            if (!Tank.ModdedData.CustomAI())
+        if (Owner.ModdedData is not null) {
+            if (!Owner.ModdedData.CustomAI())
                 return;
         }
 
@@ -92,13 +95,13 @@ public partial struct VanillaAISystem : IAISystem {
         var shell = (ClosestDanger as Shell)!;
 
         // isShellNear already accounts for the direction arc
-        if (Tank.Parameters.DeflectsBullets && isShellNear && Tank.Properties.ShellLimit - Tank.OwnedShellCount > 0) {
+        if (Owner.Parameters.DeflectsBullets && isShellNear && Owner.Properties.ShellLimit - Owner.OwnedShellCount > 0) {
             DoDeflection(shell);
         }
 
         HandleTurret();
         if (DoMovements) {
-            if (Tank.Properties.Stationary)
+            if (Owner.Properties.Stationary)
                 return;
 
             // facing down = 0 radians/2pi radians
@@ -113,10 +116,10 @@ public partial struct VanillaAISystem : IAISystem {
 
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
-            var dir = Vector2.UnitY.RotatedBy(Tank.ChassisRotation);
+            var dir = Vector2.UnitY.RotatedBy(Owner.ChassisRotation);
 
-            Tank.Velocity = Vector2.Normalize(dir) * Tank.Speed;
-            Tank.ChassisRotation = MathUtils.RoughStep(Tank.ChassisRotation, Tank.DesiredChassisRotation, Tank.Properties.TurningSpeed * RuntimeData.DeltaTime);
+            Owner.Velocity = Vector2.Normalize(dir) * Owner.Speed;
+            Owner.ChassisRotation = MathUtils.RoughStep(Owner.ChassisRotation, Owner.DesiredChassisRotation, Owner.Properties.TurningSpeed * RuntimeData.DeltaTime);
         }
     }
 }

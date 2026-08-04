@@ -360,7 +360,7 @@ public class TankGame : Game {
             "Assets/textures/secret/bk_cypher",
             
             
-            // Tank Textures
+            // Owner Textures
             "Assets/textures/tank_shadow",
             "Assets/textures/bullet/bullet",
             "Assets/textures/bullet/flame",

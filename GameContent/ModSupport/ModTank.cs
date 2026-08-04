@@ -34,9 +34,9 @@ public class ModTank : ILoadable, IModContent {
     public virtual string Texture { get; internal set; }
 
     public AITank AITank { get; internal set; }
-    /// <summary>Should include the name of the tank type without 'Tank' after it. 
+    /// <summary>Should include the name of the tank type without 'Owner' after it. 
     /// <para>
-    /// i.e: a "Brown Tank" would just be called "Brown"
+    /// i.e: a "Brown Owner" would just be called "Brown"
     /// </para>
     /// The English localized name will be the name that gets added to the game internally.
     /// </summary>
@@ -59,7 +59,7 @@ public class ModTank : ILoadable, IModContent {
     public virtual void OnLoad() { }
     /// <summary>Manually unload things that may not be automatically unloaded by the game.</summary>
     public virtual void OnUnload() { }
-    //public virtual void TargetsSpotted(List<Tank> tanksSpotted) { }
+    //public virtual void TargetsSpotted(List<Owner> tanksSpotted) { }
     /// <summary>Change things about the tank when it is spawned in the world. Be absolutely sure to call <c>base.PostApplyDefaults(AITank)</c>
     /// to ensure that your modded tank's texture is placed onto any spawning tanks that are this <see cref="ModTank"/>.</summary>
     public virtual void PostApplyDefaults() {

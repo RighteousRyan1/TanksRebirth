@@ -11,7 +11,7 @@ public sealed class PacketID {
     public const int SyncPlayer = 2;
     public const int SyncLives = 3;
 
-    // Ingame packets: Tank
+    // Ingame packets: Owner
     public const int SyncAiTank = 4;
 
     // Ingame packets: entitites

@@ -66,6 +66,7 @@ public static class CameraGlobals {
     public const float LVL_EDIT_ZOOM = 0.6f;
     public const float LVL_EDIT_Y_OFF = 82f;
     public const float LVL_EDIT_ANGLE = MathHelper.PiOver2;
+
     public static float AddativeZoom = 1f;
     public static float POVCameraRotation;
 
@@ -80,6 +81,11 @@ public static class CameraGlobals {
     public const float POV_CAM_OFFSET_Y = 20f;
 
     public static BoundingFrustum ViewFrustum = new(Matrix.Identity);
+
+    // freecam options
+
+    // 1.0 = locked, 0.0 = unlocked
+    static Vector3 _locks;
 
     public static void Initialize(GraphicsDevice device) {
         RebirthFreecam = new(device) {

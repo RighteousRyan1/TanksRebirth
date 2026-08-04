@@ -60,7 +60,7 @@ public static class CommandGlobals {
             var color = args[0];
             var isGoodColor = ColorUtils.ColorsByName.ContainsKey(color);
             if (isGoodColor) {
-                TankGame.IngameConsole.ConsoleBaseColor = ColorUtils.ColorsByName[color];
+                GameConsole.ConsoleBaseColor = ColorUtils.ColorsByName[color];
             }
         }),
 
@@ -88,6 +88,19 @@ public static class CommandGlobals {
             TankGame.miceForceDrawOverride = enabled;
 
             TankGame.IngameConsole.Log($"Mouse drawing is now: {enabled}", enabled ? Color.Lime : Color.Red);
+        }),
+        
+        [new CommandInput(name: "exec", description: $"Executes a C# script from {Path.Combine(TankGame.SaveDirectory, "Scripts")}.")] = new CommandOutput(netSync: false, false, (args) => {
+            var scriptPath = Path.Combine(TankGame.SaveDirectory, "Scripts", args[0]);
+            var scriptContents = File.ReadAllText(scriptPath);
+            var result = GameConsole.Exec(scriptContents).GetAwaiter().GetResult();
+
+            if (result.IsOK) {
+                TankGame.IngameConsole.Log("Success!", GameConsole.UserInputColor);
+            }
+            else {
+                TankGame.IngameConsole.Log(result.Response, GameConsole.ErrorColor);
+            }
         }),
 
         // mods
@@ -133,7 +146,8 @@ public static class CommandGlobals {
         [new CommandInput(name: "lang_set", description: "Set the game's language.")] = new CommandOutput(netSync: false, false, (args) => {
             var lang = args[0];
 
-            var exists = File.Exists(Path.Combine("Localization", lang + ".loc"));
+            var path = Path.Combine("Localization", lang + ".json");
+            var exists = File.Exists(path);
             if (exists) {
                 var parseLang = LangCode.Parse(lang);
                 Language.LoadLang(parseLang, out TankGame.GameLanguage);
@@ -213,69 +227,6 @@ public static class CommandGlobals {
         [new CommandInput(name: "s_cheats", description: "Enables cheats on the server")] = new CommandOutput(netSync: true, false, (args) => {
             AreCheatsEnabled = bool.Parse(args[0]);
             TankGame.IngameConsole.Log("Cheats are now " + (AreCheatsEnabled ? "enabled" : "disabled" + ".") + ".", AreCheatsEnabled ? Color.Green : Color.Red);
-        }),
-        [new CommandInput(name: "s_tnk_prop", description: "Changes a property parameter of your tank.")] = new CommandOutput(netSync: false, true, (args) => {
-            PlayerTank? playerTank = null;
-            if (NetPlay.GetMyClientId() <= GameHandler.AllPlayerTanks.Length)
-                playerTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
-
-            if (playerTank == null) { // The playerTank was out of range... Somehow...
-                TankGame.ClientLog.Write(
-                    $"'s_tnk_prop' command failed! The tank identifier was out of the range of the array! The tank identifier is {NetPlay.GetMyClientId()}, while the length of the list was {GameHandler.AllPlayerTanks.Length}",
-                    LogType.ErrorFatal,
-                    false);
-                return;
-            }
-            // The class is not likely going to change dynamically, just set the props once.
-            _playerPropertyInfoCache ??= playerTank.Properties.GetType().GetProperties();
-
-            if (args.Length < 2) {
-                TankGame.IngameConsole.Log("Usage: /s_tnk_prop <property name> <new property value>", Color.Red);
-                return;
-            }
-
-            var tankProperty = args[0];
-            var newValueOfProperty = args[1];
-            var idxFind = -1;
-
-            { // Use diff scope to not pollute outer scope.
-                ref var searchSpace = ref MemoryMarshal.GetArrayDataReference(_playerPropertyInfoCache);
-                for (int i = 0; i < _playerPropertyInfoCache.Length; i++) {
-                    var currProp = Unsafe.Add(ref searchSpace, i);
-                    if (currProp.Name != tankProperty) continue;
-                    idxFind = i;
-                    break;
-                }
-            }
-
-            if (idxFind == -1) {
-                TankGame.IngameConsole.Log($"No such field as \'{tankProperty}\' in the player tank.", Color.Maroon);
-                return;
-            }
-
-            try {
-                var oldValue = _playerPropertyInfoCache[idxFind].GetValue(playerTank.Properties);
-
-                switch (oldValue) {
-                    case int i:
-                        _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, i);
-                        break;
-                    case uint ui:
-                        _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, ui);
-                        break;
-                    case bool b:
-                        _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, b);
-                        break;
-                    case float f:
-                        _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, f);
-                        break;
-                }
-
-                TankGame.IngameConsole.Log($"Modified property '{args[0]}' from {oldValue} to {args[1]}", Color.Green);
-            } catch (TargetInvocationException targetInvex) {
-                TankGame.IngameConsole.Log($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
-                TankGame.ClientLog.Write(targetInvex.ToString(), LogType.ErrorFatal, false);
-            }
         }),
 
         // funny dev stuff

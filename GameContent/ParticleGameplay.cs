@@ -12,7 +12,7 @@ namespace TanksRebirth.GameContent;
 
 /// <summary>Each of these particles are server-shared.</summary>
 public static class ParticleGameplay {
-    // TODO: track smokes as objects, so Tank can't shoot through?
+    // TODO: track smokes as objects, so Owner can't shoot through?
     public static void CreateSmokeGrenade(ParticleManager manager, Vector3 position, Vector3 velocity) {
         var p = manager.MakeParticle(position, ModelGlobals.SmokeGrenade.Asset, GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
         bool exploded = false;

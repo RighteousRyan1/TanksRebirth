@@ -61,10 +61,10 @@ public static partial class MainMenuUI {
     public static readonly Dictionary<UIState, MenuGraphicsState> MenuGraphicsStates = new() {
         [UIState.Campaigns] = new MenuGraphicsState(new Vector3(330f, 204f, 879f), new Vector3(0, -0.18f, 0.29f), DEFAULT_BLUR), // seat headrest
         [UIState.PlayList] = new MenuGraphicsState(new Vector3(247.031f, 59.885f, 204.935f), new Vector3(0f, -0.404f, 1.397f), DEFAULT_BLUR),
-        [UIState.Mulitplayer] = new MenuGraphicsState(new Vector3(57.25f, 47.419f, -263.85f), new Vector3(0f, -0.53f, 3.78f), DEFAULT_BLUR), // behind game scene
+        [UIState.Multiplayer] = new MenuGraphicsState(new Vector3(57.25f, 47.419f, -263.85f), new Vector3(0f, -0.53f, 3.78f), DEFAULT_BLUR), // behind game scene
         [UIState.Settings] = new MenuGraphicsState(new Vector3(1461f, 928f, 623f), new Vector3(0, -0.33f, 0.53f), DEFAULT_BLUR), // near grandfather clock
         [UIState.StatsMenu] = new MenuGraphicsState(new Vector3(-1121f, 176f, 439f), new Vector3(0, -0.231f, -0.67f), 0.05f), // near sheet music
-        [UIState.Difficulties] = new MenuGraphicsState(new Vector3(-1189f, 288f, 2583f), new Vector3(0f, -0.25f, -2.27f), 0.005f), // near books
+        [UIState.Modifiers] = new MenuGraphicsState(new Vector3(-1189f, 288f, 2583f), new Vector3(0f, -0.25f, -2.27f), 0.005f), // near books
         [UIState.LoadingMods] = new MenuGraphicsState(new Vector3(-3443f, 2088f, 3183f), new Vector3(0, -0.6307f, -0.91f), 0.01f), // top of the door
         [UIState.Cosmetics] = new MenuGraphicsState(new Vector3(-953f, 1078f, 2753f), new Vector3(0f, -0.226f, -2.56f), 0f), // second-to-top shelf of bookshelf
         [UIState.ModsMenu] = new MenuGraphicsState(new Vector3(1305.43f, 1030.8687f, 340.08344f), new Vector3(0f, -0.6007973f, -0.789088f), DEFAULT_BLUR) // facing towards the clock pendulum
@@ -278,7 +278,7 @@ public static partial class MainMenuUI {
                 case UIState.Campaigns:
                     DrawCampaignsUI();
                     break;
-                case UIState.Mulitplayer:
+                case UIState.Multiplayer:
                     DrawMPMenu(gameTime);
                     break;
                 case UIState.StatsMenu:
