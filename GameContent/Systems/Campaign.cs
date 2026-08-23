@@ -440,13 +440,20 @@ public class Campaign
         if (Path.IsPathRooted(fileName))
             return fileName;
 
-        var normalizedSaveDirectory = Path.TrimEndingDirectorySeparator(saveDirectory);
-        if (fileName.Equals(normalizedSaveDirectory, StringComparison.Ordinal) ||
-            fileName.StartsWith(normalizedSaveDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        var normalizedSaveDirectory = Path.TrimEndingDirectorySeparator(NormalizePathSeparators(saveDirectory));
+        var normalizedFileName = NormalizePathSeparators(fileName);
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        if (normalizedFileName.Equals(normalizedSaveDirectory, comparison) ||
+            normalizedFileName.StartsWith(normalizedSaveDirectory + Path.DirectorySeparatorChar, comparison))
             return fileName;
 
         return Path.Combine(saveDirectory, fileName);
     }
+
+    private static string NormalizePathSeparators(string path)
+        => Path.AltDirectorySeparatorChar == Path.DirectorySeparatorChar
+            ? path
+            : path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
     /// <summary>The metadata for any given campaign.</summary>
     public struct CampaignMetaData
