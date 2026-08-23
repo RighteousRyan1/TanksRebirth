@@ -51,6 +51,9 @@ public static partial class MainMenuUI
     public static UIState MenuState {
         get => _menuState;
         set {
+            if (_menuState == UIState.Campaigns && value == UIState.PlayList)
+                LocalGameSession.Current.StartSinglePlayer();
+
             _menuState = value;
 
             if (MenuCameraManipulations.ContainsKey(value)) {
@@ -272,6 +275,8 @@ public static partial class MainMenuUI
 
     }
     public static void OpenUI() {
+        LocalGameSession.Current.StartSinglePlayer();
+
         if (!Speedrun.AreSpeedrunsFetched) {
             Speedrun.AreSpeedrunsFetched = true;
             Speedrun.GetSpeedruns();
