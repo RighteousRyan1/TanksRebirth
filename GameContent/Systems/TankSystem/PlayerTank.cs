@@ -26,6 +26,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 using TanksRebirth.Internals.Common.Framework.Collisions;
 
 namespace TanksRebirth.GameContent;
@@ -63,6 +64,7 @@ public class PlayerTank : Tank {
     public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
 
     private bool playerControl_isBindPressed;
+    private bool _localShotPathHeld;
 
     public Vector2 oldPosition;
 
@@ -85,6 +87,9 @@ public class PlayerTank : Tank {
     /// <para>Note that lives are always synced on multiplayer.</para>
     /// </summary>
     public static int[] Lives { get; set; } = new int[Server.MaxClients];
+    public bool ControlledHere => Client.IsConnected()
+        ? NetPlay.IsClientMatched(PlayerId)
+        : LocalGameSession.Current.IsActivePlayer(PlayerId);
 
     /// <summary>In multiplayer, gets the lives of the client that this code is currently being called on.</summary>
     public static int GetMyLives() => Lives[NetPlay.GetMyClientId()];
@@ -213,6 +218,12 @@ public class PlayerTank : Tank {
         if (NetPlay.IsClientMatched(PlayerId))
             Client.SyncPlayerTank(this);
 
+        if (!Client.IsConnected() && LocalGameSession.Current.IsLocalCoop) {
+            ProcessLocalCoopInput();
+            oldPosition = Position;
+            return;
+        }
+
         // TODO: optimize?
         ProcessPlayerMouse();
 
@@ -222,7 +233,7 @@ public class PlayerTank : Tank {
         }
 
         if (!Properties.Stationary) {
-            if (NetPlay.IsClientMatched(PlayerId)) {
+            if (ControlledHere) {
                 if (CurShootStun <= 0 && CurMineStun <= 0) {
                     if (LastUsedController)
                         ControlHandle_ConsoleController();
@@ -232,7 +243,7 @@ public class PlayerTank : Tank {
             }
         }
 
-        if (NetPlay.IsClientMatched(PlayerId)) {
+        if (ControlledHere) {
             if (InputUtils.CanDetectClick()) {
                 if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused) {
                     Shoot(false);
@@ -243,7 +254,7 @@ public class PlayerTank : Tank {
         oldPosition = Position;
     }
     void ProcessPlayerMouse() {
-        if (NetPlay.IsClientMatched(PlayerId)) {
+        if (ControlledHere) {
             if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive || MainMenuUI.IsActive) {
                 Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
                 if (!LevelEditorUI.IsActive)
@@ -274,6 +285,41 @@ public class PlayerTank : Tank {
                 }
             }
         }
+    }
+    private void ProcessLocalCoopInput() {
+        var session = LocalGameSession.Current;
+        if (!LocalControlPolicy.CanControlOffline(false, session, PlayerId)) {
+            _localShotPathHeld = false;
+            return;
+        }
+
+        var frame = LocalPlayerInputRouter.Runtime.GetFrame(PlayerId);
+        if (frame.AimSource == LocalAimSource.Mouse) {
+            Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(frame.Aim, -11f);
+            TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
+        }
+        else {
+            TurretRotation = -frame.Aim.ToRotation() - MathHelper.PiOver2;
+        }
+
+        var gameplayInputAllowed = CampaignGlobals.InMission
+            && !LevelEditorUI.IsActive
+            && !ChatSystem.ActiveHandle
+            && !GameUI.Paused;
+        _localShotPathHeld = gameplayInputAllowed && frame.ShotPathHeld;
+        if (!gameplayInputAllowed) {
+            playerControl_isBindPressed = false;
+            return;
+        }
+
+        if (!Properties.Stationary && CurShootStun <= 0 && CurMineStun <= 0) {
+            ControlHandle_LocalCoop(frame.Movement);
+            if (frame.MineJustPressed)
+                LayMine();
+        }
+
+        if (frame.FireJustPressed && !ChatSystem.ChatBoxHover)
+            Shoot(false);
     }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
@@ -400,6 +446,22 @@ public class PlayerTank : Tank {
 
         ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
 
+        Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
+    }
+    private void ControlHandle_LocalCoop(Vector2 movement) {
+        IsTurning = false;
+        ChassisRotation %= MathHelper.Tau;
+        DesiredDirection = movement;
+
+        if (movement != Vector2.Zero) {
+            playerControl_isBindPressed = true;
+            LastUsedController = false;
+        }
+
+        var norm = Vector2.Normalize(DesiredDirection);
+
+        DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
+        ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
         Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
@@ -583,7 +645,7 @@ public class PlayerTank : Tank {
             return;
 
         if (!MainMenuUI.IsActive) {
-            if (NetPlay.IsClientMatched(PlayerId)) {
+            if (ControlledHere) {
                 var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
                 var scale = 0.5f; // the graphic gets smaller for each availiable shell.
                 for (int i = 0; i < Properties.ShellLimit; i++) {
@@ -631,7 +693,7 @@ public class PlayerTank : Tank {
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, pText, new(pos.X, pos.Y + (flip ? 90 : -110).ToResolutionY()), playerColor, Color.White, new Vector2(scale * 2).ToResolution(), 0f, Anchor.Center, 2f);
         }
 
-        if (DebugManager.DebugLevel == 1 || _drawShotPath)
+        if (DebugManager.DebugLevel == 1 || _drawShotPath || _localShotPathHeld)
             DrawShootPath();
 
         if (Properties.Invisible && CampaignGlobals.InMission)
