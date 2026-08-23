@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.Systems.LocalCoop;
 using Xunit;
 
@@ -44,5 +45,19 @@ public sealed class LocalControlPolicyTests {
             cooldown,
             ownedCount,
             capacity));
+    }
+
+    [Theory]
+    [InlineData(1f, 0f)]
+    [InlineData(-1f, 0f)]
+    [InlineData(0f, 1f)]
+    [InlineData(0f, -1f)]
+    public void DirectionalTurretRotationFiresTowardAim(float aimX, float aimY) {
+        var aim = new Vector2(aimX, aimY);
+        var rotation = LocalControlPolicy.DirectionalTurretRotation(aim);
+        var shellDirection = new Vector2(MathF.Sin(rotation), MathF.Cos(rotation));
+
+        Assert.InRange(MathF.Abs(shellDirection.X - aim.X), 0f, 0.0001f);
+        Assert.InRange(MathF.Abs(shellDirection.Y - aim.Y), 0f, 0.0001f);
     }
 }

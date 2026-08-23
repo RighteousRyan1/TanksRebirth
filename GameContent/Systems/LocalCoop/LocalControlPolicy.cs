@@ -1,8 +1,14 @@
+using Microsoft.Xna.Framework;
+using TanksRebirth.Internals.Common.Utilities;
+
 namespace TanksRebirth.GameContent.Systems.LocalCoop;
 
 public static class LocalControlPolicy {
     public static bool CanControlOffline(bool networkConnected, LocalSession session, int playerId) =>
         !networkConnected && session.IsActivePlayer(playerId);
+
+    public static float DirectionalTurretRotation(Vector2 aim) =>
+        -aim.ToRotation() + MathHelper.PiOver2;
 
     public static bool CanUseLocalWeapon(
         bool gameplayInputAllowed,

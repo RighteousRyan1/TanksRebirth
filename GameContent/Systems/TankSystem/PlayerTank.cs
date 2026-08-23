@@ -299,7 +299,7 @@ public class PlayerTank : Tank {
             TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
         }
         else {
-            TurretRotation = -frame.Aim.ToRotation() - MathHelper.PiOver2;
+            TurretRotation = LocalControlPolicy.DirectionalTurretRotation(frame.Aim);
         }
 
         var gameplayInputAllowed = CampaignGlobals.InMission
