@@ -14,6 +14,7 @@ using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.Internals;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.UI;
 
@@ -110,6 +111,9 @@ public static partial class MainMenuUI {
                     SoundPlayer.SoundError();
                     return;
                 }
+
+                if (Client.IsConnected())
+                    LocalGameSession.Current.StartSinglePlayer();
 
                 var noExt = Path.GetFileNameWithoutExtension(name);
                 PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false);
