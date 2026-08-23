@@ -373,7 +373,7 @@ public class Campaign
     public static Campaign Load(string fileName) {
         Campaign campaign = new();
 
-        using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
+        using var reader = new BinaryReader(File.Open(ResolveLoadPath(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
 
         var header = reader.ReadBytes(4);
         if (!header.SequenceEqual(LevelEditorUI.LevelFileHeader))
@@ -435,6 +435,19 @@ public class Campaign
         }
         return campaign;
     }
+
+    public static string ResolveLoadPath(string saveDirectory, string fileName) {
+        if (Path.IsPathRooted(fileName))
+            return fileName;
+
+        var normalizedSaveDirectory = Path.TrimEndingDirectorySeparator(saveDirectory);
+        if (fileName.Equals(normalizedSaveDirectory, StringComparison.Ordinal) ||
+            fileName.StartsWith(normalizedSaveDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            return fileName;
+
+        return Path.Combine(saveDirectory, fileName);
+    }
+
     /// <summary>The metadata for any given campaign.</summary>
     public struct CampaignMetaData
     {
