@@ -18,4 +18,31 @@ public sealed class LocalControlPolicyTests {
 
         Assert.Equal(expected, LocalControlPolicy.CanControlOffline(networkConnected, session, playerId));
     }
+
+    [Theory]
+    [InlineData(true, false, 0f, 0f, 0f, 0, 1, true)]
+    [InlineData(false, false, 0f, 0f, 0f, 0, 1, false)]
+    [InlineData(true, true, 0f, 0f, 0f, 0, 1, false)]
+    [InlineData(true, false, 1f, 0f, 0f, 0, 1, false)]
+    [InlineData(true, false, 0f, 1f, 0f, 0, 1, false)]
+    [InlineData(true, false, 0f, 0f, 1f, 0, 1, false)]
+    [InlineData(true, false, 0f, 0f, 0f, 1, 1, false)]
+    public void LocalWeaponUseRequiresEveryGuard(
+        bool gameplayInputAllowed,
+        bool stationary,
+        float shootStun,
+        float mineStun,
+        float cooldown,
+        int ownedCount,
+        int capacity,
+        bool expected) {
+        Assert.Equal(expected, LocalControlPolicy.CanUseLocalWeapon(
+            gameplayInputAllowed,
+            stationary,
+            shootStun,
+            mineStun,
+            cooldown,
+            ownedCount,
+            capacity));
+    }
 }

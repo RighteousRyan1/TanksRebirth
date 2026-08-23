@@ -307,18 +307,32 @@ public class PlayerTank : Tank {
             && !ChatSystem.ActiveHandle
             && !GameUI.Paused;
         _localShotPathHeld = gameplayInputAllowed && frame.ShotPathHeld;
-        if (!gameplayInputAllowed) {
+        if (!gameplayInputAllowed)
             playerControl_isBindPressed = false;
-            return;
-        }
 
-        if (!Properties.Stationary && CurShootStun <= 0 && CurMineStun <= 0) {
+        if (gameplayInputAllowed && !Properties.Stationary && CurShootStun <= 0 && CurMineStun <= 0)
             ControlHandle_LocalCoop(frame.Movement);
-            if (frame.MineJustPressed)
-                LayMine();
-        }
 
-        if (frame.FireJustPressed && !ChatSystem.ChatBoxHover)
+        var canLayMine = LocalControlPolicy.CanUseLocalWeapon(
+            gameplayInputAllowed,
+            Properties.Stationary,
+            CurShootStun,
+            CurMineStun,
+            CurMineCooldown,
+            OwnedMineCount,
+            Properties.MineLimit);
+        if (frame.MineJustPressed && canLayMine)
+            LayMine();
+
+        var canFire = LocalControlPolicy.CanUseLocalWeapon(
+            gameplayInputAllowed && (frame.AimSource != LocalAimSource.Mouse || !ChatSystem.ChatBoxHover),
+            Properties.Stationary,
+            CurShootStun,
+            CurMineStun,
+            CurShootCooldown,
+            OwnedShellCount,
+            Properties.ShellLimit / Properties.ShellShootCount);
+        if (frame.FireJustPressed && canFire)
             Shoot(false);
     }
     public override void Remove(bool nullifyMe) {
@@ -410,12 +424,6 @@ public class PlayerTank : Tank {
         if (controlMine.JustPressed)
             LayMine();
 
-        IsTurning = false;
-
-        //var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
-
-        ChassisRotation %= MathHelper.Tau;
-
         if (controlDown.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.Y = 1;
@@ -437,26 +445,23 @@ public class PlayerTank : Tank {
             LastUsedController = false;
         }
 
-        if (Difficulties.Types["POV"])
-            DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
-
-        var norm = Vector2.Normalize(DesiredDirection);
-
-        DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
-
-        ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
-
-        Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
+        ApplyKeyboardMovement(DesiredDirection, applyPov: true);
     }
     private void ControlHandle_LocalCoop(Vector2 movement) {
-        IsTurning = false;
-        ChassisRotation %= MathHelper.Tau;
-        DesiredDirection = movement;
-
         if (movement != Vector2.Zero) {
             playerControl_isBindPressed = true;
             LastUsedController = false;
         }
+
+        ApplyKeyboardMovement(movement, applyPov: false);
+    }
+    private void ApplyKeyboardMovement(Vector2 movement, bool applyPov) {
+        IsTurning = false;
+        ChassisRotation %= MathHelper.Tau;
+        DesiredDirection = movement;
+
+        if (applyPov && Difficulties.Types["POV"])
+            DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
 
         var norm = Vector2.Normalize(DesiredDirection);
 
