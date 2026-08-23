@@ -16,6 +16,7 @@ using System.Runtime.Intrinsics.X86;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Enums;
 using TanksRebirth.Graphics.Shaders;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 
 namespace TanksRebirth.GameContent.Systems;
 #pragma warning disable
@@ -383,10 +384,10 @@ public static class IntermissionSystem {
 
         // draw player graphics & life remaining
         var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
-        var count = Server.CurrentClientCount > 0 ? Server.CurrentClientCount : Server.CurrentClientCount + 1;
+        var count = Client.IsConnected() ? Server.CurrentClientCount : LocalGameSession.Current.PlayerCount;
 
         for (int i = 0; i < count; i++) {
-            var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : string.Empty;
+            var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : $"P{i + 1}";
 
             var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.85f);
             var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.25f);

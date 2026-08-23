@@ -670,7 +670,7 @@ public class PlayerTank : Tank {
         // a bit hardcoded but whatever
         bool needClarification = (!MainMenuUI.IsActive && IntermissionHandler.TankFunctionWait > 0) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
-        if (needClarification) {
+        if (needClarification && (Client.IsConnected() || ControlledHere)) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 50).ToResolution();
 

@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -17,7 +18,9 @@ public static class GameSceneUI {
         // put any initialization logic here if needed
     }
     public static void DrawScores() {
-        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : 1;
+        // At 1920x1080 these panels stay inside the 180px side lanes, clear of the centered 672px mission bar.
+        const float statusPanelWidth = 180f;
+        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : LocalGameSession.Current.PlayerCount;
         for (int i = 0; i < drawCount; i++) {
 
             float y = WindowUtils.WindowHeight * 0.9f;
@@ -25,7 +28,10 @@ public static class GameSceneUI {
 
             if (i >= 2) y -= WindowUtils.WindowHeight * 0.1f;
 
-            DrawScore(PlayerID.PlayerTankColors[i], PlayerTank.KillCounts[i], y, flipSide: flip, scale: 2f);
+            var playerName = Client.IsConnected() ? Server.ConnectedClients[i].Name : $"P{i + 1}";
+            var statusText = $"{playerName}  K {PlayerTank.KillCounts[i]}  L {PlayerTank.Lives[i]}";
+
+            DrawScore(PlayerID.PlayerTankColors[i], statusText, y, flipSide: flip, scale: 2f, pertrusion: statusPanelWidth);
         }
     }
     public static void DrawMissionInfoBar() {
@@ -57,7 +63,7 @@ public static class GameSceneUI {
     }
 
     // helpers
-    private static void DrawScore(Color color, int score, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
+    private static void DrawScore(Color color, string statusText, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
         color = ColorUtils.ChangeColorBrightness(color, 0.25f);
         var brighterColor = ColorUtils.ChangeColorBrightness(color, 0.5f);
 
@@ -125,7 +131,7 @@ public static class GameSceneUI {
             // draws the text on the right side of the screen
             new Vector2(flipSide ? pertrusionReal + 10 : pertrusionReal - 10,
             y - 7f * scale),
-            Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.375f * scale), 1f, shadowAlpha: 0.5f);
+            Vector2.One, statusText, brighterColor, color, new Vector2(0.375f * scale), 1f, shadowAlpha: 0.5f);
     }
 
     // pretty sure this doesn't work.
