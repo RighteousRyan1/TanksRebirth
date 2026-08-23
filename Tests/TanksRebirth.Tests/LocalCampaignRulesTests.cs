@@ -129,6 +129,75 @@ public sealed class LocalCampaignRulesTests {
     }
 
     [Fact]
+    public void SinglePlayerCanWinWhenDestroyedBlueTeamMatchesFinalTeam() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.True(LocalCampaignRules.IsLocalVictory(session, playerTeams: [2], playerAlive: [false], finalTeam: 2, noTeam: 0));
+    }
+
+    [Theory]
+    [InlineData(3)]
+    [InlineData(0)]
+    public void SinglePlayerCannotWinWhenBlueTeamDoesNotMatchFinalTeam(int blueTeam) {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.False(LocalCampaignRules.IsLocalVictory(session, playerTeams: [blueTeam], playerAlive: [false], finalTeam: 2, noTeam: 0));
+    }
+
+    [Fact]
+    public void LocalCoopCanWinWhenLivingP2MatchesAfterP1Destroyed() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.True(LocalCampaignRules.IsLocalVictory(session, playerTeams: [2, 2], playerAlive: [false, true], finalTeam: 2, noTeam: 0));
+    }
+
+    [Fact]
+    public void LocalCoopCannotWinWhenBothActivePlayersAreDestroyed() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.False(LocalCampaignRules.IsLocalVictory(session, playerTeams: [2, 2], playerAlive: [false, false], finalTeam: 2, noTeam: 0));
+    }
+
+    [Fact]
+    public void LocalCoopVictoryIgnoresLivingMatchingInactiveSlots() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.False(LocalCampaignRules.IsLocalVictory(
+            session,
+            playerTeams: [3, 2, 2, 2],
+            playerAlive: [true, false, true, true],
+            finalTeam: 2,
+            noTeam: 0));
+    }
+
+    [Fact]
+    public void LocalVictoryRejectsShortTeamCollection() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            LocalCampaignRules.IsLocalVictory(session, playerTeams: [2], playerAlive: [true, true], finalTeam: 2, noTeam: 0));
+
+        Assert.Equal("playerTeams", error.ParamName);
+    }
+
+    [Fact]
+    public void LocalVictoryRejectsShortAliveCollection() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            LocalCampaignRules.IsLocalVictory(session, playerTeams: [2, 2], playerAlive: [true], finalTeam: 2, noTeam: 0));
+
+        Assert.Equal("playerAlive", error.ParamName);
+    }
+
+    [Fact]
     public void ZeroActivePlayerTemplatesProducesClearValidationError() {
         var session = new LocalSession();
         session.StartLocalCoop();

@@ -164,10 +164,20 @@ public static class IntermissionHandler {
         bool victory;
         if (Client.IsConnected())
             victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
-        else
-            victory = CampaignGlobals.LoadedCampaign.AvailableActiveLocalPlayerIds
-                .Select(playerId => GameHandler.AllPlayerTanks[playerId])
-                .Any(tank => tank is not null && !tank.IsDestroyed && tank.Team != TeamID.NoTeam && tank.Team == finalTeam);
+        else {
+            var localPlayerTeams = GameHandler.AllPlayerTanks
+                .Select(tank => tank?.Team ?? TeamID.NoTeam)
+                .ToArray();
+            var localPlayerAlive = GameHandler.AllPlayerTanks
+                .Select(tank => tank is not null && !tank.IsDestroyed)
+                .ToArray();
+            victory = LocalCampaignRules.IsLocalVictory(
+                LocalGameSession.Current,
+                localPlayerTeams,
+                localPlayerAlive,
+                finalTeam,
+                TeamID.NoTeam);
+        }
 
         if (nothingAnymore) {
             PrepareIntermission(victory);

@@ -68,6 +68,29 @@ public static class LocalCampaignRules {
         return availablePlayerIds.Any(playerId => lives[playerId] > 0);
     }
 
+    public static bool IsLocalVictory(
+        LocalSession session,
+        IReadOnlyList<int> playerTeams,
+        IReadOnlyList<bool> playerAlive,
+        int finalTeam,
+        int noTeam) {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(playerTeams);
+        ArgumentNullException.ThrowIfNull(playerAlive);
+        if (playerTeams.Count < session.PlayerCount)
+            throw new ArgumentOutOfRangeException(nameof(playerTeams), "Team collection must contain every active local player.");
+        if (playerAlive.Count < session.PlayerCount)
+            throw new ArgumentOutOfRangeException(nameof(playerAlive), "Alive collection must contain every active local player.");
+
+        if (!session.IsLocalCoop)
+            return playerTeams[0] != noTeam && playerTeams[0] == finalTeam;
+
+        return ActivePlayerIds(session).Any(playerId =>
+            playerAlive[playerId] &&
+            playerTeams[playerId] != noTeam &&
+            playerTeams[playerId] == finalTeam);
+    }
+
     public static string? GetTemplateValidationError(IReadOnlyCollection<int> availablePlayerIds, LocalSession session) {
         ArgumentNullException.ThrowIfNull(availablePlayerIds);
         ArgumentNullException.ThrowIfNull(session);
