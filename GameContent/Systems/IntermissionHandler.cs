@@ -165,7 +165,7 @@ public static class IntermissionHandler {
         if (Client.IsConnected())
             victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
         else
-            victory = LocalCampaignRules.ActivePlayerIds(LocalGameSession.Current)
+            victory = CampaignGlobals.LoadedCampaign.AvailableActiveLocalPlayerIds
                 .Select(playerId => GameHandler.AllPlayerTanks[playerId])
                 .Any(tank => tank is not null && !tank.IsDestroyed && tank.Team != TeamID.NoTeam && tank.Team == finalTeam);
 
@@ -234,12 +234,12 @@ public static class IntermissionHandler {
                     }
                 }
                 else {
-                    var activePlayerIds = LocalCampaignRules.ActivePlayerIds(LocalGameSession.Current);
-                    allPlayersDead = activePlayerIds.All(playerId => {
+                    var availablePlayerIds = CampaignGlobals.LoadedCampaign.AvailableActiveLocalPlayerIds;
+                    allPlayersDead = availablePlayerIds.All(playerId => {
                         var tank = GameHandler.AllPlayerTanks[playerId];
                         return tank is null || tank.IsDestroyed;
                     });
-                    everyoneLostAllLives = !LocalCampaignRules.CanTeamContinue(PlayerTank.Lives, LocalGameSession.Current);
+                    everyoneLostAllLives = !LocalCampaignRules.CanTeamContinue(PlayerTank.Lives, availablePlayerIds);
                 }
 
                 if (allPlayersDead) {

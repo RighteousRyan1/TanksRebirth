@@ -45,6 +45,7 @@ public class Campaign
     public Mission CurrentMission { get; private set; }
     public Mission LoadedMission { get; private set; }
     public int CurrentMissionId { get; private set; }
+    public IReadOnlyList<int> AvailableActiveLocalPlayerIds { get; private set; } = Array.Empty<int>();
 
     /// <summary>The meta-data for this campaign.</summary>
     public CampaignMetaData MetaData;
@@ -117,7 +118,9 @@ public class Campaign
         SceneManager.CleanupScene();
         const int roundingFactor = 5;
         int numPlayers = 0;
-        int availableActiveLocalTemplates = 0;
+        var applyLocalCampaignRules = LocalCampaignRules.ShouldApplyToMission(Client.IsConnected(), LevelEditorUI.IsActive);
+        var availableActiveLocalTemplateIds = new List<int>();
+        AvailableActiveLocalPlayerIds = Array.Empty<int>();
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
             var template = LoadedMission.Tanks[i];
 
@@ -166,11 +169,28 @@ public class Campaign
                 }
             }
             else {
-                if (!Client.IsConnected()) {
+                if (applyLocalCampaignRules) {
+                    if (LocalCampaignRules.ShouldUseAiCompanionTemplate(
+                        LocalGameSession.Current,
+                        Difficulties.Types["AiCompanion"],
+                        template.PlayerType)) {
+                        var randomTier = AITank.PickRandomTier();
+                        var companion = new AITank(randomTier) {
+                            Position = template.Position,
+                            Team = template.Team,
+                            ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                            DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                            TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
+                            IsDestroyed = false,
+                        };
+                        companion.Physics.Position = template.Position / Tank.UNITS_PER_METER;
+                        continue;
+                    }
+
                     if (!LocalCampaignRules.ShouldSpawnPlayer(LocalGameSession.Current, template.PlayerType))
                         continue;
 
-                    availableActiveLocalTemplates++;
+                    availableActiveLocalTemplateIds.Add(template.PlayerType);
                 }
 
                 numPlayers++;
@@ -208,7 +228,7 @@ public class Campaign
                                 tank.Remove(true);
                     }
                     // TODO: note to self, this code above is what causes the skill issue.
-                    if (Difficulties.Types["AiCompanion"] && 
+                    if ((Client.IsConnected() || (LevelEditorUI.IsActive && !LocalGameSession.Current.IsLocalCoop)) && Difficulties.Types["AiCompanion"] &&
                         (template.PlayerType == Server.CurrentClientCount + PlayerID.Red || 
                         (Server.CurrentClientCount == 4 && template.PlayerType == PlayerID.Yellow))) {
                         var randomTier = AITank.PickRandomTier();
@@ -234,8 +254,11 @@ public class Campaign
             }
         }
 
-        if (!Client.IsConnected()) {
-            var templateError = LocalCampaignRules.GetTemplateValidationError(availableActiveLocalTemplates, LocalGameSession.Current);
+        if (applyLocalCampaignRules) {
+            AvailableActiveLocalPlayerIds = LocalCampaignRules.AvailableActivePlayerIds(
+                LocalGameSession.Current,
+                availableActiveLocalTemplateIds);
+            var templateError = LocalCampaignRules.GetTemplateValidationError(AvailableActiveLocalPlayerIds, LocalGameSession.Current);
             if (templateError is not null)
                 ChatSystem.SendMessage(templateError, Color.Red);
         }

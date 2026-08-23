@@ -32,6 +32,52 @@ public sealed class LocalCampaignRulesTests {
     }
 
     [Fact]
+    public void SinglePlayerUsesEnabledRedTemplateForAiCompanion() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.True(LocalCampaignRules.ShouldUseAiCompanionTemplate(session, aiCompanionEnabled: true, playerId: 1));
+    }
+
+    [Fact]
+    public void LocalCoopNeverUsesActiveRedTemplateForAiCompanion() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.False(LocalCampaignRules.ShouldUseAiCompanionTemplate(session, aiCompanionEnabled: true, playerId: 1));
+    }
+
+    [Fact]
+    public void DisabledAiCompanionNeverUsesRedTemplate() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.False(LocalCampaignRules.ShouldUseAiCompanionTemplate(session, aiCompanionEnabled: false, playerId: 1));
+    }
+
+    [Fact]
+    public void AvailableActivePlayerIdsAreDistinctAndKeepTemplateOrder() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        var available = LocalCampaignRules.AvailableActivePlayerIds(session, [1, 0, 1, 3, 0]);
+
+        Assert.Equal([1, 0], available);
+    }
+
+    [Fact]
+    public void DuplicateBlueTemplateDoesNotSatisfyMissingRedValidation() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+        var available = LocalCampaignRules.AvailableActivePlayerIds(session, [0, 0]);
+
+        var error = LocalCampaignRules.GetTemplateValidationError(available, session);
+
+        Assert.Equal([0], available);
+        Assert.Equal("The current local session needs 2 active player templates, but this mission provides 1.", error);
+    }
+
+    [Fact]
     public void BonusLifeChangesOnlyActiveLocalCoopPlayers() {
         var session = new LocalSession();
         session.StartLocalCoop();
@@ -64,18 +110,22 @@ public sealed class LocalCampaignRulesTests {
 
     [Fact]
     public void TeamCanContinueWhileAnyActivePlayerHasLives() {
-        var session = new LocalSession();
-        session.StartLocalCoop();
-
-        Assert.True(LocalCampaignRules.CanTeamContinue([0, 2, 0, 0], session));
+        Assert.True(LocalCampaignRules.CanTeamContinue([0, 2, 0, 0], [0, 1]));
     }
 
     [Fact]
     public void TeamCannotContinueWhenAllActivePlayersHaveNoLives() {
-        var session = new LocalSession();
-        session.StartLocalCoop();
+        Assert.False(LocalCampaignRules.CanTeamContinue([0, 0, 5, 5], [0, 1]));
+    }
 
-        Assert.False(LocalCampaignRules.CanTeamContinue([0, 0, 5, 5], session));
+    [Fact]
+    public void TeamContinuationIgnoresRetainedLivesForMissingMissionPlayer() {
+        Assert.False(LocalCampaignRules.CanTeamContinue([0, 3, 0, 0], [0]));
+    }
+
+    [Fact]
+    public void TeamCannotContinueWithNoAvailablePlayerTemplates() {
+        Assert.False(LocalCampaignRules.CanTeamContinue([3, 3, 0, 0], []));
     }
 
     [Fact]
@@ -83,8 +133,64 @@ public sealed class LocalCampaignRulesTests {
         var session = new LocalSession();
         session.StartLocalCoop();
 
-        var error = LocalCampaignRules.GetTemplateValidationError(0, session);
+        var error = LocalCampaignRules.GetTemplateValidationError([], session);
 
         Assert.Equal("No active player templates are available for the current local session.", error);
+    }
+
+    [Fact]
+    public void EditorMissionDoesNotApplyLocalCampaignFiltering() {
+        Assert.False(LocalCampaignRules.ShouldApplyToMission(clientConnected: false, levelEditorActive: true));
+    }
+
+    [Fact]
+    public void OrdinaryOfflineMissionAppliesLocalCampaignFiltering() {
+        Assert.True(LocalCampaignRules.ShouldApplyToMission(clientConnected: false, levelEditorActive: false));
+    }
+
+    [Fact]
+    public void ConnectedMissionDoesNotApplyLocalCampaignFiltering() {
+        Assert.False(LocalCampaignRules.ShouldApplyToMission(clientConnected: true, levelEditorActive: false));
+    }
+
+    [Fact]
+    public void ChangeLifeRejectsNullLives() {
+        var error = Assert.Throws<ArgumentNullException>(() => LocalCampaignRules.ChangeLife(null!, 0, -1));
+
+        Assert.Equal("lives", error.ParamName);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(4)]
+    public void ChangeLifeRejectsInvalidPlayerId(int playerId) {
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => LocalCampaignRules.ChangeLife([3, 3, 0, 0], playerId, -1));
+
+        Assert.Equal("playerId", error.ParamName);
+    }
+
+    [Fact]
+    public void ChangeLivesForActivePlayersRejectsShortLivesArray() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            LocalCampaignRules.ChangeLivesForActivePlayers([3], session, 1));
+
+        Assert.Equal("lives", error.ParamName);
+    }
+
+    [Fact]
+    public void CanTeamContinueRejectsNullLives() {
+        var error = Assert.Throws<ArgumentNullException>(() => LocalCampaignRules.CanTeamContinue(null!, [0]));
+
+        Assert.Equal("lives", error.ParamName);
+    }
+
+    [Fact]
+    public void CanTeamContinueRejectsShortLivesArray() {
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => LocalCampaignRules.CanTeamContinue([3], [0, 1]));
+
+        Assert.Equal("lives", error.ParamName);
     }
 }
