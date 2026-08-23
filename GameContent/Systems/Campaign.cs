@@ -22,6 +22,7 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -116,6 +117,7 @@ public class Campaign
         SceneManager.CleanupScene();
         const int roundingFactor = 5;
         int numPlayers = 0;
+        int availableActiveLocalTemplates = 0;
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
             var template = LoadedMission.Tanks[i];
 
@@ -164,6 +166,13 @@ public class Campaign
                 }
             }
             else {
+                if (!Client.IsConnected()) {
+                    if (!LocalCampaignRules.ShouldSpawnPlayer(LocalGameSession.Current, template.PlayerType))
+                        continue;
+
+                    availableActiveLocalTemplates++;
+                }
+
                 numPlayers++;
                 if ((Client.IsConnected() && numPlayers <= Server.CurrentClientCount) || !Client.IsConnected()) {
                     var tank = template.GetPlayerTank();
@@ -175,19 +184,28 @@ public class Campaign
                     tank.IsDestroyed = false;
                     tank.Team = template.Team;
 
-                    if (tank.PlayerId <= Server.CurrentClientCount) {
-                        if (!LevelEditorUI.IsActive) {
-                            if (NetPlay.IsClientMatched(tank.PlayerId)) {
-                                PlayerTank.MyTeam = tank.Team;
-                                PlayerTank.MyTankType = tank.PlayerType;
+                    if (Client.IsConnected()) {
+                        if (tank.PlayerId <= Server.CurrentClientCount) {
+                            if (!LevelEditorUI.IsActive) {
+                                if (NetPlay.IsClientMatched(tank.PlayerId)) {
+                                    PlayerTank.MyTeam = tank.Team;
+                                    PlayerTank.MyTankType = tank.PlayerType;
+                                }
                             }
                         }
-                    }
-                    else if (!LevelEditorUI.IsActive)
-                        tank.Remove(true);
-                    if (Client.IsConnected()) {
+                        else if (!LevelEditorUI.IsActive)
+                            tank.Remove(true);
                         if (PlayerTank.Lives[tank.PlayerId] <= 0)
                             tank.Remove(true);
+                    }
+                    else {
+                        if (!LevelEditorUI.IsActive && tank.PlayerId == PlayerID.Blue) {
+                            PlayerTank.MyTeam = tank.Team;
+                            PlayerTank.MyTankType = tank.PlayerType;
+                        }
+                        if (PlayerTank.Lives[tank.PlayerId] <= 0)
+                            if (!LevelEditorUI.IsActive)
+                                tank.Remove(true);
                     }
                     // TODO: note to self, this code above is what causes the skill issue.
                     if (Difficulties.Types["AiCompanion"] && 
@@ -214,6 +232,12 @@ public class Campaign
                     }
                 }
             }
+        }
+
+        if (!Client.IsConnected()) {
+            var templateError = LocalCampaignRules.GetTemplateValidationError(availableActiveLocalTemplates, LocalGameSession.Current);
+            if (templateError is not null)
+                ChatSystem.SendMessage(templateError, Color.Red);
         }
 
         for (int b = 0; b < LoadedMission.Blocks.Length; b++) {

@@ -8,6 +8,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -160,7 +161,13 @@ public static class IntermissionHandler {
 
         var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out var finalTeam);
         var myTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
-        bool victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
+        bool victory;
+        if (Client.IsConnected())
+            victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
+        else
+            victory = LocalCampaignRules.ActivePlayerIds(LocalGameSession.Current)
+                .Select(playerId => GameHandler.AllPlayerTanks[playerId])
+                .Any(tank => tank is not null && !tank.IsDestroyed && tank.Team != TeamID.NoTeam && tank.Team == finalTeam);
 
         if (nothingAnymore) {
             PrepareIntermission(victory);
@@ -203,24 +210,36 @@ public static class IntermissionHandler {
                     }
                 }*/
 
-                // we want to move on anyway even if one player 'lost' and another 'won' so other players aren't held back while others advance (desync alert!!)
-                var allPlayersDead = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed);
+                bool allPlayersDead;
+                bool everyoneLostAllLives;
+                if (Client.IsConnected()) {
+                    // we want to move on anyway if one network player lost and another won, so clients are not held back.
+                    allPlayersDead = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed);
 
-                // assume true, but set to false later if any player has lives remaining
-                bool everyoneLostAllLives = true;
-                if (allPlayersDead) {
-                    // networking is *consistently* behind the host here
+                    // assume true, but set to false later if any player has lives remaining
+                    everyoneLostAllLives = true;
+                    if (allPlayersDead) {
+                        // networking is *consistently* behind the host here
 
-                    for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++) {
-                        var tank = GameHandler.AllPlayerTanks[i];
-                        if (tank is null) continue;
-                        var lives = PlayerTank.Lives[i];
-                        var livesCountLocal = tank.IsDestroyed ? lives - 1 : lives;
+                        for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++) {
+                            var tank = GameHandler.AllPlayerTanks[i];
+                            if (tank is null) continue;
+                            var lives = PlayerTank.Lives[i];
+                            var livesCountLocal = tank.IsDestroyed ? lives - 1 : lives;
 
-                        // if any player has any lives remaining, the campaign isn't over
-                        if (livesCountLocal > 0)
-                            everyoneLostAllLives = false;
+                            // if any player has any lives remaining, the campaign isn't over
+                            if (livesCountLocal > 0)
+                                everyoneLostAllLives = false;
+                        }
                     }
+                }
+                else {
+                    var activePlayerIds = LocalCampaignRules.ActivePlayerIds(LocalGameSession.Current);
+                    allPlayersDead = activePlayerIds.All(playerId => {
+                        var tank = GameHandler.AllPlayerTanks[playerId];
+                        return tank is null || tank.IsDestroyed;
+                    });
+                    everyoneLostAllLives = !LocalCampaignRules.CanTeamContinue(PlayerTank.Lives, LocalGameSession.Current);
                 }
 
                 if (allPlayersDead) {

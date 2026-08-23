@@ -94,26 +94,26 @@ public class PlayerTank : Tank {
     /// <summary>In multiplayer, gets the lives of the client that this code is currently being called on.</summary>
     public static int GetMyLives() => Lives[NetPlay.GetMyClientId()];
     /// <summary>
-    /// Adds lives to the player in Single-Player, adds to the lives of all players in Multiplayer.
+    /// Adds lives to the current player online, or to every active local player offline.
     /// </summary>
     /// <param name="num">How many lives to add.</param>
     public static void AddLives(int num) {
         if (Client.IsConnected())
             Lives[NetPlay.GetMyClientId()] += num;
         else
-            for (int i = 0; i < Lives.Length; i++)
-                Lives[i] += num;
+            LocalCampaignRules.ChangeLivesForActivePlayers(Lives, LocalGameSession.Current, num);
     }
     /// <summary>
-    /// Sets the lives of the player in Single-Player, sets the lives of all players in Multiplayer.
+    /// Sets the current player's lives online, or initializes only the active local players offline.
     /// </summary>
     /// <param name="num">How many lives to set the player(s) to.</param>
     public static void SetLives(int num) {
         if (Client.IsConnected())
             Lives[NetPlay.GetMyClientId()] = num;
-        else
+        else {
             for (int i = 0; i < Lives.Length; i++)
-                Lives[i] = num;
+                Lives[i] = LocalGameSession.Current.IsActivePlayer(i) ? num : 0;
+        }
     }
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
@@ -482,7 +482,7 @@ public class PlayerTank : Tank {
             }
         }
         else
-            AddLives(-1);
+            LocalCampaignRules.ChangeLife(Lives, PlayerId, -1);
 
         Remove(false);
 
