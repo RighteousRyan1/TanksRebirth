@@ -8,25 +8,31 @@ public sealed class LocalControlPolicyTests {
     [Fact]
     public void LocalCoopMovementKeyCannotRunLegacyDebugShellShortcut() {
         Assert.False(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
-            debuggingEnabled: true, debugLevel: 0, clientConnected: false, localCoop: true, keyJustPressed: true));
+            debuggingEnabled: true, debugLevel: 0, clientConnected: false, localCoop: true, levelEditorActive: false, keyJustPressed: true));
     }
 
     [Fact]
     public void NonDebugPlayCannotRunLegacyDebugShellShortcut() {
         Assert.False(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
-            debuggingEnabled: false, debugLevel: 0, clientConnected: false, localCoop: false, keyJustPressed: true));
+            debuggingEnabled: false, debugLevel: 0, clientConnected: false, localCoop: false, levelEditorActive: false, keyJustPressed: true));
     }
 
     [Fact]
     public void ExplicitSoloGeneralDebugModeCanRunLegacyDebugShellShortcut() {
         Assert.True(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
-            debuggingEnabled: true, debugLevel: 0, clientConnected: false, localCoop: false, keyJustPressed: true));
+            debuggingEnabled: true, debugLevel: 0, clientConnected: false, localCoop: false, levelEditorActive: false, keyJustPressed: true));
     }
 
     [Fact]
     public void ConnectedGeneralDebugModeCannotRunLegacyDebugShellShortcut() {
         Assert.False(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
-            debuggingEnabled: true, debugLevel: 0, clientConnected: true, localCoop: false, keyJustPressed: true));
+            debuggingEnabled: true, debugLevel: 0, clientConnected: true, localCoop: false, levelEditorActive: false, keyJustPressed: true));
+    }
+
+    [Fact]
+    public void LevelEditorGeneralDebugModeCannotRunLegacyDebugShellShortcut() {
+        Assert.False(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
+            debuggingEnabled: true, debugLevel: 0, clientConnected: false, localCoop: false, levelEditorActive: true, keyJustPressed: true));
     }
 
     [Theory]

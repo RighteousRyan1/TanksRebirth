@@ -82,6 +82,10 @@ public static partial class MainMenuUI {
             var missions = campaign.CachedMissions;
             foreach (var mission in missions)
                 numTanks += mission.Tanks.Count(x => !x.IsPlayer);
+            var lifeMetadata = LocalGameSession.Current.IsLocalCoop
+                ? string.Empty
+                : $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
+                  $"\nBonus Life Count: {campaign.CachedMissions.Count(x => x.GrantsExtraLife)}";
 
             var elem = new UITextButton(Path.GetFileNameWithoutExtension(name), FontGlobals.RebirthFont, Color.White, 0.8f) {
                 IsVisible = true,
@@ -90,8 +94,7 @@ public static partial class MainMenuUI {
                 $"\n\nName: {campaign.MetaData.Name}" +
                 $"\nDescription: {campaign.MetaData.Description}" +
                 $"\nVersion: {campaign.MetaData.Version}" +
-                $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
-                $"\nBonus Life Count: {campaign.CachedMissions.Count(x => x.GrantsExtraLife)}" +
+                lifeMetadata +
                 $"\nTags: {string.Join(", ", campaign.MetaData.Tags)}" +
                 $"\n\nMiddle click to DELETE ME."
             };

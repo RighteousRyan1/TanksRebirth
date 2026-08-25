@@ -11,11 +11,13 @@ public static class LocalControlPolicy {
         int debugLevel,
         bool clientConnected,
         bool localCoop,
+        bool levelEditorActive,
         bool keyJustPressed) =>
         debuggingEnabled
         && debugLevel == GeneralDebugLevel
         && !clientConnected
         && !localCoop
+        && !levelEditorActive
         && keyJustPressed;
 
     public static bool CanControlOffline(bool networkConnected, LocalSession session, int playerId) =>

@@ -85,6 +85,9 @@ public static class LocalCampaignRules {
         ArgumentNullException.ThrowIfNull(playerAlive);
         ArgumentNullException.ThrowIfNull(lives);
 
+        if (availablePlayerIds.Count == 0)
+            return session.IsLocalCoop;
+
         foreach (var playerId in availablePlayerIds) {
             if (playerId < 0 || playerId >= playerAlive.Count)
                 throw new ArgumentOutOfRangeException(nameof(playerAlive), "Alive state must contain every available local player.");
@@ -92,8 +95,7 @@ public static class LocalCampaignRules {
                 throw new ArgumentOutOfRangeException(nameof(lives), "Lives must contain every available local player.");
         }
 
-        var allAvailablePlayersDead = availablePlayerIds.Count > 0
-            && availablePlayerIds.All(playerId => !playerAlive[playerId]);
+        var allAvailablePlayersDead = availablePlayerIds.All(playerId => !playerAlive[playerId]);
 
         if (!allAvailablePlayersDead)
             return false;

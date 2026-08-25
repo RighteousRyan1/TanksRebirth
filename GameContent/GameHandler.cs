@@ -124,6 +124,7 @@ public class GameHandler {
             DebugManager.DebugLevel,
             Client.IsConnected(),
             LocalGameSession.Current.IsLocalCoop,
+            LevelEditorUI.IsActive,
             debugShellKeyPressed)) {
             new Shell(new Vector2(0, 100), -Vector2.UnitY * 2, ShellID.Standard, null);
             new Shell(new Vector2(MouseUtils.Test.X * 10, -100), Vector2.UnitY * 2, ShellID.Standard, null);
