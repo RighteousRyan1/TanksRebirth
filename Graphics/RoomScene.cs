@@ -298,6 +298,8 @@ public static class RoomScene {
     // render
 
     public static void Render() {
+        View = CameraGlobals.GameView;
+        Projection = CameraGlobals.GameProjection;
         _transparentFaces.Clear();
         World = Matrix.CreateScale(Scale)
             * Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X)

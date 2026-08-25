@@ -32,6 +32,9 @@ public static class LocalCoopPovPolicy {
         return destination.Size;
     }
 
+    public static bool ShouldRecreateTarget(Point currentSize, bool disposed, Point desiredSize) =>
+        disposed || currentSize != desiredSize;
+
     public static int ResolveCameraPlayerId(
         int requestedPlayerId,
         bool playerOneAvailable,

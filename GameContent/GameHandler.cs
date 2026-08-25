@@ -212,10 +212,10 @@ public class GameHandler {
         OnPostUpdate?.Invoke();
     }
 
-    internal static void RenderAll() {
+    internal static void RenderAll(bool includeSharedHud = true) {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-        if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
+        if (includeSharedHud && !MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
             ExperienceBar.Position = new(WindowUtils.WindowWidth / 2 - ExperienceBar.Scale.X / 2, 50);
             ExperienceBar.Scale = new(600, 20);
             ExperienceBar.Alignment = Anchor.LeftCenter;

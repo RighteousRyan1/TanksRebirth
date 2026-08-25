@@ -47,6 +47,24 @@ public sealed class LocalCoopPovPolicyTests {
         Assert.Equal(new Point(1440, 451), LocalCoopPovPolicy.TargetSize(layout.PlayerTwo));
     }
 
+    [Theory]
+    [InlineData(1440, 450, false, 1440, 450, false)]
+    [InlineData(1440, 450, true, 1440, 450, true)]
+    [InlineData(1440, 450, false, 1440, 451, true)]
+    [InlineData(720, 900, false, 1440, 450, true)]
+    public void TargetRecreationOnlyOccursForDisposalOrSizeChange(
+        int currentWidth,
+        int currentHeight,
+        bool disposed,
+        int desiredWidth,
+        int desiredHeight,
+        bool expected) {
+        Assert.Equal(expected, LocalCoopPovPolicy.ShouldRecreateTarget(
+            new Point(currentWidth, currentHeight),
+            disposed,
+            new Point(desiredWidth, desiredHeight)));
+    }
+
     [Fact]
     public void DestroyedPlayerSpectatesSurvivor() {
         Assert.Equal(1, LocalCoopPovPolicy.ResolveCameraPlayerId(

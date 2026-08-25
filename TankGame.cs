@@ -41,6 +41,7 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 using System.Collections.Concurrent;
 
 namespace TanksRebirth;
@@ -91,6 +92,7 @@ public class TankGame : Game {
     public static AchievementPopupHandler VanillaAchievementPopupHandler;
 
     public static RenderTarget2D GameFrameBuffer;
+    public static bool LocalCoopPovRenderedThisFrame { get; private set; }
 
     public static RasterizerState _cachedState;
 
@@ -237,6 +239,7 @@ public class TankGame : Game {
         DiscordRichPresence.Terminate();
 
         CurrentSessionTimer.Stop();
+        LocalCoopPovRenderer.DisposeTargets();
 
         // write end-life metrics
 
@@ -724,6 +727,12 @@ public class TankGame : Game {
             OnResolutionChanged?.Invoke(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
         }
 
+        LocalCoopPovRenderedThisFrame = false;
+        if (LocalCoopPovRuntime.IsActive && PrepareLocalCoopPovBuffers(spriteBatch)) {
+            LocalCoopPovRenderedThisFrame = true;
+            return;
+        }
+
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         GraphicsDevice.SetRenderTarget(GameFrameBuffer);
         GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
@@ -744,6 +753,69 @@ public class TankGame : Game {
         spriteBatch.End();
         // stop drawing the regular game scene
         GraphicsDevice.SetRenderTarget(null);
+    }
+
+    private bool PrepareLocalCoopPovBuffers(SpriteBatch spriteBatch) {
+        var playerOneTank = LocalCoopPovRuntime.ResolveCameraTank(0);
+        var playerTwoTank = LocalCoopPovRuntime.ResolveCameraTank(1);
+        if (playerOneTank is null || playerTwoTank is null)
+            return false;
+
+        var layout = LocalCoopPovPolicy.CreateHorizontalLayout(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
+        LocalCoopPovRenderer.EnsureTargets(GraphicsDevice, layout);
+        var playerOneTarget = LocalCoopPovRenderer.PlayerOneTarget;
+        var playerTwoTarget = LocalCoopPovRenderer.PlayerTwoTarget;
+        if (playerOneTarget is null || playerTwoTarget is null)
+            return false;
+
+        var playerOneCamera = CameraGlobals.CreatePovCamera(
+            playerOneTank.Position,
+            playerOneTank.TurretRotation,
+            (float)playerOneTarget.Width / playerOneTarget.Height);
+        var playerTwoCamera = CameraGlobals.CreatePovCamera(
+            playerTwoTank.Position,
+            playerTwoTank.TurretRotation,
+            (float)playerTwoTarget.Width / playerTwoTarget.Height);
+
+        RenderLocalCoopPovPass(spriteBatch, playerOneTarget, playerOneCamera);
+        RenderLocalCoopPovPass(spriteBatch, playerTwoTarget, playerTwoCamera);
+
+        GraphicsDevice.SetRenderTarget(GameFrameBuffer);
+        GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
+        spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied,
+            rasterizerState: RenderGlobals.DefaultRasterizer);
+        spriteBatch.Draw(playerOneTarget, layout.PlayerOne, Color.White);
+        spriteBatch.Draw(playerTwoTarget, layout.PlayerTwo, Color.White);
+        spriteBatch.End();
+        GraphicsDevice.SetRenderTarget(null);
+
+        ApplyPovCamera(playerOneCamera);
+        return true;
+    }
+
+    private void RenderLocalCoopPovPass(SpriteBatch spriteBatch, RenderTarget2D target, PovCameraState camera) {
+        ApplyPovCamera(camera);
+        GraphicsDevice.SetRenderTarget(target);
+        GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
+        GraphicsDevice.DepthStencilState = RenderGlobals.DefaultStencilState;
+        GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
+
+        spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied,
+            rasterizerState: RenderGlobals.DefaultRasterizer);
+        RoomScene.Render();
+        CosmeticsUI.RenderCrates();
+        GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
+        GameHandler.RenderAll(includeSharedHud: false);
+        spriteBatch.End();
+    }
+
+    private static void ApplyPovCamera(PovCameraState camera) {
+        CameraGlobals.GameView = camera.View;
+        CameraGlobals.GameProjection = camera.Projection;
+        CameraGlobals.POVCameraPosition = camera.Position;
+        CameraGlobals.RebirthFreecam.Position = camera.Position;
+        RoomScene.View = camera.View;
+        RoomScene.Projection = camera.Projection;
     }
     protected override void Draw(GameTime gameTime) {
         PrepareAllRTs();
