@@ -183,6 +183,15 @@ public sealed class LocalCampaignRulesTests {
     }
 
     [Fact]
+    public void SinglePlayerWithNoAvailablePlayerTemplatesFailsSafeAsGameOver() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.True(LocalCampaignRules.ShouldEndAsGameOver(
+            session, [], [false, false, false, false], [3, 0, 0, 0]));
+    }
+
+    [Fact]
     public void SinglePlayerWithRemainingLifeDoesNotEndGame() {
         var session = new LocalSession();
         session.StartSinglePlayer();

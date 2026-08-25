@@ -86,7 +86,7 @@ public static class LocalCampaignRules {
         ArgumentNullException.ThrowIfNull(lives);
 
         if (availablePlayerIds.Count == 0)
-            return session.IsLocalCoop;
+            return true;
 
         foreach (var playerId in availablePlayerIds) {
             if (playerId < 0 || playerId >= playerAlive.Count)
