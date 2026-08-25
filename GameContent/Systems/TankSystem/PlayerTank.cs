@@ -294,7 +294,36 @@ public class PlayerTank : Tank {
         }
 
         var frame = LocalPlayerInputRouter.Runtime.GetFrame(PlayerId);
-        if (frame.AimSource == LocalAimSource.Mouse) {
+        var splitScreenPov = LocalCoopPovPolicy.ShouldUseSplitScreen(
+            session.IsLocalCoop,
+            Difficulties.Types["POV"],
+            MainMenuUI.IsActive,
+            LevelEditorUI.IsActive,
+            Client.IsConnected());
+        if (splitScreenPov && frame.AimSource == LocalAimSource.Mouse) {
+            if (!GameUI.Paused && !DebugManager.IsFreecamEnabled) {
+                var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4);
+                if (_justCenteredMouse) {
+                    _justCenteredMouse = false;
+                }
+                else {
+                    var deltaX = frame.AimInput.X - screenCenter.X;
+                    TurretRotation = LocalControlPolicy.ApplyPovYaw(
+                        TurretRotation,
+                        deltaX,
+                        1f / 312f.ToResolutionX());
+                    Mouse.SetPosition(screenCenter.X, screenCenter.Y);
+                    _justCenteredMouse = true;
+                }
+            }
+        }
+        else if (splitScreenPov) {
+            TurretRotation = LocalControlPolicy.ApplyPovYaw(
+                TurretRotation,
+                frame.AimInput.X,
+                0.03f * RuntimeData.DeltaTime);
+        }
+        else if (frame.AimSource == LocalAimSource.Mouse) {
             Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(frame.Aim, -11f);
             TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
         }
@@ -311,7 +340,7 @@ public class PlayerTank : Tank {
             playerControl_isBindPressed = false;
 
         if (gameplayInputAllowed && !Properties.Stationary && CurShootStun <= 0 && CurMineStun <= 0)
-            ControlHandle_LocalCoop(frame.Movement);
+            ControlHandle_LocalCoop(frame.Movement, splitScreenPov);
 
         var canLayMine = LocalControlPolicy.CanUseLocalWeapon(
             gameplayInputAllowed,
@@ -447,13 +476,13 @@ public class PlayerTank : Tank {
 
         ApplyKeyboardMovement(DesiredDirection, applyPov: true);
     }
-    private void ControlHandle_LocalCoop(Vector2 movement) {
+    private void ControlHandle_LocalCoop(Vector2 movement, bool applyPov) {
         if (movement != Vector2.Zero) {
             playerControl_isBindPressed = true;
             LastUsedController = false;
         }
 
-        ApplyKeyboardMovement(movement, applyPov: false);
+        ApplyKeyboardMovement(movement, applyPov);
     }
     private void ApplyKeyboardMovement(Vector2 movement, bool applyPov) {
         IsTurning = false;
@@ -461,7 +490,7 @@ public class PlayerTank : Tank {
         DesiredDirection = movement;
 
         if (applyPov && Difficulties.Types["POV"])
-            DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
+            DesiredDirection = LocalControlPolicy.ApplyPovMovement(DesiredDirection, TurretRotation);
 
         var norm = Vector2.Normalize(DesiredDirection);
 

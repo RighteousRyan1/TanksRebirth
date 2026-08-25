@@ -90,4 +90,22 @@ public sealed class LocalControlPolicyTests {
         Assert.InRange(MathF.Abs(shellDirection.X - aim.X), 0f, 0.0001f);
         Assert.InRange(MathF.Abs(shellDirection.Y - aim.Y), 0f, 0.0001f);
     }
+
+    [Fact]
+    public void PovMovementRotatesForwardInputIntoTurretDirection() {
+        var movement = LocalControlPolicy.ApplyPovMovement(-Vector2.UnitY, turretRotation: 0f);
+
+        Assert.InRange(MathF.Abs(movement.X), 0f, 0.0001f);
+        Assert.InRange(MathF.Abs(movement.Y - 1f), 0f, 0.0001f);
+    }
+
+    [Theory]
+    [InlineData(1f, -0.2f)]
+    [InlineData(-1f, 0.2f)]
+    [InlineData(0f, 0f)]
+    public void PovYawMatchesExistingMouseDirection(float horizontalInput, float expected) {
+        var rotation = LocalControlPolicy.ApplyPovYaw(0f, horizontalInput, 0.2f);
+
+        Assert.Equal(expected, rotation, 4);
+    }
 }

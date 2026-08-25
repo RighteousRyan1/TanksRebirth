@@ -26,6 +26,12 @@ public static class LocalControlPolicy {
     public static float DirectionalTurretRotation(Vector2 aim) =>
         -aim.ToRotation() + MathHelper.PiOver2;
 
+    public static Vector2 ApplyPovMovement(Vector2 movement, float turretRotation) =>
+        movement.Rotate(-turretRotation + MathHelper.Pi);
+
+    public static float ApplyPovYaw(float currentRotation, float horizontalInput, float rotationAmount) =>
+        currentRotation - horizontalInput * rotationAmount;
+
     public static bool CanUseLocalWeapon(
         bool gameplayInputAllowed,
         bool stationary,

@@ -37,6 +37,19 @@ public sealed class LocalPlayerInputRouterTests {
     }
 
     [Fact]
+    public void P2AimInputClearsWhenArrowIsReleased() {
+        var router = new LocalPlayerInputRouter();
+        router.Update(new KeyboardState(Keys.Right), new KeyboardState(), default, default);
+
+        Assert.Equal(Vector2.UnitX, router.GetFrame(1).AimInput);
+
+        router.Update(new KeyboardState(), new KeyboardState(Keys.Right), default, default);
+
+        Assert.Equal(Vector2.Zero, router.GetFrame(1).AimInput);
+        Assert.Equal(Vector2.UnitX, router.GetFrame(1).Aim);
+    }
+
+    [Fact]
     public void FireEdgesAreIndependent() {
         var router = new LocalPlayerInputRouter();
         router.Update(new KeyboardState(Keys.Enter), new KeyboardState(), default, default);
@@ -107,6 +120,7 @@ public sealed class LocalPlayerInputRouterTests {
         router.Update(new KeyboardState(), new KeyboardState(), MouseAt(123, 456), default);
 
         Assert.Equal(new Vector2(123, 456), router.GetFrame(0).Aim);
+        Assert.Equal(new Vector2(123, 456), router.GetFrame(0).AimInput);
         Assert.Equal(LocalAimSource.Mouse, router.GetFrame(0).AimSource);
     }
 

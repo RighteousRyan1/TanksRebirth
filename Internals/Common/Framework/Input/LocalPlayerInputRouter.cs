@@ -6,8 +6,8 @@ namespace TanksRebirth.Internals.Common.Framework.Input;
 
 public sealed class LocalPlayerInputRouter {
     private readonly LocalPlayerInputFrame[] _frames = [
-        new(Vector2.Zero, Vector2.Zero, LocalAimSource.Mouse, false, false, false),
-        new(Vector2.Zero, -Vector2.UnitY, LocalAimSource.Direction, false, false, false),
+        new(Vector2.Zero, Vector2.Zero, Vector2.Zero, LocalAimSource.Mouse, false, false, false),
+        new(Vector2.Zero, -Vector2.UnitY, Vector2.Zero, LocalAimSource.Direction, false, false, false),
     ];
 
     private Vector2 _playerTwoAim = -Vector2.UnitY;
@@ -22,6 +22,7 @@ public sealed class LocalPlayerInputRouter {
         _frames[0] = new LocalPlayerInputFrame(
             ReadDirection(currentKeyboard, Keys.W, Keys.S, Keys.A, Keys.D),
             new Vector2(currentMouse.X, currentMouse.Y),
+            new Vector2(currentMouse.X, currentMouse.Y),
             LocalAimSource.Mouse,
             currentMouse.LeftButton == ButtonState.Pressed && previousMouse.LeftButton == ButtonState.Released,
             JustPressed(currentKeyboard, previousKeyboard, Keys.Space),
@@ -34,6 +35,7 @@ public sealed class LocalPlayerInputRouter {
         _frames[1] = new LocalPlayerInputFrame(
             ReadDirection(currentKeyboard, Keys.I, Keys.K, Keys.J, Keys.L),
             _playerTwoAim,
+            playerTwoAim,
             LocalAimSource.Direction,
             JustPressed(currentKeyboard, previousKeyboard, Keys.Enter),
             JustPressed(currentKeyboard, previousKeyboard, Keys.RightShift),
