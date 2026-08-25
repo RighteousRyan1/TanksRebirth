@@ -22,6 +22,7 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -44,6 +45,7 @@ public class Campaign
     public Mission CurrentMission { get; private set; }
     public Mission LoadedMission { get; private set; }
     public int CurrentMissionId { get; private set; }
+    public IReadOnlyList<int> AvailableActiveLocalPlayerIds { get; private set; } = Array.Empty<int>();
 
     /// <summary>The meta-data for this campaign.</summary>
     public CampaignMetaData MetaData;
@@ -116,6 +118,9 @@ public class Campaign
         SceneManager.CleanupScene();
         const int roundingFactor = 5;
         int numPlayers = 0;
+        var applyLocalCampaignRules = LocalCampaignRules.ShouldApplyToMission(Client.IsConnected(), LevelEditorUI.IsActive);
+        var availableActiveLocalTemplateIds = new List<int>();
+        AvailableActiveLocalPlayerIds = Array.Empty<int>();
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
             var template = LoadedMission.Tanks[i];
 
@@ -164,6 +169,33 @@ public class Campaign
                 }
             }
             else {
+                if (applyLocalCampaignRules) {
+                    if (LocalCampaignRules.ShouldUseAiCompanionTemplate(
+                        LocalGameSession.Current,
+                        Difficulties.Types["AiCompanion"],
+                        template.PlayerType)) {
+                        var randomTier = AITank.PickRandomTier();
+                        var companion = new AITank(randomTier) {
+                            Position = template.Position,
+                            Team = template.Team,
+                            ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                            DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                            TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
+                            IsDestroyed = false,
+                        };
+                        companion.Physics.Position = template.Position / Tank.UNITS_PER_METER;
+                        continue;
+                    }
+
+                    if (!LocalCampaignRules.ShouldSpawnPlayer(
+                        LocalGameSession.Current,
+                        template.PlayerType,
+                        PlayerTank.Lives[template.PlayerType]))
+                        continue;
+
+                    availableActiveLocalTemplateIds.Add(template.PlayerType);
+                }
+
                 numPlayers++;
                 if ((Client.IsConnected() && numPlayers <= Server.CurrentClientCount) || !Client.IsConnected()) {
                     var tank = template.GetPlayerTank();
@@ -175,22 +207,32 @@ public class Campaign
                     tank.IsDestroyed = false;
                     tank.Team = template.Team;
 
-                    if (tank.PlayerId <= Server.CurrentClientCount) {
-                        if (!LevelEditorUI.IsActive) {
-                            if (NetPlay.IsClientMatched(tank.PlayerId)) {
-                                PlayerTank.MyTeam = tank.Team;
-                                PlayerTank.MyTankType = tank.PlayerType;
+                    if (Client.IsConnected()) {
+                        if (tank.PlayerId <= Server.CurrentClientCount) {
+                            if (!LevelEditorUI.IsActive) {
+                                if (NetPlay.IsClientMatched(tank.PlayerId)) {
+                                    PlayerTank.MyTeam = tank.Team;
+                                    PlayerTank.MyTankType = tank.PlayerType;
+                                }
                             }
                         }
-                    }
-                    else if (!LevelEditorUI.IsActive)
-                        tank.Remove(true);
-                    if (Client.IsConnected()) {
+                        else if (!LevelEditorUI.IsActive)
+                            tank.Remove(true);
                         if (PlayerTank.Lives[tank.PlayerId] <= 0)
                             tank.Remove(true);
                     }
+                    else {
+                        if (!LevelEditorUI.IsActive && tank.PlayerId == PlayerID.Blue) {
+                            PlayerTank.MyTeam = tank.Team;
+                            PlayerTank.MyTankType = tank.PlayerType;
+                        }
+                        if (!LevelEditorUI.IsActive
+                            && LocalCampaignRules.ShouldUseLives(LocalGameSession.Current)
+                            && PlayerTank.Lives[tank.PlayerId] <= 0)
+                            tank.Remove(true);
+                    }
                     // TODO: note to self, this code above is what causes the skill issue.
-                    if (Difficulties.Types["AiCompanion"] && 
+                    if ((Client.IsConnected() || (LevelEditorUI.IsActive && !LocalGameSession.Current.IsLocalCoop)) && Difficulties.Types["AiCompanion"] &&
                         (template.PlayerType == Server.CurrentClientCount + PlayerID.Red || 
                         (Server.CurrentClientCount == 4 && template.PlayerType == PlayerID.Yellow))) {
                         var randomTier = AITank.PickRandomTier();
@@ -214,6 +256,15 @@ public class Campaign
                     }
                 }
             }
+        }
+
+        if (applyLocalCampaignRules) {
+            AvailableActiveLocalPlayerIds = LocalCampaignRules.AvailableActivePlayerIds(
+                LocalGameSession.Current,
+                availableActiveLocalTemplateIds);
+            var templateError = LocalCampaignRules.GetTemplateValidationError(AvailableActiveLocalPlayerIds, LocalGameSession.Current);
+            if (templateError is not null)
+                ChatSystem.SendMessage(templateError, Color.Red);
         }
 
         for (int b = 0; b < LoadedMission.Blocks.Length; b++) {
@@ -326,7 +377,7 @@ public class Campaign
     public static Campaign Load(string fileName) {
         Campaign campaign = new();
 
-        using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
+        using var reader = new BinaryReader(File.Open(ResolveLoadPath(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
 
         var header = reader.ReadBytes(4);
         if (!header.SequenceEqual(LevelEditorUI.LevelFileHeader))
@@ -388,6 +439,26 @@ public class Campaign
         }
         return campaign;
     }
+
+    public static string ResolveLoadPath(string saveDirectory, string fileName) {
+        if (Path.IsPathRooted(fileName))
+            return fileName;
+
+        var normalizedSaveDirectory = Path.TrimEndingDirectorySeparator(NormalizePathSeparators(saveDirectory));
+        var normalizedFileName = NormalizePathSeparators(fileName);
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        if (normalizedFileName.Equals(normalizedSaveDirectory, comparison) ||
+            normalizedFileName.StartsWith(normalizedSaveDirectory + Path.DirectorySeparatorChar, comparison))
+            return fileName;
+
+        return Path.Combine(saveDirectory, fileName);
+    }
+
+    private static string NormalizePathSeparators(string path)
+        => Path.AltDirectorySeparatorChar == Path.DirectorySeparatorChar
+            ? path
+            : path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+
     /// <summary>The metadata for any given campaign.</summary>
     public struct CampaignMetaData
     {

@@ -24,6 +24,7 @@ using TanksRebirth.Graphics.Metrics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 
 namespace TanksRebirth.GameContent;
 
@@ -117,7 +118,14 @@ public class GameHandler {
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
         GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
-        if (InputUtils.KeyJustPressed(Keys.I)) {
+        var debugShellKeyPressed = InputUtils.KeyJustPressed(Keys.I);
+        if (LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
+            DebugManager.DebuggingEnabled,
+            DebugManager.DebugLevel,
+            Client.IsConnected(),
+            LocalGameSession.Current.IsLocalCoop,
+            LevelEditorUI.IsActive,
+            debugShellKeyPressed)) {
             new Shell(new Vector2(0, 100), -Vector2.UnitY * 2, ShellID.Standard, null);
             new Shell(new Vector2(MouseUtils.Test.X * 10, -100), Vector2.UnitY * 2, ShellID.Standard, null);
         }

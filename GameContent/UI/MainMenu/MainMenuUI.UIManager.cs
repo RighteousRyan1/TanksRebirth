@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Speedrunning;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Animation;
@@ -49,6 +51,9 @@ public static partial class MainMenuUI
     public static UIState MenuState {
         get => _menuState;
         set {
+            if (_menuState == UIState.Campaigns && value == UIState.PlayList)
+                LocalGameSession.Current.StartSinglePlayer();
+
             _menuState = value;
 
             if (MenuCameraManipulations.ContainsKey(value)) {
@@ -76,6 +81,7 @@ public static partial class MainMenuUI
     }
     public static UITextButton PlayButton;
     public static UITextButton PlayButton_SinglePlayer;
+    public static UITextButton PlayButton_LocalCoop;
     public static UITextButton PlayButton_LevelEditor;
     public static UITextButton PlayButton_Multiplayer;
     public static UITextButton StartMPGameButton;
@@ -105,6 +111,7 @@ public static partial class MainMenuUI
         PlayButton_Multiplayer.SetDimensions(() => new Vector2(700, 750).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
         PlayButton_Multiplayer.OnLeftClick = (uiElement) => {
+            LocalGameSession.Current.StartSinglePlayer();
             SetPlayButtonsVisibility(false);
             SetMPButtonsVisibility(true);
             MenuState = UIState.Mulitplayer;
@@ -124,12 +131,27 @@ public static partial class MainMenuUI
             IsVisible = false,
             Tooltip = TankGame.GameLanguage.SinglePlayerFlavor
         };
-        PlayButton_SinglePlayer.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        PlayButton_SinglePlayer.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
         PlayButton_SinglePlayer.OnLeftClick = (uiElement) => {
+            LocalGameSession.Current.StartSinglePlayer();
             SetCampaignDisplay();
             MenuState = UIState.Campaigns;
         };
+
+        PlayButton_LocalCoop = new("Local Co-op", font, Color.WhiteSmoke) {
+            IsVisible = false,
+            Tooltip = "Two players on this Mac: P1 uses keyboard and mouse; P2 uses I/J/K/L plus arrow keys."
+        };
+        PlayButton_LocalCoop.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        PlayButton_LocalCoop.OnLeftClick = (uiElement) => {
+            LocalGameSession.Current.StartLocalCoop();
+            if (Difficulties.Types["POV"])
+                Difficulties.Types["POV"] = false;
+            SetCampaignDisplay();
+            MenuState = UIState.Campaigns;
+        };
+
         InitializeDifficultyButtons();
 
         PlayButton_LevelEditor = new(TankGame.GameLanguage.LevelEditor, font, Color.WhiteSmoke) {
@@ -138,6 +160,7 @@ public static partial class MainMenuUI
         };
         PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
         PlayButton_LevelEditor.OnLeftClick = (b) => {
+            LocalGameSession.Current.StartSinglePlayer();
             LevelEditorUI.Initialize();
             LevelEditorUI.TryOpen();
         };
@@ -168,6 +191,7 @@ public static partial class MainMenuUI
     private static void HideAll() {
         PlayButton.IsVisible = false;
         PlayButton_SinglePlayer.IsVisible = false;
+        PlayButton_LocalCoop.IsVisible = false;
         PlayButton_Multiplayer.IsVisible = false;
         PlayButton_LevelEditor.IsVisible = false;
 
@@ -175,6 +199,7 @@ public static partial class MainMenuUI
     }
     internal static void SetPlayButtonsVisibility(bool visible) {
         PlayButton_SinglePlayer.IsVisible = visible;
+        PlayButton_LocalCoop.IsVisible = visible;
         PlayButton_LevelEditor.IsVisible = visible;
         PlayButton_Multiplayer.IsVisible = visible;
         DifficultiesButton.IsVisible = visible;
@@ -250,6 +275,8 @@ public static partial class MainMenuUI
 
     }
     public static void OpenUI() {
+        LocalGameSession.Current.StartSinglePlayer();
+
         if (!Speedrun.AreSpeedrunsFetched) {
             Speedrun.AreSpeedrunsFetched = true;
             Speedrun.GetSpeedruns();

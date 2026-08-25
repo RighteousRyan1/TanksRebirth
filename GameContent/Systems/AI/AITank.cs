@@ -322,13 +322,18 @@ public partial class AITank : Tank {
         // pretty sure != null isn't necessary because if Source is null it can't convert
         // it knows the owner is not me but increments my kill count anyway
         if (context.Source is PlayerTank p) {
-            var myId = NetPlay.GetMyClientId();
+            if (Client.IsConnected()) {
+                var myId = NetPlay.GetMyClientId();
 
-            bool isMe = p.PlayerId == myId;
-            if (isMe)
-                PlayerTank.KillCounts[myId]++;
+                bool isMe = p.PlayerId == myId;
+                if (isMe)
+                    PlayerTank.KillCounts[myId]++;
+            }
+            else {
+                PlayerTank.KillCounts[p.PlayerId]++;
+            }
         }
-        // hardcoded for now until local multiplayer exists
+        // Preserve legacy credit for offline environmental or AI-owned kills, where no local player owns the damage.
         else if (!Client.IsConnected()) {
             PlayerTank.KillCounts[0]++;
 

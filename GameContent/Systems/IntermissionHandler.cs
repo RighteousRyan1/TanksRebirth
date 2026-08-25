@@ -8,6 +8,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -160,7 +161,33 @@ public static class IntermissionHandler {
 
         var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out var finalTeam);
         var myTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
-        bool victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
+        bool victory;
+        if (Client.IsConnected())
+            victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
+        else {
+            var localPlayerTeams = GameHandler.AllPlayerTanks
+                .Select(tank => tank?.Team ?? TeamID.NoTeam)
+                .ToArray();
+            var localPlayerAlive = GameHandler.AllPlayerTanks
+                .Select(tank => tank is not null && !tank.IsDestroyed)
+                .ToArray();
+            victory = LocalCampaignRules.IsLocalVictory(
+                LocalGameSession.Current,
+                localPlayerTeams,
+                localPlayerAlive,
+                finalTeam,
+                TeamID.NoTeam);
+
+            if (LocalGameSession.Current.IsLocalCoop
+                && LocalCampaignRules.ShouldEndAsGameOver(
+                    LocalGameSession.Current,
+                    CampaignGlobals.LoadedCampaign.AvailableActiveLocalPlayerIds,
+                    localPlayerAlive,
+                    PlayerTank.Lives)) {
+                PrepareIntermission(victory: false);
+                return;
+            }
+        }
 
         if (nothingAnymore) {
             PrepareIntermission(victory);
@@ -175,11 +202,18 @@ public static class IntermissionHandler {
             int restartTime;
             MissionEndContext endContext;
 
-            IntermissionSystem.InitializeCountdowns(isExtraLifeMission && victory);
+            var useBonusLifeSequence = Client.IsConnected()
+                ? isExtraLifeMission && victory
+                : LocalCampaignRules.ShouldUseBonusLifeSequence(LocalGameSession.Current, isExtraLifeMission, victory);
+
+            IntermissionSystem.ShouldDrawBanner = !useBonusLifeSequence;
+            if (!useBonusLifeSequence)
+                IntermissionSystem.ShouldDrawBonusBanner = false;
+            IntermissionSystem.InitializeCountdowns(useBonusLifeSequence);
             if (victory) {
                 restartTime = DEF_INTERMISSION_TIME;
 
-                if (isExtraLifeMission) {
+                if (useBonusLifeSequence) {
                     restartTime += DEF_PLUSLIFE_TIME;
                     IntermissionSystem.ShouldDrawBanner = false;
                 }
@@ -203,24 +237,41 @@ public static class IntermissionHandler {
                     }
                 }*/
 
-                // we want to move on anyway even if one player 'lost' and another 'won' so other players aren't held back while others advance (desync alert!!)
-                var allPlayersDead = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed);
+                bool allPlayersDead;
+                bool everyoneLostAllLives;
+                if (Client.IsConnected()) {
+                    // we want to move on anyway if one network player lost and another won, so clients are not held back.
+                    allPlayersDead = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed);
 
-                // assume true, but set to false later if any player has lives remaining
-                bool everyoneLostAllLives = true;
-                if (allPlayersDead) {
-                    // networking is *consistently* behind the host here
+                    // assume true, but set to false later if any player has lives remaining
+                    everyoneLostAllLives = true;
+                    if (allPlayersDead) {
+                        // networking is *consistently* behind the host here
 
-                    for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++) {
-                        var tank = GameHandler.AllPlayerTanks[i];
-                        if (tank is null) continue;
-                        var lives = PlayerTank.Lives[i];
-                        var livesCountLocal = tank.IsDestroyed ? lives - 1 : lives;
+                        for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++) {
+                            var tank = GameHandler.AllPlayerTanks[i];
+                            if (tank is null) continue;
+                            var lives = PlayerTank.Lives[i];
+                            var livesCountLocal = tank.IsDestroyed ? lives - 1 : lives;
 
-                        // if any player has any lives remaining, the campaign isn't over
-                        if (livesCountLocal > 0)
-                            everyoneLostAllLives = false;
+                            // if any player has any lives remaining, the campaign isn't over
+                            if (livesCountLocal > 0)
+                                everyoneLostAllLives = false;
+                        }
                     }
+                }
+                else {
+                    var availablePlayerIds = CampaignGlobals.LoadedCampaign.AvailableActiveLocalPlayerIds;
+                    var playerAlive = GameHandler.AllPlayerTanks.Select(tank => tank is not null && !tank.IsDestroyed).ToArray();
+                    allPlayersDead = availablePlayerIds.All(playerId => {
+                        var tank = GameHandler.AllPlayerTanks[playerId];
+                        return tank is null || tank.IsDestroyed;
+                    });
+                    everyoneLostAllLives = LocalCampaignRules.ShouldEndAsGameOver(
+                        LocalGameSession.Current,
+                        availablePlayerIds,
+                        playerAlive,
+                        PlayerTank.Lives);
                 }
 
                 if (allPlayersDead) {
@@ -233,10 +284,11 @@ public static class IntermissionHandler {
                     endContext = MissionEndContext.Win;
 
                 // hardcode hell 2: electric boogaloo
-                if (Difficulties.Types["InfiniteLives"])
+                if (Difficulties.Types["InfiniteLives"]
+                    && (Client.IsConnected() || LocalCampaignRules.ShouldUseLives(LocalGameSession.Current)))
                     endContext = MissionEndContext.Lose;
             }
-            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);
+            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, useBonusLifeSequence);
         }
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>

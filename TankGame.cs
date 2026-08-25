@@ -673,6 +673,11 @@ public class TankGame : Game {
         GameShaders.UpdateShaders();
 
         InputUtils.PollEvents();
+        LocalPlayerInputRouter.Runtime.Update(
+            InputUtils.CurrentKeySnapshot,
+            InputUtils.OldKeySnapshot,
+            InputUtils.CurrentMouseSnapshot,
+            InputUtils.OldMouseSnapshot);
 
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {
