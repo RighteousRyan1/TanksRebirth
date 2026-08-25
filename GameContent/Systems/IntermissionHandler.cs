@@ -177,6 +177,16 @@ public static class IntermissionHandler {
                 localPlayerAlive,
                 finalTeam,
                 TeamID.NoTeam);
+
+            if (LocalGameSession.Current.IsLocalCoop
+                && LocalCampaignRules.ShouldEndAsGameOver(
+                    LocalGameSession.Current,
+                    CampaignGlobals.LoadedCampaign.AvailableActiveLocalPlayerIds,
+                    localPlayerAlive,
+                    PlayerTank.Lives)) {
+                PrepareIntermission(victory: false);
+                return;
+            }
         }
 
         if (nothingAnymore) {
@@ -192,11 +202,18 @@ public static class IntermissionHandler {
             int restartTime;
             MissionEndContext endContext;
 
-            IntermissionSystem.InitializeCountdowns(isExtraLifeMission && victory);
+            var useBonusLifeSequence = Client.IsConnected()
+                ? isExtraLifeMission && victory
+                : LocalCampaignRules.ShouldUseBonusLifeSequence(LocalGameSession.Current, isExtraLifeMission, victory);
+
+            IntermissionSystem.ShouldDrawBanner = !useBonusLifeSequence;
+            if (!useBonusLifeSequence)
+                IntermissionSystem.ShouldDrawBonusBanner = false;
+            IntermissionSystem.InitializeCountdowns(useBonusLifeSequence);
             if (victory) {
                 restartTime = DEF_INTERMISSION_TIME;
 
-                if (isExtraLifeMission) {
+                if (useBonusLifeSequence) {
                     restartTime += DEF_PLUSLIFE_TIME;
                     IntermissionSystem.ShouldDrawBanner = false;
                 }
@@ -245,11 +262,16 @@ public static class IntermissionHandler {
                 }
                 else {
                     var availablePlayerIds = CampaignGlobals.LoadedCampaign.AvailableActiveLocalPlayerIds;
+                    var playerAlive = GameHandler.AllPlayerTanks.Select(tank => tank is not null && !tank.IsDestroyed).ToArray();
                     allPlayersDead = availablePlayerIds.All(playerId => {
                         var tank = GameHandler.AllPlayerTanks[playerId];
                         return tank is null || tank.IsDestroyed;
                     });
-                    everyoneLostAllLives = !LocalCampaignRules.CanTeamContinue(PlayerTank.Lives, availablePlayerIds);
+                    everyoneLostAllLives = LocalCampaignRules.ShouldEndAsGameOver(
+                        LocalGameSession.Current,
+                        availablePlayerIds,
+                        playerAlive,
+                        PlayerTank.Lives);
                 }
 
                 if (allPlayersDead) {
@@ -262,10 +284,11 @@ public static class IntermissionHandler {
                     endContext = MissionEndContext.Win;
 
                 // hardcode hell 2: electric boogaloo
-                if (Difficulties.Types["InfiniteLives"])
+                if (Difficulties.Types["InfiniteLives"]
+                    && (Client.IsConnected() || LocalCampaignRules.ShouldUseLives(LocalGameSession.Current)))
                     endContext = MissionEndContext.Lose;
             }
-            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);
+            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, useBonusLifeSequence);
         }
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>

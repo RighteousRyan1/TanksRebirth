@@ -482,7 +482,7 @@ public class PlayerTank : Tank {
             }
         }
         else
-            LocalCampaignRules.ChangeLife(Lives, PlayerId, -1);
+            LocalCampaignRules.ChangeLife(Lives, LocalGameSession.Current, PlayerId, -1);
 
         Remove(false);
 

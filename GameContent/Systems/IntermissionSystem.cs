@@ -385,6 +385,7 @@ public static class IntermissionSystem {
         // draw player graphics & life remaining
         var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
         var count = Client.IsConnected() ? Server.CurrentClientCount : LocalGameSession.Current.PlayerCount;
+        var shouldDrawLives = Client.IsConnected() || LocalCampaignRules.ShouldUseLives(LocalGameSession.Current);
 
         for (int i = 0; i < count; i++) {
             var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : $"P{i + 1}";
@@ -396,17 +397,19 @@ public static class IntermissionSystem {
 
             var lerpedColor = Color.Lerp(brightPlayerColor, GradientTopColor, brightness);
 
-            var lifeText = $"×  {PlayerTank.Lives[i]}";
-            DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-                pos + new Vector2(75, -25).ToResolution(),
-                Vector2.One,
-                lifeText,
-                lerpedColor,
-                // hacky or not?
-                PlayerID.PlayerTankColors[i],
-                Vector2.One.ToResolution() * (ShouldDrawBanner ? Vector2.One : BonusLifeAnimator.CurrentScale),
-                1f,
-                Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
+            if (shouldDrawLives) {
+                var lifeText = $"×  {PlayerTank.Lives[i]}";
+                DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+                    pos + new Vector2(75, -25).ToResolution(),
+                    Vector2.One,
+                    lifeText,
+                    lerpedColor,
+                    // hacky or not?
+                    PlayerID.PlayerTankColors[i],
+                    Vector2.One.ToResolution() * (ShouldDrawBanner ? Vector2.One : BonusLifeAnimator.CurrentScale),
+                    1f,
+                    Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
+            }
 
             DrawUtils.DrawStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 pos - new Vector2(0, 75).ToResolution(),
@@ -416,7 +419,8 @@ public static class IntermissionSystem {
                 new Vector2(0.3f).ToResolution(),
                 1f,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
-            DrawUtils.DrawTextureWithShadow(spriteBatch, tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One,
+            var tankOffset = shouldDrawLives ? new Vector2(130, 0).ToResolution() : Vector2.Zero;
+            DrawUtils.DrawTextureWithShadow(spriteBatch, tnk2d, pos - tankOffset, Vector2.One,
                 brighterPlayerColor, Vector2.One * 1.5f, 1f, Anchor.Center,
                 shadowDistScale: 1f, shadowAlpha: 0.5f);
         }

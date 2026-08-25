@@ -4,6 +4,15 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent.Systems.LocalCoop;
 
 public static class LocalControlPolicy {
+    private const int GeneralDebugLevel = 0;
+
+    public static bool ShouldRunLegacyDebugShellShortcut(
+        bool debuggingEnabled,
+        int debugLevel,
+        bool localCoop,
+        bool keyJustPressed) =>
+        debuggingEnabled && debugLevel == GeneralDebugLevel && !localCoop && keyJustPressed;
+
     public static bool CanControlOffline(bool networkConnected, LocalSession session, int playerId) =>
         !networkConnected && session.IsActivePlayer(playerId);
 

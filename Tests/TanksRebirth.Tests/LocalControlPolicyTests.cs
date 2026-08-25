@@ -5,6 +5,24 @@ using Xunit;
 namespace TanksRebirth.Tests;
 
 public sealed class LocalControlPolicyTests {
+    [Fact]
+    public void LocalCoopMovementKeyCannotRunLegacyDebugShellShortcut() {
+        Assert.False(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
+            debuggingEnabled: true, debugLevel: 0, localCoop: true, keyJustPressed: true));
+    }
+
+    [Fact]
+    public void NonDebugPlayCannotRunLegacyDebugShellShortcut() {
+        Assert.False(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
+            debuggingEnabled: false, debugLevel: 0, localCoop: false, keyJustPressed: true));
+    }
+
+    [Fact]
+    public void ExplicitSoloGeneralDebugModeCanRunLegacyDebugShellShortcut() {
+        Assert.True(LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
+            debuggingEnabled: true, debugLevel: 0, localCoop: false, keyJustPressed: true));
+    }
+
     [Theory]
     [InlineData(false, false, 0, true)]
     [InlineData(false, false, 1, false)]

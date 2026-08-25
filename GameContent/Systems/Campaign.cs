@@ -187,7 +187,10 @@ public class Campaign
                         continue;
                     }
 
-                    if (!LocalCampaignRules.ShouldSpawnPlayer(LocalGameSession.Current, template.PlayerType))
+                    if (!LocalCampaignRules.ShouldSpawnPlayer(
+                        LocalGameSession.Current,
+                        template.PlayerType,
+                        PlayerTank.Lives[template.PlayerType]))
                         continue;
 
                     availableActiveLocalTemplateIds.Add(template.PlayerType);
@@ -223,9 +226,10 @@ public class Campaign
                             PlayerTank.MyTeam = tank.Team;
                             PlayerTank.MyTankType = tank.PlayerType;
                         }
-                        if (PlayerTank.Lives[tank.PlayerId] <= 0)
-                            if (!LevelEditorUI.IsActive)
-                                tank.Remove(true);
+                        if (!LevelEditorUI.IsActive
+                            && LocalCampaignRules.ShouldUseLives(LocalGameSession.Current)
+                            && PlayerTank.Lives[tank.PlayerId] <= 0)
+                            tank.Remove(true);
                     }
                     // TODO: note to self, this code above is what causes the skill issue.
                     if ((Client.IsConnected() || (LevelEditorUI.IsActive && !LocalGameSession.Current.IsLocalCoop)) && Difficulties.Types["AiCompanion"] &&

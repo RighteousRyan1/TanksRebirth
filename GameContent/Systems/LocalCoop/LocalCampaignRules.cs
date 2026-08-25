@@ -10,9 +10,14 @@ public static class LocalCampaignRules {
         return Enumerable.Range(0, session.PlayerCount).ToArray();
     }
 
-    public static bool ShouldSpawnPlayer(LocalSession session, int playerId) {
+    public static bool ShouldUseLives(LocalSession session) {
         ArgumentNullException.ThrowIfNull(session);
-        return session.IsActivePlayer(playerId);
+        return !session.IsLocalCoop;
+    }
+
+    public static bool ShouldSpawnPlayer(LocalSession session, int playerId, int livesRemaining) {
+        ArgumentNullException.ThrowIfNull(session);
+        return session.IsActivePlayer(playerId) && (!ShouldUseLives(session) || livesRemaining > 0);
     }
 
     public static bool ShouldUseAiCompanionTemplate(LocalSession session, bool aiCompanionEnabled, int playerId) {
@@ -37,12 +42,14 @@ public static class LocalCampaignRules {
     public static bool ShouldApplyToMission(bool clientConnected, bool levelEditorActive)
         => !clientConnected && !levelEditorActive;
 
-    public static void ChangeLife(int[] lives, int playerId, int delta) {
+    public static void ChangeLife(int[] lives, LocalSession session, int playerId, int delta) {
         ArgumentNullException.ThrowIfNull(lives);
+        ArgumentNullException.ThrowIfNull(session);
         if (playerId < 0 || playerId >= lives.Length)
             throw new ArgumentOutOfRangeException(nameof(playerId));
 
-        lives[playerId] += delta;
+        if (ShouldUseLives(session))
+            lives[playerId] += delta;
     }
 
     public static void ChangeLivesForActivePlayers(int[] lives, LocalSession session, int delta) {
@@ -52,7 +59,7 @@ public static class LocalCampaignRules {
             throw new ArgumentOutOfRangeException(nameof(lives), "Lives array must contain every active local player.");
 
         foreach (var playerId in ActivePlayerIds(session))
-            ChangeLife(lives, playerId, delta);
+            ChangeLife(lives, session, playerId, delta);
     }
 
     public static bool CanTeamContinue(int[] lives, IReadOnlyCollection<int> availablePlayerIds) {
@@ -66,6 +73,37 @@ public static class LocalCampaignRules {
         }
 
         return availablePlayerIds.Any(playerId => lives[playerId] > 0);
+    }
+
+    public static bool ShouldEndAsGameOver(
+        LocalSession session,
+        IReadOnlyCollection<int> availablePlayerIds,
+        IReadOnlyList<bool> playerAlive,
+        IReadOnlyList<int> lives) {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(availablePlayerIds);
+        ArgumentNullException.ThrowIfNull(playerAlive);
+        ArgumentNullException.ThrowIfNull(lives);
+
+        foreach (var playerId in availablePlayerIds) {
+            if (playerId < 0 || playerId >= playerAlive.Count)
+                throw new ArgumentOutOfRangeException(nameof(playerAlive), "Alive state must contain every available local player.");
+            if (playerId >= lives.Count)
+                throw new ArgumentOutOfRangeException(nameof(lives), "Lives must contain every available local player.");
+        }
+
+        var allAvailablePlayersDead = availablePlayerIds.Count > 0
+            && availablePlayerIds.All(playerId => !playerAlive[playerId]);
+
+        if (!allAvailablePlayersDead)
+            return false;
+
+        return session.IsLocalCoop || !availablePlayerIds.Any(playerId => lives[playerId] > 0);
+    }
+
+    public static bool ShouldUseBonusLifeSequence(LocalSession session, bool missionGrantsBonusLife, bool victory) {
+        ArgumentNullException.ThrowIfNull(session);
+        return ShouldUseLives(session) && missionGrantsBonusLife && victory;
     }
 
     public static bool IsLocalVictory(

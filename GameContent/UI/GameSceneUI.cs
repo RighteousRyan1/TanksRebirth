@@ -32,7 +32,9 @@ public static class GameSceneUI {
                 continue;
             }
 
-            var statusText = $"P{i + 1}  K {PlayerTank.KillCounts[i]}  L {PlayerTank.Lives[i]}";
+            var statusText = LocalCampaignRules.ShouldUseLives(LocalGameSession.Current)
+                ? $"P{i + 1}  K {PlayerTank.KillCounts[i]}  L {PlayerTank.Lives[i]}"
+                : $"P{i + 1}  K {PlayerTank.KillCounts[i]}";
             var sideLaneWidth = WindowUtils.WindowWidth * 0.22f;
             var edgeInset = 20f.ToResolutionX();
             var baseTextScale = 0.375f * 2f.ToResolutionY();
@@ -57,7 +59,7 @@ public static class GameSceneUI {
             LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
         var infoMeasure = font.MeasureString(missionInfo) * infoScale;
         var infoScaling = 1f - ((float)missionInfo.Length / LevelEditorUI.MAX_MISSION_CHARS) + 0.4f;
-        var tanksRemaining = $"× {AIManager.CountAll()}";
+        var tanksRemaining = $"Ã— {AIManager.CountAll()}";
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
             Vector2.UnitY, IntermissionSystem.BannerColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);

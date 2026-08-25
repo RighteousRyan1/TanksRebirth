@@ -10,11 +10,13 @@ using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
@@ -270,14 +272,14 @@ public static class CampaignCompleteUI {
         DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(width.ToResolutionX() / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
             txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, Anchor.TopCenter, 0.4f);
 
-        string[] funFacts =
-        {
+        var funFacts = new List<string> {
             $"% Shots Hit: {ShotToKillRatio * 100:0}% ({ShellHits}/{ShellsFired})",
             $"% Mine Effect: {MineToKillRatio * 100:0}% ({MineHits}/{MinesLaid})",
-            $"% Lives Earned: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})",
             $"% Missions Complete: {MissionRatio * 100:0}% ({CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}/{CampaignGlobals.LoadedCampaign.CachedMissions.Length})"
         };
-        for (int i = 0; i < funFacts.Length; i++) {
+        if (Client.IsConnected() || LocalCampaignRules.ShouldUseLives(LocalGameSession.Current))
+            funFacts.Insert(2, $"% Lives Earned: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})");
+        for (int i = 0; i < funFacts.Count; i++) {
             var ff = funFacts[i];
 
             DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
@@ -395,7 +397,9 @@ public static class CampaignCompleteUI {
 
         ShotToKillRatio = (float)ShellHits / ShellsFired;
         MineToKillRatio = (float)MineHits / MinesLaid;
-        LifeRatio = (float)LivesRemaining / TotalPossibleLives;
+        LifeRatio = Client.IsConnected() || LocalCampaignRules.ShouldUseLives(LocalGameSession.Current)
+            ? (float)LivesRemaining / TotalPossibleLives
+            : 1f;
         MissionRatio = (float)(CampaignGlobals.LoadedCampaign.CurrentMissionId + 1) / CampaignGlobals.LoadedCampaign.CachedMissions.Length;
 
         if (float.IsNaN(ShotToKillRatio))

@@ -25,10 +25,35 @@ public sealed class LocalCampaignRulesTests {
         var session = new LocalSession();
         session.StartLocalCoop();
 
-        Assert.True(LocalCampaignRules.ShouldSpawnPlayer(session, 0));
-        Assert.True(LocalCampaignRules.ShouldSpawnPlayer(session, 1));
-        Assert.False(LocalCampaignRules.ShouldSpawnPlayer(session, 2));
-        Assert.False(LocalCampaignRules.ShouldSpawnPlayer(session, 3));
+        Assert.True(LocalCampaignRules.ShouldSpawnPlayer(session, 0, livesRemaining: 0));
+        Assert.True(LocalCampaignRules.ShouldSpawnPlayer(session, 1, livesRemaining: 0));
+        Assert.False(LocalCampaignRules.ShouldSpawnPlayer(session, 2, livesRemaining: 3));
+        Assert.False(LocalCampaignRules.ShouldSpawnPlayer(session, 3, livesRemaining: 3));
+    }
+
+    [Fact]
+    public void LocalCoopDoesNotUseLives() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.False(LocalCampaignRules.ShouldUseLives(session));
+    }
+
+    [Fact]
+    public void SinglePlayerUsesLives() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.True(LocalCampaignRules.ShouldUseLives(session));
+    }
+
+    [Fact]
+    public void SinglePlayerSpawnRequiresRemainingLife() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.True(LocalCampaignRules.ShouldSpawnPlayer(session, 0, livesRemaining: 1));
+        Assert.False(LocalCampaignRules.ShouldSpawnPlayer(session, 0, livesRemaining: 0));
     }
 
     [Fact]
@@ -78,14 +103,14 @@ public sealed class LocalCampaignRulesTests {
     }
 
     [Fact]
-    public void BonusLifeChangesOnlyActiveLocalCoopPlayers() {
+    public void BonusLifeDoesNotChangeLocalCoopPlayers() {
         var session = new LocalSession();
         session.StartLocalCoop();
         var lives = new[] { 3, 3, 0, 0 };
 
         LocalCampaignRules.ChangeLivesForActivePlayers(lives, session, 1);
 
-        Assert.Equal([4, 4, 0, 0], lives);
+        Assert.Equal([3, 3, 0, 0], lives);
     }
 
     [Fact]
@@ -102,10 +127,88 @@ public sealed class LocalCampaignRulesTests {
     [Fact]
     public void ChangeLifeChangesOnlyTheSpecifiedPlayer() {
         var lives = new[] { 3, 3, 0, 0 };
+        var session = new LocalSession();
+        session.StartSinglePlayer();
 
-        LocalCampaignRules.ChangeLife(lives, playerId: 1, delta: -1);
+        LocalCampaignRules.ChangeLife(lives, session, playerId: 1, delta: -1);
 
         Assert.Equal([3, 2, 0, 0], lives);
+    }
+
+    [Fact]
+    public void LocalCoopDeathDoesNotChangeLives() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+        var lives = new[] { 3, 3, 0, 0 };
+
+        LocalCampaignRules.ChangeLife(lives, session, playerId: 1, delta: -1);
+
+        Assert.Equal([3, 3, 0, 0], lives);
+    }
+
+    [Fact]
+    public void LocalCoopBothAvailablePlayersDeadEndsGame() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.True(LocalCampaignRules.ShouldEndAsGameOver(
+            session, [0, 1], [false, false, true, true], [3, 3, 0, 0]));
+    }
+
+    [Fact]
+    public void LocalCoopLivingSurvivorContinuesCampaign() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.False(LocalCampaignRules.ShouldEndAsGameOver(
+            session, [0, 1], [false, true, false, false], [0, 0, 0, 0]));
+    }
+
+    [Fact]
+    public void MissingActivePlayerTemplateDoesNotBlockGameOver() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.True(LocalCampaignRules.ShouldEndAsGameOver(
+            session, [0], [false, true, false, false], [3, 3, 0, 0]));
+    }
+
+    [Fact]
+    public void SinglePlayerWithRemainingLifeDoesNotEndGame() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.False(LocalCampaignRules.ShouldEndAsGameOver(
+            session, [0], [false, false, false, false], [1, 0, 0, 0]));
+    }
+
+    [Fact]
+    public void SinglePlayerWithoutRemainingLifeEndsGame() {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.True(LocalCampaignRules.ShouldEndAsGameOver(
+            session, [0], [false, false, false, false], [0, 0, 0, 0]));
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void SinglePlayerBonusLifeSequenceMatchesMissionResult(bool victory, bool expected) {
+        var session = new LocalSession();
+        session.StartSinglePlayer();
+
+        Assert.Equal(expected, LocalCampaignRules.ShouldUseBonusLifeSequence(
+            session, missionGrantsBonusLife: true, victory));
+    }
+
+    [Fact]
+    public void LocalCoopNeverUsesBonusLifeSequence() {
+        var session = new LocalSession();
+        session.StartLocalCoop();
+
+        Assert.False(LocalCampaignRules.ShouldUseBonusLifeSequence(
+            session, missionGrantsBonusLife: true, victory: true));
     }
 
     [Fact]
@@ -224,7 +327,7 @@ public sealed class LocalCampaignRulesTests {
 
     [Fact]
     public void ChangeLifeRejectsNullLives() {
-        var error = Assert.Throws<ArgumentNullException>(() => LocalCampaignRules.ChangeLife(null!, 0, -1));
+        var error = Assert.Throws<ArgumentNullException>(() => LocalCampaignRules.ChangeLife(null!, new LocalSession(), 0, -1));
 
         Assert.Equal("lives", error.ParamName);
     }
@@ -233,7 +336,7 @@ public sealed class LocalCampaignRulesTests {
     [InlineData(-1)]
     [InlineData(4)]
     public void ChangeLifeRejectsInvalidPlayerId(int playerId) {
-        var error = Assert.Throws<ArgumentOutOfRangeException>(() => LocalCampaignRules.ChangeLife([3, 3, 0, 0], playerId, -1));
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => LocalCampaignRules.ChangeLife([3, 3, 0, 0], new LocalSession(), playerId, -1));
 
         Assert.Equal("playerId", error.ParamName);
     }
