@@ -9,9 +9,14 @@ public static class LocalControlPolicy {
     public static bool ShouldRunLegacyDebugShellShortcut(
         bool debuggingEnabled,
         int debugLevel,
+        bool clientConnected,
         bool localCoop,
         bool keyJustPressed) =>
-        debuggingEnabled && debugLevel == GeneralDebugLevel && !localCoop && keyJustPressed;
+        debuggingEnabled
+        && debugLevel == GeneralDebugLevel
+        && !clientConnected
+        && !localCoop
+        && keyJustPressed;
 
     public static bool CanControlOffline(bool networkConnected, LocalSession session, int playerId) =>
         !networkConnected && session.IsActivePlayer(playerId);
