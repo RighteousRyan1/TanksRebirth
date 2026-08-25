@@ -15,6 +15,8 @@ using System;
 
 namespace TanksRebirth.GameContent.Globals;
 
+public readonly record struct PovCameraState(Matrix View, Matrix Projection, Vector3 Position);
+
 public static class CameraGlobals {
 
     public static bool IsUsingFirstPresonCamera => MatrixUtils.AreMatricesEqual(GameProjection, RebirthFreecam.Projection, 0.1f);
@@ -66,6 +68,24 @@ public static class CameraGlobals {
 
     public static Matrix GameView;
     public static Matrix GameProjection;
+
+    public static PovCameraState CreatePovCamera(Vector2 tankPosition, float turretRotation, float aspectRatio) =>
+        CreatePovCamera(tankPosition.ExpandZ(), turretRotation, aspectRatio);
+
+    public static PovCameraState CreatePovCamera(Vector3 cameraPosition, float turretRotation, float aspectRatio) {
+        if (!float.IsFinite(aspectRatio) || aspectRatio <= 0f)
+            throw new ArgumentOutOfRangeException(nameof(aspectRatio), aspectRatio, "POV camera aspect ratio must be positive and finite.");
+
+        var cameraRotation = -turretRotation;
+        var view = Matrix.CreateLookAt(
+            cameraPosition,
+            cameraPosition + new Vector2(0, 20).Rotate(cameraRotation).ExpandZ(),
+            Vector3.Up
+        ) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateTranslation(0, -20, 0);
+        var projection = Matrix.CreatePerspectiveFieldOfView(
+            MathHelper.ToRadians(90), aspectRatio, 0.1f, 10000f);
+        return new PovCameraState(view, projection, cameraPosition);
+    }
 
     public static void Initialize(GraphicsDevice device) {
         RebirthFreecam = new(device);
