@@ -258,7 +258,8 @@ public static partial class MainMenuUI {
         POVMode = new("POV Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "Play the game in the POV of your tank!" +
-            "\nYou can move around inter-directionally with WASD, and aim by dragging the mouse.",
+            "\nIn Local Co-op, P1 plays on top and P2 below in horizontal split-screen." +
+            "\nP1 aims with the mouse; P2 turns with Left/Right arrows.",
             OnLeftClick = (elem) => Difficulties.Types["POV"] = !Difficulties.Types["POV"]
         };
         AiCompanion = new("AI Companion", font, Color.White) {

@@ -96,6 +96,20 @@ public sealed class LocalCoopPovPolicyTests {
     }
 
     [Fact]
+    public void ActivePlayerHudShowsKillsAndEnemies() {
+        Assert.Equal(
+            "P1   K 3   ENEMIES 7",
+            LocalCoopPovPolicy.BuildHudText(0, kills: 3, enemies: 7, down: false, spectatingPlayerId: 0));
+    }
+
+    [Fact]
+    public void DestroyedPlayerHudShowsSpectatingTarget() {
+        Assert.Equal(
+            "P2   K 1   ENEMIES 4   DOWN - SPECTATING P1",
+            LocalCoopPovPolicy.BuildHudText(1, kills: 1, enemies: 4, down: true, spectatingPlayerId: 0));
+    }
+
+    [Fact]
     public void PovCameraFactoryProducesFiniteMatrices() {
         var camera = CameraGlobals.CreatePovCamera(new Vector2(10, 20), MathHelper.PiOver4, 16f / 5f);
 

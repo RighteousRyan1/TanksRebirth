@@ -905,8 +905,14 @@ public class TankGame : Game {
 
         var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults;
         if (shouldSeeInfo) {
-            GameSceneUI.DrawScores();
-            GameSceneUI.DrawMissionInfoBar();
+            if (LocalCoopPovRenderedThisFrame) {
+                var layout = LocalCoopPovPolicy.CreateHorizontalLayout(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
+                GameSceneUI.DrawLocalCoopPovOverlay(layout);
+            }
+            else {
+                GameSceneUI.DrawScores();
+                GameSceneUI.DrawMissionInfoBar();
+            }
         }
 
         SpriteRenderer.End();

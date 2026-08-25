@@ -1,4 +1,5 @@
 using System;
+using FontStashSharp;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
@@ -11,6 +12,7 @@ using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.LocalCoop;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -74,6 +76,49 @@ public static class GameSceneUI {
         DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
             Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale).ToResolution(),
             alpha, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
+    }
+
+    public static void DrawLocalCoopPovOverlay(LocalCoopPovLayout layout) {
+        var dividerThickness = Math.Max(2, (int)3f.ToResolutionY());
+        var dividerY = layout.PlayerTwo.Y - dividerThickness / 2;
+        TankGame.SpriteRenderer.Draw(
+            TextureGlobals.Pixels[Color.White],
+            new Rectangle(0, dividerY, WindowUtils.WindowWidth, dividerThickness),
+            Color.Black);
+
+        DrawLocalCoopPovPlayerLabel(0, layout.PlayerOne);
+        DrawLocalCoopPovPlayerLabel(1, layout.PlayerTwo);
+    }
+
+    private static void DrawLocalCoopPovPlayerLabel(int playerId, Rectangle viewport) {
+        var resolvedTank = LocalCoopPovRuntime.ResolveCameraTank(playerId);
+        var spectatingPlayerId = resolvedTank?.PlayerId ?? playerId;
+        var text = LocalCoopPovPolicy.BuildHudText(
+            playerId,
+            PlayerTank.KillCounts[playerId],
+            AIManager.CountAll(),
+            LocalCoopPovRuntime.IsPlayerDown(playerId),
+            spectatingPlayerId);
+        var color = PlayerID.PlayerTankColors[playerId];
+        var scale = new Vector2(0.32f).ToResolution();
+        var inset = new Vector2(16f.ToResolutionX(), 12f.ToResolutionY());
+        var position = new Vector2(viewport.X, viewport.Y) + inset;
+        var measured = FontGlobals.RebirthFontLarge.MeasureString(text) * scale;
+        var padding = new Vector2(10f.ToResolutionX(), 6f.ToResolutionY());
+        var background = new Rectangle(
+            (int)(position.X - padding.X),
+            (int)(position.Y - padding.Y),
+            (int)(measured.X + padding.X * 2),
+            (int)(measured.Y + padding.Y * 2));
+
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], background, Color.Black * 0.62f);
+        TankGame.SpriteRenderer.DrawString(
+            FontGlobals.RebirthFontLarge,
+            text,
+            position + new Vector2(2f).ToResolution(),
+            Color.Black,
+            scale);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, text, position, color, scale);
     }
 
     // helpers

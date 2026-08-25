@@ -35,6 +35,18 @@ public static class LocalCoopPovPolicy {
     public static bool ShouldRecreateTarget(Point currentSize, bool disposed, Point desiredSize) =>
         disposed || currentSize != desiredSize;
 
+    public static string BuildHudText(int playerId, int kills, int enemies, bool down, int spectatingPlayerId) {
+        if (playerId is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(playerId), playerId, "Only local players 0 and 1 are supported.");
+        if (spectatingPlayerId is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(spectatingPlayerId), spectatingPlayerId, "Only local players 0 and 1 are supported.");
+
+        var text = $"P{playerId + 1}   K {kills}   ENEMIES {enemies}";
+        if (down)
+            text += $"   DOWN - SPECTATING P{spectatingPlayerId + 1}";
+        return text;
+    }
+
     public static int ResolveCameraPlayerId(
         int requestedPlayerId,
         bool playerOneAvailable,

@@ -146,8 +146,6 @@ public static partial class MainMenuUI
         PlayButton_LocalCoop.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
         PlayButton_LocalCoop.OnLeftClick = (uiElement) => {
             LocalGameSession.Current.StartLocalCoop();
-            if (Difficulties.Types["POV"])
-                Difficulties.Types["POV"] = false;
             SetCampaignDisplay();
             MenuState = UIState.Campaigns;
         };
