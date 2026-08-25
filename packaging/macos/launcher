@@ -1,9 +1,0 @@
-#!/bin/zsh
-set -eu
-contents_dir="${0:A:h:h}"
-game_dir="$contents_dir/Resources/game"
-export DOTNET_ROOT="$game_dir/.dotnet-x64"
-export DOTNET_ROOT_X64="$game_dir/.dotnet-x64"
-export DYLD_LIBRARY_PATH="$game_dir${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
-cd "$game_dir"
-exec arch -x86_64 "$game_dir/.dotnet-x64/dotnet" "$game_dir/TanksRebirth.dll"
