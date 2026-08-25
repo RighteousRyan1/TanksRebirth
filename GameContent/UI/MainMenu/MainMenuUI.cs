@@ -98,7 +98,7 @@ public static partial class MainMenuUI
         InitializeMain(font);
         InitializeMP(font);
 
-        _menuElements = [PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton,
+        _menuElements = [PlayButton, PlayButton_SinglePlayer, PlayButton_LocalCoop, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton,
             CreateServerButton, UsernameInput, IPInput, PortInput, PasswordInput, ServerNameInput,
             DifficultiesButton ];
 

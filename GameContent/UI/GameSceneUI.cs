@@ -1,3 +1,5 @@
+using System;
+using FontStashSharp;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
@@ -9,6 +11,8 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.LocalCoop;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -17,7 +21,7 @@ public static class GameSceneUI {
         // put any initialization logic here if needed
     }
     public static void DrawScores() {
-        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : 1;
+        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : LocalGameSession.Current.PlayerCount;
         for (int i = 0; i < drawCount; i++) {
 
             float y = WindowUtils.WindowHeight * 0.9f;
@@ -25,7 +29,25 @@ public static class GameSceneUI {
 
             if (i >= 2) y -= WindowUtils.WindowHeight * 0.1f;
 
-            DrawScore(PlayerID.PlayerTankColors[i], PlayerTank.KillCounts[i], y, flipSide: flip, scale: 2f);
+            if (Client.IsConnected()) {
+                DrawScore(PlayerID.PlayerTankColors[i], PlayerTank.KillCounts[i], y, flipSide: flip, scale: 2f);
+                continue;
+            }
+
+            var statusText = LocalCampaignRules.ShouldUseLives(LocalGameSession.Current)
+                ? $"P{i + 1}  K {PlayerTank.KillCounts[i]}  L {PlayerTank.Lives[i]}"
+                : $"P{i + 1}  K {PlayerTank.KillCounts[i]}";
+            var sideLaneWidth = WindowUtils.WindowWidth * 0.22f;
+            var edgeInset = 20f.ToResolutionX();
+            var baseTextScale = 0.375f * 2f.ToResolutionY();
+            var measuredTextWidth = FontGlobals.RebirthFontLarge.MeasureString(statusText).X * baseTextScale;
+            var maxTextWidth = sideLaneWidth - edgeInset * 2f;
+            var textScaleFactor = Math.Min(1f, maxTextWidth / measuredTextWidth);
+            var textX = flip ? WindowUtils.WindowWidth - edgeInset : edgeInset;
+            var textAnchor = flip ? Anchor.RightCenter : Anchor.LeftCenter;
+
+            DrawScore(PlayerID.PlayerTankColors[i], statusText, y, flipSide: flip, scale: 2f,
+                pertrusion: sideLaneWidth, textX: textX, textAnchor: textAnchor, textScaleFactor: textScaleFactor);
         }
     }
     public static void DrawMissionInfoBar() {
@@ -39,7 +61,7 @@ public static class GameSceneUI {
             LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
         var infoMeasure = font.MeasureString(missionInfo) * infoScale;
         var infoScaling = 1f - ((float)missionInfo.Length / LevelEditorUI.MAX_MISSION_CHARS) + 0.4f;
-        var tanksRemaining = $"× {AIManager.CountAll()}";
+        var tanksRemaining = $"Ã— {AIManager.CountAll()}";
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
             Vector2.UnitY, IntermissionSystem.BannerColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
@@ -56,8 +78,56 @@ public static class GameSceneUI {
             alpha, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
     }
 
+    public static void DrawLocalCoopPovOverlay(LocalCoopPovLayout layout) {
+        var dividerThickness = Math.Max(2, (int)3f.ToResolutionY());
+        var dividerY = layout.PlayerTwo.Y - dividerThickness / 2;
+        TankGame.SpriteRenderer.Draw(
+            TextureGlobals.Pixels[Color.White],
+            new Rectangle(0, dividerY, WindowUtils.WindowWidth, dividerThickness),
+            Color.Black);
+
+        DrawLocalCoopPovPlayerLabel(0, layout.PlayerOne);
+        DrawLocalCoopPovPlayerLabel(1, layout.PlayerTwo);
+    }
+
+    private static void DrawLocalCoopPovPlayerLabel(int playerId, Rectangle viewport) {
+        var resolvedTank = LocalCoopPovRuntime.ResolveCameraTank(playerId);
+        var spectatingPlayerId = resolvedTank?.PlayerId ?? playerId;
+        var text = LocalCoopPovPolicy.BuildHudText(
+            playerId,
+            PlayerTank.KillCounts[playerId],
+            AIManager.CountAll(),
+            LocalCoopPovRuntime.IsPlayerDown(playerId),
+            spectatingPlayerId);
+        var color = PlayerID.PlayerTankColors[playerId];
+        var scale = new Vector2(0.32f).ToResolution();
+        var inset = new Vector2(16f.ToResolutionX(), 12f.ToResolutionY());
+        var position = new Vector2(viewport.X, viewport.Y) + inset;
+        var measured = FontGlobals.RebirthFontLarge.MeasureString(text) * scale;
+        var padding = new Vector2(10f.ToResolutionX(), 6f.ToResolutionY());
+        var background = new Rectangle(
+            (int)(position.X - padding.X),
+            (int)(position.Y - padding.Y),
+            (int)(measured.X + padding.X * 2),
+            (int)(measured.Y + padding.Y * 2));
+
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], background, Color.Black * 0.62f);
+        TankGame.SpriteRenderer.DrawString(
+            FontGlobals.RebirthFontLarge,
+            text,
+            position + new Vector2(2f).ToResolution(),
+            Color.Black,
+            scale);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, text, position, color, scale);
+    }
+
     // helpers
     private static void DrawScore(Color color, int score, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
+        DrawScore(color, score.ToString(), y, flipSide, scale, pertrusion);
+    }
+
+    private static void DrawScore(Color color, string statusText, float y, bool flipSide = false, float scale = 1f,
+        float pertrusion = 90, float? textX = null, Anchor textAnchor = Anchor.Center, float textScaleFactor = 1f) {
         color = ColorUtils.ChangeColorBrightness(color, 0.25f);
         var brighterColor = ColorUtils.ChangeColorBrightness(color, 0.5f);
 
@@ -123,9 +193,10 @@ public static class GameSceneUI {
 
         DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, 
             // draws the text on the right side of the screen
-            new Vector2(flipSide ? pertrusionReal + 10 : pertrusionReal - 10,
+            new Vector2(textX ?? (flipSide ? pertrusionReal + 10 : pertrusionReal - 10),
             y - 7f * scale),
-            Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.375f * scale), 1f, shadowAlpha: 0.5f);
+            Vector2.One, statusText, brighterColor, color, new Vector2(0.375f * scale * textScaleFactor), 1f,
+            textAnchor, shadowAlpha: 0.5f);
     }
 
     // pretty sure this doesn't work.

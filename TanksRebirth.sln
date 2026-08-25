@@ -10,6 +10,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F82F573E-8D5A-4461-80A3-56AA834B0B29}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TanksRebirth.Tests", "Tests\TanksRebirth.Tests\TanksRebirth.Tests.csproj", "{44ED7B77-1C84-4EE8-AEE5-F0FD47778EDF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,11 +24,18 @@ Global
 		{FABEBD2F-4DF3-41F7-804C-00CD771E35E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FABEBD2F-4DF3-41F7-804C-00CD771E35E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FABEBD2F-4DF3-41F7-804C-00CD771E35E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44ED7B77-1C84-4EE8-AEE5-F0FD47778EDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44ED7B77-1C84-4EE8-AEE5-F0FD47778EDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44ED7B77-1C84-4EE8-AEE5-F0FD47778EDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44ED7B77-1C84-4EE8-AEE5-F0FD47778EDF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5B64E3A-2E8A-4AC3-BA73-322C4F4FF9B6}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{44ED7B77-1C84-4EE8-AEE5-F0FD47778EDF} = {F82F573E-8D5A-4461-80A3-56AA834B0B29}
 	EndGlobalSection
 EndGlobal

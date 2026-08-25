@@ -24,6 +24,7 @@ using TanksRebirth.Graphics.Metrics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.LocalCoop;
 
 namespace TanksRebirth.GameContent;
 
@@ -117,7 +118,14 @@ public class GameHandler {
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
         GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
-        if (InputUtils.KeyJustPressed(Keys.I)) {
+        var debugShellKeyPressed = InputUtils.KeyJustPressed(Keys.I);
+        if (LocalControlPolicy.ShouldRunLegacyDebugShellShortcut(
+            DebugManager.DebuggingEnabled,
+            DebugManager.DebugLevel,
+            Client.IsConnected(),
+            LocalGameSession.Current.IsLocalCoop,
+            LevelEditorUI.IsActive,
+            debugShellKeyPressed)) {
             new Shell(new Vector2(0, 100), -Vector2.UnitY * 2, ShellID.Standard, null);
             new Shell(new Vector2(MouseUtils.Test.X * 10, -100), Vector2.UnitY * 2, ShellID.Standard, null);
         }
@@ -204,10 +212,10 @@ public class GameHandler {
         OnPostUpdate?.Invoke();
     }
 
-    internal static void RenderAll() {
+    internal static void RenderAll(bool includeSharedHud = true) {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-        if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
+        if (includeSharedHud && !MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
             ExperienceBar.Position = new(WindowUtils.WindowWidth / 2 - ExperienceBar.Scale.X / 2, 50);
             ExperienceBar.Scale = new(600, 20);
             ExperienceBar.Alignment = Anchor.LeftCenter;
