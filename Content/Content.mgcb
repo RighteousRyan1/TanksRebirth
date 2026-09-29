@@ -746,6 +746,12 @@
 /processorParam:DebugMode=Auto
 /build:Assets/shaders/lantern.fx
 
+#begin Assets/shaders/tank.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/shaders/tank.fx
+
 #begin Assets/shaders/mouse.fx
 /importer:EffectImporter
 /processor:EffectProcessor

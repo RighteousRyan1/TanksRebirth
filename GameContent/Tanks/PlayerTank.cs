@@ -122,7 +122,7 @@ public class PlayerTank : Tank {
 
     /// <summary>The input method of this player.</summary>
     public PlayerInput InputMethod = PlayerInput.KBM;
-    
+
     /// <summary>The desired direction of the player tank, given the player's current input.</summary>
     public Vector2 DesiredDirection;
     /// <summary>The minimum magnitude of the left stick for movement.</summary>
@@ -264,7 +264,7 @@ public class PlayerTank : Tank {
         }
 
         DesiredDirection = Vector2.Zero;
-       
+
         // base.Update used to be here
 
         if (LevelEditorUI.IsActive || IsDestroyed) return;
@@ -561,7 +561,7 @@ public class PlayerTank : Tank {
             if (context.Source is not PlayerTank player) return;
 
             // only increment these data values on the destroyed player's system
-            // ensure the source tank is 
+            // ensure the source tank is
             if (NetPlay.IsClientMatched(player.PlayerId)) {
                 TankGame.SaveFile.Suicides++;
                 PlayerStatistics.Suicides++;
@@ -743,31 +743,43 @@ public class PlayerTank : Tank {
         DrawExtras(TankGame.SpriteRenderer);
         if (Properties.Invisible && CampaignGlobals.InMission) return;
         foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
-            foreach (BasicEffect effect in mesh.Effects) {
-                if (!Properties.HasTurret)
-                    if (mesh.Name == "Cannon")
-                        continue;
+            if (!Properties.HasTurret && mesh.Name == "Cannon")
+                continue;
 
-                effect.World = boneTransforms[mesh.ParentBone.Index];
-                effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
-                effect.TextureEnabled = true;
-
-                if (mesh.Name == "Shadow") {
-                    if (!CommandGlobals.DrawMeshShadows)
-                        continue;
+            var world = boneTransforms[mesh.ParentBone.Index];
+            if (mesh.Name == "Shadow") {
+                if (!CommandGlobals.DrawMeshShadows)
+                    continue;
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.World = world;
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
+                    effect.TextureEnabled = true;
                     effect.Alpha = DrawParamsTank.ShadowAlpha;
                     effect.Texture = DrawParamsTank.ShadowTexture;
-                    mesh.Draw();
-                    continue;
                 }
-
-                effect.Alpha = DrawParamsTank.TankAlpha;
-                effect.Texture = DrawParamsTank.TankTexture;
-
-                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                mesh.Draw();
+                continue;
             }
-            mesh.Draw();
+
+            if (UsesCustomModel) {
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.World = world;
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
+                    effect.TextureEnabled = true;
+                    effect.Alpha = DrawParamsTank.TankAlpha;
+                    effect.Texture = DrawParamsTank.TankTexture;
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower,
+                        DrawParams.UsePhong, DrawParams.LightDirection);
+                }
+                mesh.Draw();
+            }
+            else {
+                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Projection,
+                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, DrawParams.LightDirection,
+                    PlayerType == PlayerID.Blue);
+            }
         }
     }
     static readonly Dictionary<int, float[]> _bulletAnimationStates = [];
@@ -841,14 +853,14 @@ public class PlayerTank : Tank {
                 float yPos = bulletStartY + i * (offY + spacing);
                 var position = new Vector2(xPos, yPos);
 
-                DrawUtils.DrawTextureWithBorder(spriteBatch, tex, position, colorToUse, 
+                DrawUtils.DrawTextureWithBorder(spriteBatch, tex, position, colorToUse,
                     Color.White * smoothedValue, new Vector2(currentScale).ToResolution(), 0f, Anchor.Center, borderThickness: shellCountScale + 0.5f);
             }
         }
 
         // a bit hardcoded but whatever
-        bool needClarification = 
-            !MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0 
+        bool needClarification =
+            !MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0
             || MainMenuUI.MenuState == MainMenuUI.UIState.Multiplayer;
 
         //  && PlayerId < Server.CurrentClientCount
@@ -873,7 +885,7 @@ public class PlayerTank : Tank {
             //string pText = "nerd";
             var scale = 0.3f;
 
-            string pText = Client.IsConnected() ? 
+            string pText = Client.IsConnected() ?
                 Server.ConnectedClients![PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
 
             TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, Anchor.BottomCenter.GetAnchor(tex1.Size()), scale.ToResolution(), default, default);

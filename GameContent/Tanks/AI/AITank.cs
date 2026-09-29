@@ -268,7 +268,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             // NO DISPOSING FOR NOW, it causes weird BUGS with modded tanks.... WACK!
             // _tankTexture?.Dispose();
         }
-        // Physics.OnCollision -= Physics_OnCollision; 
+        // Physics.OnCollision -= Physics_OnCollision;
         base.Remove(nullifyMe);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
@@ -515,21 +515,20 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (Properties.Invisible && (MainMenuUI.IsActive || CampaignGlobals.InMission)) return;
 
         foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
-            foreach (BasicEffect effect in mesh.Effects) {
-                if (!Properties.HasTurret)
-                    if (mesh.Name == "Cannon")
-                        continue;
+            if (!Properties.HasTurret && mesh.Name == "Cannon")
+                continue;
 
-                effect.World = boneTransforms[mesh.ParentBone.Index];
-                effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
-
-                effect.TextureEnabled = true;
-
-                if (mesh.Name == "Shadow") {
-                    if (!CommandGlobals.DrawMeshShadows) continue;
+            var world = boneTransforms[mesh.ParentBone.Index];
+            if (mesh.Name == "Shadow") {
+                if (!CommandGlobals.DrawMeshShadows) continue;
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.World = world;
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
+                    effect.TextureEnabled = true;
                     effect.Texture = DrawParamsTank.ShadowTexture;
                     effect.Alpha = DrawParamsTank.ShadowAlpha;
+                }
                     mesh.Draw();
                     continue;
                 }
@@ -545,11 +544,22 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 }*/
                 // ^ old testing stuff
 
-                effect.Alpha = DrawParamsTank.TankAlpha;
-                effect.Texture = DrawParamsTank.TankTexture;
-
-                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
-                mesh.Draw();
+            if (UsesCustomModel) {
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.World = world;
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
+                    effect.TextureEnabled = true;
+                    effect.Texture = DrawParamsTank.TankTexture;
+                    effect.Alpha = DrawParamsTank.TankAlpha;
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower,
+                        DrawParams.UsePhong, DrawParams.LightDirection);
+                    mesh.Draw();
+                }
+            }
+            else {
+                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Projection,
+                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, DrawParams.LightDirection);
             }
         }
     }
@@ -618,7 +628,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     void DrawExtras() {
         if (IsDestroyed || IgnoreRegister) return;
 
-        if (TankAI is not VanillaAISystem vais) return; 
+        if (TankAI is not VanillaAISystem vais) return;
 
         // did j ever make any good programming choices before this past year or so?
         // this code looks like it was written by a 12 year old with a broken arm - GitHub Copilot
