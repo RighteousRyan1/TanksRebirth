@@ -16,6 +16,8 @@ public class GameShaders {
     public static Effect GaussianBlurShader { get; private set; }
     public static Effect LanternShader { get; private set; }
     public static Effect AnimatedRainbow { get; private set; }
+    public static Effect OriginalTankShader { get; private set; }
+    public static Texture2D BlueTankEnvironment { get; private set; }
 
     public static float BlurFactor = 0.0075f;
 
@@ -23,6 +25,38 @@ public class GameShaders {
         GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/shaders/gaussian_blur");
         LanternShader = GameResources.GetGameResource<Effect>("Assets/shaders/lantern");
         AnimatedRainbow = GameResources.GetGameResource<Effect>("Assets/shaders/rainbow_grad_anim");
+        OriginalTankShader = GameResources.GetGameResource<Effect>("Assets/shaders/tank");
+        BlueTankEnvironment = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/tnk_tank_env");
+    }
+
+    public static void DrawTankMesh(ModelMesh mesh, Matrix world, Matrix view, Matrix projection,
+        Texture2D texture, float opacity, bool useEnvironment = false) {
+        var worldView = world * view;
+        OriginalTankShader.Parameters["WorldView"].SetValue(worldView);
+        OriginalTankShader.Parameters["NormalMatrix"].SetValue(Matrix.Transpose(Matrix.Invert(worldView)));
+        OriginalTankShader.Parameters["Projection"].SetValue(projection);
+        OriginalTankShader.Parameters["LightPosition"].SetValue(
+            Vector3.TransformNormal(Vector3.UnitY, view) * 1e10f);
+        OriginalTankShader.Parameters["Opacity"].SetValue(opacity);
+        OriginalTankShader.Parameters["HasEnvironment"].SetValue(useEnvironment ? 1f : 0f);
+        OriginalTankShader.Parameters["EnvironmentStrength"].SetValue(useEnvironment ? 1f : 0f);
+        OriginalTankShader.Parameters["DiffuseTexture"].SetValue(texture);
+        OriginalTankShader.Parameters["EnvironmentTexture"].SetValue(BlueTankEnvironment);
+
+        var parts = mesh.MeshParts.ToArray();
+        var originalEffects = parts.Select(part => part.Effect).ToArray();
+        try {
+            foreach (var part in parts)
+                part.Effect = OriginalTankShader;
+
+            TankGame.Instance.GraphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
+            TankGame.Instance.GraphicsDevice.SamplerStates[1] = SamplerState.LinearClamp;
+            mesh.Draw();
+        }
+        finally {
+            for (int i = 0; i < parts.Length; i++)
+                parts[i].Effect = originalEffects[i];
+        }
     }
     //static float val = 1f;
     public static void UpdateShaders() {
