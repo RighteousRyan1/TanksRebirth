@@ -1,9 +1,10 @@
 float4x4 WorldView;
 float4x4 NormalMatrix;
 float4x4 Projection;
-float3 LightDirection;
-float Opacity;
+float3 LightPosition;
 float HasEnvironment;
+float EnvironmentStrength;
+float Opacity;
 texture DiffuseTexture;
 texture EnvironmentTexture;
 
@@ -31,41 +32,53 @@ struct VertexInput
 {
     float4 Position : POSITION0;
     float3 Normal : NORMAL0;
+    float4 Color : COLOR0;
     float2 Uv : TEXCOORD0;
 };
 
-struct VertexOutput
+struct PixelInput
 {
     float4 Position : POSITION0;
-    float3 Normal : TEXCOORD1;
+    float4 Color : COLOR0;
     float2 Uv : TEXCOORD0;
-    float2 EnvironmentUv : TEXCOORD2;
+    float2 EnvironmentUv : TEXCOORD1;
 };
 
-VertexOutput Transform(VertexInput input)
+PixelInput Transform(VertexInput input)
 {
-    VertexOutput output;
-    float4 viewPosition = mul(input.Position, WorldView);
-    output.Position = mul(viewPosition, Projection);
+    PixelInput output;
+    float4 position = mul(input.Position, WorldView);
     float3 normal = normalize(mul(float4(input.Normal, 0), NormalMatrix).xyz);
-    output.Normal = normal;
+    float diffuse = max(0, dot(normal, normalize(LightPosition - position.xyz)));
+
+    // Match the port's vertex light/material quantization before interpolation.
+    int light = min(255, 100 + (int)round(255 * diffuse));
+    int3 material = (int3)round(input.Color.rgb * 255);
+    output.Color = float4((material * (light + (light / 128))) / 256 / 255.0, input.Color.a);
+    output.Position = mul(position, Projection);
     output.Uv = input.Uv;
-    output.EnvironmentUv = float2(0.5 + 0.5 * normal.x, 0.5 - 0.5 * normal.y);
+    output.EnvironmentUv = float2(0.5 * normal.x + 0.5, 0.5 - 0.5 * normal.y);
     return output;
 }
 
-float4 Shade(VertexOutput input) : COLOR0
+int4 MultiplyTev(int4 value, int4 weight)
 {
-    float diffuse = max(0, dot(normalize(input.Normal), normalize(LightDirection)));
-    float lighting = saturate(100.0 / 255.0 + diffuse);
-    float4 color = tex2D(DiffuseSampler, input.Uv);
-    float3 result = color.rgb * lighting;
+    return (value * (weight + (weight / 128)) + 128) / 256;
+}
+
+float4 Shade(PixelInput input) : COLOR0
+{
+    int4 sample = (int4)floor(saturate(tex2D(DiffuseSampler, input.Uv)) * 255 + 0.5);
+    int4 raster = (int4)floor(saturate(input.Color) * 255 + 0.5);
+    int4 color = MultiplyTev(sample, raster);
     if (HasEnvironment > 0.5)
     {
-        float3 environment = tex2D(EnvironmentSampler, input.EnvironmentUv).rgb;
-        result += environment * float3(177.0, 165.0, 129.0) / 255.0;
+        int4 environment = (int4)floor(saturate(tex2D(EnvironmentSampler, input.EnvironmentUv)) * 255 + 0.5);
+        int3 reflection = MultiplyTev(environment, int4(177, 165, 129, 0)).rgb;
+        color.rgb += (int3)round(reflection * EnvironmentStrength);
     }
-    return float4(saturate(result), color.a * Opacity);
+    color.a = (int)round(color.a * Opacity);
+    return clamp(color, 0, 255) / 255.0;
 }
 
 technique Tank

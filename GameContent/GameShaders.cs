@@ -30,17 +30,16 @@ public class GameShaders {
     }
 
     public static void DrawTankMesh(ModelMesh mesh, Matrix world, Matrix view, Matrix projection,
-        Texture2D texture, float opacity, Vector3 lightDirection, bool useEnvironment = false) {
-        if (lightDirection == Vector3.Zero)
-            lightDirection = Vector3.Down;
+        Texture2D texture, float opacity, bool useEnvironment = false) {
         var worldView = world * view;
         OriginalTankShader.Parameters["WorldView"].SetValue(worldView);
         OriginalTankShader.Parameters["NormalMatrix"].SetValue(Matrix.Transpose(Matrix.Invert(worldView)));
         OriginalTankShader.Parameters["Projection"].SetValue(projection);
-        OriginalTankShader.Parameters["LightDirection"].SetValue(
-            Vector3.TransformNormal(-lightDirection, view));
+        OriginalTankShader.Parameters["LightPosition"].SetValue(
+            Vector3.TransformNormal(Vector3.UnitY, view) * 1e10f);
         OriginalTankShader.Parameters["Opacity"].SetValue(opacity);
         OriginalTankShader.Parameters["HasEnvironment"].SetValue(useEnvironment ? 1f : 0f);
+        OriginalTankShader.Parameters["EnvironmentStrength"].SetValue(useEnvironment ? 1f : 0f);
         OriginalTankShader.Parameters["DiffuseTexture"].SetValue(texture);
         OriginalTankShader.Parameters["EnvironmentTexture"].SetValue(BlueTankEnvironment);
 
