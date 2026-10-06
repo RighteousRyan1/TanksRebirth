@@ -72,8 +72,8 @@ public static class GameScene {
     };
 
     public static void LoadTexturePack(string folder) {
-        LoadVanillaTextures();
         if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase)) {
+            LoadVanillaTextures(); // why was this before the check?
             TankGame.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
             return;
         }
@@ -237,16 +237,11 @@ public static class GameScene {
                         if (mesh.Name.Contains("outer", StringComparison.InvariantCultureIgnoreCase)) {
                             continue;
                         }
-                        else if (mesh.Name.Contains("shadow", StringComparison.InvariantCultureIgnoreCase)) {
-                            TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
-                        }
 
                         foreach (BasicEffect effect in mesh.Effects) {
-
                             effect.View = DrawParams.View;
                             effect.Projection = DrawParams.Projection;
                             effect.World = DrawParams.World;
-                            effect.VertexColorEnabled = true;
 
                             if (UseCustomSceneColor) {
                                 effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
@@ -255,10 +250,17 @@ public static class GameScene {
                                 continue;
                             }
 
+                            effect.VertexColorEnabled = true;
+
                             if (mesh.Name == "polygon2")
                                 effect.Alpha = 0.1f;
                             else
                                 effect.Alpha = 1f;
+
+                            if (mesh.Name.Contains("shadow", StringComparison.InvariantCultureIgnoreCase)) {
+                                TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
+                                effect.Alpha = 0.39f;
+                            }
 
                             effect.SetDefaultGameLighting();
                         }
@@ -304,12 +306,12 @@ public static class GameScene {
             foreach (BasicEffect effect in mesh.Effects)
                 effect.Texture = Assets[context.ToString()];
         }
-        private static void SetBlockTexture(ModelMesh mesh, string textureName) {
+        static void SetBlockTexture(ModelMesh mesh, string textureName) {
             foreach (BasicEffect effect in mesh.Effects)
                 effect.Texture = Assets[textureName.ToString()];
         }
 
-        private enum BoundaryTextureContext {
+        enum BoundaryTextureContext {
             block_other_a,
             block_other_b,
             block_other_c,

@@ -162,6 +162,29 @@ public static class CommandGlobals {
                 // ControlsUI.Initialize();
             }
         }),
+        [new CommandInput(name: "pack_scene", description: "Set the game's scene resource pack, and hot-reloads it.")] = new CommandOutput(netSync: false, false, (args) => {
+            var pack = args[0];
+
+            var path = Path.Combine(TankGame.SaveDirectory, "Resource Packs", "Scene", pack);
+            var exists = Directory.Exists(path);
+            if (exists) {
+                TankGame.Settings.MapPack = pack;
+                GameScene.LoadTexturePack(pack);
+                GameScene.BoundsRenderer.SetBoundTextureDefaults();
+
+                foreach (var b in Block.AllBlocks) b?.AssignAssets(b.Type);
+
+                TankGame.IngameConsole.Log($"Loaded '{pack}' from resource pack list.", Color.Lime);
+            }
+            else if (pack.Equals("vanilla", StringComparison.InvariantCultureIgnoreCase)) {
+                TankGame.Settings.MapPack = pack;
+                GameScene.LoadVanillaTextures();
+                GameScene.BoundsRenderer.SetBoundTextureDefaults();
+            }
+            else {
+                TankGame.IngameConsole.Log($"No scene folder '{pack}' exists in resource pack list.", Color.Red);
+            }
+        }),
         [new CommandInput(name: "snd_mus", description: "Set music volume.")] = new CommandOutput(netSync: false, false, (args) => {
             TankGame.Settings.MusicVolume = float.Parse(args[0]);
             VolumeUI.MusicVolume.Value = TankGame.Settings.MusicVolume;

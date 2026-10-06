@@ -178,41 +178,8 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
     public void Swap(int type) {
         Type = type;
 
-        var model = GameScene.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack,
-            MapTheme.Christmas => IsAlternateModel ? ModelGlobals.BlockStackAltSnowy : ModelGlobals.BlockStackSnowy,
-            _ => throw new Exception()
-        };
-
-        switch (type) {
-            case BlockID.Wood:
-                Model = model.Asset;
-                Texture = GameScene.Assets["block.1"];
-                break;
-            case BlockID.Cork:
-                Model = model.Asset;
-                Texture = GameScene.Assets["block.2"];
-                break;
-            case BlockID.Hole:
-                Model = ModelGlobals.FlatFace.Asset;
-                Texture = GameScene.Assets["block_harf.1"];
-                break;
-            case BlockID.Teleporter:
-                Model = ModelGlobals.Teleporter.Asset;
-                Texture = GameScene.Assets["teleporter"];
-
-                TextureMap = new() {
-                    ["Button"] = Texture,
-                    ["Ring"] = TextureGlobals.Pixels[Color.Red]
-                };
-                break;
-        }
+        AssignAssets(type);
         Properties = GetProperties(type);
-
-        TextureMap ??= new() {
-            ["base"] = Texture,
-            ["snow"] = GameScene.Assets["snow"]
-        };
 
         if (Properties.HasShadow) {
             // fix this, but dont worry about it for now
@@ -239,6 +206,42 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         }
 
         ModdedData?.PostInitialize();
+    }
+
+    public void AssignAssets(int type) {
+        var model = GameScene.Theme switch {
+            MapTheme.Vanilla => IsAlternateModel ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack,
+            MapTheme.Christmas => IsAlternateModel ? ModelGlobals.BlockStackAltSnowy : ModelGlobals.BlockStackSnowy,
+            _ => throw new Exception()
+        };
+        switch (type) {
+            case BlockID.Wood:
+                Model = model.Asset;
+                Texture = GameScene.Assets["block.1"];
+                break;
+            case BlockID.Cork:
+                Model = model.Asset;
+                Texture = GameScene.Assets["block.2"];
+                break;
+            case BlockID.Hole:
+                Model = ModelGlobals.FlatFace.Asset;
+                Texture = GameScene.Assets["block_harf.1"];
+                break;
+            case BlockID.Teleporter:
+                Model = ModelGlobals.Teleporter.Asset;
+                Texture = GameScene.Assets["teleporter"];
+
+                TextureMap = new() {
+                    ["Button"] = Texture,
+                    ["Ring"] = TextureGlobals.Pixels[Color.Red]
+                };
+                break;
+        }
+
+        TextureMap ??= new() {
+            ["base"] = Texture,
+            ["snow"] = GameScene.Assets["snow"]
+        };
     }
 
     /// <summary>Construct a <see cref="Block"/>.</summary>
