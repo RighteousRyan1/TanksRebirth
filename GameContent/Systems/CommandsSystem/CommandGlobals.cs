@@ -31,8 +31,6 @@ namespace TanksRebirth.GameContent.Systems.CommandsSystem;
 
 // TODO: maybe implement command *assists*? where parameters are also suggested?
 public static class CommandGlobals {
-
-    private static PropertyInfo[] _playerPropertyInfoCache = null; // Cached PropertyInfo[] for the PlayerTank class. Used in changetankproperty
     public static bool AreCheatsEnabled;
 
     public static bool DrawMeshShadows = true;
