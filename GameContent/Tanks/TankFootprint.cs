@@ -65,13 +65,13 @@ public class TankFootprint {
         StencilDepthBufferFail = StencilOperation.Keep,
     };
 
-    public static TankFootprint Place(Tank? owner, float rotation, bool alt = false) {
+    public static TankFootprint Place(Tank? owner, float rotation, bool alt = false, Vector3? position = null) {
         if (owner == null) return null;
 
         if (FindFreeSlot() < 0)
             RemoveOldest();
 
-        return new(owner, rotation, alt);
+        return new(owner, rotation, alt, position);
     }
 
     static int FindFreeSlot() {
@@ -96,11 +96,11 @@ public class TankFootprint {
         oldest?.Remove();
     }
 
-    public TankFootprint(Tank owner, float rotation, bool alt = false) {
+    public TankFootprint(Tank owner, float rotation, bool alt = false, Vector3? position = null) {
         Rotation = rotation;
         alternate = alt;
         Owner = owner;
-        Position = owner.Position3D;
+        Position = position ?? owner.Position3D;
         Scale = owner.DrawParams.Scaling;
         Texture = alt ? TextureGlobals.FootprintThick : TextureGlobals.FootprintStandard;
 

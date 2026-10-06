@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
@@ -115,6 +116,12 @@ public static partial class LevelEditorUI {
             // i fear there's no better way to do this?
             var tnkDummy = new AITank(i, true, true);
             var tnkPart = EditorParticleSystem.MakeParticle(Vector3.Zero, tnkDummy.DrawParamsTank.Model, tnkDummy.DrawParamsTank.TankTexture);
+
+            // at some point
+            /*tnkPart.UniqueDraw = (p) => {
+                GameShaders.DrawTankMesh(mesh, tnkPart.po, EditorParticleSystem.SystemView, EditorParticleSystem.SystemProjection,
+                    tnkDummy.DrawParamsTank.TankTexture, tnkDummy.DrawParamsTank.TankAlpha, true);
+            };*/
             tnkDummy.Remove(true); // eradicate it after dummy init
 
             tnkPart.MeshesToIgnore = ["Shadow"];

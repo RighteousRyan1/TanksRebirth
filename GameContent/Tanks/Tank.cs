@@ -541,7 +541,9 @@ public abstract class Tank(bool ignoresRegister) {
         // try to make negative. go poopoo
         SetBoneTransforms();
 
-        static bool IsPeriodicTick(float period) =>
+        UpdateTreads();
+
+        /*static bool IsPeriodicTick(float period) =>
             period > 0f && RuntimeData.RunTime % period < RuntimeData.DeltaTime;
 
         if (!Properties.Stationary) {
@@ -581,8 +583,9 @@ public abstract class Tank(bool ignoresRegister) {
                     sfx.Instance.Pitch = Properties.TreadPitch;
                 }
             }
-        }
+        }*/
 
+        // hides cosmetics (i.e: in first person)
         var camDist = Vector3.Distance(CameraGlobals.RebirthFreecam.Position, Position3D + new Vector3(0, CameraGlobals.POV_CAM_OFFSET_Y, 0));
         CamTooClose = CameraGlobals.IsUsingFirstPersonCamera && camDist < 10;
 
@@ -750,12 +753,14 @@ public abstract class Tank(bool ignoresRegister) {
         GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 15);
     }
     /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
-    public virtual void LayFootprint(bool alt) {
+    public virtual void LayFootprint(bool alt) => LayFootprint(alt, Position, ChassisRotation);
+
+    /// <summary>Lay a <see cref="TankFootprint"/> at an explicit position and chassis rotation (used for sub-frame placement).</summary>
+    public virtual void LayFootprint(bool alt, Vector2 at, float chassisRotation) {
         if (!Properties.CanLayTread)
             return;
 
-        // will be TankRotation, Position, Scaling.FlattenZ()
-        var fp = TankFootprint.Place(this, -ChassisRotation, alt);
+        var fp = TankFootprint.Place(this, -chassisRotation, alt, at.ExpandZ());
         fp.Position += new Vector3(0, 0.15f, 0);
     }
 
@@ -1019,6 +1024,92 @@ public abstract class Tank(bool ignoresRegister) {
             }
         }
     }
+
+    Vector2 _treadLastPos;
+    float _treadLastRot;
+    // distance since last footprint
+    float _treadDist; 
+    bool _treadInit;
+
+    // world units between footprints
+    const float TREAD_SPACING = 11f * 0.55f; // slightly magical
+    // turns rotation into tread distance
+    const float TREAD_HALF_WIDTH = 8f;
+    // a number representing the max distance before distance is tossed out
+    const float TREAD_TELEPORT_DIST = 40f; 
+    const float TREAD_MIN_MOVE_SQ = 1e-6f;
+    const int TREAD_MAX_PER_FRAME = 8;
+
+    static readonly string[] TreadSounds = [
+        "Assets/sounds/tnk_tread_place_1.ogg", "Assets/sounds/tnk_tread_place_2.ogg",
+        "Assets/sounds/tnk_tread_place_3.ogg", "Assets/sounds/tnk_tread_place_4.ogg",
+    ];
+
+    // this is probably closer to what the original game did, which is a bit
+    // more complicated than my old logic but at least it got rid of all of the magic numbers lol
+    void UpdateTreads() {
+        if (Properties.Stationary) { _treadInit = false; return; }
+
+        Vector2 pos = Position;
+        float rot = ChassisRotation;
+        float scale = DrawParams.Scaling.X;
+        float spacing = TREAD_SPACING * scale;
+
+        if (!_treadInit) {
+            _treadInit = true;
+            _treadLastPos = pos;
+            _treadLastRot = rot;
+            _treadDist = Client.ClientRandom.NextFloat(0f, spacing); // de-syncs tanks (replaces the WorldId % 10 hack)
+            return;
+        }
+
+        // folds rotation into a [-pi/2, pi/2] constraint
+        float dRot = MathHelper.WrapAngle(rot - _treadLastRot);
+        if (dRot > MathHelper.PiOver2) dRot -= MathHelper.Pi;
+        else if (dRot < -MathHelper.PiOver2) dRot += MathHelper.Pi;
+
+        Vector2 delta = pos - _treadLastPos;
+        float distSq = delta.LengthSquared();
+
+        float teleport = TREAD_TELEPORT_DIST * scale;
+        if (distSq > teleport * teleport) {
+            _treadLastPos = pos;
+            _treadLastRot = rot;
+            return;
+        }
+
+        // only considers placement of footprint while the tank is actually being driven/moved
+
+        const float MIN_DRIVE = 1e-4f;
+        bool driving = Velocity.LengthSquared() > MIN_DRIVE;
+        float moved = driving && distSq > TREAD_MIN_MOVE_SQ ? MathF.Sqrt(distSq) : 0f;
+        float turned = MathF.Abs(dRot) * TREAD_HALF_WIDTH * scale;
+        float travelled = moved + turned;
+
+        if (travelled > MIN_DRIVE) {
+            bool thick = Properties.TrackType == TrackID.Thick;
+            int placed = 0;
+
+            // d = how far into this frame's travel the next print lands
+            for (float d = spacing - _treadDist; d <= travelled && placed < TREAD_MAX_PER_FRAME; d += spacing, placed++) {
+                float t = d / travelled;
+                LayFootprint(thick, _treadLastPos + delta * t, _treadLastRot + dRot * t);
+            }
+            _treadDist = (_treadDist + travelled) % spacing;
+
+            // at most one sound per update, however many prints landed
+            if (placed > 0 && !Properties.IsSilent) {
+                var sfx = SoundPlayer.PlaySoundInstance(
+                    TreadSounds[Client.ClientRandom.Next(TreadSounds.Length)],
+                    SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.TreadPitch);
+                sfx.Instance.Pitch = Properties.TreadPitch;
+            }
+        }
+
+        _treadLastPos = pos;
+        _treadLastRot = rot;
+    }
+
     /// <summary>Checks if this <see cref="Tank"/> is on the same team as the passed-in <see cref="TeamID"/> and is not on <see cref="TeamID.NoTeam"/>.</summary>
     public bool IsOnSameTeamAs(int otherTeam) => Team == otherTeam && Team != TeamID.NoTeam && otherTeam != TeamID.NoTeam;
     public virtual void Remove(bool nullifyMe) {
