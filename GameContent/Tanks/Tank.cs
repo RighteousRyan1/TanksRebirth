@@ -1030,6 +1030,7 @@ public abstract class Tank(bool ignoresRegister) {
     // distance since last footprint
     float _treadDist; 
     bool _treadInit;
+    float _treadSoundTimer;
 
     // world units between footprints
     const float TREAD_SPACING = 11f * 0.55f; // slightly magical
@@ -1039,6 +1040,7 @@ public abstract class Tank(bool ignoresRegister) {
     const float TREAD_TELEPORT_DIST = 40f; 
     const float TREAD_MIN_MOVE_SQ = 1e-6f;
     const int TREAD_MAX_PER_FRAME = 8;
+    const float TREAD_SOUND_INTERVAL = 4f;
 
     static readonly string[] TreadSounds = [
         "Assets/sounds/tnk_tread_place_1.ogg", "Assets/sounds/tnk_tread_place_2.ogg",
@@ -1060,6 +1062,7 @@ public abstract class Tank(bool ignoresRegister) {
             _treadLastPos = pos;
             _treadLastRot = rot;
             _treadDist = Client.ClientRandom.NextFloat(0f, spacing); // de-syncs tanks (replaces the WorldId % 10 hack)
+            _treadSoundTimer = Client.ClientRandom.NextFloat(0f, TREAD_SOUND_INTERVAL);
             return;
         }
 
@@ -1098,11 +1101,16 @@ public abstract class Tank(bool ignoresRegister) {
             _treadDist = (_treadDist + travelled) % spacing;
 
             // at most one sound per update, however many prints landed
-            if (placed > 0 && !Properties.IsSilent) {
-                var sfx = SoundPlayer.PlaySoundInstance(
-                    TreadSounds[Client.ClientRandom.Next(TreadSounds.Length)],
-                    SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.TreadPitch);
-                sfx.Instance.Pitch = Properties.TreadPitch;
+            if (travelled > 1e-4f && !Properties.IsSilent) {
+                _treadSoundTimer -= RuntimeData.DeltaTime;
+                if (_treadSoundTimer <= 0f) {
+                    _treadSoundTimer = MathF.Max(_treadSoundTimer + TREAD_SOUND_INTERVAL, 0f);
+
+                    var sfx = SoundPlayer.PlaySoundInstance(
+                        TreadSounds[Client.ClientRandom.Next(TreadSounds.Length)],
+                        SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.TreadPitch);
+                    sfx.Instance.Pitch = Properties.TreadPitch;
+                }
             }
         }
 
