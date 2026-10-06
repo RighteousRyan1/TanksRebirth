@@ -70,9 +70,7 @@ public partial struct VanillaAISystem {
     /// </summary>
     /// <param name="inputAngle">The input angle</param>
     /// <returns>The final/output rotation angle.</returns>
-    public static float GetRealAim(float inputAngle) {
-        return -inputAngle - MathHelper.PiOver2;
-    }
+    public static float GetRealAim(float inputAngle) => -inputAngle - MathHelper.PiOver2;
     /// <summary>Attempts to lay a mine based on various conditions and environmental factors.</summary>
     /// <remarks>This method evaluates multiple conditions to determine whether a mine can be laid, including:
     /// <list type="bullet"> <item>Whether the tank is capable of laying mines.</item> <item>Whether the mine limit has

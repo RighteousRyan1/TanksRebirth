@@ -35,7 +35,6 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
  * 1) Block stacks are essentially their own data structure, so more can be added
  * 2) LevelEditorTankElement - One for each enemy block. Will support mods
  * 3) LevelEditorTerrainElement - One for each obstacle. Will support mods
- * 4) Make these elements not textures, but rather rendered as their appropriate models with text underneath, for modularity
  * 5) When in the level editor, the GC gains ~10MB per second. Find out why. (Collections are often)
  */
 public static partial class LevelEditorUI {

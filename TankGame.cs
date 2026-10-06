@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text.Json;
 using System.Reflection;
@@ -191,6 +191,8 @@ public class TankGame : Game {
             PreferHalfPixelOffset = true,
             HardwareModeSwitch = false,
             IsFullScreen = false,
+            // stencil is used to stop overlapping tank tracks from stacking up
+            PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8,
         };
 
         Content.RootDirectory = "Content";

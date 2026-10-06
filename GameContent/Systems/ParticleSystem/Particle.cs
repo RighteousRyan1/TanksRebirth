@@ -12,7 +12,7 @@ using TanksRebirth.Graphics.Drawing;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
-// this needs an optimization... stat.
+// currently unused...
 public enum ParticleIntensity {
     None, // no particles at all
     Low, // Particles emit at 25% the frequency
@@ -118,9 +118,11 @@ public class Particle {
         Position = position;
         System = system;
 
-        Id = System.CurrentParticles.AddWithIndex(this);
-        // Console.WriteLine($"{Id} -- count: {System.CurrentParticles.Count}");
+        Id = System.Register(this);
     }
+
+    /// <summary>True once <see cref="Destroy"/> has been called. Destroyed particles are no longer updated or drawn.</summary>
+    public bool Destroyed { get; internal set; }
 
     public void Update() {
         UniqueBehavior?.Invoke(this);
@@ -189,21 +191,15 @@ public class Particle {
         //TankGame.SpriteRenderer.End();
         //TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
     }
-    // ahh yes... a draw call for every fucking particle. this code needs to be euthanized
-    internal void Draw(SpriteBatch spriteBatch) {
-        if (Model is not null) return;
-
-        // ignore render if not viewable
-        //if (CameraGlobals.ViewFrustum.Contains(Position) == ContainmentType.Disjoint)
-        //    return;
-
+    /// <summary>Draws a world-space text particle. Sprite (texture) particles are batched by <see cref="ParticleManager"/> instead.</summary>
+    /// <remarks>Expects the <see cref="SpriteBatch"/> to be *ended*; manages its own Begin/End.</remarks>
+    internal void DrawText3D(SpriteBatch spriteBatch) {
         Matrix world;
 
         if (FaceTowardsMe) {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateBillboard(Position,
                                             CameraGlobals.RebirthFreecam.Position,
-                                            // might need up for other things tho
                                             CameraGlobals.RebirthFreecam.World.Down,
                                             CameraGlobals.RebirthFreecam.World.Forward);
         }
@@ -213,55 +209,39 @@ public class Particle {
                     Matrix.CreateTranslation(Position);
         }
 
-        if (!IsIn2DSpace) {
-            if (Model is null) {
-                EffectHandle.World = world;
-                // EffectHandle.Texture = Texture;
-                EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
-                EffectHandle.Alpha = Alpha;
+        EffectHandle.World = world;
+        EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
+        EffectHandle.Alpha = Alpha;
 
-                if (ApplyGameLight) {
-                    EffectHandle.EmissiveColor *= SceneManager.GameLight.Brightness;
-                    EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
-                }
-
-                spriteBatch.End();
-                spriteBatch.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle);
-                if (!IsText)
-                    spriteBatch.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, /*TextureScale*/ Scale.X, default, Layer);
-                else
-                    spriteBatch.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
-
-                spriteBatch.End();
-                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-            }
-        }
-        else {
-            spriteBatch.End();
-            spriteBatch.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
-
-            if (!IsText)
-                spriteBatch.Draw(Texture, ToScreenSpace ?
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) :
-                    new Vector2(Position.X, Position.Y), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
-            else
-                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, ToScreenSpace ?
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) :
-                    new Vector2(Position.X, Position.Y), Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
-
-            spriteBatch.End();
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+        if (ApplyGameLight) {
+            EffectHandle.EmissiveColor *= SceneManager.GameLight.Brightness;
+            EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
         }
 
-        // EffectHandle.SetDefaultGameLighting_IngameEntities();
-        UniqueDraw?.Invoke(this);
+        spriteBatch.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle);
+        spriteBatch.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
+        spriteBatch.End();
     }
 
+    /// <summary>Queues a screen-space particle on an already-begun <see cref="SpriteBatch"/>.</summary>
+    internal void Draw2D(SpriteBatch spriteBatch) {
+        var pos = ToScreenSpace ?
+            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) :
+            new Vector2(Position.X, Position.Y);
+
+        if (!IsText)
+            spriteBatch.Draw(Texture, pos, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
+        else
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, pos, Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
+    }
+
+    /// <summary>Removes this particle from its system. Safe to call multiple times; O(1).</summary>
     public void Destroy() {
         UniqueBehavior = null;
         UniqueDraw = null;
 
-        if (System.CurrentParticles.Contains(this))
-            System.CurrentParticles.RemoveAt(Id);
+        if (Destroyed) return;
+        Destroyed = true;
+        System.Unregister(this);
     }
 }

@@ -93,7 +93,7 @@ public class Explosion : IAITankDanger {
                 var position = Vector3.UnitY * -5000f;
                 var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);
 
-                // TODO: make particles face center of explosion
+                // TODO: make particles face center of explosion -- i think this is done?
                 particle.UniqueBehavior = (a) => {
                     act?.Invoke(particle);
                     particle.Color = ExplosionColor;

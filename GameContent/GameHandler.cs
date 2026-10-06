@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
@@ -38,7 +38,7 @@ public class GameHandler {
     public delegate void PostUpdate();
     public static event PostUpdate? OnPostUpdate;
 
-    public static ParticleManager Particles { get; } = new(() => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
+    public static ParticleManager Particles { get; } = new(() => CameraGlobals.GameView, () => CameraGlobals.GameProjection) { DrawsFootprints = true };
     public static XpBar ExpBar;
 
     public static byte ActiveTankCount;

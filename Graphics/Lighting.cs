@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -33,6 +33,9 @@ public static class Lighting {
     private static float ColorBrightness = 1f;
 
     private static float LightPower = 0f;
+
+    /// <summary>The ambient light color multiplied by the diffuse brightness; the constant term batched sprites add to their emissive color.</summary>
+    public static Vector3 AmbientDiffuseProduct => LightColor.ToVector3() * ColorBrightness;
     private static bool IsNight { get; set; }
 
     public static readonly LightProfile Dawn = new(0.5f, new Color(0, 25, 0)) { IsNight = true, SunPower = 0.6f };
