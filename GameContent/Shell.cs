@@ -293,14 +293,31 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.RebirthFreecam.Position);
         //}
 
-        if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
+        // hopefully fixes the ricochet issue. a bit longer code but should hopefully do the trick
+        if (Position.X is < GameScene.MIN_X) {
+            Position = new(GameScene.MIN_X, Position.Y);
+            Ricochet(Vector2.UnitX);
+
+            ModdedData?.OnRicochet(null);
+            OnRicochet?.Invoke(this, null);
+        }
+        else if (Position.X is > GameScene.MAX_X) {
+            Position = new(GameScene.MAX_X, Position.Y);
             Ricochet(Vector2.UnitX);
 
             ModdedData?.OnRicochet(null);
             OnRicochet?.Invoke(this, null);
         }
 
-        if (Position.Y is < GameScene.MIN_Z or > GameScene.MAX_Z) {
+        if (Position.Y is < GameScene.MIN_Z) {
+            Position = new(Position.X, GameScene.MIN_Z);
+            Ricochet(Vector2.UnitY);
+
+            OnRicochet?.Invoke(this, null);
+            ModdedData?.OnRicochet(null);
+        }
+        else if (Position.Y is > GameScene.MAX_Z) {
+            Position = new(Position.X, GameScene.MAX_Z);
             Ricochet(Vector2.UnitY);
 
             OnRicochet?.Invoke(this, null);
