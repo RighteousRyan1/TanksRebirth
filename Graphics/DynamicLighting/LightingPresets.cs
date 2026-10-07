@@ -1,13 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
 /// <summary>
-/// The look of each lighting preset, plus helpers that create the per-frame lights for gameplay objects.
+/// The look of the scene: the time-of-day presets, the day cycle, the room lamps. Says nothing about performance
+/// (that's <see cref="LightingQuality"/>) and nothing about game objects (that's <see cref="GameplayLights"/>).
 /// Only depends on MonoGame and <see cref="LightingSystem"/>; <see cref="LightingShowcase"/> connects it to the game.
 /// </summary>
 public static class LightingPresets {
@@ -24,11 +23,14 @@ public static class LightingPresets {
         Dusk,
         Midnight,
         Blackout,
-        /// <summary>Runs through all 24 hours, blending between the time-of-day presets. See <see cref="DayLengthSeconds"/>.</summary>
+        /// <summary>A running clock: the sun and moon move across the sky minute by minute and the colors follow. See <see cref="DayLengthSeconds"/>.</summary>
         DayCycle,
     }
 
     public static Preset Current { get; private set; } = Preset.Off;
+
+    /// <summary>Raised after a different preset is applied (also by F7 and the /lighting command), so a settings menu can follow along.</summary>
+    public static event Action<Preset>? PresetChanged;
 
     /// <summary>Whether the current preset wants headlights on the player tanks.</summary>
     public static bool WantsHeadlights { get; private set; }
@@ -42,15 +44,21 @@ public static class LightingPresets {
     public static readonly Vector3 BackWindows = new(-262f, 1137f, -421f);
     /// <summary>Center of the two windows on the right wall (+X).</summary>
     public static readonly Vector3 SideWindows = new(2050f, 1137f, 1485f);
+    /// <summary>Everything inside the room (walls, floor, ceiling). The sun's room-wide shadow map covers exactly this.</summary>
+    public static readonly BoundingBox RoomBounds = new(new Vector3(-3650f, -620f, -425f), new Vector3(2055f, 2130f, 3305f));
+    /// <summary>The board plus its outer walls and a little of the table: what the game camera looks at. Gets the sharp shadows.</summary>
+    public static readonly BoundingBox BoardBounds = new(new Vector3(-330f, -10f, -280f), new Vector3(330f, 140f, 280f));
 
     // room lamps
-    public static readonly PointLight TableLamp = new(new Vector3(794f, 285f, -74f), new Color(255, 190, 120), 0.5f, 850f, true) { Priority = 5, Wrap = 0.3f };
+    // the bulb sits just above the brass stem (which ends at y = 317); any lower and the stem swallows the light
+    public static readonly PointLight TableLamp = new(new Vector3(794f, 345f, -74f), new Color(255, 190, 120), 0.8f, 1100f, true) { Priority = 5, Wrap = 0.3f };
     public static readonly SpotLight DeskLamp = new(new Vector3(-1030f, 412f, 150f), new Vector3(880f, -412f, -240f), new Color(255, 228, 180), 0.9f, 1800f, 7f, 12f, true) { Priority = 6 };
     public static readonly PointLight FloorLamp = new(new Vector3(1532f, 1080f, 2828f), new Color(255, 190, 120), 1.0f, 2600f) { Priority = 1, Wrap = 0.4f };
     public static readonly Light[] RoomLamps = [TableLamp, DeskLamp, FloorLamp];
 
     /// <summary>Emissive look for the room's lamp shades while the lamps are on.</summary>
-    public static readonly MeshLighting GlowingShade = new() { ReceivesLight = false, Emissive = new Vector3(1.7f, 1.45f, 1.05f) };
+    /// <remarks>Lit shades don't cast shadows: a real shade is translucent, and as a solid caster it would box the bulb in.</remarks>
+    public static readonly MeshLighting GlowingShade = new() { ReceivesLight = false, CastsShadows = false, Emissive = new Vector3(1.7f, 1.45f, 1.05f) };
     static readonly string[] _shadeMeshes = ["Lamp_Shade", "Floor_Lamp_Bowl"];
 
     // ============================================================================================ presets
@@ -173,14 +181,14 @@ public static class LightingPresets {
         sunFrom: BackWindows, sunTo: Vector3.Zero,
         sunColor: new Color(150, 140, 205), sunIntensity: 0.2f, wrap: 0.6f,
         shaftColor: new Color(140, 130, 200), shaftDensity: 0.08f, dynamicBrightness: 1f)
-        with { TableLamp = 0.4f, Background = 0.6f, Headlights = 1f };
+        with { TableLamp = 0.6f, Background = 0.6f, Headlights = 1f };
 
     /// <summary>dark blue room, faint moonlight through the back windows, all the room lamps on</summary>
     public static TimeOfDay Midnight = Day(sky: new Color(48, 60, 100), ground: new Color(28, 28, 40), ambient: 0.32f,
         sunFrom: new Vector3(-382f, 1300f, -421f), sunTo: new Vector3(-262f, 0f, 59f),
         sunColor: new Color(130, 165, 255), sunIntensity: 0.16f, wrap: 0f,
         shaftColor: new Color(120, 150, 255), shaftDensity: 0.12f, dynamicBrightness: 1f)
-        with { TableLamp = 0.5f, DeskLamp = 0.9f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f };
+        with { TableLamp = 0.8f, DeskLamp = 0.9f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f };
 
     /// <summary>The static time-of-day presets.</summary>
     public static TimeOfDay? GetTimeOfDay(Preset preset) => preset switch {
@@ -202,53 +210,142 @@ public static class LightingPresets {
     public static float DayLengthSeconds = 480f;
     /// <summary>Freezes the day cycle clock.</summary>
     public static bool DayCyclePaused;
-    /// <summary>Current hour of the day cycle, 0 - 24 (6.5 = 6:30 AM). Can be set to jump.</summary>
+    /// <summary>Current clock time of the day cycle, 0 - 24 (6.5 = 6:30 AM). Can be set to jump.</summary>
     public static float Hour {
         get => _hour;
         set => _hour = ((value % 24f) + 24f) % 24f;
     }
     static float _hour = 6f;
 
+    // ------------------------------------------------------------------------------------ sun path
+    // The day cycle runs a real sun (and moon) across the sky: the time of day gives the sun's position, and the
+    // sun's height above the horizon gives the colors. The room is oriented with south = -Z (the back windows),
+    // east = -X and west = +X (the side windows), so the sun comes in through the back windows from late
+    // morning to early afternoon and low through the side windows around sunset.
+
+    /// <summary>Latitude in degrees. Higher = lower sun and longer days in summer.</summary>
+    public static float Latitude = 40f;
+    /// <summary>Sun declination in degrees: 23 = midsummer (long day, high sun), 0 = equinox, -23 = midwinter.</summary>
+    public static float Declination = 23f;
+    /// <summary>Clock time when the sun is highest (13:00 = summer time).</summary>
+    public static float SolarNoon = 13f;
+    /// <summary>Turns the compass relative to the room, in degrees. Moves where the sun patches land.</summary>
+    public static float CompassRotation = -15f;
+    /// <summary>Declination of the (full) moon, which is opposite the sun: highest at <see cref="SolarNoon"/> + 12h.</summary>
+    public static float MoonDeclination = 10f;
+
+    /// <summary>Unit vector pointing from the scene towards the sun at a given clock time.</summary>
+    public static Vector3 SunPosition(float hour) => SkyPosition(hour, Declination, SolarNoon);
+    /// <summary>Unit vector pointing from the scene towards the moon at a given clock time.</summary>
+    public static Vector3 MoonPosition(float hour) => SkyPosition(hour, MoonDeclination, SolarNoon + 12f);
+
+    /// <summary>Height of the sun above the horizon in degrees (negative at night).</summary>
+    public static float SunElevation(float hour) => MathHelper.ToDegrees(MathF.Asin(SunPosition(hour).Y));
+
+    static Vector3 SkyPosition(float hour, float declination, float noon) {
+        var h = MathHelper.ToRadians((hour - noon) * 15f);     // hour angle
+        var lat = MathHelper.ToRadians(Latitude);
+        var dec = MathHelper.ToRadians(declination);
+        var east = -MathF.Cos(dec) * MathF.Sin(h);
+        var north = MathF.Cos(lat) * MathF.Sin(dec) - MathF.Sin(lat) * MathF.Cos(dec) * MathF.Cos(h);
+        var up = MathF.Sin(lat) * MathF.Sin(dec) + MathF.Cos(lat) * MathF.Cos(dec) * MathF.Cos(h);
+        var r = MathHelper.ToRadians(CompassRotation);
+        (east, north) = (east * MathF.Cos(r) - north * MathF.Sin(r), east * MathF.Sin(r) + north * MathF.Cos(r));
+        return Vector3.Normalize(new Vector3(-east, up, north));   // room: east = -X, north = +Z
+    }
+
+    // ------------------------------------------------------------------------------------ sky colors
+    // How the scene looks for a given sun height. The sun direction stored in these is ignored (the sun path sets it).
+
+    static TimeOfDay Sky(Color sky, Color ground, float ambient, Color sunColor, float sunIntensity, float wrap,
+        Color shaftColor, float shaftDensity, float anisotropy, float marchLength, float shadowRadius, float dynamicBrightness) => new() {
+        Sky = sky, Ground = ground, Ambient = ambient,
+        SunDirection = Vector3.Down,
+        SunColor = sunColor, SunIntensity = sunIntensity, SunWrap = wrap,
+        ShaftColor = shaftColor, ShaftDensity = shaftDensity, ShaftAnisotropy = anisotropy, ShaftMarch = marchLength,
+        ShadowRadius = shadowRadius, Background = 1f, DynamicBrightness = dynamicBrightness,
+    };
+
     /// <summary>
-    /// Which preset is shown at which hour. The cycle blends between neighbours and wraps around midnight.
-    /// Holding a preset for a while = list it twice (like Midnight at 0:00 and 4:30).
+    /// The look of the scene by sun elevation (degrees), from night to the highest sun. The day cycle blends between
+    /// neighbouring entries, so the colors change continuously as the sun moves. Edit these to restyle the whole day.
     /// </summary>
-    public static readonly (float Hour, Preset Preset)[] DaySchedule = [
-        (0f, Preset.Midnight),
-        (4.5f, Preset.Midnight),
-        (5.25f, Preset.Dusk),          // dawn twilight
-        (6.25f, Preset.Sunrise),
-        (7.25f, Preset.Sunrise),
-        // between the side and back windows the sun is behind solid wall, so keep that crossover short
-        (7.75f, Preset.LateMorning),
-        (10f, Preset.LateMorning),
-        (12.5f, Preset.Midday),
-        (14.5f, Preset.MidAfternoon),
-        (15.5f, Preset.MidAfternoon),
-        (16f, Preset.LateAfternoon),   // back windows -> side windows (short crossover again)
-        (17.25f, Preset.LateAfternoon),
-        (18.25f, Preset.GoldenHour),
-        (19.25f, Preset.Evening),
-        (20.25f, Preset.Dusk),
-        (22f, Preset.Midnight),
+    public static readonly (float Elevation, TimeOfDay Look)[] SkyGradient = [
+        // night: dark blue room, all lamps on (the moon is added separately)
+        (-18f, Sky(new Color(40, 52, 92), new Color(24, 24, 36), 0.32f, Color.Black, 0f, 0f, Color.Black, 0f, 0.3f, 1400f, 560f, 1f)
+            with { TableLamp = 0.8f, DeskLamp = 0.9f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f }),
+        // nautical twilight
+        (-9f, Sky(new Color(66, 68, 116), new Color(38, 36, 54), 0.42f, Color.Black, 0f, 0f, Color.Black, 0f, 0.3f, 1400f, 560f, 1f)
+            with { TableLamp = 0.8f, DeskLamp = 0.6f, FloorLamp = 0.8f, Background = 0.4f, Headlights = 1f }),
+        // blue hour, the table lamp is on
+        (-3f, Sky(new Color(96, 90, 138), new Color(56, 50, 70), 0.62f, new Color(255, 100, 60), 0f, 0.4f, new Color(255, 110, 70), 0f, 0.6f, 1800f, 650f, 1f)
+            with { TableLamp = 0.6f, Background = 0.6f, Headlights = 1f }),
+        // sun on the horizon
+        (0f, Sky(new Color(118, 104, 140), new Color(84, 70, 72), 0.76f, new Color(255, 110, 62), 0f, 0.35f, new Color(255, 115, 70), 0f, 0.6f, 1800f, 650f, 0.95f)
+            with { TableLamp = 0.25f, Background = 0.8f }),
+        // deep orange low sun
+        (5f, Sky(new Color(122, 110, 140), new Color(96, 80, 72), 0.88f, new Color(255, 138, 80), 0.85f, 0.35f, new Color(255, 130, 80), 0.25f, 0.6f, 1800f, 650f, 0.9f)
+            with { Background = 0.95f }),
+        // golden hour
+        (14f, Sky(new Color(126, 118, 146), new Color(102, 88, 78), 0.93f, new Color(255, 168, 98), 0.9f, 0.3f, new Color(255, 170, 100), 0.2f, 0.5f, 1800f, 620f, 0.8f)),
+        // warm afternoon / morning
+        (28f, Sky(new Color(140, 142, 162), new Color(112, 102, 94), 0.95f, new Color(255, 214, 162), 0.74f, 0.2f, new Color(255, 210, 160), 0.16f, 0.45f, 1600f, 600f, 0.7f)),
+        // bright day
+        (48f, Sky(new Color(150, 157, 175), new Color(117, 111, 104), 1f, new Color(255, 240, 216), 0.64f, 0.1f, new Color(252, 238, 220), 0.13f, 0.3f, 1400f, 560f, 0.6f)),
+        // high summer sun
+        (70f, Sky(new Color(158, 164, 176), new Color(120, 116, 110), 1f, new Color(255, 252, 244), 0.62f, 0.05f, new Color(250, 248, 240), 0.1f, 0.3f, 1400f, 560f, 0.55f)),
     ];
 
-    /// <summary>The blended lighting at any hour of the day.</summary>
+    /// <summary>Moonlight at night (fades in after the blue hour, scaled by how high the moon is).</summary>
+    public static Color MoonColor = new(130, 165, 255);
+    public static float MoonIntensity = 0.16f;
+    public static Color MoonShaftColor = new(120, 150, 255);
+    public static float MoonShaftDensity = 0.12f;
+
+    /// <summary>The scene's look for a sun elevation, blended from <see cref="SkyGradient"/>.</summary>
+    public static TimeOfDay SampleSky(float sunElevation) {
+        var g = SkyGradient;
+        if (sunElevation <= g[0].Elevation) return g[0].Look;
+        for (int i = 1; i < g.Length; i++) {
+            if (sunElevation > g[i].Elevation) continue;
+            var t = (sunElevation - g[i - 1].Elevation) / (g[i].Elevation - g[i - 1].Elevation);
+            return TimeOfDay.Lerp(g[i - 1].Look, g[i].Look, t);
+        }
+        return g[^1].Look;
+    }
+
+    /// <summary>The lighting at any clock time (0 - 24), minute by minute.</summary>
     public static TimeOfDay SampleDay(float hour) {
         hour = ((hour % 24f) + 24f) % 24f;
-        var count = DaySchedule.Length;
-        for (int i = 0; i < count; i++) {
-            var (h0, p0) = DaySchedule[i];
-            var (h1, p1) = DaySchedule[(i + 1) % count];
-            if (i + 1 == count) h1 += 24f;      // last entry wraps to the first one tomorrow
-            var h = hour < h0 ? hour + 24f : hour;
-            if (h < h0 || h > h1)
-                continue;
-            var t = h1 > h0 ? (h - h0) / (h1 - h0) : 0f;
-            t = t * t * (3f - 2f * t);          // ease in and out of each keyframe
-            return TimeOfDay.Lerp(GetTimeOfDay(p0)!.Value, GetTimeOfDay(p1)!.Value, t);
+        var sunPos = SunPosition(hour);
+        var sunElevation = MathHelper.ToDegrees(MathF.Asin(sunPos.Y));
+        var look = SampleSky(sunElevation);
+
+        if (sunElevation > -4f) {
+            // the sun (its intensity is already 0 below the horizon)
+            look.SunDirection = -sunPos;
+            return look;
         }
-        return GetTimeOfDay(DaySchedule[0].Preset)!.Value;
+
+        // the moon takes over once the sun is well down (both are dark at the switch, so there is no pop)
+        var moonPos = MoonPosition(hour);
+        var moonElevation = MathHelper.ToDegrees(MathF.Asin(moonPos.Y));
+        var fade = SmoothStep(-4f, -12f, sunElevation) * SmoothStep(0f, 10f, moonElevation);
+        look.SunDirection = -moonPos;
+        look.SunColor = MoonColor;
+        look.SunIntensity = MoonIntensity * fade;
+        look.SunWrap = 0f;
+        look.ShaftColor = MoonShaftColor;
+        look.ShaftDensity = MoonShaftDensity * fade;
+        look.ShaftAnisotropy = 0.3f;
+        look.ShaftMarch = 1400f;
+        look.ShadowRadius = 560f;
+        return look;
+    }
+
+    static float SmoothStep(float edge0, float edge1, float x) {
+        var t = MathHelper.Clamp((x - edge0) / (edge1 - edge0), 0f, 1f);
+        return t * t * (3f - 2f * t);
     }
 
     /// <summary>Advances the day cycle clock and updates the lighting. Call every update.</summary>
@@ -273,15 +370,26 @@ public static class LightingPresets {
 
     /// <summary>Configures <see cref="LightingSystem"/> for a preset. <paramref name="room"/> (optional) gets glowing lamp shades when the lamps are on.</summary>
     public static void Apply(Preset preset, Model? room = null) {
+        var changed = Current != preset;
+        ApplyCore(preset, room);
+        if (changed)
+            PresetChanged?.Invoke(preset);
+    }
+
+    static void ApplyCore(Preset preset, Model? room) {
         Current = preset;
 
-        LightingSystem.Enabled = preset != Preset.Off && LightingSystem.IsAvailable;
+        // Off shows the unlit game but leaves the user's on/off choice (LightingSystem.Enabled) alone
+        LightingSystem.Suspended = preset == Preset.Off;
         LightingSystem.MaxShadowedSpotLights = 3;
         LightingSystem.FocusPoint = Vector3.Zero;
         var sun = LightingSystem.Sun;
         sun.ShadowCenter = Vector3.Zero;
         sun.ShadowDepth = 9000f;
         sun.CastsShadows = true;
+        sun.RoomShadows = true;
+        sun.RoomShadowBounds = RoomBounds;
+        sun.ShadowBounds = BoardBounds;
 
         switch (preset) {
             case Preset.DayCycle:
@@ -391,109 +499,5 @@ public static class LightingPresets {
                 else LightingSystem.ClearMeshLighting(mesh);
             }
         }
-    }
-
-    // === gameplay lights
-
-    static readonly List<PointLight> _pointPool = [];
-    static readonly List<SpotLight> _spotPool = [];
-    static int _pointsUsed, _spotsUsed;
-
-    /// <summary>Call once at the start of collecting a frame's gameplay lights (recycles pooled lights).</summary>
-    public static void BeginGameplayLights() {
-        _pointsUsed = 0;
-        _spotsUsed = 0;
-    }
-
-    /// <summary>Headlight + soft glow for a tank. <paramref name="forward"/> is the turret direction on the XZ plane.</summary>
-    public static void AddTankLights(Tank tank, Vector2 forward, Color playerColor, bool isLocalPlayer) {
-        if (forward.LengthSquared() < 1e-6f)
-            forward = new Vector2(0f, 1f);
-        forward.Normalize();
-        var forward3 = new Vector3(forward.X, 0f, forward.Y);
-
-        var head = NextSpot();
-        head.Position = tank.TurretPosition3D; // tank + new Vector3(0f, 17f, 0f) + forward3 * 4f;
-        head.Direction = forward3 + new Vector3(0f, -0.32f, 0f);
-        head.Color = new Color(255, 236, 196);
-        head.Intensity = 1.7f * DynamicBrightness;
-        head.Range = 340f;
-        head.InnerAngle = MathHelper.ToRadians(5f);
-        head.OuterAngle = MathHelper.ToRadians(50f);
-        head.CastsShadows = true;
-        head.Priority = isLocalPlayer ? 10 : 8;
-        LightingSystem.AddFrameLight(head);
-
-        /*var glow = NextPoint();
-        glow.Position = tank.Position3D + new Vector3(0f, 26f, 0f);
-        glow.Color = Color.Lerp(playerColor, Color.White, 0.55f);
-        glow.Intensity = 0.55f * DynamicBrightness;
-        glow.Range = 75f;
-        glow.Wrap = 0.6f;
-        glow.CastsShadows = false;
-        glow.Priority = 3;
-        LightingSystem.AddFrameLight(glow);*/
-    }
-
-    /// <summary>Small light travelling with a shell.</summary>
-    public static void AddShellLight(Vector3 shellPosition, Color color) {
-        var light = NextPoint();
-        light.Position = shellPosition + new Vector3(0f, 4f, 0f);
-        light.Color = color;
-        light.Intensity = 0.9f * DynamicBrightness;
-        light.Range = 70f;
-        light.Wrap = 0.4f;
-        light.CastsShadows = false;
-        light.Priority = 1;
-        LightingSystem.AddFrameLight(light);
-    }
-
-    /// <summary>Red blinking mine light; <paramref name="fuse"/> goes from 1 (just placed) to 0 (detonating).</summary>
-    public static void AddMineLight(Vector3 minePosition, float fuse, float timeSeconds) {
-        var urgency = 1f - MathHelper.Clamp(fuse, 0f, 1f);
-        var rate = MathHelper.Lerp(2.5f, 14f, urgency * urgency);
-        var blink = MathF.Pow(0.5f + 0.5f * MathF.Sin(timeSeconds * rate * MathF.PI + minePosition.X), 3f);
-        var light = NextPoint();
-        light.Position = minePosition + new Vector3(0f, 9f, 0f);
-        light.Color = new Color(255, 40, 30);
-        light.Intensity = (0.25f + 1.1f * blink) * DynamicBrightness;
-        light.Range = 55f;
-        light.Wrap = 0.5f;
-        light.CastsShadows = false;
-        light.Priority = 1;
-        LightingSystem.AddFrameLight(light);
-    }
-
-    /// <summary>Shadow casting explosion flash. <paramref name="life"/> goes from 1 (new) to 0 (gone).</summary>
-    public static void AddExplosionLight(Vector3 position, float radius, float life) {
-        if (life <= 0f)
-            return;
-        var light = NextPoint();
-        light.Position = position + new Vector3(0f, 14f, 0f);
-        light.Color = new Color(255, 168, 82);
-        light.Intensity = 1.9f * MathF.Pow(MathHelper.Clamp(life, 0f, 1f), 1.5f) * MathF.Max(DynamicBrightness, 0.8f);
-        light.Range = 80f + radius * 3f;
-        light.Wrap = 0.2f;
-        light.CastsShadows = true;
-        light.Priority = 9;
-        LightingSystem.AddFrameLight(light);
-    }
-
-    static PointLight NextPoint() {
-        if (_pointsUsed == _pointPool.Count)
-            _pointPool.Add(new PointLight());
-        var light = _pointPool[_pointsUsed++];
-        light.Enabled = true;
-        light.ShadowBias = 0.75f;
-        return light;
-    }
-
-    static SpotLight NextSpot() {
-        if (_spotsUsed == _spotPool.Count)
-            _spotPool.Add(new SpotLight());
-        var light = _spotPool[_spotsUsed++];
-        light.Enabled = true;
-        light.ShadowBias = 0.75f;
-        return light;
     }
 }

@@ -28,10 +28,22 @@ public static class LightingSystem {
     //  public settings
     // =============================================================================================
 
-    /// <summary>Master switch. When false, <see cref="EndFrame"/> leaves the frame untouched.</summary>
+    /// <summary>
+    /// Master switch (the "dynamic lighting on/off" option). When false nothing is captured or drawn and the game
+    /// looks exactly as it did without this system. Call <see cref="Unload"/> as well to free the video memory.
+    /// </summary>
     public static bool Enabled = true;
+    /// <summary>
+    /// Set by the scene (the Off preset) to show the unlit game without touching the user's <see cref="Enabled"/> choice.
+    /// </summary>
+    public static bool Suspended;
     /// <summary>True once <see cref="Initialize"/> succeeded and no unrecoverable error happened.</summary>
     public static bool IsAvailable { get; private set; }
+    /// <summary>Whether lighting is drawn this frame.</summary>
+    public static bool IsActive => Enabled && !Suspended && IsAvailable;
+
+    /// <summary>Performance limits (shadow resolutions, light counts, shafts...). See <see cref="LightingQuality"/>.</summary>
+    public static LightingQuality Quality = new();
 
     public static readonly AmbientLight Ambient = new();
     public static readonly SunLight Sun = new();
@@ -43,19 +55,24 @@ public static class LightingSystem {
     /// <summary>Raised once per frame during <see cref="EndFrame"/>; call <see cref="SubmitShadowCaster"/> from here for geometry that should cast shadows even when it was culled from the camera.</summary>
     public static event Action? CollectShadowCasters;
 
-    /// <summary>Most local lights evaluated per frame (the rest are dropped by priority, then distance to <see cref="FocusPoint"/>).</summary>
-    public static int MaxLocalLights = 32;
-    /// <summary>Most point lights with shadows per frame (each costs 6 shadow renders). Hard cap: 8.</summary>
+    /// <summary>
+    /// How many point lights the scene would like shadowed. The actual number is also capped by
+    /// <see cref="LightingQuality.MaxShadowedPointLights"/>.
+    /// </summary>
     public static int MaxShadowedPointLights = 4;
-    /// <summary>Most spot lights with shadows per frame. Hard cap: 3.</summary>
+    /// <summary>How many spot lights the scene would like shadowed (also capped by <see cref="LightingQuality.MaxShadowedSpotLights"/>).</summary>
     public static int MaxShadowedSpotLights = 3;
     /// <summary>Point of interest used to rank lights when there are too many.</summary>
     public static Vector3 FocusPoint = Vector3.Zero;
 
     /// <summary>Draws with a lower alpha than this are treated as transparent and ignored.</summary>
     public static float AlphaCutoff = 0.95f;
-    /// <summary>Size of the sun shadow map (max 2048 for the Reach profile).</summary>
-    public static int SunShadowMapSize = 2048;
+
+    /// <summary>
+    /// Invisible solid boxes that block the sun (they are only drawn into the sun's shadow maps). Use them to seal
+    /// gaps in level geometry, like the seams where walls meet the ceiling, that would let thin lines of sunlight through.
+    /// </summary>
+    public static readonly List<BoundingBox> SunBlockers = [];
     /// <summary>Light buffer value where nothing was captured (the background). 1 = untouched.</summary>
     public static float BackgroundLight = 1f;
     /// <summary>Noise added to the light buffer to hide 8 bit banding in dark scenes.</summary>
@@ -87,9 +104,10 @@ public static class LightingSystem {
     //  internal state
     // =============================================================================================
 
-    const int ATLAS_SIZE = 2048;
-    const int CUBE_TILE = 256;
-    const int SPOT_TILE = 512;
+    // atlas layout for a 2048 atlas; everything doubles with a 4096 atlas (see LightingQuality.ShadowAtlasSize)
+    static int ATLAS_SIZE = 2048;
+    static int CUBE_TILE = 256;
+    static int SPOT_TILE = 512;
     const int MAX_POINT_SHADOW_SLOTS = 8;
     const int MAX_SPOT_SHADOW_SLOTS = 3;
     const int LIGHTS_PER_PASS = 4;
@@ -130,6 +148,8 @@ public static class LightingSystem {
     static Effect _effect = null!;
 
     static RenderTarget2D? _sunShadowMap;
+    static RenderTarget2D? _roomShadowMap;
+    static RenderTarget2D? _roomShadowDilated;
     static RenderTarget2D? _shadowAtlas;
     static RenderTarget2D? _lightBuffer;
     static RenderTarget2D? _shaftBuffer;
@@ -156,6 +176,8 @@ public static class LightingSystem {
     static ShadowSlot _noShadowSlot;
 
     static Matrix _sunViewProjection;
+    static Matrix _roomViewProjection;
+    static bool _roomShadowsActive;
     static float _shaftJitter;
 
     static BlendState _modulate2X = null!;
@@ -188,16 +210,21 @@ public static class LightingSystem {
     static EffectParameter? _pLightScale, _pDither;
     static EffectParameter? _pAmbientSky, _pAmbientGround, _pSunDirection, _pSunColor, _pSunWrap;
     static EffectParameter? _pSunClipX, _pSunClipY, _pSunClipZ, _pSunShadowParams, _pSunShadowEnabled, _pSunShadowMap;
+    static EffectParameter? _pRoomClipX, _pRoomClipY, _pRoomClipZ, _pRoomShadowParams, _pRoomShadowEnabled, _pRoomShadowMap;
     // one parameter per light slot and field (the shader avoids arrays, see lighting.fx)
     static readonly EffectParameter?[] _pLightPosition = new EffectParameter?[LIGHTS_PER_PASS], _pLightColor = new EffectParameter?[LIGHTS_PER_PASS],
         _pLightDirCone = new EffectParameter?[LIGHTS_PER_PASS], _pLightParams = new EffectParameter?[LIGHTS_PER_PASS],
         _pLightRect = new EffectParameter?[LIGHTS_PER_PASS], _pLightAxisX = new EffectParameter?[LIGHTS_PER_PASS], _pLightAxisY = new EffectParameter?[LIGHTS_PER_PASS];
     static EffectParameter? _pAtlasSize, _pShadowAtlas, _pShadowLightPosInvRange, _pUnlitLight;
-    static EffectParameter? _pShaftParams, _pShaftColor;
+    static EffectParameter? _pShaftParams, _pShaftColor, _pShaftMaxGlow;
+    static BlendState _screen = null!;
     static EffectParameter? _pSplitPosition, _pNeutralValue, _pSourceTexture;
 
     static EffectTechnique _tShadowLinear = null!, _tShadowOrtho = null!, _tAmbientSun = null!, _tPointLights = null!,
-        _tSpotLights = null!, _tUnlit = null!, _tSunShafts = null!, _tComposite = null!;
+        _tSpotLights = null!, _tPointLightsFast = null!, _tSpotLightsFast = null!, _tUnlit = null!, _tSunShafts = null!,
+        _tComposite = null!, _tShadowDilate = null!;
+    // bound in place of shadow maps that a quality setting turned off (white = fully lit)
+    static Texture2D _white = null!;
 
     // =============================================================================================
     //  setup
@@ -214,9 +241,12 @@ public static class LightingSystem {
             _tAmbientSun = Technique("AmbientSun");
             _tPointLights = Technique("PointLights");
             _tSpotLights = Technique("SpotLights");
+            _tPointLightsFast = Technique("PointLightsFast");
+            _tSpotLightsFast = Technique("SpotLightsFast");
             _tUnlit = Technique("Unlit");
             _tSunShafts = Technique("SunShafts");
             _tComposite = Technique("Composite");
+            _tShadowDilate = Technique("ShadowDilate");
 
             var p = _effect.Parameters;
             _pWorld = p["World"];
@@ -237,6 +267,12 @@ public static class LightingSystem {
             _pSunShadowParams = p["SunShadowParams"];
             _pSunShadowEnabled = p["SunShadowEnabled"];
             _pSunShadowMap = p["SunShadowMap"];
+            _pRoomClipX = p["RoomClipX"];
+            _pRoomClipY = p["RoomClipY"];
+            _pRoomClipZ = p["RoomClipZ"];
+            _pRoomShadowParams = p["RoomShadowParams"];
+            _pRoomShadowEnabled = p["RoomShadowEnabled"];
+            _pRoomShadowMap = p["RoomShadowMap"];
             for (int i = 0; i < LIGHTS_PER_PASS; i++) {
                 _pLightPosition[i] = p[$"Light{i}Position"];
                 _pLightColor[i] = p[$"Light{i}Color"];
@@ -252,6 +288,7 @@ public static class LightingSystem {
             _pUnlitLight = p["UnlitLight"];
             _pShaftParams = p["ShaftParams"];
             _pShaftColor = p["ShaftColor"];
+            _pShaftMaxGlow = p["ShaftMaxGlow"];
             _pSplitPosition = p["SplitPosition"];
             _pNeutralValue = p["NeutralValue"];
             _pSourceTexture = p["SourceTexture"];
@@ -260,6 +297,16 @@ public static class LightingSystem {
                 Name = "Lighting.Modulate2X",
                 ColorSourceBlend = Blend.DestinationColor,
                 ColorDestinationBlend = Blend.SourceColor,
+                ColorBlendFunction = BlendFunction.Add,
+                AlphaSourceBlend = Blend.Zero,
+                AlphaDestinationBlend = Blend.One,
+                AlphaBlendFunction = BlendFunction.Add,
+            };
+            // screen blend (a + b - a*b): beams brighten dark areas but can't push bright ones past white
+            _screen = new BlendState {
+                Name = "Lighting.Screen",
+                ColorSourceBlend = Blend.InverseDestinationColor,
+                ColorDestinationBlend = Blend.One,
                 ColorBlendFunction = BlendFunction.Add,
                 AlphaSourceBlend = Blend.Zero,
                 AlphaDestinationBlend = Blend.One,
@@ -283,6 +330,9 @@ public static class LightingSystem {
 
             BuildAtlasLayout();
 
+            _white = new Texture2D(device, 1, 1, false, SurfaceFormat.Color) { Name = "Lighting.White" };
+            _white.SetData([Color.White]);
+
             IsAvailable = true;
             return true;
         }
@@ -297,14 +347,16 @@ public static class LightingSystem {
         => _effect.Techniques[name] ?? throw new InvalidOperationException($"lighting effect is missing technique '{name}'");
 
     static void BuildAtlasLayout() {
-        const float texel = 1f / ATLAS_SIZE;
+        float texel = 1f / ATLAS_SIZE;
+        // keep the 3x3 tent filter (which reaches 2 texels out) inside each face
+        const float inset = 2.5f;
 
         // point lights: 3x2 blocks of 256px faces in the left 1536px
         for (int i = 0; i < MAX_POINT_SHADOW_SLOTS; i++) {
             var origin = new Point(i % 2 * CUBE_TILE * 3, i / 2 * CUBE_TILE * 2);
             _pointSlots[i] = new ShadowSlot {
                 Origin = origin,
-                Rect = new Vector4(origin.X * texel, origin.Y * texel, CUBE_TILE * texel, 1.5f / CUBE_TILE),
+                Rect = new Vector4(origin.X * texel, origin.Y * texel, CUBE_TILE * texel, inset / CUBE_TILE),
             };
         }
         // spot lights: 512px tiles in the right column
@@ -312,7 +364,7 @@ public static class LightingSystem {
             var origin = new Point(CUBE_TILE * 6, i * SPOT_TILE);
             _spotSlots[i] = new ShadowSlot {
                 Origin = origin,
-                Rect = new Vector4(origin.X * texel, origin.Y * texel, SPOT_TILE * texel, 1.5f / SPOT_TILE),
+                Rect = new Vector4(origin.X * texel, origin.Y * texel, SPOT_TILE * texel, inset / SPOT_TILE),
             };
         }
         // bottom right 512px is never rendered and stays white (= fully lit)
@@ -398,7 +450,7 @@ public static class LightingSystem {
         _cameraView = view;
         _cameraProjection = projection;
         _cameraFrustum.Matrix = view * projection;
-        _capturing = Enabled && IsAvailable;
+        _capturing = IsActive;
     }
 
     /// <summary>Adds a light for the current frame only.</summary>
@@ -520,7 +572,7 @@ public static class LightingSystem {
     public static void EndFrame(RenderTarget2D target) {
         var wasCapturing = _capturing;
         _capturing = false;
-        if (!wasCapturing || !Enabled || !IsAvailable || target is null || target.IsDisposed)
+        if (!wasCapturing || !IsActive || target is null || target.IsDisposed)
             return;
 
         // let gameplay code add per-frame lights and casters (capture stays open for SubmitShadowCaster)
@@ -543,6 +595,7 @@ public static class LightingSystem {
         var oldSampler0 = _device.SamplerStates[0];
         var oldSampler1 = _device.SamplerStates[1];
         var oldSampler2 = _device.SamplerStates[2];
+        var oldSampler3 = _device.SamplerStates[3];
 
         try {
             Render(target);
@@ -561,9 +614,11 @@ public static class LightingSystem {
             _device.Textures[1] = null;
             _device.Textures[2] = null;
             _device.Textures[3] = null;
+            _device.Textures[4] = null;
             _device.SamplerStates[0] = oldSampler0;
             _device.SamplerStates[1] = oldSampler1;
             _device.SamplerStates[2] = oldSampler2;
+            _device.SamplerStates[3] = oldSampler3;
         }
     }
 
@@ -574,13 +629,15 @@ public static class LightingSystem {
             else stats.CapturedDraws++;
         }
 
+        EnsureTargets(target);      // first: it may rebuild the atlas layout that GatherLights hands out
         GatherLights(ref stats);
-        EnsureTargets(target);
 
         _device.RasterizerState = RasterizerState.CullNone;
 
+        var q = Quality;
         var sunActive = Sun.Enabled && Sun.Intensity > 0f;
-        var sunShadows = sunActive && Sun.CastsShadows;
+        var sunShadows = sunActive && Sun.CastsShadows && q.SunShadows && _sunShadowMap is not null;
+        _roomShadowsActive = false;
         if (sunShadows)
             RenderSunShadows(ref stats);
 
@@ -589,15 +646,19 @@ public static class LightingSystem {
 
         SetCameraParameters();
         _pSunShadowEnabled?.SetValue(sunShadows ? 1f : 0f);
-        _pSunShadowMap?.SetValue(_sunShadowMap);
-        _pShadowAtlas?.SetValue(_shadowAtlas);
+        _pSunShadowMap?.SetValue(sunShadows ? _sunShadowMap : _white);
+        // the shafts always march through the room map; without a room cascade they get the board cascade instead
+        _pRoomShadowEnabled?.SetValue(_roomShadowsActive ? 1f : 0f);
+        _pRoomShadowMap?.SetValue(_roomShadowsActive ? _roomShadowDilated : sunShadows ? _sunShadowMap : _white);
+        // no shadowed lamps this frame (or none allowed): every light reads "fully lit" from a white texel
+        _pShadowAtlas?.SetValue(_shadowSlots.Count > 0 && _shadowAtlas is not null ? _shadowAtlas : _white);
         _pAtlasSize?.SetValue(new Vector2(ATLAS_SIZE, 1f / ATLAS_SIZE));
         _pLightScale?.SetValue(0.5f);
         _pDither?.SetValue(Dither);
 
         RenderLightBuffer(sunActive, ref stats);
 
-        var shafts = sunShadows && Sun.Shafts.Enabled && Sun.Shafts.Density > 0f;
+        var shafts = sunShadows && q.LightShafts && _shaftBuffer is not null && Sun.Shafts.Enabled && Sun.Shafts.Density > 0f;
         if (shafts)
             RenderShafts();
 
@@ -615,11 +676,14 @@ public static class LightingSystem {
         foreach (var l in Lights) ConsiderLight(l);
         foreach (var l in _frameLights) ConsiderLight(l);
         _activeLights.Sort(CompareLights);
-        if (_activeLights.Count > MaxLocalLights)
-            _activeLights.RemoveRange(MaxLocalLights, _activeLights.Count - MaxLocalLights);
+        var maxLights = Math.Max(0, Quality.MaxLocalLights);
+        if (_activeLights.Count > maxLights)
+            _activeLights.RemoveRange(maxLights, _activeLights.Count - maxLights);
 
-        int pointShadowBudget = Math.Clamp(MaxShadowedPointLights, 0, MAX_POINT_SHADOW_SLOTS);
-        int spotShadowBudget = Math.Clamp(MaxShadowedSpotLights, 0, MAX_SPOT_SHADOW_SLOTS);
+        // the scene asks, quality caps; without an atlas (quality turned lamp shadows off) nothing gets a slot
+        var atlas = _shadowAtlas is not null;
+        int pointShadowBudget = atlas ? Math.Clamp(Math.Min(MaxShadowedPointLights, Quality.MaxShadowedPointLights), 0, MAX_POINT_SHADOW_SLOTS) : 0;
+        int spotShadowBudget = atlas ? Math.Clamp(Math.Min(MaxShadowedSpotLights, Quality.MaxShadowedSpotLights), 0, MAX_SPOT_SHADOW_SLOTS) : 0;
 
         foreach (var light in _activeLights) {
             switch (light) {
@@ -653,28 +717,73 @@ public static class LightingSystem {
         return Vector3.DistanceSquared(a.Position, FocusPoint).CompareTo(Vector3.DistanceSquared(b.Position, FocusPoint));
     }
 
+    /// <summary>
+    /// Creates, resizes or releases render targets to match <see cref="Quality"/>. Targets a setting turned off are
+    /// disposed, so lowering quality also frees video memory.
+    /// </summary>
     static void EnsureTargets(RenderTarget2D target) {
-        var sunSize = Math.Clamp(SunShadowMapSize, 256, 2048);
-        if (_sunShadowMap is null || _sunShadowMap.IsDisposed || _sunShadowMap.Width != sunSize) {
+        var q = Quality;
+        var maxSize = _device.GraphicsProfile == GraphicsProfile.HiDef ? 4096 : 2048;
+
+        // sun: sharp board map, then the room map (+ its crack-filled copy)
+        var sunWanted = q.SunShadows && Sun.CastsShadows;
+        var sunSize = Math.Clamp(q.SunShadowMapSize, 256, maxSize);
+        if (!sunWanted)
+            Release(ref _sunShadowMap);
+        else if (_sunShadowMap is null || _sunShadowMap.IsDisposed || _sunShadowMap.Width != sunSize) {
             _sunShadowMap?.Dispose();
             _sunShadowMap = new RenderTarget2D(_device, sunSize, sunSize, false, SurfaceFormat.Color, DepthFormat.Depth24);
         }
-        if (_shadowAtlas is null || _shadowAtlas.IsDisposed) {
+
+        var roomWanted = sunWanted && q.RoomShadows && Sun.RoomShadows;
+        var roomSize = Math.Clamp(q.RoomShadowMapSize, 256, maxSize);
+        if (!roomWanted) {
+            Release(ref _roomShadowMap);
+            Release(ref _roomShadowDilated);
+        }
+        else if (_roomShadowMap is null || _roomShadowMap.IsDisposed || _roomShadowMap.Width != roomSize) {
+            _roomShadowMap?.Dispose();
+            _roomShadowMap = new RenderTarget2D(_device, roomSize, roomSize, false, SurfaceFormat.Color, DepthFormat.Depth24);
+            _roomShadowDilated?.Dispose();
+            _roomShadowDilated = new RenderTarget2D(_device, roomSize, roomSize, false, SurfaceFormat.Color, DepthFormat.None);
+        }
+
+        // point / spot shadow atlas
+        var atlasWanted = q.MaxShadowedPointLights > 0 || q.MaxShadowedSpotLights > 0;
+        var atlasSize = q.ShadowAtlasSize >= 4096 && maxSize >= 4096 ? 4096 : 2048;
+        if (!atlasWanted)
+            Release(ref _shadowAtlas);
+        else if (_shadowAtlas is null || _shadowAtlas.IsDisposed || _shadowAtlas.Width != atlasSize) {
+            _shadowAtlas?.Dispose();
+            ATLAS_SIZE = atlasSize;
+            CUBE_TILE = atlasSize / 8;
+            SPOT_TILE = atlasSize / 4;
+            BuildAtlasLayout();
             _shadowAtlas = new RenderTarget2D(_device, ATLAS_SIZE, ATLAS_SIZE, false, SurfaceFormat.Color, DepthFormat.Depth24);
             // clear once so the reserved "no shadow" region is white even before the first shadow render
             _device.SetRenderTarget(_shadowAtlas);
             _device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.White, 1f, 0);
         }
+
         if (_lightBuffer is null || _lightBuffer.IsDisposed || _lightBuffer.Width != target.Width || _lightBuffer.Height != target.Height) {
             _lightBuffer?.Dispose();
             _lightBuffer = new RenderTarget2D(_device, target.Width, target.Height, false, SurfaceFormat.Color, DepthFormat.Depth24);
         }
-        var div = Math.Clamp(Sun.Shafts.Downsample, 1, 4);
+
+        // light shafts
+        var div = Math.Clamp(q.ShaftDownsample, 1, 4);
         int sw = Math.Max(1, target.Width / div), sh = Math.Max(1, target.Height / div);
-        if (Sun.Shafts.Enabled && (_shaftBuffer is null || _shaftBuffer.IsDisposed || _shaftBuffer.Width != sw || _shaftBuffer.Height != sh)) {
+        if (!(sunWanted && q.LightShafts))
+            Release(ref _shaftBuffer);
+        else if (Sun.Shafts.Enabled && (_shaftBuffer is null || _shaftBuffer.IsDisposed || _shaftBuffer.Width != sw || _shaftBuffer.Height != sh)) {
             _shaftBuffer?.Dispose();
             _shaftBuffer = new RenderTarget2D(_device, sw, sh, false, SurfaceFormat.Color, DepthFormat.Depth24);
         }
+    }
+
+    static void Release(ref RenderTarget2D? target) {
+        target?.Dispose();
+        target = null;
     }
 
     // ------------------------------------------------------------------------------------------ shadows
@@ -682,29 +791,97 @@ public static class LightingSystem {
     static void RenderSunShadows(ref FrameStats stats) {
         var size = _sunShadowMap!.Width;
         var dir = SafeNormalize(Sun.Direction, Vector3.Down);
-        var radius = MathF.Max(1f, Sun.ShadowRadius);
-        var depth = MathF.Max(10f, Sun.ShadowDepth);
         var up = MathF.Abs(dir.Y) > 0.99f ? Vector3.UnitZ : Vector3.UnitY;
 
-        var view = Matrix.CreateLookAt(Sun.ShadowCenter - dir * depth * 0.5f, Sun.ShadowCenter, up);
-        // snap to whole texels so shadows don't shimmer if the center moves
-        var texelWorld = 2f * radius / size;
-        var originLS = Vector3.Transform(Vector3.Zero, view);
-        var snap = new Vector3(
-            MathF.Round(originLS.X / texelWorld) * texelWorld - originLS.X,
-            MathF.Round(originLS.Y / texelWorld) * texelWorld - originLS.Y, 0f);
-        view *= Matrix.CreateTranslation(snap);
-        var projection = Matrix.CreateOrthographicOffCenter(-radius, radius, -radius, radius, 0f, depth);
-        _sunViewProjection = view * projection;
+        // ---- cascade 1: sharp map around the board
+        var depth = MathF.Max(10f, Sun.ShadowDepth);
+        float texelWorld;
+        if (Sun.ShadowBounds is { } bounds)
+            _sunViewProjection = FitBoardCascade(bounds, dir, up, size, depth, out texelWorld, out depth);
+        else {
+            var radius = MathF.Max(1f, Sun.ShadowRadius);
+            var view = Matrix.CreateLookAt(Sun.ShadowCenter - dir * depth * 0.5f, Sun.ShadowCenter, up);
+            // snap to whole texels so shadows don't shimmer if the center moves
+            texelWorld = 2f * radius / size;
+            var originLS = Vector3.Transform(Vector3.Zero, view);
+            var snap = new Vector3(
+                MathF.Round(originLS.X / texelWorld) * texelWorld - originLS.X,
+                MathF.Round(originLS.Y / texelWorld) * texelWorld - originLS.Y, 0f);
+            view *= Matrix.CreateTranslation(snap);
+            _sunViewProjection = view * Matrix.CreateOrthographicOffCenter(-radius, radius, -radius, radius, 0f, depth);
+        }
 
-        _device.SetRenderTarget(_sunShadowMap);
+        RenderSunCascade(_sunShadowMap, _sunViewProjection, ref stats);
+        SetCascadeParameters(_pSunClipX, _pSunClipY, _pSunClipZ, _pSunShadowParams, _sunViewProjection,
+            new Vector4(1f / size, size, Sun.ShadowBias / depth, texelWorld * 1.5f));
+
+        // ---- cascade 2: coarse map over the whole room (everything outside cascade 1, and the shafts)
+        if (Sun.RoomShadows && Quality.RoomShadows && _roomShadowMap is not null && _roomShadowDilated is not null && TryFitRoomCascade(dir, up, out var roomVP, out var roomTexel, out var roomDepth)) {
+            _roomViewProjection = roomVP;
+            _roomShadowsActive = true;
+            RenderSunCascade(_roomShadowMap, _roomViewProjection, ref stats);
+            // coarser texels need a proportionally larger bias
+            var bias = MathF.Max(Sun.ShadowBias, roomTexel * 0.75f);
+            SetCascadeParameters(_pRoomClipX, _pRoomClipY, _pRoomClipZ, _pRoomShadowParams, _roomViewProjection,
+                new Vector4(1f / _roomShadowMap.Width, _roomShadowMap.Width, bias / roomDepth, roomTexel * 2f));
+
+            // close the one texel cracks that seams between meshes leave in the coarse map
+            _device.SetRenderTarget(_roomShadowDilated);
+            _device.DepthStencilState = DepthStencilState.None;
+            _pRoomShadowMap?.SetValue(_roomShadowMap);
+            _effect.CurrentTechnique = _tShadowDilate;
+            DrawFullscreen();
+            _pRoomShadowMap?.SetValue((Texture2D?)null);
+        }
+        else {
+            // no room cascade: the shafts read the board cascade through the room parameters
+            SetCascadeParameters(_pRoomClipX, _pRoomClipY, _pRoomClipZ, _pRoomShadowParams, _sunViewProjection,
+                new Vector4(1f / size, size, Sun.ShadowBias / depth, texelWorld * 1.5f));
+        }
+    }
+
+    /// <summary>
+    /// Fits the sharp cascade tightly around <paramref name="box"/> as seen from the sun. For a low sun the box looks
+    /// thin from the light's point of view, so the texels get spent where they are needed instead of on a square.
+    /// Casters between the box and the sun are kept by extending the depth range <paramref name="depthTowardsSun"/> towards it.
+    /// </summary>
+    static Matrix FitBoardCascade(BoundingBox box, Vector3 dir, Vector3 up, int size, float depthTowardsSun, out float texelWorld, out float depth) {
+        var center = (box.Min + box.Max) * 0.5f;
+        // a fixed light-space origin (the box center) keeps the texel grid stable while the sun doesn't move
+        var view = Matrix.CreateLookAt(center - dir, center, up);
+        box.GetCorners(_boxCorners);
+        var lsMin = new Vector3(float.MaxValue);
+        var lsMax = new Vector3(float.MinValue);
+        foreach (var c in _boxCorners) {
+            var v = Vector3.Transform(c, view);
+            lsMin = Vector3.Min(lsMin, v);
+            lsMax = Vector3.Max(lsMax, v);
+        }
+        // round the size up in steps so it doesn't change every frame while the sun moves slowly, then snap to texels
+        const float step = 16f;
+        float w = MathF.Ceiling((lsMax.X - lsMin.X + 2f) / step) * step;
+        float h = MathF.Ceiling((lsMax.Y - lsMin.Y + 2f) / step) * step;
+        float tx = w / size, ty = h / size;
+        float cx = MathF.Round((lsMin.X + lsMax.X) * 0.5f / tx) * tx;
+        float cy = MathF.Round((lsMin.Y + lsMax.Y) * 0.5f / ty) * ty;
+        texelWorld = MathF.Max(tx, ty);
+
+        // view space looks down -Z: the box spans z in [lsMin.Z, lsMax.Z], the sun is towards +Z
+        float far = -lsMin.Z + 4f;
+        float near = -lsMax.Z - depthTowardsSun;
+        depth = far - near;
+        return view * Matrix.CreateOrthographicOffCenter(cx - w * 0.5f, cx + w * 0.5f, cy - h * 0.5f, cy + h * 0.5f, near, far);
+    }
+
+    static void RenderSunCascade(RenderTarget2D target, Matrix viewProjection, ref FrameStats stats) {
+        _device.SetRenderTarget(target);
         _device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.White, 1f, 0);
         _device.BlendState = BlendState.Opaque;
         _device.DepthStencilState = DepthStencilState.Default;
 
         _effect.CurrentTechnique = _tShadowOrtho;
-        _pViewProjection?.SetValue(_sunViewProjection);
-        _scratchFrustum.Matrix = _sunViewProjection;
+        _pViewProjection?.SetValue(viewProjection);
+        _scratchFrustum.Matrix = viewProjection;
         foreach (var d in _draws) {
             if ((d.Flags & DrawFlags.CastsShadows) == 0)
                 continue;
@@ -713,13 +890,107 @@ public static class LightingSystem {
             DrawPart(d, DrawMode.Shadow);
             stats.ShadowDraws++;
         }
+        DrawSunBlockers(ref stats);
+    }
 
-        // columns of the (orthographic) view projection, so clip.x = dot(float4(p, 1), SunClipX)
-        var m = _sunViewProjection;
-        _pSunClipX?.SetValue(new Vector4(m.M11, m.M21, m.M31, m.M41));
-        _pSunClipY?.SetValue(new Vector4(m.M12, m.M22, m.M32, m.M42));
-        _pSunClipZ?.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
-        _pSunShadowParams?.SetValue(new Vector4(1f / size, size, Sun.ShadowBias / depth, texelWorld * 1.5f));
+    static void SetCascadeParameters(EffectParameter? clipX, EffectParameter? clipY, EffectParameter? clipZ, EffectParameter? shadowParams,
+        in Matrix m, Vector4 parameters) {
+        // columns of the (orthographic) view projection, so clip.x = dot(float4(p, 1), ClipX)
+        clipX?.SetValue(new Vector4(m.M11, m.M21, m.M31, m.M41));
+        clipY?.SetValue(new Vector4(m.M12, m.M22, m.M32, m.M42));
+        clipZ?.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
+        shadowParams?.SetValue(parameters);
+    }
+
+    static readonly Vector3[] _boxCorners = new Vector3[8];
+    static VertexPositionColor[] _blockerVertices = [];
+    static short[] _blockerIndices = [];
+    // BoundingBox.GetCorners order: near face (z max) TL TR BR BL, far face (z min) TL TR BR BL
+    static readonly short[] _boxIndices = [0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 4, 5, 1, 4, 1, 0, 3, 2, 6, 3, 6, 7, 1, 5, 6, 1, 6, 2, 4, 0, 3, 4, 3, 7];
+
+    static void DrawSunBlockers(ref FrameStats stats) {
+        int count = 0;
+        foreach (var box in SunBlockers)
+            if (_scratchFrustum.Contains(box) != ContainmentType.Disjoint)
+                count++;
+        if (count == 0)
+            return;
+
+        if (_blockerVertices.Length < count * 8) {
+            _blockerVertices = new VertexPositionColor[count * 8];
+            _blockerIndices = new short[count * 36];
+        }
+        int b = 0;
+        foreach (var box in SunBlockers) {
+            if (_scratchFrustum.Contains(box) == ContainmentType.Disjoint)
+                continue;
+            box.GetCorners(_boxCorners);
+            for (int i = 0; i < 8; i++)
+                _blockerVertices[b * 8 + i] = new VertexPositionColor(_boxCorners[i], Color.White);
+            for (int i = 0; i < 36; i++)
+                _blockerIndices[b * 36 + i] = (short)(b * 8 + _boxIndices[i]);
+            b++;
+        }
+        _pWorld?.SetValue(Matrix.Identity);
+        _effect.CurrentTechnique.Passes[0].Apply();
+        _device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, _blockerVertices, 0, count * 8, _blockerIndices, 0, count * 12);
+        stats.ShadowDraws++;
+    }
+
+    /// <summary>Fits an orthographic sun projection tightly around <see cref="SunLight.RoomShadowBounds"/> (or everything drawn).</summary>
+    static bool TryFitRoomCascade(Vector3 dir, Vector3 up, out Matrix viewProjection, out float texelWorld, out float depth) {
+        viewProjection = Matrix.Identity;
+        texelWorld = 1f;
+        depth = 1f;
+
+        BoundingBox box;
+        if (Sun.RoomShadowBounds is { } bounds) {
+            box = bounds;
+        }
+        else {
+            var min = new Vector3(float.MaxValue);
+            var max = new Vector3(float.MinValue);
+            foreach (var d in _draws) {
+                if (d.Bounds.Radius >= float.MaxValue || float.IsNaN(d.Bounds.Radius))
+                    continue;
+                var r = new Vector3(d.Bounds.Radius);
+                min = Vector3.Min(min, d.Bounds.Center - r);
+                max = Vector3.Max(max, d.Bounds.Center + r);
+            }
+            if (min.X > max.X)
+                return false;
+            // quantize so small movements (tanks, shells) don't make the map swim
+            const float q = 64f;
+            min = new Vector3(MathF.Floor(min.X / q), MathF.Floor(min.Y / q), MathF.Floor(min.Z / q)) * q;
+            max = new Vector3(MathF.Ceiling(max.X / q), MathF.Ceiling(max.Y / q), MathF.Ceiling(max.Z / q)) * q;
+            box = new BoundingBox(min, max);
+        }
+
+        var center = (box.Min + box.Max) * 0.5f;
+        var halfDiagonal = MathF.Max(1f, (box.Max - box.Min).Length() * 0.5f);
+        var view = Matrix.CreateLookAt(center - dir * (halfDiagonal + 10f), center, up);
+
+        box.GetCorners(_boxCorners);
+        var lsMin = new Vector3(float.MaxValue);
+        var lsMax = new Vector3(float.MinValue);
+        foreach (var c in _boxCorners) {
+            var v = Vector3.Transform(c, view);
+            lsMin = Vector3.Min(lsMin, v);
+            lsMax = Vector3.Max(lsMax, v);
+        }
+        // a little margin so geometry right on the bounds still lands inside the map
+        var pad = (lsMax.X - lsMin.X + lsMax.Y - lsMin.Y) * 0.005f + 4f;
+        lsMin -= new Vector3(pad);
+        lsMax += new Vector3(pad);
+
+        var size = _roomShadowMap!.Width;
+        texelWorld = MathF.Max(lsMax.X - lsMin.X, lsMax.Y - lsMin.Y) / size;
+        // view space looks down -Z: near/far are the negated z extents
+        var near = MathF.Max(0f, -lsMax.Z);
+        var far = -lsMin.Z;
+        depth = MathF.Max(10f, far - near);
+        viewProjection = view * Matrix.CreateOrthographicOffCenter(lsMin.X, lsMax.X, lsMin.Y, lsMax.Y, near, near + depth);
+        return true;
     }
 
     static void RenderLocalShadows(ref FrameStats stats) {
@@ -836,7 +1107,7 @@ public static class LightingSystem {
                 }
             }
             UploadLightArrays();
-            _effect.CurrentTechnique = _tPointLights;
+            _effect.CurrentTechnique = Quality.SoftLocalShadows ? _tPointLights : _tPointLightsFast;
             DrawLitBatch(count, ref stats);
         }
 
@@ -861,7 +1132,7 @@ public static class LightingSystem {
                 }
             }
             UploadLightArrays();
-            _effect.CurrentTechnique = _tSpotLights;
+            _effect.CurrentTechnique = Quality.SoftLocalShadows ? _tSpotLights : _tSpotLightsFast;
             DrawLitBatch(count, ref stats);
         }
     }
@@ -934,6 +1205,7 @@ public static class LightingSystem {
         var s = Sun.Shafts;
         _pShaftParams?.SetValue(new Vector4(s.MarchLength, s.Density, MathHelper.Clamp(s.Anisotropy, -0.95f, 0.95f), _shaftJitter));
         _pShaftColor?.SetValue(s.Color.ToVector3() * Sun.Intensity);
+        _pShaftMaxGlow?.SetValue(MathF.Max(1f, s.MaxGlow));
         _effect.CurrentTechnique = _tSunShafts;
 
         foreach (var d in _draws) {
@@ -955,7 +1227,7 @@ public static class LightingSystem {
         DrawFullscreen();
 
         if (shafts) {
-            _device.BlendState = _additive;
+            _device.BlendState = _screen;
             _pSourceTexture?.SetValue(_shaftBuffer);
             _pNeutralValue?.SetValue(Vector4.Zero);
             DrawFullscreen();
@@ -985,9 +1257,11 @@ public static class LightingSystem {
         return length > 1e-6f ? v / length : fallback;
     }
 
-    /// <summary>Releases the render targets. They are recreated on demand.</summary>
+    /// <summary>Releases all render targets (call after turning <see cref="Enabled"/> off). They are recreated on demand.</summary>
     public static void Unload() {
         _sunShadowMap?.Dispose(); _sunShadowMap = null;
+        _roomShadowMap?.Dispose(); _roomShadowMap = null;
+        _roomShadowDilated?.Dispose(); _roomShadowDilated = null;
         _shadowAtlas?.Dispose(); _shadowAtlas = null;
         _lightBuffer?.Dispose(); _lightBuffer = null;
         _shaftBuffer?.Dispose(); _shaftBuffer = null;

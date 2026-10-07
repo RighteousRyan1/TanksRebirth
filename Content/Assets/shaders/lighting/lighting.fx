@@ -17,12 +17,14 @@
 //  Techniques
 //    ShadowLinear    - writes |p - lightPos| / range   (point + spot shadow maps)
 //    ShadowOrtho     - writes ortho clip depth         (sun shadow map)
-//    AmbientSun      - base light buffer: hemisphere ambient + sun (+ PCF shadows)
-//    PointLights     - up to 4 point lights per pass, cube shadows from an atlas
-//    SpotLights      - up to 4 spot lights per pass, perspective shadows from an atlas
+//    AmbientSun      - base light buffer: hemisphere ambient + sun (+ PCF shadows, two cascades)
+//    PointLights     - up to 4 point lights per pass, cube shadows from an atlas (3x3 tent filter)
+//    SpotLights      - up to 4 spot lights per pass, perspective shadows from an atlas (3x3 tent filter)
+//    PointLightsFast / SpotLightsFast - the same with a cheaper 2x2 filter (low quality setting)
 //    Unlit           - constant light value (meshes that ignore lighting / emissive meshes)
-//    SunShafts       - volumetric in-scattering of the sun, ray-marched through the shadow map
+//    SunShafts       - volumetric in-scattering of the sun, ray-marched through the room shadow map
 //    Composite       - full screen pass that copies a buffer (used with blend states)
+//    ShadowDilate    - closes 1 texel cracks in the room shadow map (seams between meshes)
 // ============================================================================================
 
 
@@ -56,6 +58,23 @@ float4 SunClipY;
 float4 SunClipZ;
 float4 SunShadowParams;         // x = 1/size, y = size, z = depth bias, w = normal offset (world units)
 float  SunShadowEnabled;
+// second, wider cascade that covers the whole room (used outside of the sharp board cascade + for the shafts)
+float4 RoomClipX;
+float4 RoomClipY;
+float4 RoomClipZ;
+float4 RoomShadowParams;        // same layout as SunShadowParams
+float  RoomShadowEnabled;
+
+texture RoomShadowMap;
+sampler RoomShadowSampler = sampler_state
+{
+    Texture = <RoomShadowMap>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = None;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
 
 texture SunShadowMap;
 sampler SunShadowSampler = sampler_state
@@ -104,6 +123,7 @@ float3 UnlitLight;
 // ---------------------------------------------------------------- shafts
 float4 ShaftParams;     // x = march length, y = density, z = anisotropy (g), w = jitter offset
 float3 ShaftColor;
+float  ShaftMaxGlow;    // cap for the forward-scattering boost when looking towards the sun
 
 // ---------------------------------------------------------------- composite
 float  SplitPosition;   // 0..1, pixels left of this are shown without lighting
@@ -169,44 +189,75 @@ float3 SunClip(float3 p)
     return float3(dot(h, SunClipX), dot(h, SunClipY), dot(h, SunClipZ));
 }
 
-#define SUN_TAP(ox, oy) step(depth, UnpackDepth(tex2D(SunShadowSampler, base + float2(ox, oy) * texel).rgb))
+float3 RoomClip(float3 p)
+{
+    float4 h = float4(p, 1.0);
+    return float3(dot(h, RoomClipX), dot(h, RoomClipY), dot(h, RoomClipZ));
+}
 
-// 3x3 tent filter built from 16 point taps (equivalent to 9 bilinear PCF lookups)
+// 3x3 tent filter built from 16 point taps (equivalent to 9 bilinear PCF lookups).
+// Written as macros so both cascades can use it with their own sampler.
+#define SUN_TAP(SAMP, ox, oy) step(depth, UnpackDepth(tex2D(SAMP, base + float2(ox, oy) * texel).rgb))
+#define SUN_ROW(SAMP, oy) (SUN_TAP(SAMP, -1.0, oy) * (1.0 - f.x) + SUN_TAP(SAMP, 0.0, oy) + SUN_TAP(SAMP, 1.0, oy) + SUN_TAP(SAMP, 2.0, oy) * f.x)
+#define SUN_TENT(SAMP, UV, DEPTH, PARAMS, RESULT) \
+    { \
+        float texel = PARAMS.x; \
+        float depth = DEPTH; \
+        float2 t = UV * PARAMS.y - 0.5; \
+        float2 f = frac(t); \
+        float2 base = (t - f + 0.5) * texel; \
+        RESULT = (SUN_ROW(SAMP, -1.0) * (1.0 - f.y) + SUN_ROW(SAMP, 0.0) + SUN_ROW(SAMP, 1.0) + SUN_ROW(SAMP, 2.0) * f.y) / 9.0; \
+    }
+
+// 1 inside the [0,1] square, 0 outside; fades over the outer 1/fadeScale of the square when fadeScale > 0
+float CascadeWeight(float2 uv, float z, float fadeScale)
+{
+    float2 e = min(uv, 1.0 - uv);
+    float edge = min(e.x, e.y);
+    return saturate(edge * fadeScale) * step(0.0, edge) * step(z, 1.0) * step(0.0, z);
+}
+
+// Sun shadow with two cascades: the sharp board map, and a coarser map covering the whole room.
+// The board map wins where it exists (fading out over its border), the room map fills everything else.
 float SunShadow(float3 worldPos, float3 normal, float ndl)
 {
-    float texel = SunShadowParams.x;
-    float3 p = worldPos + normal * (SunShadowParams.w * (1.5 - ndl));
-    float3 clip = SunClip(p);
-    float2 uv = clip.xy * float2(0.5, -0.5) + 0.5;
-    float depth = clip.z - SunShadowParams.z;
+    float offset = 1.5 - ndl;
 
-    float2 t = uv * SunShadowParams.y - 0.5;
-    float2 f = frac(t);
-    float2 base = (t - f + 0.5) * texel;
+    float3 cb = SunClip(worldPos + normal * (SunShadowParams.w * offset));
+    float2 uvb = cb.xy * float2(0.5, -0.5) + 0.5;
+    float litBoard;
+    SUN_TENT(SunShadowSampler, uvb, cb.z - SunShadowParams.z, SunShadowParams, litBoard)
 
-    float r0 = SUN_TAP(-1.0, -1.0) * (1.0 - f.x) + SUN_TAP(0.0, -1.0) + SUN_TAP(1.0, -1.0) + SUN_TAP(2.0, -1.0) * f.x;
-    float r1 = SUN_TAP(-1.0, 0.0) * (1.0 - f.x) + SUN_TAP(0.0, 0.0) + SUN_TAP(1.0, 0.0) + SUN_TAP(2.0, 0.0) * f.x;
-    float r2 = SUN_TAP(-1.0, 1.0) * (1.0 - f.x) + SUN_TAP(0.0, 1.0) + SUN_TAP(1.0, 1.0) + SUN_TAP(2.0, 1.0) * f.x;
-    float r3 = SUN_TAP(-1.0, 2.0) * (1.0 - f.x) + SUN_TAP(0.0, 2.0) + SUN_TAP(1.0, 2.0) + SUN_TAP(2.0, 2.0) * f.x;
-    float lit = (r0 * (1.0 - f.y) + r1 + r2 + r3 * f.y) / 9.0;
+    float3 cr = RoomClip(worldPos + normal * (RoomShadowParams.w * offset));
+    float2 uvr = cr.xy * float2(0.5, -0.5) + 0.5;
+    float litRoom;
+    SUN_TENT(RoomShadowSampler, uvr, cr.z - RoomShadowParams.z, RoomShadowParams, litRoom)
 
-    // outside of the shadow map counts as lit
-    float2 inside2 = step(0.0, uv) * step(uv, 1.0);
-    float inside = inside2.x * inside2.y * step(clip.z, 1.0) * SunShadowEnabled;
-    return lerp(1.0, lit, inside);
+    // anything outside of both maps counts as lit
+    float room = lerp(1.0, litRoom, CascadeWeight(uvr, cr.z, 100000.0) * RoomShadowEnabled);
+    return lerp(room, litBoard, CascadeWeight(uvb, cb.z, 12.0) * SunShadowEnabled);
 }
 
 #define ATLAS_TAP(ox, oy) step(depth, UnpackDepth(tex2D(ShadowAtlasSampler, base + float2(ox, oy) * AtlasSize.y).rgb))
+#define ATLAS_ROW(oy) (ATLAS_TAP(-1.0, oy) * (1.0 - f.x) + ATLAS_TAP(0.0, oy) + ATLAS_TAP(1.0, oy) + ATLAS_TAP(2.0, oy) * f.x)
 
-// 2x2 bilinear PCF inside a tile of the shadow atlas
+// 3x3 tent PCF inside a tile of the shadow atlas (16 point taps, same filter as the sun).
+// Tiles are inset by 2.5 texels on the C# side so the taps never reach a neighbouring tile.
 float AtlasShadow(float2 atlasUV, float depth)
 {
     float2 t = atlasUV * AtlasSize.x - 0.5;
     float2 f = frac(t);
     float2 base = (t - f + 0.5) * AtlasSize.y;
-    float a = lerp(ATLAS_TAP(0.0, 0.0), ATLAS_TAP(1.0, 0.0), f.x);
-    float b = lerp(ATLAS_TAP(0.0, 1.0), ATLAS_TAP(1.0, 1.0), f.x);
-    return lerp(a, b, f.y);
+    return (ATLAS_ROW(-1.0) * (1.0 - f.y) + ATLAS_ROW(0.0) + ATLAS_ROW(1.0) + ATLAS_ROW(2.0) * f.y) / 9.0;
+}
+
+// 2x2 bilinear PCF (4 taps): the cheap version for low quality settings
+float AtlasShadowFast(float2 atlasUV, float depth)
+{
+    float2 t = atlasUV * AtlasSize.x - 0.5;
+    float2 f = frac(t);
+    float2 base = (t - f + 0.5) * AtlasSize.y;
+    return lerp(lerp(ATLAS_TAP(0.0, 0.0), ATLAS_TAP(1.0, 0.0), f.x), lerp(ATLAS_TAP(0.0, 1.0), ATLAS_TAP(1.0, 1.0), f.x), f.y);
 }
 
 // Cube map face selection without branches. Face order and orientation match the
@@ -237,7 +288,10 @@ float2 CubeAtlasUV(float3 d, float4 rect)
     return rect.xy + (float2(column, row) + tc) * rect.z;
 }
 
-float3 EvalPointLight(float3 worldPos, float3 n, float4 posInvRange, float4 color, float4 params, float4 rect)
+// The light terms return the unshadowed light and where to look it up in the shadow atlas. The pixel shaders
+// apply the shadow filter themselves (AtlasShadow or AtlasShadowFast), which is how the two quality levels share this code.
+float3 PointLightTerm(float3 worldPos, float3 n, float4 posInvRange, float4 color, float4 params, float4 rect,
+                      out float2 shadowUV, out float shadowDepth)
 {
     float3 d = worldPos - posInvRange.xyz;
     float dist = length(d);
@@ -248,14 +302,14 @@ float3 EvalPointLight(float3 worldPos, float3 n, float4 posInvRange, float4 colo
     float atten = x * x;
 
     float3 ds = d + n * (params.y * (1.5 - saturate(ndl)));
-    float depth = length(ds) * posInvRange.w - params.z;
-    float shadow = AtlasShadow(CubeAtlasUV(ds, rect), depth);
+    shadowDepth = length(ds) * posInvRange.w - params.z;
+    shadowUV = CubeAtlasUV(ds, rect);
 
-    return color.rgb * (WrapDiffuse(ndl, color.w) * atten * shadow);
+    return color.rgb * (WrapDiffuse(ndl, color.w) * atten);
 }
 
-float3 EvalSpotLight(float3 worldPos, float3 n, float4 posInvRange, float4 color, float4 dirCone,
-                     float4 params, float4 rect, float4 axisX, float4 axisY)
+float3 SpotLightTerm(float3 worldPos, float3 n, float4 posInvRange, float4 color, float4 dirCone,
+                     float4 params, float4 rect, float4 axisX, float4 axisY, out float2 shadowUV, out float shadowDepth)
 {
     float3 d = worldPos - posInvRange.xyz;
     float dist = length(d);
@@ -272,10 +326,10 @@ float3 EvalSpotLight(float3 worldPos, float3 n, float4 posInvRange, float4 color
     float z = max(dot(ds, dirCone.xyz), 1e-3);
     float2 ndc = float2(dot(ds, axisX.xyz), dot(ds, axisY.xyz)) / z;
     float2 tc = clamp(ndc * float2(0.5, -0.5) + 0.5, rect.w, 1.0 - rect.w);
-    float depth = length(ds) * posInvRange.w - params.z;
-    float shadow = AtlasShadow(rect.xy + tc * rect.z, depth);
+    shadowDepth = length(ds) * posInvRange.w - params.z;
+    shadowUV = rect.xy + tc * rect.z;
 
-    return color.rgb * (WrapDiffuse(ndl, color.w) * atten * cone * shadow);
+    return color.rgb * (WrapDiffuse(ndl, color.w) * atten * cone);
 }
 
 float4 EncodeLight(float3 light, float3 worldPos)
@@ -399,29 +453,33 @@ float4 AmbientSunPS(LitPSInput input) : COLOR0
     return EncodeLight(ambient + sun, input.WorldPos);
 }
 
-float4 PointLightsPS(LitPSInput input) : COLOR0
-{
-    float3 v = ViewVector(input.WorldPos);
-    float3 n = FaceNormal(input.Normal, v);
+#define POINT(i, SHADOW) \
+    { \
+        float2 uv; float depth; \
+        float3 c = PointLightTerm(input.WorldPos, n, Light##i##Position, Light##i##Color, Light##i##Params, Light##i##Rect, uv, depth); \
+        light += c * SHADOW(uv, depth); \
+    }
+#define SPOT(i, SHADOW) \
+    { \
+        float2 uv; float depth; \
+        float3 c = SpotLightTerm(input.WorldPos, n, Light##i##Position, Light##i##Color, Light##i##DirCone, Light##i##Params, \
+                                 Light##i##Rect, Light##i##AxisX, Light##i##AxisY, uv, depth); \
+        light += c * SHADOW(uv, depth); \
+    }
+#define LIGHTS_PS(NAME, LIGHT, SHADOW) \
+    float4 NAME(LitPSInput input) : COLOR0 \
+    { \
+        float3 v = ViewVector(input.WorldPos); \
+        float3 n = FaceNormal(input.Normal, v); \
+        float3 light = 0.0; \
+        LIGHT(0, SHADOW) LIGHT(1, SHADOW) LIGHT(2, SHADOW) LIGHT(3, SHADOW) \
+        return EncodeLight(light, input.WorldPos); \
+    }
 
-#define POINT(i) EvalPointLight(input.WorldPos, n, Light##i##Position, Light##i##Color, Light##i##Params, Light##i##Rect)
-    float3 light = POINT(0) + POINT(1) + POINT(2) + POINT(3);
-#undef POINT
-
-    return EncodeLight(light, input.WorldPos);
-}
-
-float4 SpotLightsPS(LitPSInput input) : COLOR0
-{
-    float3 v = ViewVector(input.WorldPos);
-    float3 n = FaceNormal(input.Normal, v);
-
-#define SPOT(i) EvalSpotLight(input.WorldPos, n, Light##i##Position, Light##i##Color, Light##i##DirCone, Light##i##Params, Light##i##Rect, Light##i##AxisX, Light##i##AxisY)
-    float3 light = SPOT(0) + SPOT(1) + SPOT(2) + SPOT(3);
-#undef SPOT
-
-    return EncodeLight(light, input.WorldPos);
-}
+LIGHTS_PS(PointLightsPS, POINT, AtlasShadow)
+LIGHTS_PS(PointLightsFastPS, POINT, AtlasShadowFast)
+LIGHTS_PS(SpotLightsPS, SPOT, AtlasShadow)
+LIGHTS_PS(SpotLightsFastPS, SPOT, AtlasShadowFast)
 
 float4 UnlitPS(ShadowPSInput input) : COLOR0
 {
@@ -429,9 +487,20 @@ float4 UnlitPS(ShadowPSInput input) : COLOR0
 }
 
 #define SHAFT_STEPS 16.0
-#define SHAFT_STEP visible += step(sp.z, UnpackDepth(tex2D(SunShadowSampler, sp.xy).rgb)); sp += stepS;
+// each step takes a bilinear (2x2) shadow lookup: with single point taps the steps right next to the surface
+// copy the room map's coarse texels onto the floor as a saw-tooth edge (very visible under weak moonlight)
+#define SHAFT_TAP(ox, oy) step(sp.z, UnpackDepth(tex2D(RoomShadowSampler, base + float2(ox, oy) * RoomShadowParams.x).rgb))
+#define SHAFT_STEP \
+    { \
+        float2 t = sp.xy * RoomShadowParams.y - 0.5; \
+        float2 f = frac(t); \
+        float2 base = (t - f + 0.5) * RoomShadowParams.x; \
+        visible += lerp(lerp(SHAFT_TAP(0.0, 0.0), SHAFT_TAP(1.0, 0.0), f.x), lerp(SHAFT_TAP(0.0, 1.0), SHAFT_TAP(1.0, 1.0), f.x), f.y); \
+        sp += stepS; \
+    }
 
-// Ray marches from the surface back towards the viewer through the sun's shadow map.
+// Ray marches from the surface back towards the viewer through the sun's room shadow map
+// (when the room cascade is off, LightingSystem binds the board cascade here instead).
 // The ray is transformed into shadow map space once (the sun projection is orthographic, so
 // this is linear) and clipped against the map's [0,1] cube, so every step is a single tap.
 float4 SunShaftsPS(ShadowPSInput input) : COLOR0
@@ -439,10 +508,10 @@ float4 SunShaftsPS(ShadowPSInput input) : COLOR0
     float3 worldPos = input.Data.xyz;
     float3 v = ViewVector(worldPos);
 
-    float3 c0 = SunClip(worldPos);
-    float3 c1 = SunClip(worldPos + v * ShaftParams.x);
-    float3 s0 = float3(c0.xy * float2(0.5, -0.5) + 0.5, c0.z - SunShadowParams.z);
-    float3 s1 = float3(c1.xy * float2(0.5, -0.5) + 0.5, c1.z - SunShadowParams.z);
+    float3 c0 = RoomClip(worldPos);
+    float3 c1 = RoomClip(worldPos + v * ShaftParams.x);
+    float3 s0 = float3(c0.xy * float2(0.5, -0.5) + 0.5, c0.z - RoomShadowParams.z);
+    float3 s1 = float3(c1.xy * float2(0.5, -0.5) + 0.5, c1.z - RoomShadowParams.z);
 
     // clip the segment to the shadow map volume (slab test)
     float3 dir = s1 - s0;
@@ -475,7 +544,22 @@ float4 SunShaftsPS(ShadowPSInput input) : COLOR0
     float cosTheta = dot(-v, SunDirection);
     float phase = (1.0 - g * g) / pow(abs(1.0 + g * g - 2.0 * g * cosTheta), 1.5);
 
-    return float4(ShaftColor * (visible * ShaftParams.y * phase * SunShadowEnabled), 1.0);
+    // HG peaks at (1 + g) / (1 - g)^2 (10x for g = 0.6), which blows out to white when looking into the beams
+    phase = min(phase, ShaftMaxGlow);
+
+    // soft knee: thin haze stays linear, thick beams roll off towards 1 instead of clipping
+    float3 shaft = ShaftColor * (visible * ShaftParams.y * phase * SunShadowEnabled);
+    shaft = 1.0 - exp(-shaft);
+    return float4(shaft, 1.0);
+}
+
+// Min filter over a cross of 5 texels. Seams between separate meshes (wall/ceiling edges) can rasterize as
+// one texel wide gaps in the coarse room map, which would let thin lines of sunlight through.
+#define DILATE_TAP(ox, oy) UnpackDepth(tex2D(RoomShadowSampler, input.TexCoord + float2(ox, oy) * RoomShadowParams.x).rgb)
+float4 ShadowDilatePS(ScreenPSInput input) : COLOR0
+{
+    float d = min(min(DILATE_TAP(0.0, 0.0), DILATE_TAP(1.0, 0.0)), min(DILATE_TAP(-1.0, 0.0), min(DILATE_TAP(0.0, 1.0), DILATE_TAP(0.0, -1.0))));
+    return float4(PackDepth(d), 1.0);
 }
 
 float4 CompositePS(ScreenPSInput input) : COLOR0
@@ -524,6 +608,24 @@ technique PointLights
     }
 }
 
+technique PointLightsFast
+{
+    pass P0
+    {
+        VertexShader = compile vs_3_0 LitVS();
+        PixelShader = compile ps_3_0 PointLightsFastPS();
+    }
+}
+
+technique SpotLightsFast
+{
+    pass P0
+    {
+        VertexShader = compile vs_3_0 LitVS();
+        PixelShader = compile ps_3_0 SpotLightsFastPS();
+    }
+}
+
 technique SpotLights
 {
     pass P0
@@ -548,6 +650,15 @@ technique SunShafts
     {
         VertexShader = compile vs_3_0 ShadowVS();
         PixelShader = compile ps_3_0 SunShaftsPS();
+    }
+}
+
+technique ShadowDilate
+{
+    pass P0
+    {
+        VertexShader = compile vs_3_0 ScreenVS();
+        PixelShader = compile ps_3_0 ShadowDilatePS();
     }
 }
 
