@@ -30,6 +30,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Localization;
 using TanksRebirth.Net;
 using TanksRebirth.IO;
@@ -570,6 +571,7 @@ public class TankGame : Game {
 
             GameResources.EnsurePreloadedAssetsArePreloaded();
             GameHandler.SetupGraphics();
+            LightingShowcase.Initialize(GraphicsDevice); // dynamic lighting (F7 = presets, F8 = before/after)
             GameUI.Initialize();
             MainMenuUI.InitializeUI();
             MainMenuUI.InitializeBasics();
@@ -823,6 +825,7 @@ public class TankGame : Game {
         RuntimeData.UpdateCount++;
 
         GameShaders.UpdateShaders();
+        LightingShowcase.Update();
 
         InputUtils.PollGamepad();
         InputUtils.PollKBM();
@@ -879,6 +882,8 @@ public class TankGame : Game {
         GraphicsDevice.SetRenderTarget(GameFrameBuffer);
         GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
 
+        LightingSystem.BeginFrame(CameraGlobals.GameView, CameraGlobals.GameProjection);
+
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
         // TankFootprint.PrepareRT(GraphicsDevice);
@@ -893,6 +898,9 @@ public class TankGame : Game {
         GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
 
         spriteBatch.End();
+
+        // (LightingSystem.EndFrame runs inside GameHandler.RenderAll, before the in-world UI)
+
         // stop drawing the regular game scene
         GraphicsDevice.SetRenderTarget(null);
     }

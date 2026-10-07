@@ -264,6 +264,7 @@ public record struct Mission {
         //if (version != LevelEditorUI.EDITOR_VERSION)
         //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
         return version switch {
+            1 => LoadMissionV2(reader),
             2 => LoadMissionV2(reader),
             3 => LoadMissionV3(reader),
             4 => LoadMissionV4(reader),

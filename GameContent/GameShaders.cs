@@ -7,6 +7,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
@@ -31,6 +32,9 @@ public class GameShaders {
 
     public static void DrawTankMesh(ModelMesh mesh, Matrix world, Matrix view, Matrix projection,
         Texture2D texture, float opacity, bool useEnvironment = false) {
+        // the tank shader isn't a BasicEffect, so tell the lighting system about this mesh directly
+        LightingSystem.Submit(mesh, world, view, projection, opacity);
+
         var worldView = world * view;
         OriginalTankShader.Parameters["WorldView"].SetValue(worldView);
         OriginalTankShader.Parameters["NormalMatrix"].SetValue(Matrix.Transpose(Matrix.Invert(worldView)));

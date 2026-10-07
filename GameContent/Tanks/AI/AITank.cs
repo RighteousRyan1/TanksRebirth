@@ -183,7 +183,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     }
     public override void Initialize() {
         base.Initialize();
-        TankAI.Initialize();
+        TankAI?.Initialize();
     }
 
     public override void ApplyDefaults(ref TankProperties properties) {

@@ -17,6 +17,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -267,6 +268,9 @@ public class GameHandler {
 
             Particles.RenderParticles(spriteBatch);
         }
+
+        // shadows + lights, multiplied onto the world drawn so far. everything below is UI and stays unlit.
+        LightingSystem.EndFrame(TankGame.GameFrameBuffer);
 
         // only render the level editor if it's active
         // change depth stencil...?

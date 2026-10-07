@@ -740,6 +740,12 @@
 /processorParam:DebugMode=Auto
 /build:Assets/shaders/gaussian_blur.fx
 
+#begin Assets/shaders/lighting/lighting.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/shaders/lighting/lighting.fx
+
 #begin Assets/shaders/lantern.fx
 /importer:EffectImporter
 /processor:EffectProcessor
