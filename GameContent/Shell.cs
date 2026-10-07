@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Runtime.CompilerServices;
@@ -114,8 +115,11 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     /// Represents the ID of this shell in the array. Useful for local operations relating to collisions and such.
     /// </summary>
     public int Id { get; private set; }
-    /// <summary>Represents an ID between (0-63 * client #) used for syncing. Set randomly and is synced on spawn but not manipulated! Useful for state change operations on the bullet, such as death.</summary>
-    public byte UID { get; private set; }
+    /// <summary>
+    /// An ID that helps each client identify this specific <see cref="Shell"/>.
+    /// The top byte is the firing client's ID + 1, the rest a counter, so duplicate IDs are literally impossible.
+    /// </summary>
+    public int NetId { get; private set; } = -1;
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
     public ShellProperties Properties = new();
@@ -123,28 +127,49 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
     /// <summary>An identifier of the shell's volley. If shells share the same volley ID, they cannot collide until they separate from spawn.</summary>
     public int VolleyId = -1;
-    /// <summary>Updates the UID of the shell. Avoid changing during runtime if unnecessary.</summary>
-    public void SetUID(byte newID) => UID = newID;
-    /// <summary>aGenerates a random UID for use with shell instance management</summary>
-    public static byte GenerateUID(Tank owner) {
-        bool repetitionCheck = true;
-        int attempts = 0;
-        while (repetitionCheck && attempts < 8) {
-            attempts += 1;
-            repetitionCheck = false;
-            byte newID = (byte)(Client.ClientRandom.Next(0, byte.MaxValue / GameHandler.MAX_PLAYERS + 1) + NetPlay.GetMyClientId() * byte.MaxValue / GameHandler.MAX_PLAYERS + 1);        //splits the byte range (0-255) amongst 4 players and allows each player to allocate 0-63 of the addr.
-            for (int i = 0; i < owner.OwnedShellCount; i++) {
-                if (owner.OwnedShells[i] is null) continue;
-                if (owner.OwnedShells[i].UID == newID) {      //if there's a repetition, redo
-                    repetitionCheck = true;
-                    break;
-                }
-            }
-            if (!repetitionCheck)
-                return newID;
-        }
-        return 255;     //Could not generate.
+    /// <summary>Gives the shell the ID another client assigned to it (used when a fired shell arrives over the network).</summary>
+    public void SetNetId(int netId) => NetId = netId;
+
+    static int _netIdCounter;
+
+
+    /// <summary>A new network ID, unique to this client.</summary>
+    public static int NewNetId() {
+        // increment the actual counter part of the NetId
+        _netIdCounter = (_netIdCounter + 1) & 0xFFFFFF;
+
+        // shift so we can plant the client id in the first 8 bytes, then the counter for the latter 24
+        return ((NetPlay.GetMyClientId() + 1) << 24) | _netIdCounter;
     }
+
+    /// <summary>The live shell with this <see cref="NetId"/>, or null.</summary>
+    public static Shell? FindByNetId(int netId) {
+        if (netId < 0) return null;
+        for (int i = 0; i < AllShells.Length; i++) {
+            var shell = AllShells[i];
+            if (shell is not null && shell.NetId == netId)
+                return shell;
+        }
+        return null;
+    }
+
+    // IDs of shells that were destroyed before they were created here
+    // fixing shell desyncs is more hell than i thought
+    const int DESTROYED = 512;
+    static readonly HashSet<int> _destroyedIds = [];
+    static readonly Queue<int> _destroyedOrder = new();
+
+    /// <summary>Remembers that the shell with <paramref name="netId"/> is gone, in case its fire message is still on the way.</summary>
+    public static void LogDeadShell(int netId) {
+        if (netId < 0 || !_destroyedIds.Add(netId))
+            return;
+        _destroyedOrder.Enqueue(netId);
+        if (_destroyedOrder.Count > DESTROYED)
+            _destroyedIds.Remove(_destroyedOrder.Dequeue());
+    }
+
+    /// <summary>Whether a shell with <paramref name="netId"/> was already destroyed. Used to prevent late creations on other clients.</summary>
+    public static bool WasDestroyed(int netId) => _destroyedIds.Contains(netId);
     public void Swap(int type) {
         Type = type;
 
@@ -205,12 +230,13 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         Id = index;
         AllShells[index] = this;
 
+        NetId = NewNetId();
+
         if (owner == null) return;
 
         var idx = Array.IndexOf(Owner.OwnedShells, null);
         if (idx > -1) Owner.OwnedShells[idx] = this;
 
-        SetUID(GenerateUID(owner));
         AITank.Dangers.Add(this);
         PostCreate?.Invoke(this);
     }

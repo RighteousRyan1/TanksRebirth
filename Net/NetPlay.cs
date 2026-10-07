@@ -277,37 +277,14 @@ public static class NetPlay {
                 GameHandler.AllTanks[hurtTankId]?.Damage(context, false, colorOverride);
                 break;
             case PacketID.ShellDestroy:
-                var otherShellUID = reader.GetByte();
+                var destroyedNetId = reader.GetInt();
                 var cxt = reader.GetByte();
 
-                // FIXME: crashes if recieving on a dead player. weird.
-                // FIXME? wait for results.
-                // TODO: see if this works.
-
-                /*var currentClientShellCount = Shell.AllShells.Count(x => x is not null);
-
-                var idAdjust = senderShellId + (currentClientShellCount - senderShellCount);
-
-                if (idAdjust < 0)
-                    return;
-
-                Shell.AllShells[idAdjust]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);*/
-
-                var currentClientShellCount = Shell.AllShells.Length;
-                for (int i = 0; i < currentClientShellCount; i++) {
-                    if (Shell.AllShells[i] is null) continue;
-                    if (Shell.AllShells[i].UID == otherShellUID) {
-                        Shell.AllShells[i].Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
-                        break;
-                    }
-                }
-
-                // old and stupid "ghost bullets" workaround
-                /*if (GameHandler.AllTanks[ownerId] is not null)
-                    if (ownerShellIndex > -1)
-                        if (GameHandler.AllTanks[ownerId].OwnedShells.Length > ownerShellIndex)
-                            if (GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex] is not null)
-                                GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);*/
+                var destroyedShell = Shell.FindByNetId(destroyedNetId);
+                if (destroyedShell is not null)
+                    destroyedShell.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
+                else
+                    Shell.LogDeadShell(destroyedNetId);
                 break;
             case PacketID.MineDetonate:
                 var destroyedMineId = reader.GetInt();
@@ -320,26 +297,24 @@ public static class NetPlay {
                 var shellVel = reader.GetVector2();
                 var shellRicochets = reader.GetInt();
                 var shellOwner = reader.GetInt();
-                var shellUID = reader.GetByte();
+                var shellNetId = reader.GetInt();
+                var shellVolley = reader.GetInt();
 
-                // GameHandler.AllTanks[shellOwner].Shoot(true);
-                //var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
-                //shell.SetUID(shellUID);
-                // GameHandler.AllTanks[shellOwner]?.DoShootParticles();
-                var shooter = GameHandler.AllTanks[shellOwner];
+                // already destroyed (the destroy message overtook this one), or already here
+                if (Shell.WasDestroyed(shellNetId) || Shell.FindByNetId(shellNetId) is not null)
+                    break;
+                if (Array.IndexOf(Shell.AllShells, null) < 0)
+                    break;
 
-                if (shooter is null) break;
-
-                shooter.Shoot(false, false);
-                if (shooter.LastShotShell is not null) {
-                    shooter!.LastShotShell!.Type = shellType;
-                    shooter.LastShotShell.Position = shellPos;
-                    shooter.LastShotShell.Velocity = shellVel;
-                    shooter.LastShotShell.Ricochets = shooter.LastShotShell.RicochetsRemaining = shellRicochets;
-                    shooter.LastShotShell.SetUID(shellUID);
+                // before there was some bs that just straight up caused this code to malfunction via lag
+                var shooter = shellOwner >= 0 && shellOwner < GameHandler.AllTanks.Length ? GameHandler.AllTanks[shellOwner] : null;
+                var firedShell = Shell.Create(shellPos, shellVel, shellType, shooter, shellRicochets);
+                firedShell.SetNetId(shellNetId);
+                firedShell.VolleyId = shellVolley;
+                if (shooter is not null) {
+                    firedShell.Properties.Homing = shooter.Properties.ShellHoming;
+                    shooter.DoShootParticles();
                 }
-
-                // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                 break;
             case PacketID.MinePlacement:
                 var minePos = reader.GetVector2();
@@ -581,10 +556,10 @@ public static class NetPlay {
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.ShellDestroy:
-                var senderShellUID = reader.GetByte();
+                var senderShellNetId = reader.GetInt();
                 var cxt = reader.GetByte();
 
-                message.Put(senderShellUID);
+                message.Put(senderShellNetId);
                 message.Put(cxt);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
@@ -601,14 +576,16 @@ public static class NetPlay {
                 var shellVel = reader.GetVector2();
                 var shellRicochets = reader.GetInt();
                 var shellOwner = reader.GetInt();
-                var shellUniqueID = reader.GetByte();
+                var shellNetId = reader.GetInt();
+                var shellVolley = reader.GetInt();
 
                 message.Put(shellType);
                 message.Put(shellPos);
                 message.Put(shellVel);
                 message.Put(shellRicochets);
                 message.Put(shellOwner);
-                message.Put(shellUniqueID);
+                message.Put(shellNetId);
+                message.Put(shellVolley);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;

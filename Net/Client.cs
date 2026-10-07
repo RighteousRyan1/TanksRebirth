@@ -230,14 +230,11 @@ public class Client {
         message.Put(shell.Velocity);
         message.Put(shell.RicochetsRemaining);
         message.Put(shell.Owner!.WorldId);
-        message.Put(shell.UID);
+        message.Put(shell.NetId);
+        message.Put(shell.VolleyId);
 
-        // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
-
-        // FIXME: could probably use more syncing... who cares?
-
-
-        NetClient.Send(message, DeliveryMethod.Sequenced);
+        // reliable: a lost fire message means a shell that exists for the shooter but nobody else
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     // maybe make contexts serializable?
     public static void SyncDamage(int hurtId, Color colorOverride) {
@@ -257,10 +254,7 @@ public class Client {
             return;
         NetDataWriter message = new();
         message.Put(PacketID.ShellDestroy);
-        //sending the shell UID on the current client.
-        message.Put(shell.UID);
-        // send the index of the shell in the owner's OwnedShell array for destruction on other clients
-        // message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
+        message.Put(shell.NetId);
         message.Put((byte)cxt);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
@@ -287,7 +281,7 @@ public class Client {
         message.Put(detonateTime);
         message.Put(id);
 
-        NetClient.Send(message, DeliveryMethod.Sequenced);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendMessage(string text, Color color, string sender) {
         if (!IsConnected())
