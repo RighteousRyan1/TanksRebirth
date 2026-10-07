@@ -1,4 +1,5 @@
 using System;
+using TanksRebirth.Net;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
@@ -52,7 +53,8 @@ public struct TankTemplate {
         return ai;
     }
 
-    public readonly PlayerTank GetPlayerTank() {
+    /// <param name="random">Picks the tier when the Random Player modifier is on. Pass one from <see cref="Server.RandomFor"/> so it's the same on every client.</param>
+    public readonly PlayerTank GetPlayerTank(Random? random = null) {
         if (!IsPlayer)
             throw new Exception($"{nameof(IsPlayer)} is false. This method cannot execute.");
 
@@ -60,7 +62,7 @@ public struct TankTemplate {
 
         // change player based on chosen difficulties
         if (Modifiers.Map[Modifiers.RANDOM_PLAYER])
-            player = new PlayerTank(PlayerType, false, TankID.ServerRandomTier());
+            player = new PlayerTank(PlayerType, false, random is null ? TankID.ServerRandomTier() : TankID.RandomTier(random));
         else if (Modifiers.Map[Modifiers.DISGUISE])
             player = new PlayerTank(PlayerType, false, Modifiers.DisguiseValue);
         else

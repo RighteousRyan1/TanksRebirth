@@ -128,9 +128,9 @@ public static class ParticleGameplay {
             var c = manager.MakeParticle(position,
                 ModelGlobals.Smoke.Asset,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-            var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
+            var randDir = new Vector3(Client.ClientRandom.NextFloat(-35, 35), 0, Client.ClientRandom.NextFloat(-35, 35));
             c.Position += randDir;
-            var randSize = Server.ServerRandom.NextFloat(5, 10);
+            var randSize = Client.ClientRandom.NextFloat(5, 10);
             c.Scale.X = randSize;
             c.Scale.Z = randSize;
             c.UniqueBehavior = (b) => {

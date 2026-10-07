@@ -368,6 +368,11 @@ public class Client {
         message.Put(name);
         message.Put(missionId);
 
+        // every client plays this game with the same seed
+        var seed = Server.NewSessionSeed();
+        Server.SetSessionSeed(seed);
+        message.Put(seed);
+
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendCampaignStatus(string campaignName, int clientId, bool success) {

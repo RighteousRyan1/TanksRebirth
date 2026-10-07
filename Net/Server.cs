@@ -1,4 +1,4 @@
-﻿using LiteNetLib;
+using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using System;
@@ -37,8 +37,57 @@ public class Server {
             ServerRandom = new(value);
         }
     }
-    /// <summary>Should only be used for events in a multiplayer context in order for events to happen the same way on all clients.</summary>
+    /// <summary>
+    /// A shared random stream. It only matches between clients while every client draws from it the same number of times
+    /// in the same order, so prefer <see cref="RandomFor"/> for anything that has to come out the same everywhere.
+    /// </summary>
     public static Random ServerRandom { get; private set; } = new();
+
+    /// <summary>
+    /// The seed of the current game. The host picks a new one whenever a campaign starts, so every client has the same one. <see cref="RandomFor"/> is built from it.
+    /// </summary>
+    public static int SessionSeed { get; private set; } = Environment.TickCount;
+
+    /// <summary>Sets <see cref="SessionSeed"/> (and restarts <see cref="ServerRandom"/> from it).</summary>
+    public static void SetSessionSeed(int seed) {
+        SessionSeed = seed;
+        RandSeed = seed;
+    }
+
+    /// <summary>A new random <see cref="SessionSeed"/>, for the host when it starts a game.</summary>
+    public static int NewSessionSeed() => Guid.NewGuid().GetHashCode();
+
+    /// <summary>
+    /// A random generator for one specific roll, the same on every client: it's seeded from <see cref="SessionSeed"/> and
+    /// <paramref name="key"/> only, so it doesn't matter what else was drawn before, or in what order. Give every roll its
+    /// own key (what it's for, the mission, which tank...): e.g. <c>RandomFor(RandomKey.EnemyTier, missionId, tankIndex)</c>.
+    /// </summary>
+    /// <remarks>Outside of multiplayer this is just <see cref="Client.ClientRandom"/>, so single player stays unpredictable.</remarks>
+    public static Random RandomFor(params int[] key) {
+        if (!Client.IsConnected())
+            return Client.ClientRandom;
+        return new Random(Mix(SessionSeed, key));
+    }
+
+    /// <summary>What a <see cref="RandomFor"/> roll is for (the first part of its key).</summary>
+    public static class RandomKey {
+        public const int EnemyTier = 1;
+        public const int CompanionTier = 2;
+        public const int PlayerTier = 3;
+    }
+
+    // splitmix64, which is consistent PRNG, unlike hashcode.combine
+    // thank you flipy for suggestion. which psycho game up with this?
+    static int Mix(int seed, int[] key) {
+        ulong x = (uint)seed;
+        foreach (var k in key) {
+            x += 0x9E3779B97F4A7C15UL + (uint)k;
+            x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9UL;
+            x = (x ^ (x >> 27)) * 0x94D049BB133111EBUL;
+            x ^= x >> 31;
+        }
+        return (int)(x ^ (x >> 32));
+    }
 
     public static Client[]? ConnectedClients;
 
@@ -114,12 +163,12 @@ public class Server {
 
         NetDataWriter message = new();
 
-        var seed = Guid.NewGuid().GetHashCode();
+        var seed = NewSessionSeed();
         message.Put(PacketID.SyncSeeds);
 
         message.Put(seed);
 
-        RandSeed = seed;
+        SetSessionSeed(seed);
 
         // since this is sending from the server itself, no point in sending to itself.
         NetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, Client.NetClient);

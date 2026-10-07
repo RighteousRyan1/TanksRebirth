@@ -152,7 +152,7 @@ public static class NetPlay {
             #region One-Off
             case PacketID.SyncSeeds:
                 var millis = reader.GetInt();
-                Server.RandSeed = millis;
+                Server.SetSessionSeed(millis);
                 break;
             case PacketID.SendCommandUsage:
                 var cmd = reader.GetString();
@@ -327,6 +327,7 @@ public static class NetPlay {
             case PacketID.SendCampaignByName:
                 var campName = reader.GetString();
                 var missionId = reader.GetInt();        // Obtain the mission id from the server itself. Fixes issues when loading missions.
+                Server.SetSessionSeed(reader.GetInt());
 
                 // if this solution fails, simply change param 2 (wasConfirmed) to true
                 var success = MainMenuUI.PrepareGameplay(campName, false, true, missionId); // second param to false when doing a check
@@ -657,8 +658,10 @@ public static class NetPlay {
             case PacketID.SendCampaignByName:
                 var campName = reader.GetString();
                 var missionId = reader.GetInt();
+                var sessionSeed = reader.GetInt();
                 message.Put(campName);
                 message.Put(missionId);
+                message.Put(sessionSeed);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;

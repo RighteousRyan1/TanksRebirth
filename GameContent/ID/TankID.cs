@@ -1,4 +1,5 @@
-﻿using TanksRebirth.Internals.Common.Framework.Collections;
+﻿using System;
+using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.ID;
@@ -51,5 +52,7 @@ public sealed class TankID {
     // methods...
 
     public static int ServerRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
-    public static int ClientRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
+    /// <summary>A random tier from <paramref name="random"/> (e.g. one from <see cref="Server.RandomFor"/>).</summary>
+    public static int RandomTier(Random random) => random.Next(0, TankID.Collection.Count);
+    public static int ClientRandomTier() => Client.ClientRandom.Next(0, TankID.Collection.Count);
 }

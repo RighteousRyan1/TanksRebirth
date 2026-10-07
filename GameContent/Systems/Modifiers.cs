@@ -67,6 +67,7 @@ public record Modifiers {
 
     // fun modifiers stuff
     public static TankTemplate[] HijackTanks(TankTemplate[] tanks) {
+        var missionId = CampaignGlobals.LoadedCampaign.CurrentMissionId;
         for (int i = 0; i < tanks.Length; i++) {
             var t = tanks[i];
             if (t.IsPlayer)
@@ -74,7 +75,7 @@ public record Modifiers {
 
             var newTemplate = t;
 
-            newTemplate.AiTier = Server.ServerRandom.Next(RandomTanksLower, RandomTanksUpper + 1);
+            newTemplate.AiTier = Server.RandomFor(Server.RandomKey.EnemyTier, missionId, i).Next(RandomTanksLower, RandomTanksUpper + 1);
             tanks[i] = newTemplate;
         }
         return tanks;
