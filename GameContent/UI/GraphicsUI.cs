@@ -8,24 +8,20 @@ using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.DynamicLighting;
-using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals.UI;
-using FontStashSharp;
 using Preset = TanksRebirth.Graphics.DynamicLighting.LightingPresets.Preset;
 
 namespace TanksRebirth.GameContent.UI;
 
 /// <summary>
-/// The graphics settings page: a "Display" column and a "Dynamic Lighting" column of option rows, a description
-/// bar for whatever the mouse is over, and Apply / Reset buttons.
+/// The Video page of the settings window (<see cref="SettingsUI.Video"/>): a "Display" column and a "Dynamic Lighting"
+/// column of option rows, and Apply / Reset buttons.
 /// </summary>
 /// <remarks>
-/// <para>Every row is a <see cref="SettingRow"/>: left click picks the next value, right click the previous one.
+/// Every row is a <see cref="SettingRow"/>: left click picks the next value, right click the previous one.
 /// Most options apply immediately. Window mode and resolution only apply when "Apply" is pressed (switching on every
-/// click would make the window jump around), and are discarded when the page is closed without applying.</para>
-/// <para>Layout is in 1920x1080 units and scaled with <c>ToResolution</c>, like the rest of the UI.</para>
+/// click would make the window jump around), and are discarded when the page is left without applying.
 /// </remarks>
 public static class GraphicsUI {
     // the rows GameUI refers to by name (kept for compatibility)
@@ -53,14 +49,13 @@ public static class GraphicsUI {
     public static UITextButton ApplyBtn = null!;
     public static UITextButton ResetBtn = null!;
 
-    /// <summary>The resolution currently in use (GameUI reads this when leaving the page).</summary>
+    /// <summary>The resolution currently in use.</summary>
     public static KeyValuePair<int, int> CurrentRes;
 
+    /// <summary>Whether the Video page is on screen. Clearing it closes the settings window.</summary>
     public static bool IsVisible;
 
-    static readonly List<UIElement> _elements = [];
-    static bool _initialized;
-    static uint _openedAt;
+    static SettingsPage Page => SettingsUI.Video;
 
     // window mode and resolution wait for "Apply"
     static WindowKind _pendingKind;
@@ -80,42 +75,27 @@ public static class GraphicsUI {
     ];
     static readonly float[] _dayLengths = [2f, 5f, 8f, 15f, 30f, 60f, 24f * 60f];
 
-    // ------------------------------------------------------------------------------------------ layout (1920x1080 units)
-
-    const float PanelX = 150, PanelY = 30, PanelW = 1620, PanelH = 800;
-    const float LeftX = 190, RightX = 990, ColumnW = 740;
-    const float HeaderY = 115, FirstRowY = 172, RowH = 50, RowStep = 57;
-    const float DescY = 752, DescH = 58;
-
-    static float RowY(int index) => FirstRowY + index * RowStep;
+    const float LeftX = SettingsUI.LeftX, RightX = SettingsUI.RightX, ColumnW = SettingsUI.ColumnW;
+    static float RowY(int index) => SettingsUI.RowY(index);
 
     static LightingSettings Lighting => LightingSettings.Current;
 
     // ------------------------------------------------------------------------------------------ setup
 
     public static void Initialize() {
-        if (_initialized) {
-            foreach (var element in _elements)
-                element.Remove();
-            _elements.Clear();
-        }
-        _initialized = true;
+        Page.Clear();
+        Page.Opened = ResetPendingDisplay;
 
         CurrentRes = new(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
         _resolutions = FindResolutions();
+        ResetPendingDisplay();
 
-        // background, title, column headers and the description bar (none of them take mouse input)
-        Add(new UIPanel((panel, sb) => DrawTitle(sb)) {
-            BackgroundColor = Color.Black * 0.55f,
-            IgnoreMouseInteractions = true,
-        }, PanelX, PanelY, PanelW, PanelH);
-        Add(new SectionHeader("Display"), LeftX, HeaderY, ColumnW, 46);
-        Add(new SectionHeader("Dynamic Lighting"), RightX, HeaderY, ColumnW, 46);
-        Add(new DescriptionBar(), LeftX, DescY, RightX + ColumnW - LeftX, DescH);
+        Page.Header("Display", LeftX);
+        Page.Header("Dynamic Lighting", RightX);
 
         var lang = TankGame.GameLanguage;
 
-        // ---------------------------------------------------------------- display
+    // ---------------------------------------------------------------- display
         WinKindBtn = Row(LeftX, RowY(0), lang.Settings.WindowKind ?? "Window Mode",
             "Windowed, borderless (covers the screen, quick to alt-tab) or exclusive fullscreen. Press Apply to switch.",
             () => WindowKindName(_pendingKind) + (_pendingKind != TankGame.Settings.WindowKind ? " *" : ""),
@@ -181,10 +161,10 @@ public static class GraphicsUI {
                     tank?.Remove(true);
             });
 
-        ApplyBtn = Button(LeftX, RowY(9), (ColumnW - 20) / 2, "Apply",
-            "Switches to the selected window mode and resolution.", ApplyDisplay, () => HasPendingDisplay);
-        ResetBtn = Button(LeftX + (ColumnW + 20) / 2, RowY(9), (ColumnW - 20) / 2, "Reset to Defaults",
-            "Puts every option on this page back to its default (the display mode still needs Apply).", ResetToDefaults, () => true);
+        ApplyBtn = Page.Button(LeftX, RowY(9), (ColumnW - 20) / 2, "Apply",
+            "Switches to the selected window mode and resolution.", ApplyDisplay, () => HasPendingDisplay, highlight: true);
+        ResetBtn = Page.Button(LeftX + (ColumnW + 20) / 2, RowY(9), (ColumnW - 20) / 2, "Reset to Defaults",
+            "Puts every option on this page back to its default (the display mode still needs Apply).", ResetToDefaults);
 
         // ---------------------------------------------------------------- dynamic lighting
         LightingBtn = Row(RightX, RowY(0), "Dynamic Lighting",
@@ -260,20 +240,19 @@ public static class GraphicsUI {
             () => OnOff(Lighting.GameplayLights),
             _ => { Lighting.GameplayLights = !Lighting.GameplayLights; ApplyLighting(); },
             enabled: LightingOn);
-
-        SetVisibility(false);
     }
 
-    /// <summary>Shows or hides the page. Hiding it throws away an unapplied window mode / resolution.</summary>
+    /// <summary>Opens the settings window on this page, or closes the window.</summary>
     public static void SetVisibility(bool visibility) {
-        IsVisible = visibility;
-        if (visibility) {
-            _openedAt = RuntimeData.UpdateCount;
-            _pendingKind = TankGame.Settings.WindowKind;
-            _pendingRes = new Point(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
-        }
-        foreach (var element in _elements)
-            element.IsVisible = visibility;
+        if (visibility)
+            SettingsUI.Open(SettingsUI.Video);
+        else if (SettingsUI.IsOpen && SettingsUI.Current == SettingsUI.Video)
+            SettingsUI.Close();
+    }
+
+    static void ResetPendingDisplay() {
+        _pendingKind = TankGame.Settings.WindowKind;
+        _pendingRes = new Point(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
     }
 
     // ------------------------------------------------------------------------------------------ actions
@@ -325,6 +304,9 @@ public static class GraphicsUI {
 
     // ------------------------------------------------------------------------------------------ helpers
 
+    static SettingRow Row(float x, float y, string label, string description, Func<string> value, Action<int> step, Func<bool>? enabled = null)
+        => Page.Row(x, y, label, description, value, step, enabled);
+
     static bool LightingOn() => Lighting.Enabled;
 
     static string OnOff(bool value) => TankGame.GameLanguage.GetEnablement(value);
@@ -375,171 +357,4 @@ public static class GraphicsUI {
 
     static float NearestOf(float[] values, float value) => values.OrderBy(v => MathF.Abs(v - value)).First();
     static int NearestOf(int[] values, int value) => values.OrderBy(v => Math.Abs(v - value)).First();
-
-    static SettingRow Row(float x, float y, string label, string description, Func<string> value, Action<int> step, Func<bool>? enabled = null) {
-        var row = new SettingRow(label, description, value, step, enabled);
-        Add(row, x, y, ColumnW, RowH);
-        return row;
-    }
-
-    static UITextButton Button(float x, float y, float width, string text, string description, Action onClick, Func<bool> enabled) {
-        var button = new UITextButton(text, FontGlobals.RebirthFont, Color.WhiteSmoke, 0.75f);
-        button.OnLeftClick = _ => {
-            if (!InputReady || !enabled())
-                return;
-            onClick();
-        };
-        button.OnMouseOver = _ => SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect);
-        Add(button, x, y, width, RowH);
-        _buttons[button] = (description, enabled);
-        return button;
-    }
-
-    static readonly Dictionary<UITextButton, (string Description, Func<bool> Enabled)> _buttons = [];
-
-    static void Add(UIElement element, float x, float y, float width, float height) {
-        element.SetDimensions(() => new Vector2(x, y).ToResolution(), () => new Vector2(width, height).ToResolution());
-        element.IsVisible = false;
-        _elements.Add(element);
-    }
-
-    /// <summary>Ignores the click that opened the page (it lands on the same frame the rows appear).</summary>
-    internal static bool InputReady => RuntimeData.UpdateCount - _openedAt > 5;
-
-    static Vector2 TextScale(float scale) => new Vector2(scale).ToResolution();
-
-    static void DrawTitle(SpriteBatch sb) {
-        // GameUI sometimes clears IsVisible without calling SetVisibility; follow it
-        if (!IsVisible) {
-            SetVisibility(false);
-            return;
-        }
-        var font = FontGlobals.RebirthFont;
-        var title = TankGame.GameLanguage.Menu.Graphics ?? "Graphics";
-        var pos = new Vector2(PanelX + PanelW / 2f, PanelY + 42).ToResolution();
-        DrawUtils.DrawStringWithBorder(sb, font, title, pos, Color.White, Color.Black, TextScale(1.25f), 0f, Anchor.Center, 1.5f);
-
-        // the Apply button greys out when there is nothing to apply
-        foreach (var (button, info) in _buttons) {
-            var on = info.Enabled();
-            button.Color = on ? (button == ApplyBtn ? Color.Gold : Color.WhiteSmoke) : Color.Gray;
-            button.HoverColor = on ? Color.CornflowerBlue : Color.Gray;
-        }
-    }
-
-    internal static string? HoveredDescription() {
-        var mouse = MouseUtils.MousePosition;
-        foreach (var element in _elements) {
-            if (!element.IsVisible || !element.Hitbox.Contains(mouse))
-                continue;
-            if (element is SettingRow row)
-                return row.Description;
-            if (element is UITextButton button && _buttons.TryGetValue(button, out var info))
-                return info.Description;
-        }
-        return null;
-    }
-
-    // ------------------------------------------------------------------------------------------ widgets
-
-    /// <summary>One option: label on the left, "&lt; value &gt;" on the right. Left click = next, right click = previous.</summary>
-    public sealed class SettingRow : UIElement {
-        public string Label;
-        public string Description;
-        readonly Func<string> _value;
-        readonly Action<int> _step;
-        readonly Func<bool>? _enabled;
-
-        public bool Enabled => _enabled?.Invoke() ?? true;
-
-        public SettingRow(string label, string description, Func<string> value, Action<int> step, Func<bool>? enabled) {
-            Label = label;
-            Description = description;
-            _value = value;
-            _step = step;
-            _enabled = enabled;
-            OnLeftClick = _ => Click(1);
-            OnRightClick = _ => Click(-1);
-            OnMouseOver = _ => SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect);
-        }
-
-        void Click(int dir) {
-            if (!InputReady)
-                return;
-            if (!Enabled) {
-                SoundPlayer.SoundError();
-                return;
-            }
-            Step(dir);
-        }
-
-        /// <summary>Changes the value as if clicked (1 = next, -1 = previous).</summary>
-        public void Step(int dir) => _step(dir);
-
-        public override void DrawSelf(SpriteBatch spriteBatch) {
-            var enabled = Enabled;
-            var hovered = enabled && Hitbox.Contains(MouseUtils.MousePosition);
-            var background = !enabled ? Color.Gray * 0.55f : hovered ? Color.CornflowerBlue : Color.WhiteSmoke;
-            DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, background, Vector2.Zero);
-
-            var font = FontGlobals.RebirthFont;
-            var scale = TextScale(0.72f);
-            var textColor = enabled ? Color.Black : Color.Black * 0.5f;
-            var pad = 22f.ToResolutionX();
-            var centerY = Hitbox.Center.Y;
-
-            // label, left aligned
-            var labelSize = font.MeasureString(Label);
-            spriteBatch.DrawString(font, Label, new Vector2(Hitbox.X + pad, centerY), textColor, scale, 0f, new Vector2(0f, labelSize.Y / 2f));
-
-            // "<  value  >", right aligned
-            var value = _value();
-            var valueSize = font.MeasureString(value);
-            var arrowSize = font.MeasureString(">");
-            var right = Hitbox.Right - pad;
-            var arrowColor = enabled ? (hovered ? Color.White : Color.DimGray) : Color.Black * 0.3f;
-            spriteBatch.DrawString(font, ">", new Vector2(right, centerY), arrowColor, scale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
-            var valueRight = right - (arrowSize.X + 14f) * scale.X;
-            var valueColor = enabled ? new Color(20, 40, 110) : Color.Black * 0.45f;
-            spriteBatch.DrawString(font, value, new Vector2(valueRight, centerY), valueColor, scale, 0f, new Vector2(valueSize.X, valueSize.Y / 2f));
-            var arrowLeft = valueRight - (valueSize.X + 14f) * scale.X;
-            spriteBatch.DrawString(font, "<", new Vector2(arrowLeft, centerY), arrowColor, scale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
-        }
-    }
-
-    /// <summary>A column title with an underline.</summary>
-    sealed class SectionHeader : UIElement {
-        readonly string _text;
-        public SectionHeader(string text) {
-            _text = text;
-            IgnoreMouseInteractions = true;
-        }
-
-        public override void DrawSelf(SpriteBatch spriteBatch) {
-            var font = FontGlobals.RebirthFont;
-            DrawUtils.DrawStringWithBorder(spriteBatch, font, _text, new Vector2(Hitbox.X + 6f.ToResolutionX(), Hitbox.Center.Y),
-                Color.White, Color.Black, TextScale(0.9f), 0f, Anchor.LeftCenter, 1f);
-            var line = new Rectangle(Hitbox.X, Hitbox.Bottom - (int)3f.ToResolutionY(), Hitbox.Width, Math.Max(1, (int)3f.ToResolutionY()));
-            spriteBatch.Draw(TextureGlobals.Pixels[Color.White], line, Color.White * 0.8f);
-        }
-    }
-
-    /// <summary>Shows the description of whatever option the mouse is over.</summary>
-    sealed class DescriptionBar : UIElement {
-        public DescriptionBar() => IgnoreMouseInteractions = true;
-
-        public override void DrawSelf(SpriteBatch spriteBatch) {
-            DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, Color.Black * 0.45f, Vector2.Zero);
-            var text = HoveredDescription() ?? "Left click an option for the next value, right click for the previous one.";
-            var font = FontGlobals.RebirthFont;
-            var scale = TextScale(0.6f);
-            var maxWidth = Hitbox.Width - 40f.ToResolutionX();
-            // shrink long descriptions to fit on one line
-            var width = font.MeasureString(text).X * scale.X;
-            if (width > maxWidth)
-                scale *= maxWidth / width;
-            var size = font.MeasureString(text);
-            spriteBatch.DrawString(font, text, Hitbox.Center.ToVector2(), Color.White, scale, 0f, size / 2f);
-        }
-    }
 }

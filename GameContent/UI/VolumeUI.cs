@@ -1,119 +1,55 @@
-using Microsoft.Xna.Framework;
-using System;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.Internals.Common.Framework.Input;
-using TanksRebirth.Internals.Common.GameUI;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI;
 
-public static class VolumeUI
-{
-    public static UISlider MusicVolume;
+/// <summary>The Audio page of the settings window (<see cref="SettingsUI.Audio"/>): music, sound effect and ambient volume.</summary>
+/// <remarks>The sliders read and write <see cref="TankGame.Settings"/> directly, so setting <c>Value</c> from code (like the
+/// <c>snd_*</c> commands do) updates both the setting and the slider.</remarks>
+public static class VolumeUI {
+    public static SliderRow MusicVolume = null!;
+    public static SliderRow EffectsVolume = null!;
+    public static SliderRow AmbientVolume = null!;
 
-    public static UISlider EffectsVolume;
-
-    public static UISlider AmbientVolume;
-
-    public static UIText MusicText;
-
-    public static UIText EffectsText;
-
-    public static UIText AmbientText;
-
+    /// <summary>Whether the Audio page is on screen. Clearing it closes the settings window.</summary>
     public static bool BatchVisible { get; set; }
 
-    private static bool _initialized;
+    static SettingsPage Page => SettingsUI.Audio;
 
-    public static void Initialize()
-    {
-        if (_initialized) {
-            foreach (var field in typeof(VolumeUI).GetFields()) {
-                if (field.GetValue(null) is UIElement element) {
-                    element.Remove();
-                    field.SetValue(null, null);
-                }
-            }
-        }
-        _initialized = true;
-        //Music
-        MusicVolume = new()
-        {
-            IsVisible = false,
-            FallThroughInputs = true
-        };
-        MusicVolume.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
-        MusicVolume.Initialize();
-        MusicVolume.Value = TankGame.Settings.MusicVolume;
-        MusicVolume.BarWidth = 10;
-        MusicVolume.SliderColor = Color.WhiteSmoke;
+    public static void Initialize() {
+        Page.Clear();
 
-        MusicText = new(TankGame.GameLanguage.Settings.MusicVolume, FontGlobals.RebirthFont, Color.Black)
-        {
-            // IgnoreMouseInteractions = true,
-            IsVisible = false,
-            FallThroughInputs = true
-        };
-        MusicText.SetDimensions(() => new Vector2(950, 175).ToResolution(), () => new Vector2(500, 150).ToResolution());
+        var lang = TankGame.GameLanguage;
+        const float x = SettingsUI.CenterX;
 
-        //Effects
-        EffectsVolume = new()
-        {
-            IsVisible = false
-        };
-        EffectsVolume.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";
-        EffectsVolume.Initialize();
-        EffectsVolume.Value = TankGame.Settings.EffectsVolume;
-        EffectsVolume.BarWidth = 10;
-        EffectsVolume.SliderColor = Color.WhiteSmoke;
+        Page.Header("Volume", x);
 
-        EffectsText = new(TankGame.GameLanguage.Settings.EffectsVolume, FontGlobals.RebirthFont, Color.Black)
-        {
-            //IgnoreMouseInteractions = true,
-            IsVisible = false
-        };
-        EffectsText.SetDimensions(() => new Vector2(950, 425).ToResolution(), () => new Vector2(500, 150).ToResolution());
+        MusicVolume = Page.Slider(x, SettingsUI.RowY(0), lang.Settings.MusicVolume ?? "Music",
+            "Volume of the menu, level editor and mission music.",
+            () => TankGame.Settings.MusicVolume, v => TankGame.Settings.MusicVolume = v, new GameConfig().MusicVolume);
 
-        //Ambient
-        AmbientVolume = new()
-        {
-            IsVisible = false
-        };
-        AmbientVolume.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        AmbientVolume.Tooltip = $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%";
-        AmbientVolume.Initialize();
-        AmbientVolume.Value = TankGame.Settings.AmbientVolume;
-        AmbientVolume.BarWidth = 10;
-        AmbientVolume.SliderColor = Color.WhiteSmoke;
+        EffectsVolume = Page.Slider(x, SettingsUI.RowY(1), lang.Settings.EffectsVolume ?? "Sound Effects",
+            "Volume of shots, explosions, mines, tanks and menu sounds.",
+            () => TankGame.Settings.EffectsVolume, v => TankGame.Settings.EffectsVolume = v, new GameConfig().EffectsVolume);
 
-        AmbientText = new(TankGame.GameLanguage.Settings.AmbientVolume, FontGlobals.RebirthFont, Color.Black)
-        {
-            //IgnoreMouseInteractions = true,
-            IsVisible = false
-        };
-        AmbientText.SetDimensions(() => new Vector2(950, 675).ToResolution(), () => new Vector2(500, 150).ToResolution());
+        AmbientVolume = Page.Slider(x, SettingsUI.RowY(2), lang.Settings.AmbientVolume ?? "Ambient",
+            "Volume of the weather: rain, thunder and the snowy wind.",
+            () => TankGame.Settings.AmbientVolume, v => TankGame.Settings.AmbientVolume = v, new GameConfig().AmbientVolume);
+
+        Page.Button(x, SettingsUI.RowY(4), SettingsUI.ColumnW, "Reset to Defaults",
+            "Puts all three volumes back to their defaults.", () => {
+                var defaults = new GameConfig();
+                MusicVolume.Value = defaults.MusicVolume;
+                EffectsVolume.Value = defaults.EffectsVolume;
+                AmbientVolume.Value = defaults.AmbientVolume;
+            });
     }
 
-    public static void HideAll()
-    {
-        MusicVolume.IsVisible = false;
-        EffectsVolume.IsVisible = false;
-        AmbientVolume.IsVisible = false;
-        MusicText.IsVisible = false;
-        EffectsText.IsVisible = false;
-        AmbientText.IsVisible = false;
-    }
+    /// <summary>Opens the settings window on this page.</summary>
+    public static void ShowAll() => SettingsUI.Open(SettingsUI.Audio);
 
-    public static void ShowAll()
-    {
-        MusicVolume.IsVisible = true;
-        EffectsVolume.IsVisible = true;
-        AmbientVolume.IsVisible = true;
-        MusicText.IsVisible = true;
-        EffectsText.IsVisible = true;
-        AmbientText.IsVisible = true;
+    /// <summary>Closes the settings window if it's on this page.</summary>
+    public static void HideAll() {
+        if (SettingsUI.IsOpen && SettingsUI.Current == SettingsUI.Audio)
+            SettingsUI.Close();
     }
 }
