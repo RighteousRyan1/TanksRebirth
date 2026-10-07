@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using TanksRebirth.GameContent;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
@@ -57,14 +58,12 @@ public static class GameplayLights {
     }
 
     /// <summary>Red blinking mine light; <paramref name="fuse"/> goes from 1 (just placed) to 0 (detonating).</summary>
-    public static void AddMineLight(Vector3 minePosition, float fuse, float timeSeconds) {
-        var urgency = 1f - MathHelper.Clamp(fuse, 0f, 1f);
-        var rate = MathHelper.Lerp(2.5f, 14f, urgency * urgency);
-        var blink = MathF.Pow(0.5f + 0.5f * MathF.Sin(timeSeconds * rate * MathF.PI + minePosition.X), 3f);
+    public static void AddMineLight(Mine mine) {
         var light = NextPoint();
-        light.Position = minePosition + new Vector3(0f, 9f, 0f);
+        light.Position = mine.Position3D + new Vector3(0f, 9f, 0f);
         light.Color = new Color(255, 40, 30);
-        light.Intensity = (0.25f + 1.1f * blink) * Brightness;
+        // light.Intensity = (0.25f + 1.1f * blink) * Brightness;
+        light.Intensity = 1f;
         light.Range = 55f;
         light.Wrap = 0.5f;
         light.CastsShadows = false;

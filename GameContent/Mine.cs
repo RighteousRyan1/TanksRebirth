@@ -70,7 +70,8 @@ public sealed class Mine : IAITankDanger {
     /// <summary>The time until detonation (in ticks) from when this <see cref="Mine"/> was/is created.</summary>
     public readonly float DetonateTimeMax;
 
-    bool _tickRed;
+    /// <summary>Whether or not the mine is currently flashing red (low time remaining)</summary>
+    public bool RedTick;
     /// <summary>Whether or not this <see cref="Mine"/> is near destructible <see cref="Block"/>s.</summary>
     public bool IsNearDestructibles { get; private set; }
 
@@ -177,7 +178,7 @@ public sealed class Mine : IAITankDanger {
 
             if (DetonateTime < TICKS_OF_FLASHING) {
                 if (DetonateTime % 3.5f <= RuntimeData.DeltaTime) {
-                    _tickRed = !_tickRed;
+                    RedTick = !RedTick;
                 }
                 if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f);
@@ -257,7 +258,7 @@ public sealed class Mine : IAITankDanger {
                 effect.TextureEnabled = true;
 
                 if (mesh == _mineMesh) {
-                    effect.EmissiveColor = (_tickRed ?
+                    effect.EmissiveColor = (RedTick ?
                         ActiveColor.ToVector3() : InactiveColor.ToVector3())
                         * SceneManager.GameLight.Brightness;
                     effect.DiffuseColor *= 0.5f;
@@ -299,7 +300,7 @@ public sealed class Mine : IAITankDanger {
                 ActiveColor = new Color(231, 62, 99);
                 InactiveColor = new Color(219, 228, 64);
                 if (mesh == _mineMesh) {
-                    effect.EmissiveColor = (_tickRed ?
+                    effect.EmissiveColor = (RedTick ?
                         ActiveColor.ToVector3() : InactiveColor.ToVector3())
                         * SceneManager.GameLight.Brightness;
                     effect.DiffuseColor *= 0.5f;

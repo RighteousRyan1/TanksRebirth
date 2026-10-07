@@ -597,7 +597,8 @@ public static class DebugManager {
             $"\nLeft: {CameraGlobals.GameView.Left}" +
             $"\nRight: {CameraGlobals.GameView.Right}" +
             $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})" +
-            $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors" +
+            $"\n\nCTRL + C: Copy Position and Rotation Vector3s" +
+            $"\n\nCTRL + X: Copy Camera Look Vector3" +
             $"\nPress + & - to play camera animation with keyframes" +
             $"\nIncrease/Decrease keyframe timespan: T & -/+" +
             $"\nChange easing type: K & -/+" +
@@ -626,6 +627,9 @@ public static class DebugManager {
 
         if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {
             TextCopy.ClipboardService.SetText($"{CameraGlobals.RebirthFreecam.Position.ToCtor()}, {CameraGlobals.RebirthFreecam.Rotation.ToCtor()}");
+        }
+        else if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.X)) {
+            TextCopy.ClipboardService.SetText($"{CameraGlobals.RebirthFreecam.World.Forward.ToCtor()}");
         }
 
         var information = new string[] {

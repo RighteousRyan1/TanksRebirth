@@ -93,13 +93,13 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         var view = SystemView;
         var projection = SystemProjection;
 
-        // tank tracks go first: they're decals on the floor, everything else draws on top
+        // footprints are rendered first as quads
         if (DrawsFootprints && TankFootprint.Count > 0) {
             EndSpriteBatch();
             TankFootprint.Render(device, view, projection);
         }
 
-        // ---- sort this frame's particles into draw lists ----
+        // sort particles into draw lists
         _sprites.Begin();
         _text3D.Clear();
         _screenSpace.Clear();

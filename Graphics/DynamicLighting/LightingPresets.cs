@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using TanksRebirth.GameContent;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
@@ -37,7 +38,6 @@ public static class LightingPresets {
     /// <summary>Multiplier for gameplay lights (shells, mines, explosions, headlights).</summary>
     public static float DynamicBrightness { get; private set; } = 1f;
 
-    // ---------------------------------------------------------------------------------- scene coordinates
     // The room model is drawn at scale 10 around RoomScene.TableScenePos * 10, the board sits on the table at y = 0.
 
     /// <summary>Center of the two windows on the wall behind the board (-Z).</summary>
@@ -54,8 +54,9 @@ public static class LightingPresets {
     public static readonly PointLight TableLamp = new(new Vector3(794f, 345f, -74f), new Color(255, 190, 120), 0.8f, 1100f, true) { Priority = 5, Wrap = 0.3f };
     // the desk lamp on the left of the board and the little picture light over the grandfather clock are unshadowed
     // spots: they only reach furniture that nothing stands in front of, so they leave the shadow slots to the tanks
+
     /// <summary>Bulb inside the desk lamp's tilted shade (left of the board), shining out of the shade onto the desk and its book.</summary>
-    public static readonly SpotLight DeskLamp = new(new Vector3(-1060f, 483f, 158f), new Vector3(0.331f, -0.743f, 0.581f), new Color(255, 222, 170), 0.9f, 1000f, 30f, 50f, false) { Priority = 6, Wrap = 0.2f };
+    public static readonly SpotLight DeskLamp = new(new Vector3(-1108.787f, 604.177f, 54.381f), new Vector3(0.199f, -0.897f, 0.393f), new Color(255, 222, 170), 0.9f, 1000f, 30f, 50f, false) { Priority = 6, Wrap = 0.2f };
     /// <summary>Picture light in front of the clock's hood (the face is at about (1525, 1016, 122), facing (-0.71, 0, 0.71)), shining down onto the dial.
     /// It's brighter than the other lamps because it hits the dark dial at a grazing angle.</summary>
     public static readonly SpotLight ClockLight = new(new Vector3(1426f, 1260f, 221f), new Vector3(99f, -260f, -99f), new Color(255, 214, 160), 3.5f, 900f, 25f, 42f, false) { Priority = 4, Wrap = 0.2f };
@@ -67,9 +68,7 @@ public static class LightingPresets {
     public static readonly MeshLighting GlowingShade = new() { ReceivesLight = false, CastsShadows = false, Emissive = new Vector3(1.7f, 1.45f, 1.05f) };
     static readonly string[] _shadeMeshes = ["Lamp_Shade", "Floor_Lamp_Bowl"];
 
-    // ============================================================================================ presets
-
-    // ============================================================================================ time of day keyframes
+    // presets / ToD keyframes
 
     /// <summary>Everything that changes with the time of day. The day cycle blends between these.</summary>
     public struct TimeOfDay {
@@ -188,7 +187,7 @@ public static class LightingPresets {
         sunFrom: BackWindows, sunTo: Vector3.Zero,
         sunColor: new Color(150, 140, 205), sunIntensity: 0.2f, wrap: 0.6f,
         shaftColor: new Color(140, 130, 200), shaftDensity: 0.08f, dynamicBrightness: 1f)
-        with { TableLamp = 0.6f, Background = 0.6f, Headlights = 1f };
+        with { TableLamp = 0.6f, DeskLamp = 0.9f, ClockLight = 3.5f, FloorLamp = 1f, Background = 0.6f, Headlights = 1f };
 
     /// <summary>dark blue room, faint moonlight through the back windows, all the room lamps on</summary>
     public static TimeOfDay Midnight = Day(sky: new Color(48, 60, 100), ground: new Color(28, 28, 40), ambient: 0.32f,
@@ -211,7 +210,7 @@ public static class LightingPresets {
         _ => null,
     };
 
-    // ============================================================================================ day cycle
+    // day cycle
 
     /// <summary>Real seconds for one full 24 hour day in <see cref="Preset.DayCycle"/> (default: 8 minutes).</summary>
     public static float DayLengthSeconds = 480f;
@@ -224,7 +223,7 @@ public static class LightingPresets {
     }
     static float _hour = 6f;
 
-    // ------------------------------------------------------------------------------------ sun path
+    // ### SUN PATH ###
     // The day cycle runs a real sun (and moon) across the sky: the time of day gives the sun's position, and the
     // sun's height above the horizon gives the colors. The room is oriented with south = -Z (the back windows),
     // east = -X and west = +X (the side windows), so the sun comes in through the back windows from late
@@ -261,7 +260,7 @@ public static class LightingPresets {
         return Vector3.Normalize(new Vector3(-east, up, north));   // room: east = -X, north = +Z
     }
 
-    // ------------------------------------------------------------------------------------ sky colors
+    // sky colors
     // How the scene looks for a given sun height. The sun direction stored in these is ignored (the sun path sets it).
 
     static TimeOfDay Sky(Color sky, Color ground, float ambient, Color sunColor, float sunIntensity, float wrap,
@@ -273,6 +272,7 @@ public static class LightingPresets {
         ShadowRadius = shadowRadius, Background = 1f, DynamicBrightness = dynamicBrightness,
     };
 
+    // this is so cooked
     /// <summary>
     /// The look of the scene by sun elevation (degrees), from night to the highest sun. The day cycle blends between
     /// neighbouring entries, so the colors change continuously as the sun moves. Edit these to restyle the whole day.
@@ -350,6 +350,7 @@ public static class LightingPresets {
         return look;
     }
 
+    // this could totally go somewhere else
     static float SmoothStep(float edge0, float edge1, float x) {
         var t = MathHelper.Clamp((x - edge0) / (edge1 - edge0), 0f, 1f);
         return t * t * (3f - 2f * t);
@@ -373,7 +374,7 @@ public static class LightingPresets {
         }
     }
 
-    // ============================================================================================ presets
+    // presets
 
     /// <summary>Configures <see cref="LightingSystem"/> for a preset. <paramref name="room"/> (optional) gets glowing lamp shades when the lamps are on.</summary>
     public static void Apply(Preset preset, Model? room = null) {
@@ -459,9 +460,10 @@ public static class LightingPresets {
         DeskLamp.Intensity = time.DeskLamp;
         ClockLight.Intensity = time.ClockLight;
         FloorLamp.Intensity = time.FloorLamp;
-        foreach (var lamp in RoomLamps)
+        foreach (var lamp in RoomLamps) {
             if (lamp.Intensity > 0.01f)
                 lights.Add(lamp);
+        }
         LightingSystem.MaxShadowedPointLights = lights.Count > 1 ? 5 : 4;
 
         var glowing = time.TableLamp > 0.2f;

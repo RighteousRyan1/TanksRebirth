@@ -22,7 +22,7 @@ namespace TanksRebirth.Graphics.DynamicLighting;
 /// <remarks>
 /// <para>The pieces, from engine to game:</para>
 /// <list type="bullet">
-/// <item><see cref="LightingSystem"/>, <see cref="Light"/> and friends, <see cref="LightCaptureEffect"/>: the renderer (MonoGame only)</item>
+/// <item><see cref="LightingSystem"/>, <see cref="Light"/> and friends, <see cref="LightCaptureEffect"/>: the renderer</item>
 /// <item><see cref="LightingQuality"/>: how expensive the renderer may be</item>
 /// <item><see cref="LightingPresets"/>: what the scene looks like (time of day, day cycle, room lamps)</item>
 /// <item><see cref="GameplayLights"/>: what headlights, shells, mines and explosion lights look like</item>
@@ -32,9 +32,8 @@ namespace TanksRebirth.Graphics.DynamicLighting;
 /// <list type="bullet">
 /// <item>F7 - cycle presets through the day (Sunrise ... Midnight, Blackout, DayCycle, Off)</item>
 /// <item>F8 - before / after split screen (left half = original)</item>
-/// <item>/lighting [preset name|off|split|stats|list], e.g. /lighting late afternoon</item>
+/// <item>/lighting [preset name|off|split|stats]</item>
 /// <item>/lighting cycle, /lighting time [hour], /lighting daylength [minutes], /lighting pause - the 24 hour day cycle</item>
-/// <item>/lighting quality [low|medium|high|ultra], /lighting enable, /lighting disable - the settings</item>
 /// </list>
 /// </remarks>
 public static class LightingShowcase {
@@ -147,7 +146,6 @@ public static class LightingShowcase {
 
     static void CollectLights() {
         GameplayLights.BeginFrame();
-        var time = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
 
         if (LightingPresets.WantsHeadlights) {
             foreach (var tank in GameHandler.AllPlayerTanks) {
@@ -169,9 +167,11 @@ public static class LightingShowcase {
 
         if (MineLights) {
             foreach (var mine in Mine.AllMines) {
-                if (mine is null)
-                    continue;
-                GameplayLights.AddMineLight(mine.Position3D, mine.DetonateTime / MathF.Max(mine.DetonateTimeMax, 1f), time);
+                if (mine is null) continue;
+                if (!mine.RedTick) continue;
+
+                // only creates a light when flashing red
+                GameplayLights.AddMineLight(mine);
             }
         }
 

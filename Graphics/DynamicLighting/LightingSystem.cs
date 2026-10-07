@@ -2,6 +2,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using TanksRebirth.GameContent;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
@@ -112,9 +114,7 @@ public static class LightingSystem {
             $"light {LightBufferDraws}, shafts {ShaftDraws}";
     }
 
-    // =============================================================================================
-    //  internal state
-    // =============================================================================================
+    // state machine
 
     // atlas layout for a 2048 atlas; everything doubles with a 4096 atlas (see LightingQuality.ShadowAtlasSize)
     static int ATLAS_SIZE = 2048;
@@ -271,9 +271,7 @@ public static class LightingSystem {
     // bound in place of shadow maps that a quality setting turned off (white = fully lit)
     static Texture2D _white = null!;
 
-    // =============================================================================================
-    //  setup
-    // =============================================================================================
+    // setup
 
     /// <summary>Call once after the graphics device exists. <paramref name="lightingEffect"/> is the compiled lighting.fx.</summary>
     public static bool Initialize(GraphicsDevice device, Effect lightingEffect) {
@@ -425,9 +423,7 @@ public static class LightingSystem {
         _noShadowSlot = new ShadowSlot { Origin = white, Rect = new Vector4(white.X * texel, white.Y * texel, 0f, 0f) };
     }
 
-    // =============================================================================================
-    //  model instrumentation
-    // =============================================================================================
+    // model instrumentation
 
     /// <summary>
     /// Swaps the model's <see cref="BasicEffect"/>s for <see cref="LightCaptureEffect"/>s so its draws are seen by
@@ -719,6 +715,16 @@ public static class LightingSystem {
         stats.ShaftDraws = _shaftDrawsThisFrame;
 
         Composite(target, shafts);
+
+        // debug for showing lights
+        /*foreach (var light in Lights) {
+            //light.CastsShadows = true;
+            //light.Color = Color.White;
+            //light.Range = 10000f;
+            GameHandler.Particles.MakeShineSpot(light.Position, Color.White, 1f);
+            if (light is SpotLight s)
+                GameHandler.Particles.MakeShineSpot(light.Position + s.Direction * 25, Color.White, 0.5f);
+        }*/
 
         Stats = stats;
     }

@@ -18,7 +18,7 @@ public abstract class Light {
     public float Intensity = 1f;
     /// <summary>Distance at which the light fades to zero (smooth windowed falloff).</summary>
     public float Range = 200f;
-    /// <summary>0 = hard lambert falloff, 1 = light wraps fully around objects (softer look).</summary>
+    /// <summary>0 = harder falloff, 1 = softer falloff.</summary>
     public float Wrap = 0.15f;
     /// <summary>Whether this light renders a shadow map. Shadow slots are limited, see <see cref="LightingSystem.MaxShadowedPointLights"/>.</summary>
     public bool CastsShadows;
