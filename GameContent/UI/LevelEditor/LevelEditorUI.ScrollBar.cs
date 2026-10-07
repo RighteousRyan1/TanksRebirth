@@ -16,9 +16,8 @@ public static partial class LevelEditorUI {
     static List<string> _renderNamesPlayers = [];
 
     public static void DrawTankDescriptionFlavor() {
-        var measure = FontGlobals.RebirthFont.MeasureString(_curDescription);
-
-        if (_curDescription != null && _curDescription != string.Empty) {
+        if (!string.IsNullOrEmpty(_curDescription)) {
+            var measure = FontGlobals.RebirthFont.MeasureString(_curDescription);
             int padding = 20;
             var orig = new Vector2(0, TextureGlobals.Pixels[Color.White].Size().Y);
             TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White],

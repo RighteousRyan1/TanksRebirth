@@ -43,7 +43,14 @@ public class PlacementSquare {
     public float Alpha;
 
     public static bool AutoAlphaHandle = true;
-    public bool IsHovered => RayUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
+    public bool IsHovered => _hovered;
+
+    bool _hovered;
+    static Ray _mouseRay;
+
+    static readonly string[] _numberText = BuildByteText(string.Empty);
+    static readonly string[] _teleporterText = BuildByteText("TP:");
+    static readonly Dictionary<int, string> _idText = [];
 
     public static bool PlacesBlock; // if false, tanks will be placed
 
@@ -182,9 +189,40 @@ public class PlacementSquare {
             LevelEditorUI.difficultyRating = DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent());
         }
     }
-    public void Update() {
+    static string[] BuildByteText(string prefix) {
+        var text = new string[256];
+        for (int i = 0; i < text.Length; i++)
+            text[i] = prefix + i;
+        return text;
+    }
+    static string IdText(int id) {
+        if (!_idText.TryGetValue(id, out var text)) {
+            text = "ID: " + id;
+            _idText[id] = text;
+        }
+        return text;
+    }
 
-        if (!IsHovered) {
+    public static void UpdateAll() {
+        _mouseRay = RayUtils.GetMouseToWorldRay();
+        for (int i = 0; i < Placements.Count; i++)
+            Placements[i]?.Update();
+    }
+    public static void RenderAll() {
+        if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0)
+            return;
+
+        _mouseRay = RayUtils.GetMouseToWorldRay();
+        var view = CameraGlobals.GameView;
+        var projection = CameraGlobals.GameProjection;
+        for (int i = 0; i < Placements.Count; i++)
+            Placements[i]?.Render(view, projection);
+    }
+
+    void Update() {
+        _hovered = _mouseRay.Intersects(_box).HasValue;
+
+        if (!_hovered) {
             if (_flashTime > 0) {
                 _flashTime -= 0.01f * RuntimeData.DeltaTime;
                 Alpha = _flashTime * 0.5f;
@@ -231,36 +269,32 @@ public class PlacementSquare {
         SquareColor = c;
     }
 
-    public void Render() {
-        var hoverUi = UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0;
-
-        if (hoverUi) return;
+    void Render(in Matrix view, in Matrix projection) {
+        _hovered = _mouseRay.Intersects(_box).HasValue;
 
         World = Matrix.CreateScale(0.678f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
-        View = CameraGlobals.GameView;
-        Projection = CameraGlobals.GameProjection;
-        var texture = TextureGlobals.Pixels[SquareColor];
+        View = view;
+        Projection = projection;
 
-        if (AutoAlphaHandle) {
-            if (IsHovered)
-                Alpha = 0.7f;
-            else
-                Alpha = 0f;
-        }
+        if (AutoAlphaHandle)
+            Alpha = _hovered ? 0.7f : 0f;
 
-        foreach (var mesh in _model.Meshes) {
-            foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = World;
-                effect.View = View;
-                effect.Projection = Projection;
+        if (Alpha > 0f) {
+            var texture = TextureGlobals.Pixels[SquareColor];
+            foreach (var mesh in _model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.World = World;
+                    effect.View = View;
+                    effect.Projection = Projection;
 
-                effect.TextureEnabled = true;
-                effect.Texture = texture;
+                    effect.TextureEnabled = true;
+                    effect.Texture = texture;
 
-                effect.Alpha = Alpha;
-                effect.SetDefaultGameLighting_IngameEntities();
+                    effect.Alpha = Alpha;
+                    effect.SetDefaultGameLighting_IngameEntities();
+                }
+                mesh.Draw();
             }
-            mesh.Draw();
         }
 
         if (!DrawStacks) return;
@@ -274,29 +308,34 @@ public class PlacementSquare {
     }
 
     void BlockDisplay() {
-        if (!displayHeights || Block.AllBlocks[BlockId] is null) return;
+        var block = Block.AllBlocks[BlockId];
+        if (!displayHeights || block is null) return;
 
-        if (Block.AllBlocks[BlockId].Properties.CanStack) {
+        if (block.Properties.CanStack) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
 
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black,
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, _numberText[block.Stack], pos, Color.White, Color.Black,
                 new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
         }
-        if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter) {
+        if (block.Type == BlockID.Teleporter) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
 
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black,
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, _teleporterText[block.TpLink], pos, Color.White, Color.Black,
                 new Vector2(CameraGlobals.AddativeZoom).ToResolution(), 0f, Anchor.Center, borderThickness: 0.75f);
         }
     }
     void TankDisplay() {
+        var tank = GameHandler.AllTanks[TankId];
+        if (tank is null) return;
+
         var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
+        var teamColor = TeamID.TeamColors[tank.Team];
 
-        DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{LevelEditorUI.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+        DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, LevelEditorUI.TeamColorsLocalized[tank.Team], pos - new Vector2(0, 8).ToResolution(), teamColor, Color.Black, new Vector2(0.9f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
 
-        if (GameHandler.AllTanks[TankId] is AITank ai)
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
-        if (GameHandler.AllTanks[TankId] is PlayerTank player)
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+        if (tank is AITank ai)
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, IdText(ai.AITankId), pos + new Vector2(0, 8), teamColor, Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+        else if (tank is PlayerTank player)
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, IdText(player.PlayerId), pos + new Vector2(0, 8), teamColor, Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
     }
 }

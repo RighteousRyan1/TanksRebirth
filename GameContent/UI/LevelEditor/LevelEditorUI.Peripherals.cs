@@ -262,10 +262,43 @@ public static partial class LevelEditorUI {
         sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
 
         sb.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.LevelEdit.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.LevelEdit.LevelInfo)));
-        sb.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.LevelEdit.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        UpdateLevelInfoText();
+        sb.DrawString(FontGlobals.RebirthFont, _enemyCountText, new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
         // localize later.
-        sb.DrawString(FontGlobals.RebirthFont, $"Total Terrain: {Block.AllBlocks.Count(x => x is not null)}", new Vector2(10, 60).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-        sb.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.LevelEdit.DifficultyRating}: {difficultyRating:0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        sb.DrawString(FontGlobals.RebirthFont, _terrainCountText, new Vector2(10, 60).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        sb.DrawString(FontGlobals.RebirthFont, _ratingText, new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+    }
+
+    static string _enemyCountText, _terrainCountText, _ratingText;
+    static int _shownEnemyCount = -1, _shownTerrainCount = -1;
+    static float _shownRating = float.NaN;
+    static object _levelInfoLanguage;
+
+    static void UpdateLevelInfoText() {
+        var language = TankGame.GameLanguage;
+        bool languageChanged = !ReferenceEquals(_levelInfoLanguage, language);
+        _levelInfoLanguage = language;
+
+        var enemies = AIManager.CountAll();
+        if (languageChanged || enemies != _shownEnemyCount) {
+            _shownEnemyCount = enemies;
+            _enemyCountText = $"{language.LevelEdit.EnemyTankTotal}: {enemies}";
+        }
+
+        var blocks = Block.AllBlocks;
+        int terrain = 0;
+        for (int i = 0; i < blocks.Length; i++)
+            if (blocks[i] is not null)
+                terrain++;
+        if (terrain != _shownTerrainCount) {
+            _shownTerrainCount = terrain;
+            _terrainCountText = $"Total Terrain: {terrain}";
+        }
+
+        if (languageChanged || difficultyRating != _shownRating) {
+            _shownRating = difficultyRating;
+            _ratingText = $"{language.LevelEdit.DifficultyRating}: {difficultyRating:0.00}";
+        }
     }
     public static void DrawAlerts(SpriteBatch sb) {
         if (_alertTime <= 0) return;

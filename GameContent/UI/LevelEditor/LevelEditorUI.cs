@@ -187,7 +187,8 @@ public static partial class LevelEditorUI {
                         Properties.IsVisible =
                             LoadLevel.IsVisible =
                                 TestLevel.IsVisible = visible;
-        _missionButtons.ForEach(x => x.IsVisible = visible);
+        for (int i = 0; i < _missionButtons.Count; i++)
+            _missionButtons[i].IsVisible = visible;
     }
     private static void SetSaveMenuVisibility(bool visible) {
         _saveMenuOpen = visible;
@@ -521,13 +522,15 @@ public static partial class LevelEditorUI {
 
         if (PlacementSquare.CurrentlyHovered != null) {
             var mapCoords = PlacementSquare.CurrentlyHovered.RelativePosition;
+            if (_hoveredCoordsText is null || mapCoords != _hoveredCoords) {
+                _hoveredCoords = mapCoords;
+                _hoveredCoordsText = mapCoords.ToString();
+            }
 
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, mapCoords.ToString(),
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, _hoveredCoordsText,
                 MouseUtils.MousePosition - Vector2.UnitY * 30, Color.White, Color.Black, Vector2.One * 0.5f, 0f,
             Anchor.BottomCenter, 0.5f);
         }
-
-        var measure = FontGlobals.RebirthFont.MeasureString(AlertText);
 
         DrawAlerts(sb);
         if (!ShouldDrawBarUI) return;
@@ -577,7 +580,7 @@ public static partial class LevelEditorUI {
 
         // used to have an Active check, but since we only call this method when Active is true, don't bother
         if (HoveringAnyTank) {
-            var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/leveledit/rotate");
+            var tex = _rotateTexture ??= GameResources.GetGameResource<Texture2D>("Assets/textures/ui/leveledit/rotate");
             sb.Draw(tex,
                 MouseUtils.MousePosition + new Vector2(20, -20).ToResolution(),
                 null,
@@ -607,10 +610,18 @@ public static partial class LevelEditorUI {
                     0f,
                     new Vector2(FontGlobals.RebirthFont.MeasureString(txt).X / 2, 0));
         }
+    }
+    static BlockMapPosition _hoveredCoords;
+    static string? _hoveredCoordsText;
+    static Texture2D? _rotateTexture;
+    static Language? _shownLanguage;
+    static bool? _shownMajorVictory;
+    static bool? _shownGrantsLife;
 
+    static void SetupCampaignTextInputs() {
         // i believe this makes the text left-origin instead of center-origin
         // TODO: make text origin in relation to the ui element a property of the UI itself..?
-        _campaignTextInputs.ForEach(elem => {
+        foreach (var elem in _campaignTextInputs) {
             elem.UniqueDraw = (a, b) => {
                 elem.DrawText = false;
                 if (!elem.IsVisible)
@@ -624,7 +635,7 @@ public static partial class LevelEditorUI {
                 float scale =  msr1.X * constScale > elem.Size.X ? msr2.X / (msr1.X + msr2.X) : constScale;
                 b.DrawString(FontGlobals.RebirthFontLarge, text, pos, Color.Black, new Vector2(scale).ToResolution(), 0f, new Vector2(0, msr1.Y / 2));
             };
-        });
+        }
     }
     static int GetHoveredBarIndex() {
         _clickRect = new(0, (int)(WindowUtils.WindowBottom.Y * 0.8f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.2f));
@@ -650,6 +661,8 @@ public static partial class LevelEditorUI {
     }
     static float DrawCategoryRow<T>(List<Particle> pEntries, ReflectionDictionary<T> dict, int selectedIndex, int idOffset = 0, float minScale = 4.5f, float maxScale = 6f) where T : class, new() {
         float xOff = 0;
+        float barWidth = BAR_WIDTH.ToResolutionX();
+        float windowWidth = WindowUtils.WindowWidth;
 
         for (int i = 0; i < pEntries.Count; i++) {
             bool isSelected = selectedIndex == (i + idOffset);
@@ -658,16 +671,19 @@ public static partial class LevelEditorUI {
             var posForText = new Vector2((BAR_START_X + BAR_WIDTH / 2).ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.95f);
             var posForModel = posForText + new Vector2(0, 150).ToResolution();
             pEntries[i].Position = DrawUtils.CenteredOrthoToScreen(posForModel).Expand();
+            pEntries[i].Alpha = posForText.X > -barWidth * 2 && posForText.X < windowWidth + barWidth * 2 ? 1f : 0f;
 
             // if selected, the tank rotates a full circle
             float addend = isSelected ? MathHelper.TwoPi : 0;
             pEntries[i].Yaw = MathHelper.Lerp(pEntries[i].Yaw, ElementRotation + addend, 0.15f * RuntimeData.DeltaTime);
 
             // draw the name of the block
-            string tankName = dict.GetKey(i + idOffset)!;
-            float strSzX = DrawUtils.StringSizeProportional(tankName.Length, 8, 0.6f, 0.1f);
-            DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, posForText, Vector2.UnitY, tankName,
-                Color.White, isSelected ? ColorUtils.DiscoPartyColor : Color.Black, new Vector2(strSzX).ToResolution(), 1f, Anchor.Center, shadowAlpha: 0.5f);
+            if (posForText.X > -barWidth && posForText.X < windowWidth + barWidth) {
+                string tankName = dict.GetKey(i + idOffset)!;
+                float strSzX = DrawUtils.StringSizeProportional(tankName.Length, 8, 0.6f, 0.1f);
+                DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, posForText, Vector2.UnitY, tankName,
+                    Color.White, isSelected ? ColorUtils.DiscoPartyColor : Color.Black, new Vector2(strSzX).ToResolution(), 1f, Anchor.Center, shadowAlpha: 0.5f);
+            }
 
             // EditorParticleSystem.MakeSmallExplosion(posForModel.Expand(), 10, 10, 1f, 2);
             // EditorParticleSystem.MakeShineSpot(posForModel.Expand(), Color.Red, 10f);
@@ -676,7 +692,7 @@ public static partial class LevelEditorUI {
             pEntries[i].Scale = Vector3.Lerp(pEntries[i].Scale, Vector3.One.ToResolution() * apprScale, 0.1f * RuntimeData.DeltaTime);
 
             // this code hurts me. emotionally
-            xOff += BAR_WIDTH.ToResolutionX();
+            xOff += barWidth;
         }
         return xOff;
     }
@@ -740,10 +756,20 @@ public static partial class LevelEditorUI {
         _missionsMaxOff = _missionButtons.Count * 30.ToResolutionY();
         SaveLevelConfirm.Tooltip = _viewMissionDetails ? TankGame.GameLanguage.LevelEdit.PropertyMenu.MissionSaveFlavor : TankGame.GameLanguage.LevelEdit.PropertyMenu.CampaignSaveFlavor;
 
-        CampaignMajorVictory.Text = TankGame.GameLanguage.LevelEdit.PropertyMenu.HasMajorVictoryTheme + ": " + TankGame.GameLanguage.GetYesNo(_hasMajorVictory);
+        var language = TankGame.GameLanguage;
+        if (_shownLanguage != language || _shownMajorVictory != _hasMajorVictory) {
+            CampaignMajorVictory.Text = language.LevelEdit.PropertyMenu.HasMajorVictoryTheme + ": " + language.GetYesNo(_hasMajorVictory);
+            _shownMajorVictory = _hasMajorVictory;
+        }
 
-        if (loadedCampaign is not null)
-            MissionGrantsLife.Text = TankGame.GameLanguage.LevelEdit.PropertyMenu.GrantsBonusLife + ": " + TankGame.GameLanguage.GetYesNo(loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife);
+        if (loadedCampaign is not null) {
+            var grantsLife = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife;
+            if (_shownLanguage != language || _shownGrantsLife != grantsLife) {
+                MissionGrantsLife.Text = language.LevelEdit.PropertyMenu.GrantsBonusLife + ": " + language.GetYesNo(grantsLife);
+                _shownGrantsLife = grantsLife;
+            }
+        }
+        _shownLanguage = language;
 
         if (_missionsOffset > 0)
             _missionsOffset = 0;

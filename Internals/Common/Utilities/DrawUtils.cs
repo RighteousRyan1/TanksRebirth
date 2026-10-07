@@ -87,9 +87,16 @@ public static class DrawUtils {
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
 
-        DrawStringBorderOnly(spriteBatch, font, text, position, borderColor, scale, rotation, anchor, borderThickness, charSpacing, origMeasureScale);
+        var origin = GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale);
+        DrawBorder(spriteBatch, font, text, position, borderColor, scale, rotation, origin, borderThickness, charSpacing);
 
-        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 1f, characterSpacing: charSpacing);
+        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, origin, 1f, characterSpacing: charSpacing);
+    }
+    static void DrawBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
+        Color borderColor, Vector2 scale, float rotation, Vector2 origin, float borderThickness, float charSpacing) {
+        for (int i = 0; i < 4; i++)
+            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
+                borderColor, scale, rotation, origin, 0f, characterSpacing: charSpacing);
     }
     public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor, 
         Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f) {
@@ -137,9 +144,7 @@ public static class DrawUtils {
     public static void DrawStringBorderOnly(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
         Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
-        for (int i = 0; i < 4; i++)
-            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
-                borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+        DrawBorder(spriteBatch, font, text, position, borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), borderThickness, charSpacing);
     }
     public static void DrawStringShadowOnly(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,
     string text, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
@@ -411,7 +416,7 @@ public static class DrawUtils {
     }
 
     public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {
-        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner"); // apparently incorrect texture
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
 
         var scaling = new Vector2(3.25f, 3f);
 

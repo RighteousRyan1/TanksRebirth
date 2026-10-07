@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using NativeFileDialogSharp;
 using System.IO;
 using TanksRebirth.GameContent.Globals;
@@ -192,6 +192,11 @@ public static partial class LevelEditorUI {
 
         SetSaveMenuVisibility(false);
 
+        _shownLanguage = null;
+        _shownMajorVictory = null;
+        _shownGrantsLife = null;
+
+        _campaignTextInputs.Clear();
         _campaignTextInputs.Add(MissionName);
         _campaignTextInputs.Add(CampaignName);
         _campaignTextInputs.Add(CampaignVersion);
@@ -201,5 +206,6 @@ public static partial class LevelEditorUI {
         _campaignTextInputs.Add(CampaignAuthor);
         _campaignTextInputs.Add(CampaignDescription);
         _campaignTextInputs.Add(CampaignStartingLives);
+        SetupCampaignTextInputs();
     }
 }

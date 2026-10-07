@@ -76,14 +76,6 @@ public partial class LevelEditorUI {
                 loadedCampaign.LoadMission(index);
                 loadedCampaign.SetupLoadedMission(true);
 
-                foreach (var b in Block.AllBlocks) {
-                    if (b is null) continue;
-                    var sq = PlacementSquare.GetFromClosest(b.Position3D);
-                    if (sq is null) continue;
-                    var d = b.Position - sq.Position.FlattenZ();
-                    Console.WriteLine($"{b.Position} -> dx {d.X:0.00}, dz {d.Y:0.00}");
-                }
-
                 MissionName.Text = loadedCampaign.CachedMissions[index].Name;
 
                 // update the mission we are wanting to rate

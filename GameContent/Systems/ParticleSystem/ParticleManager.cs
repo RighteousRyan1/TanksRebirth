@@ -174,7 +174,7 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
     public void RenderModelParticles() {
         for (int i = 0; i < _count; i++) {
             var particle = _items[i];
-            if (particle.Model is null) continue;
+            if (particle.Model is null || particle.Alpha <= 0f) continue;
 
             particle.DrawModel();
         }
