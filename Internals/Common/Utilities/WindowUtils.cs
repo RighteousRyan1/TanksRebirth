@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
@@ -39,32 +40,68 @@ public static class WindowUtils {
     public static Vector2 ToNormalisedCoordinates(this Vector2 input) => new Vector2(input.X / WindowWidth - 0.5f, input.Y / WindowHeight - 0.5f) * 2;
     /// <summary>Converts pixel coordinates (0..WindowWidth, 0..WindowHeight) to cartesian coordinates (0..1, 0..1)</summary>
     public static Vector2 ToCartesianCoordinates(this Vector2 input) => new(input.X / WindowWidth, input.Y / WindowHeight);
-    public static void ChangeWindowKind(WindowKind kind) {
+    /// <summary>Applies <paramref name="kind"/> with the resolution saved in the settings.</summary>
+    public static void ChangeWindowKind(WindowKind kind) => ApplyDisplayMode(kind, TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
+
+    /// <summary>
+    /// Switches the window mode and resolution in one go, always starting from a plain window so every switch
+    /// (windowed, borderless, fullscreen in any order) ends up in the same state.
+    /// </summary>
+    /// <remarks>
+    /// Windowed uses <paramref name="width"/> x <paramref name="height"/> (clamped to the desktop) and centers the window.
+    /// Borderless always covers the desktop at its native resolution.
+    /// Fullscreen is exclusive and switches the monitor to <paramref name="width"/> x <paramref name="height"/>
+    /// (falls back to the desktop resolution if the monitor doesn't support it).
+    /// </remarks>
+    public static void ApplyDisplayMode(WindowKind kind, int width, int height) {
         var graphics = TankGame.Instance.Graphics;
         var window = TankGame.Instance.Window;
-        var display = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+
+        // leave fullscreen first: the desktop mode has to be back before we can measure it
+        if (graphics.IsFullScreen) {
+            graphics.IsFullScreen = false;
+            graphics.ApplyChanges();
+        }
+        var desktop = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
 
         switch (kind) {
-            case WindowKind.Fullscreen:
+            case WindowKind.Fullscreen: {
+                var supported = false;
+                foreach (var mode in GraphicsAdapter.DefaultAdapter.SupportedDisplayModes)
+                    if (mode.Width == width && mode.Height == height)
+                        supported = true;
+                if (!supported) {
+                    width = desktop.Width;
+                    height = desktop.Height;
+                }
+                window.IsBorderless = false;
+                graphics.HardwareModeSwitch = true;
+                graphics.PreferredBackBufferWidth = width;
+                graphics.PreferredBackBufferHeight = height;
                 graphics.IsFullScreen = true;
-                window.IsBorderless = false;
+                graphics.ApplyChanges();
                 break;
-
-            case WindowKind.Windowed:
-                graphics.IsFullScreen = false;
-                window.IsBorderless = false;
-                graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
-                graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
-                break;
-
+            }
             case WindowKind.FullscreenBorderless:
-                graphics.IsFullScreen = false;
+                graphics.HardwareModeSwitch = false;
                 window.IsBorderless = true;
-                graphics.PreferredBackBufferWidth = display.Width;
-                graphics.PreferredBackBufferHeight = display.Height;
+                graphics.PreferredBackBufferWidth = desktop.Width;
+                graphics.PreferredBackBufferHeight = desktop.Height;
+                graphics.ApplyChanges();
+                window.Position = Point.Zero;
                 break;
-        }
 
-        TankGame.Instance.Graphics.ApplyChanges();
+            default: {
+                graphics.HardwareModeSwitch = false;
+                window.IsBorderless = false;
+                width = Math.Clamp(width, 640, desktop.Width);
+                height = Math.Clamp(height, 480, desktop.Height);
+                graphics.PreferredBackBufferWidth = width;
+                graphics.PreferredBackBufferHeight = height;
+                graphics.ApplyChanges();
+                window.Position = new Point((desktop.Width - width) / 2, Math.Max(0, (desktop.Height - height) / 2));
+                break;
+            }
+        }
     }
 }

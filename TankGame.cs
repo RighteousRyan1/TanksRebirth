@@ -118,8 +118,7 @@ public class TankGame : Game {
     public static Task<T> MainThreadEnqueue<T>(Func<T> func) {
         var tcs = new TaskCompletionSource<T>();
 
-        MainThreadTasks.Enqueue(() =>
-        {
+        MainThreadTasks.Enqueue(() => {
             try {
                 var result = func();
                 tcs.SetResult(result);
@@ -163,8 +162,7 @@ public class TankGame : Game {
                     "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
                     out var name, out var status);
                 MOTD = System.Text.Encoding.Default.GetString(bytes);
-            }
-            catch {
+            } catch {
                 // in the case that an HTTPRequestException is thrown (no internet access)
                 ClientLog.Write("Failed to obtain MOTD. Falling back to offline MOTDs.", LogType.Warn);
                 MOTD = LocalizationRandoms.GetRandomMotd();
@@ -194,6 +192,7 @@ public class TankGame : Game {
             IsFullScreen = false,
             // stencil is used to stop overlapping tank tracks from stacking up
             PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8,
+            GraphicsProfile = GraphicsProfile.HiDef
         };
 
         Content.RootDirectory = "Content";
@@ -277,8 +276,7 @@ public class TankGame : Game {
             InputUtils.OnGamePadDisconnected += InputUtils_OnGamePadDisconnected;
 
             base.Initialize();
-        }
-        catch (Exception e) when (!Debugger.IsAttached) {
+        } catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e);
         }
     }
@@ -421,15 +419,15 @@ public class TankGame : Game {
                 textures.Add(Path.GetFileNameWithoutExtension(file));
             }
         }*/
-        
+
         GameResources.MassPreloadAssets<Texture2D, TexturePreloadSettings>(
             textures
-        , new TexturePreloadSettings{});
+        , new TexturePreloadSettings { });
 
         // Prefix with Content for compatibility reasons with old code.
         // Done mostly dynamcially, because easier than hardcoding for 20 minutes each audio.
         List<string> sounds = [];
-        
+
         // ~~ Vanilla audio ~~
         // sounds.AddRange(Directory.GetFiles("Content/Assets/music"));
         sounds.AddRange(Directory.GetFiles("Content", "*.ogg", SearchOption.AllDirectories));
@@ -508,7 +506,7 @@ public class TankGame : Game {
                 SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
                 Settings = SettingsHandler.Deserialize();
             }
-       
+
             // english is loaded so fallback characters work.
             FontGlobals.LoadLocalizedFont(LangCode.English);
             FontGlobals.LoadLocalizedFont(Settings.Language);
@@ -548,9 +546,6 @@ public class TankGame : Game {
             // GameScene.Theme = MapTheme.Christmas;
 
             TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
-
-            Graphics.PreferredBackBufferWidth = Settings.ResWidth;
-            Graphics.PreferredBackBufferHeight = Settings.ResHeight;
 
             ClientLog.Write($"Applied user settings.", LogType.Info);
 
@@ -632,8 +627,7 @@ public class TankGame : Game {
             SceneManager.GameLight.Apply(false);
 
             IngameConsole.PrepareForUser("cascadia");
-        }
-        catch (Exception e) when (!Debugger.IsAttached) {
+        } catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e);
         }
     }
@@ -735,7 +729,7 @@ public class TankGame : Game {
 
         #region Non-Camera
 
-        TargetElapsedTime = TimeSpan.FromMilliseconds(RuntimeData.Interp ? 16.67 * (60f / Settings.TargetFPS) : 16.67);
+        GraphicsSettings.UpdateFrameTiming(this);
 
         if (!float.IsInfinity(RuntimeData.DeltaTime))
             RuntimeData.RunTime += RuntimeData.DeltaTime;
@@ -819,8 +813,6 @@ public class TankGame : Game {
 
     // wtf is wrong with me btw this code is ass
     private void SubHandleLogic(GameTime gameTime) {
-        // TODO: this
-        IsFixedTimeStep = !Settings.Vsync || !RuntimeData.Interp;
 
         RuntimeData.UpdateCount++;
 
@@ -870,10 +862,9 @@ public class TankGame : Game {
     public static void Quit() => Instance.Exit();
     public void PrepareGameBuffers(SpriteBatch spriteBatch) {
         // idea: have 3d resolution parameter to save performance (which also scales this down
-        if (GameFrameBuffer == null || GameFrameBuffer.IsDisposed || GameFrameBuffer.Size() != WindowUtils.WindowBounds) {
+        if (GraphicsSettings.FrameBufferNeedsRecreate(GameFrameBuffer, WindowUtils.WindowBounds.ToPoint())) {
             GameFrameBuffer?.Dispose();
-            var presentationParams = GraphicsDevice.PresentationParameters;
-            GameFrameBuffer = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
+            GameFrameBuffer = GraphicsSettings.CreateFrameBuffer(GraphicsDevice);
 
             OnResolutionChanged?.Invoke(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
         }
@@ -1033,7 +1024,7 @@ public class TankGame : Game {
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
         SpriteRenderer.End();
-    } 
+    }
     public static void DrawCursors() {
         foreach (var elem in PlayerMice) {
             elem?.Draw();

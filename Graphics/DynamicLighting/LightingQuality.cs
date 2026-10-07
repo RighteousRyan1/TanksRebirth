@@ -22,6 +22,11 @@ public sealed class LightingQuality {
     public bool RoomShadows = true;
     /// <summary>Resolution of the room-wide sun shadow map.</summary>
     public int RoomShadowMapSize = 2048;
+    /// <summary>
+    /// The room map is re-rendered at most every this many frames while the sun stands still (it mostly holds the
+    /// room, which doesn't move; it's always re-rendered at once when the sun moves). 1 = every frame.
+    /// </summary>
+    public int RoomShadowRefreshInterval = 4;
 
     // ------------------------------------------------------------------------------ local lights
 
@@ -35,6 +40,11 @@ public sealed class LightingQuality {
     public int ShadowAtlasSize = 4096;
     /// <summary>Smooth 3x3 filtered lamp shadows (16 taps) instead of the cheaper 2x2 filter (4 taps).</summary>
     public bool SoftLocalShadows = true;
+    /// <summary>
+    /// A shadowed light that didn't move re-renders its shadow map only every this many frames (lamps, a parked
+    /// tank's headlight). Moving lights always update. 1 = every frame.
+    /// </summary>
+    public int StaticLightShadowInterval = 3;
 
     // ------------------------------------------------------------------------------ light shafts
 

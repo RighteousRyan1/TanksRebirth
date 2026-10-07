@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Localization;
 
 namespace TanksRebirth;
@@ -21,10 +22,15 @@ public class GameConfig
     public bool PerPixelLighting { get; set; } = true;
     public bool Vsync { get; set; } = true;
     public WindowKind WindowKind { get; set; } = WindowKind.Windowed;
-    public bool MSAA { get; set; } = false;
+    /// <summary>Multisample anti-aliasing for the 3D scene: 0 (off), 2, 4 or 8 samples.</summary>
+    public int MSAASamples { get; set; } = 0;
     public bool FadeFootprints { get; set; } = false;
 
+    /// <summary>Frame rate cap while VSync is off. 0 = unlimited.</summary>
     public int TargetFPS { get; set; } = 60;
+
+    /// <summary>Dynamic lighting: on/off, quality, time of day. Edited on the graphics settings page.</summary>
+    public LightingSettings Lighting { get; set; } = new();
     #endregion
 
     #region Controls Settings

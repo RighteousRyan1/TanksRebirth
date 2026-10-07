@@ -487,17 +487,8 @@ float4 UnlitPS(ShadowPSInput input) : COLOR0
 }
 
 #define SHAFT_STEPS 16.0
-// each step takes a bilinear (2x2) shadow lookup: with single point taps the steps right next to the surface
-// copy the room map's coarse texels onto the floor as a saw-tooth edge (very visible under weak moonlight)
-#define SHAFT_TAP(ox, oy) step(sp.z, UnpackDepth(tex2D(RoomShadowSampler, base + float2(ox, oy) * RoomShadowParams.x).rgb))
-#define SHAFT_STEP \
-    { \
-        float2 t = sp.xy * RoomShadowParams.y - 0.5; \
-        float2 f = frac(t); \
-        float2 base = (t - f + 0.5) * RoomShadowParams.x; \
-        visible += lerp(lerp(SHAFT_TAP(0.0, 0.0), SHAFT_TAP(1.0, 0.0), f.x), lerp(SHAFT_TAP(0.0, 1.0), SHAFT_TAP(1.0, 1.0), f.x), f.y); \
-        sp += stepS; \
-    }
+// one point tap per step: the jitter between pixels and frames plus the soft knee below hide the coarse texels
+#define SHAFT_STEP visible += step(sp.z, UnpackDepth(tex2D(RoomShadowSampler, sp.xy).rgb)); sp += stepS;
 
 // Ray marches from the surface back towards the viewer through the sun's room shadow map
 // (when the room cascade is off, LightingSystem binds the board cascade here instead).

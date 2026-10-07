@@ -92,6 +92,10 @@ public static class LightingShowcase {
 
         RegisterCommands();
 
+        // the lighting options live in the game's settings file
+        if (TankGame.Settings is not null)
+            LightingSettings.Current = TankGame.Settings.Lighting ??= new LightingSettings();
+
         // keep the settings in sync when F7 or a command changes the time of day
         LightingPresets.PresetChanged += preset => LightingSettings.Current.TimeOfDay = preset;
         LightingSettings.Current.Apply(force: true);
@@ -149,7 +153,7 @@ public static class LightingShowcase {
             foreach (var tank in GameHandler.AllPlayerTanks) {
                 if (tank is null || tank.IsDestroyed)
                     continue;
-                GameplayLights.AddHeadlight(tank.TurretPosition3D, tank.TurretPosition - tank.Position, tank == PlayerTank.ClientTank);
+                GameplayLights.AddHeadlight(tank.TurretPosition3D - new Vector3(0, 5, 0), tank.TurretPosition - tank.Position, tank == PlayerTank.ClientTank);
             }
         }
 
@@ -159,7 +163,7 @@ public static class LightingShowcase {
                 if (!shell.Properties.Visuals.HasFlag(VisualFlags.Flaming)) continue;
 
                 var color = Color.Orange;
-                GameplayLights.AddShellLight(shell.Position3D - shell.Velocity3D * 20f, color);
+                GameplayLights.AddShellLight(shell.Position3D - Vector3.Normalize(shell.Velocity3D) * 20f, color);
             }
         }
 

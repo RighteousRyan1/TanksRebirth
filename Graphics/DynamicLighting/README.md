@@ -146,3 +146,15 @@ candidate.Apply();
 `LightingSettings.ToQuality()` is the only place menu choices become numbers; edit it to retune the levels.
 `LightingPresets.PresetChanged` keeps `TimeOfDay` in sync when F7 or `/lighting` changes it.
 `/lighting quality low|medium|high|ultra`, `/lighting enable`, `/lighting disable` test the settings before a menu exists.
+
+## Performance
+
+Most of the cost is draw calls: every captured mesh is drawn again for each shadow map and light pass.
+`/lighting stats` prints the breakdown for the last frame (sun, room, lamps, light passes, shafts).
+
+- The room shadow map is cached: it's only re-rendered when the sun moves (> 0.1°) or every
+  `Quality.RoomShadowRefreshInterval` frames. `LightingSystem.InvalidateShadowCache()` forces a refresh.
+- Lamp / headlight shadow maps are cached per light: a light that didn't move re-renders every
+  `Quality.StaticLightShadowInterval` frames, moving lights every frame.
+- Point light cube faces and spot maps that can't affect anything on screen are skipped.
+- Light shafts take one shadow tap per step and run at half resolution at most.

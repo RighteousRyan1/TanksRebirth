@@ -180,7 +180,7 @@ public abstract class Tank(bool ignoresRegister) {
     public Shell[] OwnedShells = [];
 
     /// <summary>The *backend* length of the turret. Does not affect anything graphically.</summary>
-    public float TurretLength = 20;
+    public float TurretLength = 19; // updated from 20. essentially perfect!
 
     public BasicDrawParams DrawParams = new();
     public TankDrawParams DrawParamsTank;

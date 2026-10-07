@@ -53,6 +53,8 @@ public sealed class LightingSettings {
     public float DayLengthMinutes { get; set; } = 8f;
     /// <summary>Lights on shells, mines and explosions (headlights are part of the night presets).</summary>
     public bool GameplayLights { get; set; } = true;
+    /// <summary>The room's walls, windows and furniture block the sun (sun patches through the windows). Off = the sun shines through the room.</summary>
+    public bool RoomShadows { get; set; } = true;
 
     // ------------------------------------------------------------------------------ quality
 
@@ -122,12 +124,13 @@ public sealed class LightingSettings {
         // sun: resolution of the board and room shadow maps (Ultra = 4096, HiDef only). The room map stays on even at
         // Low: without it the sun shines through the walls everywhere away from the board
         q.SunShadows = SunShadows != ShadowQuality.Off;
-        (q.SunShadowMapSize, q.RoomShadows, q.RoomShadowMapSize) = SunShadows switch {
-            ShadowQuality.Low => (1024, true, 1024),
-            ShadowQuality.Medium => (2048, true, 1024),
-            ShadowQuality.High => (2048, true, 2048),
-            ShadowQuality.Ultra => (4096, true, 2048),
-            _ => (1024, false, 1024),
+        // (the board map is fitted tightly to the board, so 2048 is already sharp; Ultra's 4096 is for close-ups)
+        (q.SunShadowMapSize, q.RoomShadows, q.RoomShadowMapSize, q.RoomShadowRefreshInterval) = SunShadows switch {
+            ShadowQuality.Low => (1024, true, 1024, 8),
+            ShadowQuality.Medium => (2048, true, 1024, 6),
+            ShadowQuality.High => (2048, true, 2048, 4),
+            ShadowQuality.Ultra => (4096, true, 2048, 2),
+            _ => (1024, false, 1024, 8),
         };
 
         // lamps: how many get shadows, how sharp, how smooth
@@ -135,18 +138,21 @@ public sealed class LightingSettings {
             ShadowQuality.Off => (0, 0, 2048, false),
             // spot shadows are cheap (one render each, point lights need six), and a lamp that loses its shadow
             // shines straight through everything, so the low settings keep the spots shadowed first
+            // each shadowed point light costs six shadow renders, so even Ultra stays at 4: the scene rarely has more
+            // than a lamp or two plus an explosion, and lights past the cap still shine, just without shadows
             ShadowQuality.Low => (1, 2, 2048, false),
-            ShadowQuality.Medium => (3, 3, 2048, true),
-            ShadowQuality.High => (5, 3, 4096, true),
-            ShadowQuality.Ultra => (8, 3, 4096, true),
+            ShadowQuality.Medium => (2, 2, 2048, true),
+            ShadowQuality.High => (3, 3, 4096, true),
+            ShadowQuality.Ultra => (4, 3, 4096, true),
             _ => (4, 2, 2048, true),
         };
 
         q.LightShafts = LightShafts != EffectQuality.Off;
+        // the beams are soft anyway: full resolution costs 4x half resolution and looks the same
         q.ShaftDownsample = LightShafts switch {
             EffectQuality.Low => 4,
-            EffectQuality.Medium => 2,
-            _ => 1,
+            EffectQuality.Medium => 3,
+            _ => 2,
         };
 
         q.MaxLocalLights = LightCount switch {
@@ -174,6 +180,7 @@ public sealed class LightingSettings {
         LightingShowcase.ShellLights = GameplayLights;
         LightingShowcase.MineLights = GameplayLights;
         LightingShowcase.ExplosionLights = GameplayLights;
+        LightingShowcase.RoomCastsShadows = RoomShadows;
 
         if (force || LightingPresets.Current != TimeOfDay)
             LightingShowcase.Apply(TimeOfDay);

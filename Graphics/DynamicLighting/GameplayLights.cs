@@ -24,14 +24,14 @@ public static class GameplayLights {
     }
 
     /// <summary>A tank headlight. <paramref name="forward"/> is the turret direction on the XZ plane.</summary>
-    public static void AddHeadlight(Vector3 turretPosition, Vector2 forward, bool isLocalPlayer) {
+    public static void AddHeadlight(Vector3 relativePosition, Vector2 forward, bool isLocalPlayer) {
         if (forward.LengthSquared() < 1e-6f)
             forward = new Vector2(0f, 1f);
         forward.Normalize();
         var forward3 = new Vector3(forward.X, 0f, forward.Y);
 
         var head = NextSpot();
-        head.Position = turretPosition;
+        head.Position = relativePosition;
         head.Direction = forward3 + new Vector3(0f, -0.32f, 0f);
         head.Color = new Color(255, 236, 196);
         head.Intensity = 1.7f * Brightness;
