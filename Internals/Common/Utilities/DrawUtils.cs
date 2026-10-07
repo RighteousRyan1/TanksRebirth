@@ -411,7 +411,7 @@ public static class DrawUtils {
     }
 
     public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {
-        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner"); // apparently incorrect texture
 
         var scaling = new Vector2(3.25f, 3f);
 

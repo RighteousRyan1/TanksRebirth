@@ -61,7 +61,7 @@ public static class LightingSystem {
     /// </summary>
     public static int MaxShadowedPointLights = 4;
     /// <summary>How many spot lights the scene would like shadowed (also capped by <see cref="LightingQuality.MaxShadowedSpotLights"/>).</summary>
-    public static int MaxShadowedSpotLights = 3;
+    public static int MaxShadowedSpotLights = 4;
     /// <summary>Point of interest used to rank lights when there are too many.</summary>
     public static Vector3 FocusPoint = Vector3.Zero;
 
@@ -120,8 +120,8 @@ public static class LightingSystem {
     static int ATLAS_SIZE = 2048;
     static int CUBE_TILE = 256;
     static int SPOT_TILE = 512;
-    const int MAX_POINT_SHADOW_SLOTS = 8;
-    const int MAX_SPOT_SHADOW_SLOTS = 3;
+    const int MAX_POINT_SHADOW_SLOTS = 6;
+    const int MAX_SPOT_SHADOW_SLOTS = 6;
     const int LIGHTS_PER_PASS = 4;
 
     [Flags]
@@ -396,7 +396,13 @@ public static class LightingSystem {
         // keep the 3x3 tent filter (which reaches 2 texels out) inside each face
         const float inset = 2.5f;
 
-        // point lights: 3x2 blocks of 256px faces in the left 1536px
+        // layout in cube tiles (C = atlas / 8, a spot tile is 2C):
+        //   x: 0     3C    6C   8C
+        //      [pt0 ][pt1 ][sp0]     rows 0..2C
+        //      [pt2 ][pt3 ][sp1]     rows 2C..4C
+        //      [pt4 ][pt5 ][sp2]     rows 4C..6C
+        //      [wht][sp4][sp5][sp3]  rows 6C..8C
+        // point lights: 3x2 blocks of cube faces
         for (int i = 0; i < MAX_POINT_SHADOW_SLOTS; i++) {
             var origin = new Point(i % 2 * CUBE_TILE * 3, i / 2 * CUBE_TILE * 2);
             _pointSlots[i] = new ShadowSlot {
@@ -404,16 +410,18 @@ public static class LightingSystem {
                 Rect = new Vector4(origin.X * texel, origin.Y * texel, CUBE_TILE * texel, inset / CUBE_TILE),
             };
         }
-        // spot lights: 512px tiles in the right column
+        // spot lights: the right column, then along the bottom row
         for (int i = 0; i < MAX_SPOT_SHADOW_SLOTS; i++) {
-            var origin = new Point(CUBE_TILE * 6, i * SPOT_TILE);
+            var origin = i < 4
+                ? new Point(CUBE_TILE * 6, i * SPOT_TILE)
+                : new Point((i - 3) * SPOT_TILE, CUBE_TILE * 6);
             _spotSlots[i] = new ShadowSlot {
                 Origin = origin,
                 Rect = new Vector4(origin.X * texel, origin.Y * texel, SPOT_TILE * texel, inset / SPOT_TILE),
             };
         }
-        // bottom right 512px is never rendered and stays white (= fully lit)
-        var white = new Point(CUBE_TILE * 6 + SPOT_TILE / 2, MAX_SPOT_SHADOW_SLOTS * SPOT_TILE + SPOT_TILE / 2);
+        // the bottom left spot-sized tile is never rendered and stays white (= fully lit)
+        var white = new Point(SPOT_TILE / 2, CUBE_TILE * 6 + SPOT_TILE / 2);
         _noShadowSlot = new ShadowSlot { Origin = white, Rect = new Vector4(white.X * texel, white.Y * texel, 0f, 0f) };
     }
 

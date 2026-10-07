@@ -41,8 +41,8 @@ Nothing in the game's draw code changed. The integration is these hooks:
    Do the same for any other mesh you draw with a custom effect.
 4. `TankGame.LoadContent` calls `LightingShowcase.Initialize(GraphicsDevice)` and `Update` calls `LightingShowcase.Update()`.
 
-At `EndFrame` the recorded geometry is drawn again into the sun shadow map, a 2048² shadow atlas (point lights as
-6×256² cube faces, spot lights as 512² tiles) and a light buffer. The light buffer is multiplied onto the finished
+At `EndFrame` the recorded geometry is drawn again into the sun shadow map, a 2048² shadow atlas (up to 6 point lights as
+6×256² cube faces, up to 6 spot lights as 512² tiles) and a light buffer. The light buffer is multiplied onto the finished
 frame (2× modulate, so lights can also brighten), then the sun shafts are added. If `lighting.fx` fails to load or
 anything throws, lighting turns itself off and the game renders as before.
 
@@ -70,8 +70,9 @@ LightingSystem.SetMeshLighting(model, "Lamp_Shade", new MeshLighting { ReceivesL
 
 ## Tuning
 
-- `MaxShadowedPointLights` (default 4, max 8) and `MaxShadowedSpotLights` (default 3) bound the shadow cost.
-  Each shadowed point light re-renders nearby geometry 6 times.
+- `MaxShadowedPointLights` (default 4, max 6) and `MaxShadowedSpotLights` (default 4, max 6) bound the shadow cost.
+  Each shadowed point light re-renders nearby geometry 6 times, each shadowed spot once. The presets ask for
+  4 shadowed spots, one per player headlight; the room's desk lamp and clock light are unshadowed spots.
 - `MaxLocalLights` (default 32) bounds the light passes. Lights are batched 4 per pass and ranked by
   `Priority`, then by distance to `FocusPoint`.
 - `Sun.ShadowRadius` trades shadow sharpness for coverage (560 covers the board).

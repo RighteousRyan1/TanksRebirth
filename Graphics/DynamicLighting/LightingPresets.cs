@@ -52,9 +52,15 @@ public static class LightingPresets {
     // room lamps
     // the bulb sits just above the brass stem (which ends at y = 317); any lower and the stem swallows the light
     public static readonly PointLight TableLamp = new(new Vector3(794f, 345f, -74f), new Color(255, 190, 120), 0.8f, 1100f, true) { Priority = 5, Wrap = 0.3f };
-    public static readonly SpotLight DeskLamp = new(new Vector3(-1030f, 412f, 150f), new Vector3(880f, -412f, -240f), new Color(255, 228, 180), 0.9f, 1800f, 7f, 12f, true) { Priority = 6 };
+    // the desk lamp on the left of the board and the little picture light over the grandfather clock are unshadowed
+    // spots: they only reach furniture that nothing stands in front of, so they leave the shadow slots to the tanks
+    /// <summary>Bulb inside the desk lamp's tilted shade (left of the board), shining out of the shade onto the desk and its book.</summary>
+    public static readonly SpotLight DeskLamp = new(new Vector3(-1060f, 483f, 158f), new Vector3(0.331f, -0.743f, 0.581f), new Color(255, 222, 170), 0.9f, 1000f, 30f, 50f, false) { Priority = 6, Wrap = 0.2f };
+    /// <summary>Picture light in front of the clock's hood (the face is at about (1525, 1016, 122), facing (-0.71, 0, 0.71)), shining down onto the dial.
+    /// It's brighter than the other lamps because it hits the dark dial at a grazing angle.</summary>
+    public static readonly SpotLight ClockLight = new(new Vector3(1426f, 1260f, 221f), new Vector3(99f, -260f, -99f), new Color(255, 214, 160), 3.5f, 900f, 25f, 42f, false) { Priority = 4, Wrap = 0.2f };
     public static readonly PointLight FloorLamp = new(new Vector3(1532f, 1080f, 2828f), new Color(255, 190, 120), 1.0f, 2600f) { Priority = 1, Wrap = 0.4f };
-    public static readonly Light[] RoomLamps = [TableLamp, DeskLamp, FloorLamp];
+    public static readonly Light[] RoomLamps = [TableLamp, DeskLamp, ClockLight, FloorLamp];
 
     /// <summary>Emissive look for the room's lamp shades while the lamps are on.</summary>
     /// <remarks>Lit shades don't cast shadows: a real shade is translucent, and as a solid caster it would box the bulb in.</remarks>
@@ -77,7 +83,7 @@ public static class LightingPresets {
         public float ShaftDensity, ShaftAnisotropy, ShaftMarch;
         public float ShadowRadius;
         /// <summary>Room lamp brightness, 0 = off.</summary>
-        public float TableLamp, DeskLamp, FloorLamp;
+        public float TableLamp, DeskLamp, ClockLight, FloorLamp;
         public float Background;
         public float DynamicBrightness;
         /// <summary>Above 0.5 the player tanks get headlights.</summary>
@@ -102,6 +108,7 @@ public static class LightingPresets {
                 ShadowRadius = F(a.ShadowRadius, b.ShadowRadius, t),
                 TableLamp = F(a.TableLamp, b.TableLamp, t),
                 DeskLamp = F(a.DeskLamp, b.DeskLamp, t),
+                ClockLight = F(a.ClockLight, b.ClockLight, t),
                 FloorLamp = F(a.FloorLamp, b.FloorLamp, t),
                 Background = F(a.Background, b.Background, t),
                 DynamicBrightness = F(a.DynamicBrightness, b.DynamicBrightness, t),
@@ -188,7 +195,7 @@ public static class LightingPresets {
         sunFrom: new Vector3(-382f, 1300f, -421f), sunTo: new Vector3(-262f, 0f, 59f),
         sunColor: new Color(130, 165, 255), sunIntensity: 0.16f, wrap: 0f,
         shaftColor: new Color(120, 150, 255), shaftDensity: 0.12f, dynamicBrightness: 1f)
-        with { TableLamp = 0.8f, DeskLamp = 0.9f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f };
+        with { TableLamp = 0.8f, DeskLamp = 0.9f, ClockLight = 3.5f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f };
 
     /// <summary>The static time-of-day presets.</summary>
     public static TimeOfDay? GetTimeOfDay(Preset preset) => preset switch {
@@ -273,10 +280,10 @@ public static class LightingPresets {
     public static readonly (float Elevation, TimeOfDay Look)[] SkyGradient = [
         // night: dark blue room, all lamps on (the moon is added separately)
         (-18f, Sky(new Color(40, 52, 92), new Color(24, 24, 36), 0.32f, Color.Black, 0f, 0f, Color.Black, 0f, 0.3f, 1400f, 560f, 1f)
-            with { TableLamp = 0.8f, DeskLamp = 0.9f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f }),
+            with { TableLamp = 0.8f, DeskLamp = 0.9f, ClockLight = 3.5f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f }),
         // nautical twilight
         (-9f, Sky(new Color(66, 68, 116), new Color(38, 36, 54), 0.42f, Color.Black, 0f, 0f, Color.Black, 0f, 0.3f, 1400f, 560f, 1f)
-            with { TableLamp = 0.8f, DeskLamp = 0.6f, FloorLamp = 0.8f, Background = 0.4f, Headlights = 1f }),
+            with { TableLamp = 0.8f, DeskLamp = 0.6f, ClockLight = 2.2f, FloorLamp = 0.8f, Background = 0.4f, Headlights = 1f }),
         // blue hour, the table lamp is on
         (-3f, Sky(new Color(96, 90, 138), new Color(56, 50, 70), 0.62f, new Color(255, 100, 60), 0f, 0.4f, new Color(255, 110, 70), 0f, 0.6f, 1800f, 650f, 1f)
             with { TableLamp = 0.6f, Background = 0.6f, Headlights = 1f }),
@@ -381,7 +388,8 @@ public static class LightingPresets {
 
         // Off shows the unlit game but leaves the user's on/off choice (LightingSystem.Enabled) alone
         LightingSystem.Suspended = preset == Preset.Off;
-        LightingSystem.MaxShadowedSpotLights = 3;
+        // one per player tank headlight (the room's spots are unshadowed)
+        LightingSystem.MaxShadowedSpotLights = 4;
         LightingSystem.FocusPoint = Vector3.Zero;
         var sun = LightingSystem.Sun;
         sun.ShadowCenter = Vector3.Zero;
@@ -449,6 +457,7 @@ public static class LightingPresets {
         lights.Clear();
         TableLamp.Intensity = time.TableLamp;
         DeskLamp.Intensity = time.DeskLamp;
+        ClockLight.Intensity = time.ClockLight;
         FloorLamp.Intensity = time.FloorLamp;
         foreach (var lamp in RoomLamps)
             if (lamp.Intensity > 0.01f)

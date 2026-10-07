@@ -136,15 +136,15 @@ public sealed class LightingSettings {
         // lamps: how many get shadows, how sharp, how smooth
         (q.MaxShadowedPointLights, q.MaxShadowedSpotLights, q.ShadowAtlasSize, q.SoftLocalShadows) = LampShadows switch {
             ShadowQuality.Off => (0, 0, 2048, false),
-            // spot shadows are cheap (one render each, point lights need six), and a lamp that loses its shadow
-            // shines straight through everything, so the low settings keep the spots shadowed first
+            // spot shadows are cheap (one render each, point lights need six), and a headlight that loses its shadow
+            // shines straight through blocks and tanks, so every level keeps all 4 player headlights shadowed
             // each shadowed point light costs six shadow renders, so even Ultra stays at 4: the scene rarely has more
             // than a lamp or two plus an explosion, and lights past the cap still shine, just without shadows
-            ShadowQuality.Low => (1, 2, 2048, false),
-            ShadowQuality.Medium => (2, 2, 2048, true),
-            ShadowQuality.High => (3, 3, 4096, true),
-            ShadowQuality.Ultra => (4, 3, 4096, true),
-            _ => (4, 2, 2048, true),
+            ShadowQuality.Low => (1, 4, 2048, false),
+            ShadowQuality.Medium => (2, 4, 2048, true),
+            ShadowQuality.High => (3, 4, 4096, true),
+            ShadowQuality.Ultra => (4, 4, 4096, true),
+            _ => (4, 4, 2048, true),
         };
 
         q.LightShafts = LightShafts != EffectQuality.Off;

@@ -32,9 +32,7 @@ public static class RoomScene {
     // bro there is no construcor stop yapping stupid ide
     public static Model RoomSkyboxScene;
 
-    public static ModelMesh HandHour;
-    public static ModelMesh HandMinute;
-    public static ModelMesh Pendulum;
+    public static ModelMesh HandHour, HandMinute, HandSecond, Pendulum;
 
     public static Dictionary<string, Texture2D> RoomSkyboxTextures = [];
     public static Dictionary<string, Color> BookColors = [];
@@ -51,15 +49,15 @@ public static class RoomScene {
 
     static Matrix[] _boneTransforms;
 
-    static Matrix _baseMinuteTransform;
-    static Matrix _baseHourTransform;
-    static Matrix _basePendulumTransform;
+    static Matrix _baseMinuteTransform, _baseHourTransform, _baseSecondTransform,
+        _basePendulumTransform;
     static RoomScene() {
         // .png breaks the UVs vs .jpg
         RoomSkyboxScene = ModelGlobals.Room.Asset;
         _boneTransforms = new Matrix[RoomSkyboxScene.Bones.Count];
         HandHour = RoomSkyboxScene.Meshes["Clock_Hand_Hour"];
         HandMinute = RoomSkyboxScene.Meshes["Clock_Hand_Minute"];
+        HandSecond = RoomSkyboxScene.Meshes["Clock_Hand_Second"];
         Pendulum = RoomSkyboxScene.Meshes["Clock_Pendulum"];
 
         RoomSkyboxScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);
@@ -67,6 +65,7 @@ public static class RoomScene {
 
         _baseMinuteTransform = HandMinute.ParentBone.Transform;
         _baseHourTransform = HandHour.ParentBone.Transform;
+        _baseSecondTransform = HandSecond.ParentBone.Transform;
         _basePendulumTransform = Pendulum.ParentBone.Transform;
 
         InitializeTextures();
@@ -113,6 +112,7 @@ public static class RoomScene {
         ["Clock_Glass"] = "glass",
         ["Clock_Hand_Hour"] = "black",
         ["Clock_Hand_Minute"] = "black",
+        ["Clock_Hand_Second"] = "black",
         ["Clock_Pendulum"] = "brass",
         ["Clock_Wires"] = "brass_wire",
         ["Clock_Wood1"] = "wood_dark",
@@ -198,11 +198,11 @@ public static class RoomScene {
 
     public static readonly Vector3 ClockAudioPosition = new(1663.5045f, 850.9713f, -65.44688f);
 
+    public static float SecondHandRotation;
     public static float HourHandRotation;
     public static float MinuteHandRotation;
     public static float PendulumRotation;
-    public static int Hour;
-    public static int Minute;
+    public static int Hour, Minute, Second;
     static int _oldHour;
     static int _oldMin;
     /* q1 = seq1
@@ -277,13 +277,14 @@ public static class RoomScene {
         // this is pretty magical, but it gives the room a good scale in comparison to the game scene.
         Scale = 10f;
 
-        //var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
+        Hour = TimeUtils.GetHourFromCircle(HourHandRotation);
+        Minute = TimeUtils.GetMinuteFromCircle(MinuteHandRotation);
+        Second = DateTime.Now.Second;
+
+        SecondHandRotation = (float)Second / 60 * MathHelper.TwoPi;
         HourHandRotation = TimeUtils.InterpolateHourToDay(DateTime.Now);
         MinuteHandRotation = TimeUtils.InterpolateMinuteToHour(DateTime.Now);
         PendulumRotation = MathHelper.Pi / 32 * TimeUtils.SineForSecond(DateTime.Now, 0.5f);
-
-        Hour = TimeUtils.GetHourFromCircle(HourHandRotation);
-        Minute = TimeUtils.GetMinuteFromCircle(MinuteHandRotation);
 
         // hacky way to prevent chiming on game boot. 
         if (RuntimeData.RunTime > 60f) {
@@ -296,7 +297,6 @@ public static class RoomScene {
                 // prevent chimes that would have happened when unfocused
                 if (Math.Abs(Minute - _oldMin) >= 3)
                     return;
-
 
                 if (Minute % 15 == 0) {
                     // Console.WriteLine($"Attempting chime at quarter {Minute / 15}");
@@ -321,6 +321,7 @@ public static class RoomScene {
 
         HandHour.ParentBone.Transform = Matrix.CreateRotationY(HourHandRotation * MathHelper.Tau) * _baseHourTransform;
         HandMinute.ParentBone.Transform = Matrix.CreateRotationY(MinuteHandRotation * MathHelper.Tau) * _baseMinuteTransform;
+        HandSecond.ParentBone.Transform = Matrix.CreateRotationZ(SecondHandRotation) * _baseSecondTransform;
         Pendulum.ParentBone.Transform = Matrix.CreateRotationY(PendulumRotation) * _basePendulumTransform;
 
         RoomSkyboxScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);

@@ -32,10 +32,10 @@ public sealed class LightingQuality {
 
     /// <summary>Most point, spot and gameplay lights evaluated per frame (the rest are dropped by priority).</summary>
     public int MaxLocalLights = 32;
-    /// <summary>Cap on point lights with shadows (each costs 6 shadow renders). 0 turns their shadows off. Hard cap: 8.</summary>
-    public int MaxShadowedPointLights = 8;
-    /// <summary>Cap on spot lights with shadows. 0 turns their shadows off. Hard cap: 3.</summary>
-    public int MaxShadowedSpotLights = 3;
+    /// <summary>Cap on point lights with shadows (each costs 6 shadow renders). 0 turns their shadows off. Hard cap: 6.</summary>
+    public int MaxShadowedPointLights = 6;
+    /// <summary>Cap on spot lights with shadows (one shadow render each). 0 turns their shadows off. Hard cap: 6.</summary>
+    public int MaxShadowedSpotLights = 4;
     /// <summary>Resolution of the point / spot shadow atlas: 2048 or 4096 (HiDef only, ~128 MB).</summary>
     public int ShadowAtlasSize = 4096;
     /// <summary>Smooth 3x3 filtered lamp shadows (16 taps) instead of the cheaper 2x2 filter (4 taps).</summary>
