@@ -181,7 +181,7 @@ public class Campaign {
         }
 
         if (isValidMPPlayer || isLocalGame) {
-            var tank = template.GetPlayerTank(Server.RandomFor(Server.RandomKey.PlayerTier, CurrentMissionId, template.PlayerType));
+            var tank = template.GetPlayerTank(Server.RandomFor(Server.RandomKey.PLR_TIER, CurrentMissionId, template.PlayerType));
 
             tank.Position = template.Position;
             tank.ChassisRotation = chassisRotation;
@@ -209,7 +209,7 @@ public class Campaign {
                     companionPos = LoadedMission.Tanks[nextPlayerIdx].Position;
                 }
 
-                var randomTier = TankID.RandomTier(Server.RandomFor(Server.RandomKey.CompanionTier, CurrentMissionId, template.PlayerType));
+                var randomTier = TankID.RandomTier(Server.RandomFor(Server.RandomKey.COMPANION_TIER, CurrentMissionId, template.PlayerType));
                 var tnk = new AITank(randomTier) {
                     // target = rot - pi
                     // turret =  -rot

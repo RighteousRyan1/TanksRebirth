@@ -60,7 +60,7 @@ public class Server {
     /// <summary>
     /// A random generator for one specific roll, the same on every client: it's seeded from <see cref="SessionSeed"/> and
     /// <paramref name="key"/> only, so it doesn't matter what else was drawn before, or in what order. Give every roll its
-    /// own key (what it's for, the mission, which tank...): e.g. <c>RandomFor(RandomKey.EnemyTier, missionId, tankIndex)</c>.
+    /// own key (what it's for, the mission, which tank...): e.g. <c>RandomFor(RandomKey.ENEMY_TIER, missionId, tankIndex)</c>.
     /// </summary>
     /// <remarks>Outside of multiplayer this is just <see cref="Client.ClientRandom"/>, so single player stays unpredictable.</remarks>
     public static Random RandomFor(params int[] key) {
@@ -71,9 +71,9 @@ public class Server {
 
     /// <summary>What a <see cref="RandomFor"/> roll is for (the first part of its key).</summary>
     public static class RandomKey {
-        public const int EnemyTier = 1;
-        public const int CompanionTier = 2;
-        public const int PlayerTier = 3;
+        public const int ENEMY_TIER = 1;
+        public const int COMPANION_TIER = 2;
+        public const int PLR_TIER = 3;
     }
 
     // splitmix64, which is consistent PRNG, unlike hashcode.combine
