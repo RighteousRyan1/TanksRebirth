@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Localization;
@@ -40,6 +41,12 @@ public class GameConfig
     public Keys RightKeybind { get; set; } = Keys.D;
     public Keys DownKeybind { get; set; } = Keys.S;
     public Keys MineKeybind { get; set; } = Keys.Space;
+    // a binding uses its mouse button instead of its key when the button isn't None
+    public MouseInput UpMouseBind { get; set; } = MouseInput.None;
+    public MouseInput LeftMouseBind { get; set; } = MouseInput.None;
+    public MouseInput RightMouseBind { get; set; } = MouseInput.None;
+    public MouseInput DownMouseBind { get; set; } = MouseInput.None;
+    public MouseInput MineMouseBind { get; set; } = MouseInput.None;
     public int PlayerUsingKeyboard { get; set; } = PlayerID.Blue;
 
     #endregion

@@ -173,7 +173,7 @@ public static class InputUtils {
 
     public static bool OldMouseLeft => KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Pressed;
     public static bool OldMouseMiddle => KeyboardMouse.PreviousMouse.MiddleButton == ButtonState.Pressed;
-    public static bool OldMouseRight => KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Pressed;
+    public static bool OldMouseRight => KeyboardMouse.PreviousMouse.RightButton == ButtonState.Pressed;
     public static bool OldMouse3 => KeyboardMouse.PreviousMouse.XButton1 == ButtonState.Pressed;
     public static bool OldMouse4 => KeyboardMouse.PreviousMouse.XButton2 == ButtonState.Pressed;
     public static bool Click(bool rightClick = false) {
@@ -267,16 +267,27 @@ public static class InputUtils {
             _ => false
         };
     }
+    /// <summary>Whether <paramref name="mouseInput"/> went down this frame (like <see cref="KeyJustPressed"/> for keys).</summary>
     public static bool CheckMouseFreshInput(MouseInput mouseInput) {
         return mouseInput switch {
-            MouseInput.Left => !MouseLeft && KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Pressed,
-            MouseInput.Right => !MouseRight && KeyboardMouse.PreviousMouse.RightButton == ButtonState.Pressed,
-            MouseInput.Middle => !MouseMiddle && KeyboardMouse.PreviousMouse.MiddleButton == ButtonState.Pressed,
-            MouseInput.Mouse3 => !Mouse3 && KeyboardMouse.PreviousMouse.XButton1 == ButtonState.Pressed,
-            MouseInput.Mouse4 => !Mouse4 && KeyboardMouse.PreviousMouse.XButton2 == ButtonState.Pressed,
+            MouseInput.Left => MouseLeft && KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Released,
+            MouseInput.Right => MouseRight && KeyboardMouse.PreviousMouse.RightButton == ButtonState.Released,
+            MouseInput.Middle => MouseMiddle && KeyboardMouse.PreviousMouse.MiddleButton == ButtonState.Released,
+            MouseInput.Mouse3 => Mouse3 && KeyboardMouse.PreviousMouse.XButton1 == ButtonState.Released,
+            MouseInput.Mouse4 => Mouse4 && KeyboardMouse.PreviousMouse.XButton2 == ButtonState.Released,
             _ => false
         };
     }
+
+    /// <summary>A display name for a mouse button ("Right Mouse", "Mouse 4"...).</summary>
+    public static string MouseAsString(this MouseInput mouseInput) => mouseInput switch {
+        MouseInput.Left => "Left Mouse",
+        MouseInput.Right => "Right Mouse",
+        MouseInput.Middle => "Middle Mouse",
+        MouseInput.Mouse3 => "Mouse 4",
+        MouseInput.Mouse4 => "Mouse 5",
+        _ => "None"
+    };
 
     public static ReadOnlySpan<MouseInput> GetPressedMouseButtons() {
         int count = 0;

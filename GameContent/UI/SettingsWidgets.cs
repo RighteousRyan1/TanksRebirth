@@ -234,7 +234,7 @@ public sealed class SettingsTab : UIElement {
     }
 
     void Activate() {
-        if (ControlsUI.IsRebinding)
+        if (ControlsUI.InputLocked)
             return;
         if (_page is not null)
             SettingsUI.Show(_page);

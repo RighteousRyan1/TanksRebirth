@@ -218,6 +218,8 @@ public sealed class SettingsPage {
     public Action? Opened;
     /// <summary>Runs when the page leaves the screen (another tab, or the window closed).</summary>
     public Action? Closed;
+    /// <summary>Runs every update while the page is on screen.</summary>
+    public Action? Updated;
 
     public bool IsVisible { get; private set; }
     public IReadOnlyList<UIElement> Elements => _elements;
@@ -283,6 +285,7 @@ public sealed class SettingsPage {
     }
 
     internal void UpdateInput() {
+        Updated?.Invoke();
         foreach (var element in _elements)
             if (element is SliderRow slider)
                 slider.UpdateInput();
