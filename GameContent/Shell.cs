@@ -450,32 +450,13 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
             GeometryUtils.Add(ref particle.Scale, 0.0075f * RuntimeData.DeltaTime);
         };
     }
+
+    ShellTrail? _trail;
     void RenderLeaveTrail() {
         // _oldPosition and Position are *not* the same during method call.
-        // TODO: make more particles added depending on the positions between 2 distinct frames
-        //var numToAdd
 
-        var p = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedBy(Rotation + MathHelper.Pi).ExpandZ(),
-            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-
-        // p.Layer = 1f;
-        p.Roll = -MathHelper.PiOver2 + (RuntimeData.RunTime % MathHelper.Tau);
-        p.Color = Properties.TrailColor;
-        p.HasAdditiveBlending = false;
-        p.Scale = new(0.45f, 0.5f, 2f); // x = length, y = height, z = width
-                                        // defaults = (x = 0.4, y = 0.25, 0.4)
-
-        p.UniqueBehavior = (a) => {
-            var diff = 0.05f * RuntimeData.DeltaTime;
-            p.Roll += diff;
-            p.Pitch += diff;
-
-            p.Alpha -= 0.02f * RuntimeData.DeltaTime;
-
-            if (p.Alpha <= 0f)
-                p.Destroy();
-        };
+        _trail ??= ShellTrail.Start(Properties.TrailColor, Client.ClientRandom.NextFloat(0, MathHelper.TwoPi));
+        _trail.Emit(Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedBy(Rotation + MathHelper.Pi).ExpandZ());
     }
     void RenderFlamingParticle() {
         var flame = GameHandler.Particles.MakeParticle(
@@ -659,6 +640,9 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
             if (idx > -1)
                 Owner.OwnedShells[idx] = null;
         }
+
+        _trail?.Detach();
+        _trail = null;
 
         TankGame.OnFocusLost -= TankGame_OnFocusLost;
         TankGame.OnFocusRegained -= TankGame_OnFocusRegained;

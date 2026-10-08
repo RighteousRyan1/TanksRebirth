@@ -65,9 +65,14 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
             _items[i] = null;
         }
         _count = 0;
+        if (DrawsFootprints)
+            ShellTrail.Clear();
     }
 
     public void UpdateParticles() {
+        if (DrawsFootprints)
+            ShellTrail.UpdateAll(RuntimeData.DeltaTime);
+
         int i = 0;
         while (i < _count) {
             var p = _items[i];
@@ -93,13 +98,19 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         var view = SystemView;
         var projection = SystemProjection;
 
-        // footprints are rendered first as quads
+        // tank tracks go first: they're decals on the floor, everything else draws on top
         if (DrawsFootprints && TankFootprint.Count > 0) {
             EndSpriteBatch();
             TankFootprint.Render(device, view, projection);
         }
 
-        // sort particles into draw lists
+        // rocket smoke: before the sprites, so the flames draw over it
+        if (DrawsFootprints && ShellTrail.All.Count > 0) {
+            EndSpriteBatch();
+            ShellTrail.RenderAll(device, view, projection, TanksRebirth.GameContent.RebirthUtils.SceneManager.GameLight.Brightness / 0.75f);
+        }
+
+        // ---- sort this frame's particles into draw lists ----
         _sprites.Begin();
         _text3D.Clear();
         _screenSpace.Clear();

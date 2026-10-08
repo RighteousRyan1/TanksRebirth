@@ -99,17 +99,19 @@ internal static class SpriteQuad {
     }
 }
 
-/// <summary>Collects every plain sprite particle of a frame, groups them by (texture, blend mode), uploads all of their
-/// vertices in one buffer write and issues one draw call per group.</summary>
+/// <summary>Batches like textures and combines them into one draw call. Modders won't need this because it's used via the particle systems by default.</summary>
 internal sealed class SpriteParticleBatcher {
     sealed class Bucket {
         public Texture2D Texture;
         public bool Additive;
         public Particle[] Items = new Particle[64];
         public int Count;
+        /// <summary>Highest <see cref="Particle.Layer"/> in the bucket: buckets draw in this order, so higher layers end up on top.</summary>
+        public float Layer;
 
         public void Add(Particle p) {
             if (Count == Items.Length) Array.Resize(ref Items, Items.Length * 2);
+            Layer = Count == 0 ? p.Layer : MathF.Max(Layer, p.Layer);
             Items[Count++] = p;
         }
     }
@@ -141,16 +143,25 @@ internal sealed class SpriteParticleBatcher {
     }
 
     public void Draw(GraphicsDevice device, Matrix view, Matrix projection) {
+        // draws lower layers first
+        for (int i = 1; i < _active.Count; i++) {
+            var bucket = _active[i];
+            int j = i - 1;
+            while (j >= 0 && _active[j].Layer > bucket.Layer) {
+                _active[j + 1] = _active[j];
+                j--;
+            }
+            _active[j + 1] = bucket;
+        }
+
         int totalQuads = 0;
         for (int i = 0; i < _active.Count; i++) totalQuads += _active[i].Count;
         if (totalQuads == 0) return;
 
         EnsureCapacity(device, totalQuads);
 
-        // Everything the old per-particle path recomputed per particle is constant for the frame:
         float brightness = SceneManager.GameLight.Brightness;
-        // (DiffuseColor * AmbientLightColor) of the old BasicEffect lighting. SpriteBatch quads have no normals,
-        // so directional lights contributed nothing and only emissive + ambient*diffuse ever reached the screen.
+
         Vector3 ambient = Lighting.AmbientDiffuseProduct;
 
         var cam = CameraGlobals.RebirthFreecam;
@@ -164,9 +175,8 @@ internal sealed class SpriteParticleBatcher {
             for (int i = 0; i < bucket.Count; i++) {
                 var p = bucket.Items[i];
 
-                // never-positioned placeholder particles (e.g. flames spawned before their first update)
+                // anyhting that hasn't been inited yet will just kinda exist in nothingness for a frame, still usable tho
                 if (p.Position.X > 1e8f || p.Position.X < -1e8f) {
-                    // keep the quad slot valid but fully transparent & degenerate
                     WriteDegenerate(quad++);
                     continue;
                 }
@@ -227,11 +237,13 @@ internal sealed class SpriteParticleBatcher {
         device.SetVertexBuffer(null);
     }
 
+    // just a bs quad
     void WriteDegenerate(int quad) {
         for (int k = 0; k < 4; k++)
             _verts[quad * 4 + k] = default;
     }
 
+    // basically just ensures that we aren't going over the quad limit 
     void EnsureCapacity(GraphicsDevice device, int quads) {
         int needed = quads * 4;
         if (_verts.Length < needed) {
