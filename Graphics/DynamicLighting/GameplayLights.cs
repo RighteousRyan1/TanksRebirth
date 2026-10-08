@@ -52,7 +52,7 @@ public static class GameplayLights {
         light.Intensity = 0.9f * Brightness;
         light.Range = 70f;
         light.Wrap = 0.4f;
-        light.CastsShadows = false;
+        light.CastsShadows = true;
         light.Priority = 1;
         LightingSystem.AddFrameLight(light);
     }

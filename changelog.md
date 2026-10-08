@@ -1,4 +1,4 @@
-// message
+Holy crap, what an update! Lots of great new things!
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will get their spot on the main menu!
 
@@ -22,6 +22,12 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Even more localization!
 	- Translators are still welcome to correct any faulty translations- some translations were done via machine translation
 - Added a new animation/text popup when a mission attempt is over
+- Added an entirely new OPTIONAL lighting system that can be accessed via the graphics settings
+	- Shadows, lights, and time of day all are settings you can change
+	- You can simply choose to not enable this if you either don't want it on or your computer cannot handle it
+- Added a second hand to the clock (thank you BigKitty)
+- Added heaps more graphics settings for regular gameplay, including Anti-Aliasing, FPS limit, and more!
+
 
 # Changes
 
@@ -38,6 +44,11 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- Tanks now have recoil when firing
 	- Shot spread is much tighter
 - Pings now grow and shrink quicker
+- Rocket trails are now MUCH better looking
+- Completely overhauled the Settings UI (which will be the standard for future UI updates!)
+	- I caved into using AI to assist me with the design and layout, since UI frontend is not my strong suit in the slightest
+- Lantern mode will now look entirely different if using the new lighting system, read the description
+- Bindings in the Controls menu can now use mouse buttons!
 
 # Changes Important for Modders
 
@@ -73,16 +84,19 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Fixed smokes generated from smoke grenades being the wrong color
 - Mods should load 2x quicker on average, depending on content
 - Fixed some tank destruction particles having frame-dependent animation
-- Fixed bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
+- Fixed a bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
 - Fixed clock pendulum not accurately tracking seconds (there was some margin of error before)
 - The mission intro sequence/fanfare is now controlled by the sound effects slider
 - Fixed the room scene not being updated while in pause
 - Places in the room where glass would before not render properly now renders
 - Performance has been improved in various places of the game (the level editor should be much more performant even with the new changes)
+- Particles are now infinitely more performant than they were before, allowing for tens to hundreds of thousands of particles to be present before noticable framerate loss
+- Tank treads now look much more proper, and there is not a performance loss to have 'Fading Tank Tracks' disabled
+- Massively optimized the level editor, should run much better on all systems
+- Fixed a bug where fast enough bullets could skip all ricochets when colliding with the outer border
 
 # TODO
 
-- [ ] Tank tread hyper-optimization (and visual re-haul)
 - [ ] Real-time multiplayer stats
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 

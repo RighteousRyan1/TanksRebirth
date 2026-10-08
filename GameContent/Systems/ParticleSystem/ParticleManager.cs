@@ -98,7 +98,7 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         var view = SystemView;
         var projection = SystemProjection;
 
-        // tank tracks go first: they're decals on the floor, everything else draws on top
+        // tracks before everything else
         if (DrawsFootprints && TankFootprint.Count > 0) {
             EndSpriteBatch();
             TankFootprint.Render(device, view, projection);
@@ -110,7 +110,7 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
             ShellTrail.RenderAll(device, view, projection, TanksRebirth.GameContent.RebirthUtils.SceneManager.GameLight.Brightness / 0.75f);
         }
 
-        // ---- sort this frame's particles into draw lists ----
+        // put each particles into their own draw lists for optimizations
         _sprites.Begin();
         _text3D.Clear();
         _screenSpace.Clear();
@@ -118,7 +118,7 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
 
         for (int i = 0; i < _count; i++) {
             var p = _items[i];
-            if (p.Model is not null) continue; // model particles are drawn by RenderModelParticles
+            if (p.Model is not null) continue; // RenderModelParticles
 
             if (p.UniqueDraw is not null)
                 _customDraw.Add(p);
