@@ -22,6 +22,9 @@ public class GameShaders {
 
     public static float BlurFactor = 0.0075f;
 
+    /// <summary>How strongly a tank's wooden trim is tinted toward its team color (0 = plain wood, 1 = fully team-colored wood).</summary>
+    public static float TeamTintStrength = 0.55f;
+
     public static void Initialize() {
         GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/shaders/gaussian_blur");
         LanternShader = GameResources.GetGameResource<Effect>("Assets/shaders/lantern");
@@ -30,8 +33,9 @@ public class GameShaders {
         BlueTankEnvironment = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/tnk_tank_env");
     }
 
+    /// <param name="teamColor">If set, the mesh's wooden trim is tinted with this color (see <see cref="Tanks.Tank.ShowTeamVisuals"/>).</param>
     public static void DrawTankMesh(ModelMesh mesh, Matrix world, Matrix view, Matrix projection,
-        Texture2D texture, float opacity, bool useEnvironment = false) {
+        Texture2D texture, float opacity, bool useEnvironment = false, Color? teamColor = null) {
         // the tank shader isn't a BasicEffect, so tell the lighting system about this mesh directly
         LightingSystem.Submit(mesh, world, view, projection, opacity);
 
@@ -46,6 +50,8 @@ public class GameShaders {
         OriginalTankShader.Parameters["EnvironmentStrength"].SetValue(useEnvironment ? 1f : 0f);
         OriginalTankShader.Parameters["DiffuseTexture"].SetValue(texture);
         OriginalTankShader.Parameters["EnvironmentTexture"].SetValue(BlueTankEnvironment);
+        OriginalTankShader.Parameters["TeamTint"]?.SetValue(teamColor.HasValue ? TeamTintStrength : 0f);
+        OriginalTankShader.Parameters["TeamColor"]?.SetValue(teamColor?.ToVector4() ?? Vector4.Zero);
 
         var parts = mesh.MeshParts.ToArray();
         var originalEffects = parts.Select(part => part.Effect).ToArray();

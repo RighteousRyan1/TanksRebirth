@@ -46,7 +46,7 @@ public sealed class ShellTrail {
     /// <summary>Twist in radians per world unit (π / 68: the dark strip pinches every 68 units, like the original).</summary>
     public static float TwistPerUnit = MathF.PI / 68f;
     /// <summary>How fast the whole trail spins around its length, in radians per frame (0 = frozen in place).</summary>
-    public static float SpinSpeed = 0.03f;
+    public static float SpinSpeed = 0.05f;
     /// <summary>Brightness of the dark strip, relative to the trail color.</summary>
     public static float StripShade = 0.12f;
     /// <summary>Brightness of the light fin, relative to the trail color.</summary>

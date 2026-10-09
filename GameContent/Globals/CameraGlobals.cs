@@ -266,7 +266,7 @@ public static class CameraGlobals {
 
         Vector3 offsetVector = new(0, POV_CAM_OFFSET_Y, 0);
         var plOffset = clientTank.Position3D + offsetVector;
-        if (clientTank is { IsDestroyed: true }) {
+        if (clientTank.IsDestroyed) {
             SpectatorId = NetPlay.GetMyClientId();
             POVCameraPosition = plOffset;
             POVCameraRotation = -clientTank.TurretRotation;

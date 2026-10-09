@@ -80,7 +80,7 @@ public static class GraphicsUI {
 
     static LightingSettings Lighting => LightingSettings.Current;
 
-    // ------------------------------------------------------------------------------------------ setup
+    // setup
 
     public static void Initialize() {
         Page.Clear();
@@ -94,8 +94,8 @@ public static class GraphicsUI {
         Page.Header("Dynamic Lighting", RightX);
 
         var lang = TankGame.GameLanguage;
-
-    // ---------------------------------------------------------------- display
+        
+        // display
         WinKindBtn = Row(LeftX, RowY(0), lang.Settings.WindowKind ?? "Window Mode",
             "Windowed, borderless (covers the screen, quick to alt-tab) or exclusive fullscreen. Press Apply to switch.",
             () => WindowKindName(_pendingKind) + (_pendingKind != TankGame.Settings.WindowKind ? " *" : ""),
@@ -255,7 +255,7 @@ public static class GraphicsUI {
         _pendingRes = new Point(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
     }
 
-    // ------------------------------------------------------------------------------------------ actions
+    // actions
 
     static void ApplyDisplay() {
         if (!HasPendingDisplay)

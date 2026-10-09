@@ -240,7 +240,7 @@ public static class CommandGlobals {
             MainMenuUI.Theme.Play();
         }),
         // client side
-        [new CommandInput(name: "c_show_teams", description: "Shows tank teams visually. Applies for each new tank.")] = new CommandOutput(netSync: true, false, (args) => {
+        [new CommandInput(name: "c_show_teams", description: "Shows tank teams visually by tinting each tank's wooden trim with its team color.")] = new CommandOutput(netSync: true, false, (args) => {
             Tank.ShowTeamVisuals = bool.Parse(args[0]);
             TankGame.IngameConsole.Log("Tank team visuals are now " + (Tank.ShowTeamVisuals ? "enabled" : "disabled" + ".") + ".", Tank.ShowTeamVisuals ? Color.Green : Color.Red);
         }),

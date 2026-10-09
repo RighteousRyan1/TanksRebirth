@@ -187,7 +187,7 @@ public static class LightingPresets {
         sunFrom: BackWindows, sunTo: Vector3.Zero,
         sunColor: new Color(150, 140, 205), sunIntensity: 0.2f, wrap: 0.6f,
         shaftColor: new Color(140, 130, 200), shaftDensity: 0.08f, dynamicBrightness: 1f)
-        with { TableLamp = 0.6f, DeskLamp = 0.9f, ClockLight = 3.5f, FloorLamp = 1f, Background = 0.6f, Headlights = 1f };
+        with { TableLamp = 0.6f, DeskLamp = 5f, ClockLight = 3.5f, FloorLamp = 1f, Background = 0.6f, Headlights = 1f };
 
     /// <summary>dark blue room, faint moonlight through the back windows, all the room lamps on</summary>
     public static TimeOfDay Midnight = Day(sky: new Color(48, 60, 100), ground: new Color(28, 28, 40), ambient: 0.32f,

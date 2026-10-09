@@ -43,10 +43,10 @@ public sealed class LightingSettings {
     /// <summary>The settings in use. Replace it (e.g. with the loaded config) and call <see cref="Apply"/>.</summary>
     public static LightingSettings Current { get; set; } = new();
 
-    // ------------------------------------------------------------------------------ general
+    // general stuff
 
-    /// <summary>Dynamic lighting on or off. Off = the game looks exactly as it did without it (and frees its video memory).</summary>
-    public bool Enabled { get; set; } = true;
+    /// <summary>Dynamic lighting on or off. Disabled frees all performance decreases and frees the video memory.</summary>
+    public bool Enabled { get; set; } = false;
     /// <summary>Time of day (or Blackout / DayCycle). Off is better expressed with <see cref="Enabled"/>.</summary>
     public Preset TimeOfDay { get; set; } = Preset.MidAfternoon;
     /// <summary>Real minutes for one 24 hour day when <see cref="TimeOfDay"/> is DayCycle.</summary>
@@ -56,7 +56,7 @@ public sealed class LightingSettings {
     /// <summary>The room's walls, windows and furniture block the sun (sun patches through the windows). Off = the sun shines through the room.</summary>
     public bool RoomShadows { get; set; } = true;
 
-    // ------------------------------------------------------------------------------ quality
+    // lighting quality
 
     /// <summary>The preset these options came from (Custom once one was changed by hand).</summary>
     public LightingQualityLevel QualityLevel { get; set; } = LightingQualityLevel.High;
@@ -119,11 +119,11 @@ public sealed class LightingSettings {
 
     /// <summary>Turns the menu options into the numbers <see cref="LightingSystem"/> works with.</summary>
     public LightingQuality ToQuality() {
-        var q = new LightingQuality();
-
-        // sun: resolution of the board and room shadow maps (Ultra = 4096, HiDef only). The room map stays on even at
-        // Low: without it the sun shines through the walls everywhere away from the board
-        q.SunShadows = SunShadows != ShadowQuality.Off;
+        var q = new LightingQuality {
+            // sun: resolution of the board and room shadow maps (Ultra = 4096, HiDef only). The room map stays on even at
+            // Low: without it the sun shines through the walls everywhere away from the board
+            SunShadows = SunShadows != ShadowQuality.Off
+        };
         // (the board map is fitted tightly to the board, so 2048 is already sharp; Ultra's 4096 is for close-ups)
         (q.SunShadowMapSize, q.RoomShadows, q.RoomShadowMapSize, q.RoomShadowRefreshInterval) = SunShadows switch {
             ShadowQuality.Low => (1024, true, 1024, 8),

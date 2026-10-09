@@ -559,7 +559,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             }
             else {
                 GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Projection,
-                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha);
+                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, teamColor: TeamColor(mesh));
             }
         }
     }

@@ -61,8 +61,10 @@ public struct TankTemplate {
         PlayerTank player;
 
         // change player based on chosen difficulties
-        if (Modifiers.Map[Modifiers.RANDOM_PLAYER])
-            player = new PlayerTank(PlayerType, false, random is null ? TankID.ServerRandomTier() : TankID.RandomTier(random));
+        if (Modifiers.Map[Modifiers.RANDOM_PLAYER]) {
+            var randomNumber = random is null ? TankID.ServerRandomTier() : TankID.RandomTier(random);
+            player = new PlayerTank(PlayerType, false, randomNumber);
+        }
         else if (Modifiers.Map[Modifiers.DISGUISE])
             player = new PlayerTank(PlayerType, false, Modifiers.DisguiseValue);
         else

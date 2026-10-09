@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using TanksRebirth.GameContent;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
@@ -611,9 +612,7 @@ public static class LightingSystem {
         return MathF.Sqrt(MathF.Max(sx, MathF.Max(sy, sz)));
     }
 
-    // =============================================================================================
-    //  frame rendering
-    // =============================================================================================
+    // rendering
 
     /// <summary>
     /// Stops recording, renders shadows and lights, and composites them onto <paramref name="target"/>.
@@ -718,12 +717,20 @@ public static class LightingSystem {
 
         // debug for showing lights
         /*foreach (var light in Lights) {
-            //light.CastsShadows = true;
-            //light.Color = Color.White;
-            //light.Range = 10000f;
-            GameHandler.Particles.MakeShineSpot(light.Position, Color.White, 1f);
-            if (light is SpotLight s)
-                GameHandler.Particles.MakeShineSpot(light.Position + s.Direction * 25, Color.White, 0.5f);
+            light.CastsShadows = true;
+            light.Color = Color.White;
+            light.Intensity = 1f;
+            light.Wrap = 1f;
+            light.Range = 2500f;
+
+            if (light is SpotLight s) {
+                s.OuterAngle = MathHelper.ToRadians(30);
+                s.InnerAngle = MathHelper.ToRadians(10);
+                s.Direction = Vector3.Normalize(new Vector3(0, -1, MathF.Sin(RuntimeData.RunTime / 20) / 5));
+            }
+            //GameHandler.Particles.MakeShineSpot(light.Position, Color.White, 1f);
+            //if (light is SpotLight s)
+            //    GameHandler.Particles.MakeShineSpot(light.Position + s.Direction * 25, Color.White, 0.5f);
         }*/
 
         Stats = stats;

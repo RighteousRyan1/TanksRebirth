@@ -777,7 +777,7 @@ public class PlayerTank : Tank {
             }
             else {
                 GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Projection,
-                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, true);
+                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, _isPlayerModel, TeamColor(mesh));
             }
         }
     }

@@ -242,7 +242,7 @@ public record struct Mission {
 
         using var reader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read));
 
-        // ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Lime);
+        // ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Magenta);
 
         return Read(reader);
     }

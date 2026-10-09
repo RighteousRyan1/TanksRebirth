@@ -5,6 +5,9 @@ float3 LightPosition;
 float HasEnvironment;
 float EnvironmentStrength;
 float Opacity;
+// team tint for the tank's wooden edges: TeamColor.rgb is the team color, TeamTint how much of it to apply (0 = off)
+float4 TeamColor;
+float TeamTint;
 texture DiffuseTexture;
 texture EnvironmentTexture;
 
@@ -51,7 +54,6 @@ PixelInput Transform(VertexInput input)
     float3 normal = normalize(mul(float4(input.Normal, 0), NormalMatrix).xyz);
     float diffuse = max(0, dot(normal, normalize(LightPosition - position.xyz)));
 
-    // Match the port's vertex light/material quantization before interpolation.
     int light = min(255, 100 + (int)round(255 * diffuse));
     int3 material = (int3)round(input.Color.rgb * 255);
     output.Color = float4((material * (light + (light / 128))) / 256 / 255.0, input.Color.a);
@@ -68,7 +70,21 @@ int4 MultiplyTev(int4 value, int4 weight)
 
 float4 Shade(PixelInput input) : COLOR0
 {
-    int4 sample = (int4)floor(saturate(tex2D(DiffuseSampler, input.Uv)) * 255 + 0.5);
+    float4 texel = saturate(tex2D(DiffuseSampler, input.Uv));
+
+    // tints the wood toward the team color
+    float v = frac(input.Uv.y);
+    float trim = saturate((9.0 / 32.0 - v) * 10000.0) + saturate((v - 23.0 / 32.0) * 10000.0);
+    float3 lumaWeights = float3(0.299, 0.587, 0.114);
+    float3 tinted = texel.rgb * TeamColor.rgb;
+    
+    // uses the brightest channel
+    float teamValue = max(TeamColor.r, max(TeamColor.g, TeamColor.b));
+    tinted *= teamValue * dot(texel.rgb, lumaWeights) / max(dot(tinted, lumaWeights), 0.05);
+    
+    texel.rgb = lerp(texel.rgb, saturate(tinted), trim * TeamTint);
+
+    int4 sample = (int4)floor(texel * 255 + 0.5);
     int4 raster = (int4)floor(saturate(input.Color) * 255 + 0.5);
     int4 color = MultiplyTev(sample, raster);
     if (HasEnvironment > 0.5)

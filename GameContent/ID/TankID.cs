@@ -51,8 +51,8 @@ public sealed class TankID {
 
     // methods...
 
-    public static int ServerRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
+    public static int ServerRandomTier() => Server.ServerRandom.Next(Brown, Collection.Count);
     /// <summary>A random tier from <paramref name="random"/> (e.g. one from <see cref="Server.RandomFor"/>).</summary>
-    public static int RandomTier(Random random) => random.Next(0, TankID.Collection.Count);
-    public static int ClientRandomTier() => Client.ClientRandom.Next(0, TankID.Collection.Count);
+    public static int RandomTier(Random random) => random.Next(0, Collection.Count);
+    public static int ClientRandomTier() => Client.ClientRandom.Next(0, Collection.Count);
 }

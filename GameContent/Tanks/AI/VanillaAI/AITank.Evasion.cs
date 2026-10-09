@@ -24,7 +24,8 @@ public partial struct VanillaAISystem {
     public List<IAITankDanger> GetEvasionData() {
         _evasionDangersBuffer.Clear();
 
-        foreach (var danger in AITank.Dangers) {
+        for (int i = 0; i < AITank.Dangers.Count; i++) {
+            var danger = AITank.Dangers[i];
             var isHostile = !Owner.IsOnSameTeamAs(danger.Team);
 
             // mines and explosions should be treated differently and specially

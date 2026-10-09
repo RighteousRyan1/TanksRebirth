@@ -20,6 +20,7 @@ using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.Graphics.DynamicLighting;
 
 namespace TanksRebirth.GameContent.Tanks;
 public abstract class Tank(bool ignoresRegister) {
@@ -46,6 +47,8 @@ public abstract class Tank(bool ignoresRegister) {
     }
 
     public static bool ShowTeamVisuals = false;
+
+    protected Color? TeamColor(ModelMesh mesh) => ShowTeamVisuals && Team != TeamID.NoTeam && mesh.Name == "Chassis" && TeamID.TeamColors.TryGetValue(Team, out var color) ? color : null;
     public static World CollisionsWorld = new(Vector2.Zero);
     public const float UNITS_PER_METER = 20f;
     public const float TNK_WIDTH = 25;
@@ -543,48 +546,6 @@ public abstract class Tank(bool ignoresRegister) {
 
         UpdateTreads();
 
-        /*static bool IsPeriodicTick(float period) =>
-            period > 0f && RuntimeData.RunTime % period < RuntimeData.DeltaTime;
-
-        if (!Properties.Stationary) {
-            float speed = Velocity.Length();
-            bool isMoving = speed != 0f;
-            bool isRotating = IsTurning && ChassisRotation != _oldRotation;
-
-            float moveTreadTimer = 0f;
-            float turnTreadTimer = 0f;
-
-            if (isMoving) {
-                moveTreadTimer = MathF.Round(11 / speed) * DrawParams.Scaling.X;
-                if (IsPeriodicTick(moveTreadTimer))
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
-            }
-
-            if (isRotating) {
-                turnTreadTimer = Properties.TurningSpeed * 150 * DrawParams.Scaling.X;
-                if (IsPeriodicTick(turnTreadTimer))
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
-            }
-
-            if (!Properties.IsSilent && speed > 0.01f) {
-                // NOTE: previously this used whichever of the two timers was computed
-                // last (turn overwrote move), which was likely accidental. Pick the
-                // one that's actually intended to drive tread audio timing:
-                float baseTimer = isRotating ? turnTreadTimer : moveTreadTimer;
-
-                // for some slight randomness (so the noises dont all overlap)
-                baseTimer %= (WorldId % 10) + 1;
-
-                if (IsPeriodicTick(MathHelper.Clamp(baseTimer / 2, 4, 6))) {
-                    // shouldnt be necessary anymore given oggaudio update
-                    // Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
-                    var treadPlace = $"Assets/sounds/tnk_tread_place_{Client.ClientRandom.Next(1, 5)}.ogg";
-                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.TreadPitch);
-                    sfx.Instance.Pitch = Properties.TreadPitch;
-                }
-            }
-        }*/
-
         // hides cosmetics (i.e: in first person)
         var camDist = Vector3.Distance(CameraGlobals.RebirthFreecam.Position, Position3D + new Vector3(0, CameraGlobals.POV_CAM_OFFSET_Y, 0));
         CamTooClose = CameraGlobals.IsUsingFirstPersonCamera && camDist < 10;
@@ -1004,17 +965,6 @@ public abstract class Tank(bool ignoresRegister) {
                     else
                         effect.EmissiveColor = Color.Black.ToVector3();
 
-                    if (ShowTeamVisuals) {
-                        if (Team != TeamID.NoTeam) {
-                            var ex = new Color[1024];
-
-                            Array.Fill(ex, TeamID.TeamColors[Team]);
-
-                            effect.Texture?.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                            effect.Texture?.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                        }
-                    }
-
                     effect.TextureEnabled = true;
                     effect.Texture = cos3d.ModelTexture;
                     effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
@@ -1080,11 +1030,12 @@ public abstract class Tank(bool ignoresRegister) {
             _treadLastRot = rot;
             return;
         }
-
         // only considers placement of footprint while the tank is actually being driven/moved
 
         const float MIN_DRIVE = 1e-4f;
-        bool driving = Velocity.LengthSquared() > MIN_DRIVE;
+
+        var vsq = Velocity.LengthSquared();
+        bool driving = vsq > MIN_DRIVE;
         float moved = driving && distSq > TREAD_MIN_MOVE_SQ ? MathF.Sqrt(distSq) : 0f;
         float turned = MathF.Abs(dRot) * TREAD_HALF_WIDTH * scale;
         float travelled = moved + turned;
@@ -1101,7 +1052,8 @@ public abstract class Tank(bool ignoresRegister) {
             _treadDist = (_treadDist + travelled) % spacing;
 
             // at most one sound per update, however many prints landed
-            if (travelled > 1e-4f && !Properties.IsSilent) {
+            // isturning is temporary
+            if (travelled > 1e-4f && !Properties.IsSilent && !IsTurning) {
                 _treadSoundTimer -= RuntimeData.DeltaTime;
                 if (_treadSoundTimer <= 0f) {
                     _treadSoundTimer = MathF.Max(_treadSoundTimer + TREAD_SOUND_INTERVAL, 0f);
