@@ -62,6 +62,7 @@ public class ReflectionDictionary<TClass> where TClass : class, new() {
     /// <returns>The corresponding key.</returns>
     public string? GetKey(int value) {
         foreach (var kvp in _dictionary) {
+            // does this need to be an EqualityComparer?
             if (EqualityComparer<int>.Default.Equals(value, kvp.Value))
                 return kvp.Key;
         }
@@ -105,16 +106,14 @@ public class ReflectionDictionary<TClass> where TClass : class, new() {
     /// <param name="key"></param>
     /// <returns></returns>
     public int ForcefullyInsert(string key) {
-        if (_dictionary.ContainsKey(key))
-            return Array.IndexOf(Keys, key);
+        if (_dictionary.TryGetValue(key, out var existing))
+            return existing;
 
-        _dictionary.Add(key, 0);
+        var val = _dictionary.Count == 0 ? 0 : _dictionary.Values.Max() + 1;
+        _dictionary.Add(key, val);
 
-        var val = Array.IndexOf(_dictionary.Keys.ToArray(), key);
-        _dictionary[key] = val;
-
-        Keys = _dictionary.Keys.ToArray();
-        Values = _dictionary.Values.ToArray();
+        Keys = [.. _dictionary.Keys];
+        Values = [.. _dictionary.Values];
         return val;
     }
     /// <summary>
@@ -135,8 +134,8 @@ public class ReflectionDictionary<TClass> where TClass : class, new() {
         //if (!refreshCache) // Only refresh the Keys and Values properties if we are requested to.
             //return Array.IndexOf(Keys, key);
 
-        Keys = _dictionary.Keys.ToArray();
-        Values = _dictionary.Values.ToArray();
+        Keys = [.. _dictionary.Keys];
+        Values = [.. _dictionary.Values];
         return Array.IndexOf(Keys, key);
     }
     public bool TryRemove(int id) {
@@ -144,16 +143,16 @@ public class ReflectionDictionary<TClass> where TClass : class, new() {
             return false;
         var element = _dictionary.ElementAt(id);
         _dictionary.Remove(element.Key);
-        Keys = _dictionary.Keys.ToArray();
-        Values = _dictionary.Values.ToArray();
+        Keys = [.. _dictionary.Keys];
+        Values = [.. _dictionary.Values];
         return true;
     }
     public bool TryRemove(string name) {
         if (!_dictionary.ContainsKey(name))
             return false;
         _dictionary.Remove(name);
-        Keys = _dictionary.Keys.ToArray();
-        Values = _dictionary.Values.ToArray();
+        Keys = [.. _dictionary.Keys];
+        Values = [.. _dictionary.Values];
         return true;
     }
 

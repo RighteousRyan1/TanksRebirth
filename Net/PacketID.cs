@@ -30,43 +30,43 @@ public sealed class PacketID {
 
     // Debugging packets:
 
-    public const int PlayerSpawn = 13;
-    public const int AiTankSpawn = 14;
-    public const int CrateSpawn = 15;
+    public const int PlayerSpawn = 12;
+    public const int AiTankSpawn = 13;
+    public const int CrateSpawn = 14;
 
     // more server syncing
 
-    public const int ServerNameSync = 16;
-    public const int StartGame = 17;
-    public const int LeaveGame = 18;
+    public const int ServerNameSync = 15;
+    public const int StartGame = 16;
+    public const int LeaveGame = 17;
 
     // map sync
 
-    public const int SendCampaign = 19;
-    public const int SendCampaignByName = 20;
-    public const int SendMission = 21;
+    public const int SendCampaign = 18;
+    public const int SendCampaignByName = 19;
+    public const int SendMission = 20;
 
     // misc
 
     /// <summary>The game has to reassign identifiers of shells beacuse there can be a client-server mismatch of IDs.</summary>
-    public const int SyncShellId = 22;
+    public const int SyncShellId = 21;
     /// <summary>The packet for map cleanup (removal of death X's, etc)</summary>
-    public const int Cleanup = 23;
+    public const int Cleanup = 22;
     /// <summary>When the host leaves the level.</summary>
-    public const int QuitLevel = 24;
+    public const int QuitLevel = 23;
     /// <summary>To check if another client doesn't have something a host does, such as a campaign.</summary>
-    public const int SendCampaignStatus = 25;
+    public const int SendCampaignStatus = 24;
     /// <summary>Sent across the network when a command is used that has serverside effects.</summary>
-    public const int SendCommandUsage = 26;
+    public const int SendCommandUsage = 25;
 
-    public const int SyncDifficulties = 27;
+    public const int SyncDifficulties = 26;
     /// <summary>Syncs randomization seeds to random events are synchronous on each client.</summary>
-    public const int SyncSeeds = 28;
+    public const int SyncSeeds = 27;
 
-    public const int SyncKills = 29;
-    public const int SendAirplane = 30;
+    public const int SyncKills = 28;
+    public const int SendAirplane = 29;
 
-    public const int HostDisconnect = 31;
+    public const int HostDisconnect = 30;
 
     public static int AddPacketId(string name) => Collection.ForcefullyInsert(name);
 

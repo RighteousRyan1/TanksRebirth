@@ -110,6 +110,7 @@ public static partial class MainMenuUI {
 
         // me in march 2024: what the fuck is this code.
         // also me in july 2025: what the FUCK is this code
+        // also me in october 2026: what the F U C K is this code
         TanksAreCalculators.Color = Modifiers.Map[Modifiers.EXTRA_CALCS] ? Color.Lime : Color.Red;
         PieFactory.Color = Modifiers.Map[Modifiers.MINE_SPAM] ? Color.Lime : Color.Red;
         UltraMines.Color = Modifiers.Map[Modifiers.BIG_MINES] ? Color.Lime : Color.Red;
