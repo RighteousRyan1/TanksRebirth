@@ -18,27 +18,36 @@ using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates;
 
-public class PlacementSquare {
-    private static bool _initialized;
+// idea: probably change it from being a model to a quad?
+/// <summary>
+/// The level editor's clickable square over one <see cref="MapCell"/> of <see cref="MapGrid.Current"/>.
+/// </summary>
+public class EditorTile {
+    static MapGrid? _builtFor;
     // Drag-and-Drop
     
     public static bool DrawStacks { get; set; } = true;
     public static bool IsPlacing { get; private set; }
     public bool HasItem => BlockId > -1 || TankId > -1;
 
-    public static PlacementSquare? CurrentlyHovered;
+    public static EditorTile? CurrentlyHovered;
 
-    public static bool displayHeights = true;
+    public static bool DisplayHeights = true;
 
-    public static List<PlacementSquare> Placements = [];
+    /// <summary>One square per cell of <see cref="MapGrid.Current"/>, in the same order (row by row): <c>AllTiles[cell.Index]</c>.</summary>
+    public static List<EditorTile> AllTiles = [];
 
     public Color SquareColor = Color.White;
 
-    public Vector3 Position { get; set; }
+    /// <summary>World position of the center of this square's <see cref="MapCell"/>.</summary>
+    public Vector3 Position { get; }
+
+    // flat_face.fbx is 32 units across
+    const float FlatFaceModelSize = 32f;
 
     BoundingBox _box;
 
-    Model _model;
+    readonly Model _model;
 
     public float Alpha;
 
@@ -54,16 +63,25 @@ public class PlacementSquare {
 
     public static bool PlacesBlock; // if false, tanks will be placed
 
-    public int TankId = -1;
-    public int BlockId = -1;
+    /// <summary>The grid cell this square sits on.</summary>
+    public MapCell Cell { get; }
 
-    private Action<PlacementSquare>? _onClick = null;
+    /// <summary>The <see cref="Tank.WorldId"/> of the tank on this square, or -1 (stored on <see cref="Cell"/>).</summary>
+    public int TankId {
+        get => Cell.TankId;
+        set => Cell.TankId = value;
+    }
+    /// <summary>The <see cref="Block.Id"/> of the block on this square, or -1 (stored on <see cref="Cell"/>).</summary>
+    public int BlockId {
+        get => Cell.BlockId;
+        set => Cell.BlockId = value;
+    }
+
+    private Action<EditorTile>? _onClick = null;
 
     public bool HasBlock; // if false, a tank exists here
 
     public readonly int Id;
-
-    public BlockMapPosition RelativePosition;
 
     float _flashTime;
 
@@ -71,50 +89,63 @@ public class PlacementSquare {
     public Matrix View;
     public Matrix Projection;
 
-    public PlacementSquare(Vector3 position, float dimensions) {
-        Position = position;
-        _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
+    EditorTile(MapCell cell) {
+        Cell = cell;
+        Position = cell.Position3D;
+        var half = cell.Grid.CellSize / 2;
+        _box = new(Position - new Vector3(half, 0, half), Position + new Vector3(half, 0, half));
 
         _model = ModelGlobals.FlatFace.Asset;
 
-        Id = Placements.Count;
+        Id = AllTiles.Count;
 
-        Placements.Add(this);
+        AllTiles.Add(this);
     }
+    /// <summary>Makes a square for every cell of <see cref="MapGrid.Current"/>. Does nothing if they already match it.</summary>
     public static void InitializeLevelEditorSquares() {
-        if (_initialized)
+        if (_builtFor == MapGrid.Current)
             return;
-        for (int j = 0; j < BlockMapPosition.MAP_HEIGHT; j++) {
-            for (int i = 0; i < BlockMapPosition.MAP_WIDTH_169; i++) {
-                new PlacementSquare(new BlockMapPosition(i, j), Block.SIDE_LENGTH) {
-                    _onClick = (place) => {
-                        if (!place.HasItem)
-                            place.DoPlacementAction(true);
-                        else
-                            place.DoPlacementAction(false);
-                    },
-                    RelativePosition = new BlockMapPosition(i, j)
-                };
-            }
-        }
-        _initialized = true;
+        RebuildSquares();
     }
-    public static void ResetSquares() {
-        for (int i = 0; i < Placements.Count; i++) {
-            Placements[i].TankId = -1;
-            Placements[i].BlockId = -1;
+    /// <summary>Throws the squares away and makes new ones for <see cref="MapGrid.Current"/>, and is called when the grid changes.</summary>
+    public static void RebuildSquares() {
+        AllTiles.Clear();
+        CurrentlyHovered = null;
+        foreach (var cell in MapGrid.Current) {
+            new EditorTile(cell) {
+                _onClick = (place) => {
+                    if (!place.HasItem)
+                        place.DoPlacementAction(true);
+                    else
+                        place.DoPlacementAction(false);
+                },
+            };
         }
+        _builtFor = MapGrid.Current;
+    }
+    /// <summary>Forgets what's placed on every square (doesn't remove anything from the game).</summary>
+    public static void ResetSquares() {
+        MapGrid.Current.Forget();
     }
     // TODO: need a sound for placement
 
-    /// <summary>Attempts to get the closest <see cref="PlacementSquare"/> given a position. Returns null if one was not found.
-    /// <br></br>This method checks if the position is cloest to a <see cref="PlacementSquare"/> within half a block size.</summary>
+    /// <summary>The square of the cell <paramref name="pos"/> is inside of, or null if it's off the grid.</summary>
     /// <param name="pos">The position to check from.</param>
-    /// <returns>The closest <see cref="PlacementSquare"/>.</returns>
-    public static PlacementSquare? GetFromClosest(Vector3 pos) {
-        var closestIdx = Placements.FindIndex(place => Vector3.Distance(place.Position, pos) < Block.SIDE_LENGTH / 2);
+    /// <returns>The square under the position.</returns>
+    public static EditorTile? GetFromClosest(Vector3 pos) {
+        var cell = MapGrid.Current.CellAt(pos);
+        return cell is null ? null : At(cell);
+    }
 
-        return closestIdx > -1 ? Placements[closestIdx] : null;
+    /// <summary>The square on cell (<paramref name="x"/>, <paramref name="y"/>), or null if that's off the grid.</summary>
+    public static EditorTile? At(int x, int y)
+        => MapGrid.Current.TryGetCell(x, y, out var cell) ? At(cell) : null;
+
+    /// <summary>The square on <paramref name="cell"/>. Is null if the squares haven't been made for its grid.</summary>
+    public static EditorTile? At(MapCell cell) {
+        InitializeLevelEditorSquares();
+        var index = cell.Index;
+        return cell.Grid == _builtFor && index < AllTiles.Count ? AllTiles[index] : null;
     }
 
     /// <summary>
@@ -189,6 +220,9 @@ public class PlacementSquare {
             LevelEditorUI.difficultyRating = DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent());
         }
     }
+
+    // prevents new strings from being created willy nilly
+    // i do believe these strings were a massive issue when it came to garbage collection when in the level editor
     static string[] BuildByteText(string prefix) {
         var text = new string[256];
         for (int i = 0; i < text.Length; i++)
@@ -205,8 +239,8 @@ public class PlacementSquare {
 
     public static void UpdateAll() {
         _mouseRay = RayUtils.GetMouseToWorldRay();
-        for (int i = 0; i < Placements.Count; i++)
-            Placements[i]?.Update();
+        for (int i = 0; i < AllTiles.Count; i++)
+            AllTiles[i]?.Update();
     }
     public static void RenderAll() {
         if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0)
@@ -215,8 +249,8 @@ public class PlacementSquare {
         _mouseRay = RayUtils.GetMouseToWorldRay();
         var view = CameraGlobals.GameView;
         var projection = CameraGlobals.GameProjection;
-        for (int i = 0; i < Placements.Count; i++)
-            Placements[i]?.Render(view, projection);
+        for (int i = 0; i < AllTiles.Count; i++)
+            AllTiles[i]?.Render(view, projection);
     }
 
     void Update() {
@@ -272,7 +306,7 @@ public class PlacementSquare {
     void Render(in Matrix view, in Matrix projection) {
         _hovered = _mouseRay.Intersects(_box).HasValue;
 
-        World = Matrix.CreateScale(0.678f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
+        World = Matrix.CreateScale(Cell.Grid.CellSize / FlatFaceModelSize) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
         View = view;
         Projection = projection;
 
@@ -309,7 +343,7 @@ public class PlacementSquare {
 
     void BlockDisplay() {
         var block = Block.AllBlocks[BlockId];
-        if (!displayHeights || block is null) return;
+        if (!DisplayHeights || block is null) return;
 
         if (block.Properties.CanStack) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);

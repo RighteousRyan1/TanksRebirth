@@ -119,7 +119,7 @@ public static partial class LevelEditorUI {
 
     static readonly List<UITextInput> _campaignTextInputs = [];
     public static void HandleLevelEditorModifications() {
-        var cur = PlacementSquare.CurrentlyHovered;
+        var cur = EditorTile.CurrentlyHovered;
 
         if (cur is not null && cur.HasItem && cur.HasBlock && cur.BlockId > -1 && cur.BlockId < Block.AllBlocks.Length) {
             if (Block.AllBlocks[cur.BlockId] != null) {
@@ -362,7 +362,7 @@ public static partial class LevelEditorUI {
         AutoOrientTanks.Tooltip = TankGame.GameLanguage.LevelEdit.AutoOrientTanksFlavor;
         AutoOrientTanks.TextScale = () => new Vector2(0.8f);
         AutoOrientTanks.OnLeftClick = (e) => {
-            PlacementSquare.Placements.ForEach(p => {
+            EditorTile.AllTiles.ForEach(p => {
                 // maybe in the original game this was based off the top-left of the blocks?
                 var tnkRot = WiiMap.GetAutoTankRotation(p.Position.FlattenZ());
 
@@ -494,7 +494,7 @@ public static partial class LevelEditorUI {
             };
             SetupMissionsBar(loadedCampaign);
         }
-        PlacementSquare.ResetSquares();
+        EditorTile.ResetSquares();
     }
 
     // the rectangle of any clickable zone
@@ -520,8 +520,8 @@ public static partial class LevelEditorUI {
         ShouldDrawBarUI = !GameUI.Paused;
         SwapMenu.Text = _viewMissionDetails ? "Campaign Details" : "Mission Details";
 
-        if (PlacementSquare.CurrentlyHovered != null) {
-            var mapCoords = PlacementSquare.CurrentlyHovered.RelativePosition;
+        if (EditorTile.CurrentlyHovered != null) {
+            var mapCoords = EditorTile.CurrentlyHovered.Cell.Coordinates;
             if (_hoveredCoordsText is null || mapCoords != _hoveredCoords) {
                 _hoveredCoords = mapCoords;
                 _hoveredCoordsText = mapCoords.ToString();
@@ -611,7 +611,7 @@ public static partial class LevelEditorUI {
                     new Vector2(FontGlobals.RebirthFont.MeasureString(txt).X / 2, 0));
         }
     }
-    static BlockMapPosition _hoveredCoords;
+    static Point _hoveredCoords;
     static string? _hoveredCoordsText;
     static Texture2D? _rotateTexture;
     static Language? _shownLanguage;
@@ -777,7 +777,7 @@ public static partial class LevelEditorUI {
             _missionsOffset = -_missionsMaxOff + _missionButtonScissor.Height;
 
         LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
-        PlacementSquare.PlacesBlock = CurCategory == EditorCategory.Terrain;
+        EditorTile.PlacesBlock = CurCategory == EditorCategory.Terrain;
 
         // much better code now
         if (IsActive) {
@@ -788,7 +788,7 @@ public static partial class LevelEditorUI {
             IntermissionHandler.TankFunctionWait = 190;
             if (DebugManager.DebuggingEnabled)
                 if (InputUtils.KeyJustPressed(Keys.T))
-                    PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
+                    EditorTile.DrawStacks = !EditorTile.DrawStacks;
 
             Theme.SetVolume(0.4f * TankGame.Settings.MusicVolume);
 

@@ -55,7 +55,7 @@ public class Campaign {
         if (string.IsNullOrEmpty(mission.Name))
             return;
 
-        CurrentTrackedSpawns = new (BlockMapPosition, bool)[mission.Tanks.Length];
+        CurrentTrackedSpawns = new (Point, bool)[mission.Tanks.Length];
         LoadedMission = mission;
     }
     /// <summary>Register a mission already in memory by ID.</summary>
@@ -65,9 +65,9 @@ public class Campaign {
 
         CurrentMissionId = id;
         if (LoadedMission.Tanks != null) {
-            CurrentTrackedSpawns = new (BlockMapPosition, bool)[LoadedMission.Tanks.Length];
+            CurrentTrackedSpawns = new (Point, bool)[LoadedMission.Tanks.Length];
             for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-                CurrentTrackedSpawns[i].Position = BlockMapPosition.ConvertFromVector2(LoadedMission.Tanks[i].Position);
+                CurrentTrackedSpawns[i].Position = MapGrid.Current.WorldToCell(LoadedMission.Tanks[i].Position);
                 CurrentTrackedSpawns[i].Alive = true;
             }
         }
@@ -92,9 +92,9 @@ public class Campaign {
 
         LoadedMission = CachedMissions[CurrentMissionId];
 
-        CurrentTrackedSpawns = new (BlockMapPosition, bool)[LoadedMission.Tanks.Length];
+        CurrentTrackedSpawns = new (Point, bool)[LoadedMission.Tanks.Length];
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-            CurrentTrackedSpawns[i].Position = BlockMapPosition.ConvertFromVector2(LoadedMission.Tanks[i].Position);
+            CurrentTrackedSpawns[i].Position = MapGrid.Current.WorldToCell(LoadedMission.Tanks[i].Position);
             CurrentTrackedSpawns[i].Alive = true;
         }
         // run line 120 and 121 in each when i get back
@@ -103,13 +103,13 @@ public class Campaign {
     const int roundingFactor = 5;
 
     // FIXME: not sure why this is public?
-    public static (BlockMapPosition Position, bool Alive)[] CurrentTrackedSpawns { get; set; } // position of spawn, alive
+    public static (Point Position, bool Alive)[] CurrentTrackedSpawns { get; set; } // position of spawn, alive
 
     /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
     /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
     public void SetupLoadedMission(bool spawnNewSet) {
         // FIXME: source of level editor bug.
-        PlacementSquare.ResetSquares();
+        EditorTile.ResetSquares();
         SceneManager.CleanupEntities();
         SceneManager.CleanupScene();
 
@@ -120,7 +120,7 @@ public class Campaign {
             var template = LoadedMission.Tanks[i];
 
             if (spawnNewSet) {
-                CurrentTrackedSpawns[i].Position = BlockMapPosition.ConvertFromVector2(LoadedMission.Tanks[i].Position);
+                CurrentTrackedSpawns[i].Position = MapGrid.Current.WorldToCell(LoadedMission.Tanks[i].Position);
                 CurrentTrackedSpawns[i].Alive = true;
             }
 
@@ -153,10 +153,10 @@ public class Campaign {
 
             var block = template.GetBlock();
 
-            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.SIDE_LENGTH / 2);
-            if (placement > -1) {
-                PlacementSquare.Placements[placement].BlockId = block.Id;
-                PlacementSquare.Placements[placement].HasBlock = true;
+            var placement = EditorTile.GetFromClosest(block.Position3D);
+            if (placement is not null) {
+                placement.BlockId = block.Id;
+                placement.HasBlock = true;
             }
         }
 
@@ -183,7 +183,9 @@ public class Campaign {
         if (isValidMPPlayer || isLocalGame) {
             var tank = template.GetPlayerTank(Server.RandomFor(Server.RandomKey.PLR_TIER, CurrentMissionId, template.PlayerType));
 
-            tank.Position = template.Position;
+            var cell = MapGrid.Current.CellAt(template.Position);
+            // typically shouldn't be null. probably safe!
+            tank.Position = cell!.Position;
             tank.ChassisRotation = chassisRotation;
             tank.DesiredChassisRotation = chassisRotation;
             tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
@@ -197,8 +199,7 @@ public class Campaign {
             }
 
             // almost definitely never fails.
-            var placeId = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
-            var placement = PlacementSquare.Placements[placeId];
+            var placement = EditorTile.GetFromClosest(tank.Position3D);
 
             if (Modifiers.IsOn(Modifiers.AI_COMPANION) && !hasSpawnedCompanion) {
                 var companionPos = template.Position;
@@ -225,8 +226,10 @@ public class Campaign {
                 // tnk.Physics.Position = template.Position / Owner.UNITS_PER_METER;
             }
 
-            placement.TankId = tank.WorldId;
-            placement.HasBlock = false;
+            if (placement is not null) {
+                placement.TankId = tank.WorldId;
+                placement.HasBlock = false;
+            }
         }
     }
     static void LoadAIControlled(TankTemplate template, float chassisRotation) {
@@ -242,7 +245,7 @@ public class Campaign {
         if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {
             tank.OnDestroy += () => {
                 var tankSpawnIndex = Array.IndexOf(CurrentTrackedSpawns, CurrentTrackedSpawns.First(pos => {
-                    var converted = BlockMapPosition.ConvertFromVector2(template.Position);
+                    var converted = MapGrid.Current.WorldToCell(template.Position);
                     return pos.Position == converted;
                 }));
 
@@ -250,7 +253,7 @@ public class Campaign {
                     CurrentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
             };
         }
-        var placement = PlacementSquare.GetFromClosest(tank.Position3D);
+        var placement = EditorTile.GetFromClosest(tank.Position3D);
         if (placement is not null) {
             // ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
             placement.TankId = tank.WorldId;
@@ -302,7 +305,7 @@ public class Campaign {
 
         if (autoSetLoadedMission) {
             campaign.LoadMission(0); // first mission in campaign
-            CurrentTrackedSpawns = new (BlockMapPosition, bool)[campaign.LoadedMission.Tanks.Length];
+            CurrentTrackedSpawns = new (Point, bool)[campaign.LoadedMission.Tanks.Length];
             PlayerTank.StartingLives = properties.StartingLives;
         }
 

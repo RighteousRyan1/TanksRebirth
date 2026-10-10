@@ -40,7 +40,7 @@ public static partial class MainMenuUI {
         SceneManager.StartTnkScene();
         PlayerTank.SetLives(PlayerTank.StartingLives);
         SceneManager.CleanupEntities();
-        PlacementSquare.ResetSquares();
+        EditorTile.ResetSquares();
         SceneManager.CleanupScene();
         Theme.Stop();
     }

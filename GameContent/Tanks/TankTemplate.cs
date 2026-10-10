@@ -44,10 +44,10 @@ public struct TankTemplate {
         ai.TurretRotation = Rotation;
         ai.Team = Team;
 
-        var placement = PlacementSquare.Placements.FindIndex(place => place.Position == ai.Position3D);
-        if (placement > -1) {
-            PlacementSquare.Placements[placement].TankId = ai.WorldId;
-            PlacementSquare.Placements[placement].HasBlock = false;
+        var placement = EditorTile.GetFromClosest(ai.Position3D);
+        if (placement is not null) {
+            placement.TankId = ai.WorldId;
+            placement.HasBlock = false;
         }
 
         return ai;
@@ -76,10 +76,10 @@ public struct TankTemplate {
         player.IsDestroyed = false;
         player.Team = Team;
 
-        var placement = PlacementSquare.Placements.FindIndex(place => place.Position == player.Position3D);
-        if (placement > -1) {
-            PlacementSquare.Placements[placement].TankId = player.WorldId;
-            PlacementSquare.Placements[placement].HasBlock = false;
+        var placement = EditorTile.GetFromClosest(player.Position3D);
+        if (placement is not null) {
+            placement.TankId = player.WorldId;
+            placement.HasBlock = false;
         }
 
         return player;

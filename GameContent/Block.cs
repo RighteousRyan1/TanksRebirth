@@ -29,16 +29,11 @@ public struct BlockTemplate {
 
     public readonly Block GetBlock() {
         Block c = new(Type, Stack, Position) {
-            //c.Position = Position;
-            //if (c.Body != null)
-            //c.Body.Position = Position;
             TpLink = TpLink
         };
 
-        for (int i = 0; i < PlacementSquare.Placements.Count; i++) {
-            if (c.Position3D == PlacementSquare.Placements[i].Position)
-                PlacementSquare.Placements[i].BlockId = c.Id;
-        }
+        if (MapGrid.Current.TryGetCellAt(c.Position3D, out var cell))
+            cell.BlockId = c.Id;
 
         return c;
     }
@@ -80,7 +75,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
     /// <summary>The type of this <see cref="Block"/>. (i.e: Wood, Cork, Hole)</summary>
     public int Type { get; set; }
     /// <summary>All <see cref="Block"/>s stored in the same array.</summary>
-    public static Block[] AllBlocks = new Block[BlockMapPosition.MAP_WIDTH_169 * BlockMapPosition.MAP_HEIGHT];
+    public static Block[] AllBlocks = new Block[MapGrid.STD_WIDTH * MapGrid.STD_HEIGHT];
 
     Vector2 _nonPhysPos;
     public Vector2 Position {

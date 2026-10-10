@@ -14,8 +14,8 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
 public readonly struct WiiMap {
-    public readonly struct WiiMapTileData(BlockMapPosition pos, int type, int stack) {
-        public readonly BlockMapPosition Position = pos;
+    public readonly struct WiiMapTileData(Point pos, int type, int stack) {
+        public readonly Point Position = pos;
         public readonly int Type = type;
         /// <summary>-1 for player tank, -2 for enemy tank.</summary>
         public readonly int Stack = stack;
@@ -55,7 +55,7 @@ public readonly struct WiiMap {
             var tileMetaData = ConvertToEditorSpace(blockTypeOrig);
             // 731 == player tank byte position for the vanilla map
             var x = i % Width;
-            MapItems.Add(new WiiMapTileData(new BlockMapPosition(x, i / Width), tileMetaData.Key, tileMetaData.Value));
+            MapItems.Add(new WiiMapTileData(new Point(x, i / Width), tileMetaData.Key, tileMetaData.Value));
         }
     }
     public static void SaveToTanksBinFile(string fileLocation, bool largeMap = true) {
@@ -86,14 +86,14 @@ public readonly struct WiiMap {
             byteOffset += 0x4; // 4 bytes per tile
         }
 
-        SetBit(rawData, (byte)(largeMap ? BlockMapPosition.MAP_WIDTH_169 : BlockMapPosition.MAP_WIDTH_43));
+        SetBit(rawData, (byte)(largeMap ? MapGrid.STD_WIDTH : MapGrid.WIDTH_43));
 
-        SetBit(rawData, BlockMapPosition.MAP_HEIGHT);
+        SetBit(rawData, MapGrid.STD_HEIGHT);
 
         SetBit(rawData, 0);
         SetBit(rawData, 0);
 
-        foreach (var pl in PlacementSquare.Placements) {
+        foreach (var pl in EditorTile.AllTiles) {
             if (pl.BlockId > -1 && pl.HasBlock) {
                 var block = Block.AllBlocks[pl.BlockId];
                 switch (block.Type) {
@@ -137,8 +137,8 @@ public readonly struct WiiMap {
         WiiMapValidationResult result = 0;
         var tankAiCount = 0;
         var playerCount = 0;
-        for (var i = 0; i < PlacementSquare.Placements.Count; i++) {
-            var pl = PlacementSquare.Placements[i];
+        for (var i = 0; i < EditorTile.AllTiles.Count; i++) {
+            var pl = EditorTile.AllTiles[i];
             if (pl.TankId > -1) {
                 var tnk = GameHandler.AllTanks[pl.TankId];
                 if (tnk is PlayerTank)
@@ -154,7 +154,7 @@ public readonly struct WiiMap {
     }
 
     public static void ApplyToGameWorld(WiiMap map) {
-        PlacementSquare.ResetSquares();
+        EditorTile.ResetSquares();
         SceneManager.CleanupEntities();
 
         foreach (var mapTile in map.MapItems) {
@@ -163,11 +163,9 @@ public readonly struct WiiMap {
     }
 
     private static void ProcessWiiMapTile(WiiMapTileData mapTile) {
-        //var tile = PlacementSquare.Placements[map.Width * item.Key.Y + item.Key.X]; // access from the list like it's a 2D array
-
-        // The coordinates for the placements are actually just Row and Column. Annoying...
-        var tile = PlacementSquare.Placements.First(sq =>
-            sq.RelativePosition.X == mapTile.Position.X && sq.RelativePosition.Y == mapTile.Position.Y);
+        // the coordinates for the placements are just column and row, so look the square up on the grid
+        var tile = EditorTile.At(mapTile.Position.X, mapTile.Position.Y);
+        if (tile is null) return;
 
         /* Code used to debug Map processing, somewhat:
          *  if (tile.RelativePosition == new Point(5, 1))
@@ -188,7 +186,7 @@ public readonly struct WiiMap {
 
         // This tile is basically a tank.
 
-        var tnkRot = GetAutoTankRotation(tile.RelativePosition);
+        var tnkRot = GetAutoTankRotation(tile.Cell.Coordinates.ToVector2());
 
         switch (mapTile.Stack) {
             case PLAYER_TANK_ID: { // Player Owner, That's us!
@@ -227,9 +225,13 @@ public readonly struct WiiMap {
 
         // unfortunately we cannot do much more than this, since enemy spawns are handled in the parameter file.
         // ...but we can find where they would spawn. go ahead and put a random tank on the red team there.
+
+        // update: might try reading the parameters file to place appropriate tanks. this would also entail supporting ranged random tanks like the original game does, and also the ranged random maps
     }
+
+    // why is this cancer? what did the original game do bruh
     public static float GetAutoTankRotation(Vector2 p) {
-        const float ROWS_PER_COL = (float)BlockMapPosition.MAP_HEIGHT / BlockMapPosition.MAP_WIDTH_169;
+        const float ROWS_PER_COL = (float)MapGrid.STD_HEIGHT / MapGrid.STD_WIDTH;
 
         // adjust to the center of the map.
 
@@ -251,7 +253,7 @@ public readonly struct WiiMap {
 
 [Flags]
 public enum WiiMapValidationResult {
-    Success,
-    FailureTooManyAI,
-    FailureTooManyPlayers
+    Success = 0,
+    FailureTooManyAI = 1 << 0,
+    FailureTooManyPlayers = 1 << 1
 }

@@ -44,6 +44,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.GameContent.Systems.Coordinates;
 
 namespace TanksRebirth;
 

@@ -441,10 +441,9 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.OemComma)) blockHeight--;
 
 
-        if (InputUtils.KeyJustPressed(Keys.PageUp)) SpawnTankPlethorae(true);
         if (InputUtils.KeyJustPressed(Keys.PageDown)) SpawnMe(PlayerID.Blue, tankToSpawnTeam);
         if (InputUtils.KeyJustPressed(Keys.Home))
-            SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
+            SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : EditorTile.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
         if (InputUtils.KeyJustPressed(Keys.OemSemicolon)) Mine.Create(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
         if (InputUtils.KeyJustPressed(Keys.OemQuotes)) Shell.Create(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Rocket, null!, 0);
@@ -653,21 +652,6 @@ public static class DebugManager {
             Team = TeamID.NoTeam
         };
     }
-    public static AITank SpawnTank(int tier, int team) {
-        var rot = GeometryUtils.GetPiRandom();
-
-        var t = new AITank(tier) {
-            ChassisRotation = rot,
-            TurretRotation = rot,
-            Team = team,
-            IsDestroyed = false
-        };
-        var pos = new BlockMapPosition(Client.ClientRandom.Next(0, 27), Client.ClientRandom.Next(0, 20));
-        t.Physics.Position = pos;
-        t.Position = pos;
-
-        return t;
-    }
     public static AITank SpawnTankAt(Vector3 position, int tier, int team) {
         var rot = 0f;
 
@@ -683,22 +667,8 @@ public static class DebugManager {
         x.Position = position.FlattenZ();
         return x;
     }
-    public static void SpawnTankPlethorae(bool useCurTank = false) {
-        for (int i = 0; i < 5; i++) {
-            var random = new BlockMapPosition(Client.ClientRandom.Next(0, 23), Client.ClientRandom.Next(0, 18));
-            var rot = GeometryUtils.GetPiRandom();
-            var t = new AITank(useCurTank ? tankToSpawnType : TankID.ClientRandomTier()) {
-                ChassisRotation = rot,
-                TurretRotation = rot,
-                IsDestroyed = false,
-                Team = useCurTank ? tankToSpawnTeam : TeamID.NoTeam
-            };
-            t.Physics.Position = random;
-            t.Position = random;
-        }
-    }
     public static PlayerTank SpawnMe(int playerType, int team, Vector3 posOverride = default) {
-        var pos = LevelEditorUI.IsActive ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
+        var pos = LevelEditorUI.IsActive ? EditorTile.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
 
         if (posOverride != default)
             pos = posOverride;
@@ -713,16 +683,6 @@ public static class DebugManager {
             Client.RequestPlayerTankSpawn(myTank);
 
         return myTank;
-    }
-    public static void SpawnTankInCrate(int tierOverride = default, int teamOverride = default, bool createEvenDrop = false) {
-        var random = new BlockMapPosition(Client.ClientRandom.Next(0, 26), Client.ClientRandom.Next(0, 20));
-
-        var drop = Crate.SpawnCrate(new(BlockMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : Client.ClientRandom.Next(-300, 301)), BlockMapPosition.Convert3D(random).Z), 2f);
-        drop.Scale = 1.25f;
-        drop.TankToSpawn = new TankTemplate() {
-            AiTier = tierOverride == default ? TankID.ClientRandomTier() : tierOverride,
-            Team = teamOverride == default ? Client.ClientRandom.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride
-        };
     }
     
     public static void DrawBoundingBox(

@@ -85,7 +85,7 @@ public record struct Mission {
     /// <param name="mission">The mission instance to load.</param>
     public static void LoadDirectly(Mission mission) {
         SceneManager.CleanupEntities();
-        PlacementSquare.ResetSquares();
+        EditorTile.ResetSquares();
         SceneManager.CleanupScene();
         for (int i = 0; i < mission.Tanks.Length; i++) {
             var tnk = mission.Tanks[i];
@@ -93,7 +93,7 @@ public record struct Mission {
 
             var tank = tnk.GetTank();
 
-            var placement = PlacementSquare.GetFromClosest(tank.Position3D);
+            var placement = EditorTile.GetFromClosest(tank.Position3D);
 
             if (placement is not null) {
                 placement.TankId = tank.WorldId;
@@ -124,10 +124,10 @@ public record struct Mission {
 
             var block = blockr.GetBlock();
 
-            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.SIDE_LENGTH / 2);
-            if (placement > -1) {
-                PlacementSquare.Placements[placement].BlockId = block.Id;
-                PlacementSquare.Placements[placement].HasBlock = true;
+            var placement = EditorTile.GetFromClosest(block.Position3D);
+            if (placement is not null) {
+                placement.BlockId = block.Id;
+                placement.HasBlock = true;
             }
         }
     }

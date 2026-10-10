@@ -183,7 +183,7 @@ public class GameHandler {
                 cube?.OnUpdate();
 
             if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
-                PlacementSquare.UpdateAll();
+                EditorTile.UpdateAll();
 
             Particles.UpdateParticles();
         }
@@ -260,7 +260,7 @@ public class GameHandler {
             Particles.RenderModelParticles();
 
             if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
-                PlacementSquare.RenderAll();
+                EditorTile.RenderAll();
 
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
@@ -314,6 +314,6 @@ public class GameHandler {
         GameScene.InitializeRenderers();
         SceneManager.LoadGameScene();
         DebugManager.InitDebugUI();
-        PlacementSquare.InitializeLevelEditorSquares();
+        EditorTile.InitializeLevelEditorSquares();
     }
 }

@@ -343,17 +343,17 @@ public record Modifiers {
         var tanks = newMission.Tanks;
         var blocks = newMission.Blocks;
 
-        var tanksWithPlacements = new Dictionary<TankTemplate, PlacementSquare>();
-        var blocksWithPlacements = new Dictionary<BlockTemplate, PlacementSquare>();
+        var tanksWithPlacements = new Dictionary<TankTemplate, EditorTile>();
+        var blocksWithPlacements = new Dictionary<BlockTemplate, EditorTile>();
 
-        PlacementSquare.InitializeLevelEditorSquares();
+        EditorTile.InitializeLevelEditorSquares();
 
         for (int i = 0; i < tanks.Length; i++) {
             // bro :sob:
-            tanksWithPlacements[tanks[i]] = PlacementSquare.Placements.First(x => Vector2.Distance(x.Position.FlattenZ(), tanks[i].Position) < 5);
+            tanksWithPlacements[tanks[i]] = EditorTile.AllTiles.First(x => Vector2.Distance(x.Position.FlattenZ(), tanks[i].Position) < 5);
         }
         for (int i = 0; i < blocks.Length; i++) {
-            blocksWithPlacements[blocks[i]] = PlacementSquare.Placements.First(x => Vector2.Distance(x.Position.FlattenZ(), blocks[i].Position) < 5);
+            blocksWithPlacements[blocks[i]] = EditorTile.AllTiles.First(x => Vector2.Distance(x.Position.FlattenZ(), blocks[i].Position) < 5);
         }
 
         // TODO: this
