@@ -27,11 +27,15 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- You can simply choose to not enable this if you either don't want it on or your computer cannot handle it
 - Added a second hand to the clock (thank you BigKitty)
 - Added heaps more graphics settings for regular gameplay, including Anti-Aliasing, FPS limit, and more!
-
+- New setting which allows the display of team colors on tanks
+	- I'd suggest only using this in non-standard campaigns (i.e: campaigns where it's only players vs ai tanks, 2 teams)
 
 # Changes
 
-- The level editor has gotten a number of various improvments
+- The level editor has gotten a number of various improvements
+- Missions and campaigns are now stored in a smaller (and better) format, gzipped JSON
+	- Around 40-50% smaller than before
+	- No forwards compatibility. Don't go back to older versions and load these files, they won't work
 - Debug tools are now locked behind debug builds of the game
 - Increased the maximum tank count to 60
 - Made mines not destroy everything instantly, but rather grow, similar to the original
@@ -61,12 +65,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- `Types` now renamed to just `Map`
 	- Each default modifier identifier now has a constant string associated with it, which makes things much less of a headache
 		- The constants have simplified names for lesser code cram. The names should be good enough to decipher 
-- All drawing-related fields/properties of drawn objects have been moved into their own `DrawParams`
-- `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
 - `MathUtils.Rotate` -> `MathUtils.RotatedBy` because the new MonoGame version has `Vector2.Rotate` declared
 - `Campaign.TrackedSpawnPoints` is now static instead of instanced, and is now `CurrentTrackedSpawns`
 - Every `Crate` field has been properly named for C# naming conventions
-- `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
 - Most rendering/drawing info has been moved into a struct called `DrawParamsBasic`, where the field name for it is `DrawParams`
 	- Entity-specific draw params are named `DrawParamsX` (i.e: `DrawParamsTank`)
 - `SwapXTexture` from entity classes is now just `DrawParamsX.XTexture = newTexture;`
@@ -77,7 +78,17 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- You can see controls on the left
 - `LocalizedString` is now indexed directly instead of through the method
 - Added `Description` to `ModBlock` and `ModTank` for use in the level editor
+- Level and campaign files are now gzipped JSON (format version 7) instead of binary
+	- All reading and writing goes through `LevelFiles`. `Mission.Read(Stream)` reads any format, binary or JSON
+	- `Mission.WriteToStream` was removed. Use `Mission.Save` or `LevelFiles.WriteMission`
+	- Tank, team, player and block types are saved by name, not by number. Modded tanks are saved under their English name, so changing your tank's name will break levels that use it
+	- If a level uses a tank or block from a mod that isn't loaded, it logs a warning and uses a default instead of crashing
+	- Binary versions 1 to 6 still load
+- Added `ModModifier`, which handles everything automatically, including the UI element and net sync
 - Some `Shell` and `Tank` properties are now bit flags
+- Tanks are now drawn with a custom shader instead of `BaiscEffect`, so if you were modifying anything related to that- it will no longer work
+- `PlacementSquare` -> `EditorTile`
+- `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
 
 # Fixes
 
@@ -91,19 +102,17 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Fixed the room scene not being updated while in pause
 - Places in the room where glass would before not render properly now renders
 - Performance has been improved in various places of the game (the level editor should be much more performant even with the new changes)
-- Particles are now infinitely more performant than they were before, allowing for tens to hundreds of thousands of particles to be present before noticable framerate loss
+- Particles are now infinitely more performant than they were before, allowing for tens to hundreds of thousands of particles to be present before noticeable framerate loss
 - Tank treads now look much more proper, and there is not a performance loss to have 'Fading Tank Tracks' disabled
 - Massively optimized the level editor, should run much better on all systems
 - Fixed a bug where fast enough bullets could skip all ricochets when colliding with the outer border
+- Fixed a lot of strange graphical bugs relating to christmas mode
 
 # TODO
 
 - [ ] Real-time multiplayer stats
 
-PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
-channel, or, if you want to suggest something, suggest them in the #suggestions channel.
-
-## Note for Everyone
+# Note for Everyone
 
 Since I value transparency, I want to be upfront: I’ve recently started using AI to help program small pieces of Tanks Rebirth.
 
@@ -114,5 +123,8 @@ I review, test and rework everything I keep, and I decide what the game is and h
 The game design, direction and the vast majority of the codebase are still mine, since that’s the part I love doing.
 
 Thanks for reading, and I hope you enjoy the update!
+
+PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
+channel, or, if you want to suggest something, suggest them in the #suggestions channel.
 
 Happy tanking!

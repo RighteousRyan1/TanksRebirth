@@ -230,6 +230,7 @@ public readonly struct WiiMap {
     }
 
     // why is this cancer? what did the original game do bruh
+    // i will come back to this later.
     public static float GetAutoTankRotation(Vector2 p) {
         const float ROWS_PER_COL = (float)MapGrid.STD_HEIGHT / MapGrid.STD_WIDTH;
 
