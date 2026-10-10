@@ -7,6 +7,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Net;
 
@@ -34,8 +35,10 @@ public class GameShaders {
     }
 
     /// <param name="teamColor">If set, the mesh's wooden trim is tinted with this color (see <see cref="Tanks.Tank.ShowTeamVisuals"/>).</param>
+    /// <param name="sceneLit">Whether the scene's light darkens / tints the tank like it does other models (see <see cref="StaticLighting.RelativeSceneLight"/>).
+    /// Off for previews that shouldn't follow the scene, like UI.</param>
     public static void DrawTankMesh(ModelMesh mesh, Matrix world, Matrix view, Matrix projection,
-        Texture2D texture, float opacity, bool useEnvironment = false, Color? teamColor = null) {
+        Texture2D texture, float opacity, bool useEnvironment = false, Color? teamColor = null, bool sceneLit = true) {
         // the tank shader isn't a BasicEffect, so tell the lighting system about this mesh directly
         LightingSystem.Submit(mesh, world, view, projection, opacity);
 
@@ -52,6 +55,7 @@ public class GameShaders {
         OriginalTankShader.Parameters["EnvironmentTexture"].SetValue(BlueTankEnvironment);
         OriginalTankShader.Parameters["TeamTint"]?.SetValue(teamColor.HasValue ? TeamTintStrength : 0f);
         OriginalTankShader.Parameters["TeamColor"]?.SetValue(teamColor?.ToVector4() ?? Vector4.Zero);
+        OriginalTankShader.Parameters["SceneLight"]?.SetValue(sceneLit ? StaticLighting.RelativeSceneLight : Vector3.One);
 
         var parts = mesh.MeshParts.ToArray();
         var originalEffects = parts.Select(part => part.Effect).ToArray();

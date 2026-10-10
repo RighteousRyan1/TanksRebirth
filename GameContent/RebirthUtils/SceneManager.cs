@@ -25,7 +25,7 @@ public static class SceneManager {
     public static event MissionCleanupEvent? OnMissionCleanup;
 
     // random scene stuff
-    public static Lighting.LightProfile GameLight = new() {
+    public static StaticLighting.LightProfile GameLight = new() {
         Color = new(150, 150, 170),
         Brightness = 0.75f,
     };

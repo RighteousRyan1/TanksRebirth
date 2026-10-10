@@ -1,3 +1,5 @@
+// it's about time i moved away from the stupid lowercase letter i prefixed before these parameters because i was so tModLoader-rotted
+
 float4x4 WorldView;
 float4x4 NormalMatrix;
 float4x4 Projection;
@@ -5,9 +7,11 @@ float3 LightPosition;
 float HasEnvironment;
 float EnvironmentStrength;
 float Opacity;
-// team tint for the tank's wooden edges: TeamColor.rgb is the team color, TeamTint how much of it to apply (0 = off)
+// TeamColor.rgb is the team color, TeamTint how much of it to apply as a percentage
 float4 TeamColor;
 float TeamTint;
+// the scene's light relative to the default game light darkens / tints the tank with the scene
+float3 SceneLight = float3(1, 1, 1);
 texture DiffuseTexture;
 texture EnvironmentTexture;
 
@@ -93,6 +97,7 @@ float4 Shade(PixelInput input) : COLOR0
         int3 reflection = MultiplyTev(environment, int4(177, 165, 129, 0)).rgb;
         color.rgb += (int3)round(reflection * EnvironmentStrength);
     }
+    color.rgb = (int3)round(color.rgb * SceneLight);
     color.a = (int)round(color.a * Opacity);
     return clamp(color, 0, 255) / 255.0;
 }

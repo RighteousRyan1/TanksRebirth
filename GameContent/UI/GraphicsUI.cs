@@ -15,7 +15,7 @@ using Preset = TanksRebirth.Graphics.DynamicLighting.LightingPresets.Preset;
 namespace TanksRebirth.GameContent.UI;
 
 /// <summary>
-/// The Video page of the settings window (<see cref="SettingsUI.Video"/>): a "Display" column and a "Dynamic Lighting"
+/// The Video page of the settings window (<see cref="SettingsUI.Video"/>): a "Display" column and a "Dynamic StaticLighting"
 /// column of option rows, and Apply / Reset buttons.
 /// </summary>
 /// <remarks>

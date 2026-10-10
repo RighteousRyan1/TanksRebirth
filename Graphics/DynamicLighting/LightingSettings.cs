@@ -32,7 +32,7 @@ public enum EffectQuality {
 
 /// <summary>
 /// Everything a graphics settings page needs for the dynamic lighting, as plain properties so it can be saved with
-/// the rest of the settings (for example as <c>public LightingSettings Lighting { get; set; } = new();</c> in GameConfig).
+/// the rest of the settings (for example as <c>public LightingSettings StaticLighting { get; set; } = new();</c> in GameConfig).
 /// </summary>
 /// <remarks>
 /// <para>Edit the properties, then call <see cref="Apply"/>. <see cref="SetQualityLevel"/> fills in all the

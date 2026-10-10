@@ -162,7 +162,7 @@ internal sealed class SpriteParticleBatcher {
 
         float brightness = SceneManager.GameLight.Brightness;
 
-        Vector3 ambient = Lighting.AmbientDiffuseProduct;
+        Vector3 ambient = StaticLighting.AmbientDiffuseProduct;
 
         var cam = CameraGlobals.RebirthFreecam;
         Vector3 camPos = cam.Position;

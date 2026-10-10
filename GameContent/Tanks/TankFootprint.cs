@@ -207,7 +207,7 @@ public class TankFootprint {
 
         // same lighting result the old BasicEffect path produced for a white sprite: (emissive + ambient * diffuse) * alpha
         float brightness = SceneManager.GameLight.Brightness;
-        _fx.DiffuseColor = Vector3.One * (brightness * brightness) + Lighting.AmbientDiffuseProduct;
+        _fx.DiffuseColor = Vector3.One * (brightness * brightness) + StaticLighting.AmbientDiffuseProduct;
         _fx.View = view;
         _fx.Projection = projection;
 

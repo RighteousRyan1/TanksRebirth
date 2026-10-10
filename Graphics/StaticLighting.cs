@@ -3,8 +3,11 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics;
-/// <summary>Represents a system in which to render lighting for the world.</summary>
-public static class Lighting {
+
+// i probably need to de-shittify this
+
+/// <summary>Represents a system in which to render static lighting for the world.</summary>
+public static class StaticLighting {
     /// <summary>A custom time of day for the lighting and brightness.</summary>
     public struct LightProfile(float brightness, Color color) {
         public float Brightness = brightness;
@@ -20,33 +23,36 @@ public static class Lighting {
 
             LightPower = applySunPower ? SunPower : 0f;
 
-            /*if (Lighting.IsNight != IsNight)
+            /*if (StaticLighting.IsNight != IsNight)
                 TankMusicSystem.SnowLoop = new OggMusic("Snow Loop", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);*/
 
-            Lighting.IsNight = IsNight;
+            StaticLighting.IsNight = IsNight;
         }
     }
+    static Color LightColor = DefaultLightingColor;
+    static float ColorBrightness = 1f;
 
-    public static readonly Vector3 AccurateLightingDirection = new(0.25f, 1, -0.5f);
+    static float LightPower = 0f;
 
-    private static Color LightColor = DefaultLightingColor;
-    private static float ColorBrightness = 1f;
+    /// <summary>The game light the tank shader's look is tuned for the game's default lighting.</summary>
+    public static readonly LightProfile ReferenceLight = new(0.75f, new Color(150, 150, 170));
 
-    private static float LightPower = 0f;
+    /// <summary>
+    /// How bright per channel the current light is compared to <see cref="ReferenceLight"/>.
+    /// </summary>
+    public static Vector3 RelativeSceneLight {
+        get {
+            var current = (LightColor.ToVector3() + Vector3.One) * ColorBrightness;
+            var reference = (ReferenceLight.Color.ToVector3() + Vector3.One) * ReferenceLight.Brightness;
+            return current / reference;
+        }
+    }
 
     /// <summary>The ambient light color multiplied by the diffuse brightness; the constant term batched sprites add to their emissive color.</summary>
     public static Vector3 AmbientDiffuseProduct => LightColor.ToVector3() * ColorBrightness;
     private static bool IsNight { get; set; }
-
-    public static readonly LightProfile Dawn = new(0.5f, new Color(0, 25, 0)) { IsNight = true, SunPower = 0.6f };
-
-    public static readonly LightProfile Noon = new(0.65f, new Color(200, 200, 200)) { IsNight = false, SunPower = 1f };
-
-    public static readonly LightProfile Dusk = new(0.4f, new Color(255, 165, 0)) { IsNight = true, SunPower = 0.7f };
-
-    public static readonly LightProfile Midnight = new(0.15f, new Color(0, 0, 0)) { IsNight = true, SunPower = 0.5f };
-
-    private static readonly Color DefaultLightingColor = new Vector3(0.05333332f, 0.09882354f, 0.1819608f).ToColor();
+    // i do not recall where i got these numbers from
+    static readonly Color DefaultLightingColor = new Vector3(0.05333332f, 0.09882354f, 0.1819608f).ToColor();
 
     public static void SetDefaultGameLighting(this BasicEffect effect) {
         const float lightingConstant = 0.9f;
