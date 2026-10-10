@@ -36,7 +36,7 @@ public static class GameplayLights {
         head.Direction = forward3 + new Vector3(0f, -0.32f, 0f);
         head.Color = new Color(255, 236, 196);
         head.Intensity = 1.7f * Brightness;
-        head.Range = 200f;
+        head.Range = 250f;
         head.InnerAngle = MathHelper.ToRadians(10f);
         head.OuterAngle = MathHelper.ToRadians(40f);
         head.CastsShadows = true;
