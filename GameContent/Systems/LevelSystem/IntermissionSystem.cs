@@ -373,7 +373,7 @@ public static class IntermissionSystem {
         // TODO: fix this fuckery above
     }
     public static void MissionSetup() {
-        if (Modifiers.Map[Modifiers.RANDOM_ENEMY]) {
+        if (Modifiers.IsOn(Modifiers.RANDOM_ENEMY)) {
             if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint
                 && IntermissionHandler.LastResult != MissionEndContext.Lose) {
                 CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks

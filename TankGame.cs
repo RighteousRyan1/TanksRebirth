@@ -289,17 +289,30 @@ public class TankGame : Game {
         var plrReal = player + 1;
         ClientLog.Write($"Gamepad disconnected from player {plrReal}.", LogType.Info);
         PlayerMice[plrReal] = null;
+
+        PlrMiceRenderHandle();
     }
 
     void InputUtils_OnGamePadConnected(int player) {
-        var kbTnk = PlayerTank.KbPlayer;
-        var numGps = InputUtils.NumGamepadsConnected;
+        //var kbTnk = PlayerTank.KbPlayer;
+        //var numGps = InputUtils.NumGamepadsConnected;
 
         var plrReal = player + 1;
         ClientLog.Write($"Gamepad connected, controlling player {player}.", LogType.Info);
         PlayerMice[plrReal] = new RebirthMouse(PlayerID.PlayerTankColors[plrReal], PlayerID.PlayerTankColorsBright[plrReal], plrReal) {
             Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * plrReal
         };
+
+        PlrMiceRenderHandle();
+    }
+
+    static void PlrMiceRenderHandle() {
+        // here is where the multiplayer mouse bug was. it's fixed. but why are the colors not changing for the trail?
+        for (int i = 0; i < PlayerMice.Length; i++) {
+            if (PlayerMice[i] is null) continue;
+            PlayerMice[i].ShouldRender = true;
+            if (i >= PlayerTank.NumLocalPlayers) PlayerMice[i].ShouldRender = false;
+        }
     }
 
     protected override void OnExiting(object sender, ExitingEventArgs args) {
@@ -566,7 +579,7 @@ public class TankGame : Game {
 
             GameResources.EnsurePreloadedAssetsArePreloaded();
             GameHandler.SetupGraphics();
-            LightingShowcase.Initialize(GraphicsDevice); // dynamic lighting (F7 = presets, F8 = before/after)
+            LightManager.Initialize(GraphicsDevice); // dynamic lighting (F7 = presets, F8 = before/after)
             GameUI.Initialize();
             MainMenuUI.InitializeUI();
             MainMenuUI.InitializeBasics();
@@ -664,12 +677,7 @@ public class TankGame : Game {
             MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
             MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
 
-            // here is where the multiplayer mouse bug was. it's fixed. but why are the colors not changing for the trail?
-            for (int i = 0; i < PlayerMice.Length; i++) {
-                if (PlayerMice[i] is null) continue;
-                PlayerMice[i].ShouldRender = true;
-                if (i >= PlayerTank.NumLocalPlayers) PlayerMice[i].ShouldRender = false;
-            }
+            // mouse/cursor ShouldRender logic was here before. place back if it breaks somehow
 
             // ensures player mouse is controlled properly... could be hacky?
             // if (Client.IsConnected()) PlayerTank.KbPlayer = NetPlay.CurrentClient.Id;
@@ -752,10 +760,11 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
+            // this should only be done once and not every frame... this is so ass lol
             for (int i = 0; i < PlayerMice.Length; i++) {
                 var elem = PlayerMice[i];
                 if (elem is null) continue;
-                elem.ShouldRender = (!Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride && elem.ShouldRender;
+                elem.ShouldRender = (!Modifiers.IsOn(Modifiers.POV) || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride && elem.ShouldRender;
             }
 
             UIElement.UpdateElements();
@@ -817,7 +826,7 @@ public class TankGame : Game {
         RuntimeData.UpdateCount++;
 
         GameShaders.UpdateShaders();
-        LightingShowcase.Update();
+        LightManager.Update();
 
         InputUtils.PollGamepad();
         InputUtils.PollKBM();
@@ -1018,7 +1027,7 @@ public class TankGame : Game {
     }
 
     public static void DrawGameElements() {
-        var shader = Modifiers.Map[Modifiers.LANTERN] && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
+        var shader = Modifiers.IsOn(Modifiers.LANTERN) && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
         if (!GameScene.UpdateAndRender) shader = null;
 
         SpriteRenderer.Begin(effect: shader);

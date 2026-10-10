@@ -8,7 +8,7 @@ namespace TanksRebirth.Graphics.DynamicLighting;
 /// <summary>
 /// The look of the scene: the time-of-day presets, the day cycle, the room lamps. Says nothing about performance
 /// (that's <see cref="LightingQuality"/>) and nothing about game objects (that's <see cref="GameplayLights"/>).
-/// Only depends on MonoGame and <see cref="LightingSystem"/>; <see cref="LightingShowcase"/> connects it to the game.
+/// Only depends on MonoGame and <see cref="LightingSystem"/>; <see cref="LightManager"/> connects it to the game.
 /// </summary>
 public static class LightingPresets {
     /// <summary>Presets in time-of-day order (F7 cycles through them in this order).</summary>

@@ -129,7 +129,7 @@ public class GameHandler {
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
         GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
-        if (Modifiers.Map[Modifiers.INF_LIFE])
+        if (Modifiers.IsOn(Modifiers.INF_LIFE))
             PlayerTank.SetLives(PlayerTank.StartingLives);
 
         for (int i = 0; i < Animator.Animators.Count; i++)

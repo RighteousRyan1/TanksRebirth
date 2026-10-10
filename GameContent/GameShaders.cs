@@ -22,7 +22,7 @@ public class GameShaders {
 
     public static float BlurFactor = 0.0075f;
 
-    /// <summary>How strongly a tank's wooden trim is tinted toward its team color (0 = plain wood, 1 = fully team-colored wood).</summary>
+    /// <summary>How strongly a tank's wooden trim is tinted toward its team color, where 0 = untouched, 1 = fully colored.</summary>
     public static float TeamTintStrength = 0.55f;
 
     public static void Initialize() {
@@ -91,7 +91,7 @@ public class GameShaders {
         LanternShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         //TestShader.Parameters["oBend"]?.SetValue(val);
         //TestShader.Parameters["oDistortionFactor"].SetValue(MouseUtils.MousePosition.X / WindowUtils.WindowWidth);
-        if (Modifiers.Map[Modifiers.LANTERN]) {
+        if (Modifiers.IsOn(Modifiers.LANTERN)) {
             var activeTanks = GameHandler.AllPlayerTanks.Where(x => x is not null && !x.IsDestroyed).ToArray();
 
             if (activeTanks.Length == 0 || MainMenuUI.IsActive) {

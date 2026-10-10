@@ -144,13 +144,14 @@ public static class InputUtils {
             var nowConnected = GamePads[i].Current.IsConnected;
             bool wasConnected = _previousConnected[i];
 
+            // for some reason i was firing the event before modifying the values LOL
             if (nowConnected && !wasConnected) {
-                OnGamePadConnected?.Invoke(index);
                 NumGamepadsConnected++;
+                OnGamePadConnected?.Invoke(index);
             }
             else if (!nowConnected && wasConnected) {
-                OnGamePadDisconnected?.Invoke(index);
                 NumGamepadsConnected--;
+                OnGamePadDisconnected?.Invoke(index);
             }
 
             _previousConnected[i] = nowConnected;

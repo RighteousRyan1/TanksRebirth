@@ -47,6 +47,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Rocket trails are now MUCH better looking
 - Completely overhauled the Settings UI (which will be the standard for future UI updates!)
 	- I caved into using AI to assist me with the design and layout, since UI frontend is not my strong suit in the slightest
+- Completely overhauled the Modifiers UI!
 - Lantern mode will now look entirely different if using the new lighting system, read the description
 - Bindings in the Controls menu can now use mouse buttons!
 
@@ -101,5 +102,17 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.
+
+## Note for Everyone
+
+Since I value transparency, I want to be upfront: I’ve recently started using AI to help program small pieces of Tanks Rebirth.
+
+I’ve used it where I struggled the most- lighting and the UI rework. 
+I'm still squishing bugs, adding new features, and designing the game myself.
+
+I review, test and rework everything I keep, and I decide what the game is and how it plays, and I remain knowledgeable of the codebase.
+The game design, direction and the vast majority of the codebase are still mine, since that’s the part I love doing.
+
+Thanks for reading, and I hope you enjoy the update!
 
 Happy tanking!

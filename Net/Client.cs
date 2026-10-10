@@ -417,14 +417,14 @@ public class Client {
         NetDataWriter message = new();
 
         message.Put(PacketID.SyncDifficulties);
-        foreach (var item in Modifiers.Map) {
-            message.Put(item.Value);
+        // by key, only what isn't at its default: clients reset everything else, and skip keys they don't have (mods)
+        var values = Modifiers.NonDefaultValues();
+        message.Put(values.Count);
+        foreach (var (key, value) in values) {
+            message.Put(key);
+            message.Put(value);
         }
-        message.Put(Modifiers.RandomTanksLower);
-        message.Put(Modifiers.RandomTanksUpper);
-        message.Put(Modifiers.MonochromeValue);
-        message.Put(Modifiers.DisguiseValue);
-        NetClient.Send(message, DeliveryMethod.Sequenced);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendMapPing(Vector3 location, int pingId, int playerId) {
         NetDataWriter message = new();

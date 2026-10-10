@@ -172,7 +172,7 @@ public class Crate {
 
         if (ContainsTank) {
             var tier = TankToSpawn.AiTier;
-            if (Modifiers.Map[Modifiers.MASTER])
+            if (Modifiers.IsOn(Modifiers.MASTER))
                 tier = Modifiers.VanillaToMasterModeConversions[tier];
             var t = new AITank(tier);
             t.Physics.Position = Position.FlattenZ() / Tank.UNITS_PER_METER;

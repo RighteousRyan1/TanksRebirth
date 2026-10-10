@@ -123,9 +123,9 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     public AITank(int tier, bool applyDefaults = true, bool ignoreRegister = false) : base(ignoreRegister) {
         // looking at this code makes me want to barf.
         // maybe move this stuff to events within Modifiers.cs
-        if (Modifiers.Map[Modifiers.BUMP])       tier++;
-        if (Modifiers.Map[Modifiers.MONOCHROME]) tier = Modifiers.MonochromeValue;
-        if (Modifiers.Map[Modifiers.MASTER])     tier = Modifiers.VanillaToMasterModeConversions[tier];
+        if (Modifiers.IsOn(Modifiers.BUMP))       tier++;
+        if (Modifiers.IsOn(Modifiers.MONOCHROME)) tier = Modifiers.MonochromeValue;
+        if (Modifiers.IsOn(Modifiers.MASTER))     tier = Modifiers.VanillaToMasterModeConversions[tier];
 
         // NearbyDangers = [];
 
@@ -198,22 +198,22 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
 
         // unfortunately these are just miserable
-        if (Modifiers.Map[Modifiers.EXTRA_CALCS])
+        if (Modifiers.IsOn(Modifiers.EXTRA_CALCS))
             if (properties.RicochetCount >= 1)
                 if (properties.HasTurret)
                     Parameters.SmartRicochets = true;
 
-        if (Modifiers.Map[Modifiers.BIG_MINES])
+        if (Modifiers.IsOn(Modifiers.BIG_MINES))
             Parameters.AwarenessHostileMine *= 3;
 
-        if (Modifiers.Map[Modifiers.INVIS]) {
+        if (Modifiers.IsOn(Modifiers.INVIS)) {
             properties.Invisible = true;
             properties.CanLayTread = false;
         }
-        if (Modifiers.Map[Modifiers.STATIONARY])
+        if (Modifiers.IsOn(Modifiers.STATIONARY))
             properties.Stationary = true;
 
-        if (Modifiers.Map[Modifiers.HOMING]) {
+        if (Modifiers.IsOn(Modifiers.HOMING)) {
             properties.ShellHoming = new() {
                 Radius = 200f,
                 Speed = properties.ShellSpeed,
@@ -223,17 +223,17 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             Parameters.DetectionForgivenessHostile *= 2;
         }
 
-        if (Modifiers.Map[Modifiers.DEFLECT])
+        if (Modifiers.IsOn(Modifiers.DEFLECT))
             Parameters.DeflectsBullets = true;
 
-        if (Modifiers.Map[Modifiers.ARMOR]) {
+        if (Modifiers.IsOn(Modifiers.ARMOR)) {
             if (Extras.Armor == null)
                 Extras.Armor = new(this, 3);
             else
                 Extras.Armor = new(this, Extras.Armor.HitPoints + 3);
         }
 
-        if (Modifiers.Map[Modifiers.PREDICTIONS])
+        if (Modifiers.IsOn(Modifiers.PREDICTIONS))
             Parameters.PredictsPositions = true;
         properties.TreadVolume = 0.05f;
 

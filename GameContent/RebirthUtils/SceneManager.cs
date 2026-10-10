@@ -139,7 +139,7 @@ public static class SceneManager {
         });
     }
     public static void HandleSceneVisuals() {
-        if (Modifiers.Map[Modifiers.THUNDER])
+        if (Modifiers.IsOn(Modifiers.THUNDER))
             DoThunderStuff();
         else if (GameScene.Theme == MapTheme.Christmas) {
             GameLight.Color = new(50, 50, 50, 50);

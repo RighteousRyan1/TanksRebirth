@@ -428,13 +428,15 @@ public static class NetPlay {
                 PlayerTank.KillCounts[clientid] = kills;
                 break;
             case PacketID.SyncDifficulties:
-                for (int i = 0; i < Modifiers.Map.Count; i++) {
-                    Modifiers.Map[Modifiers.Map.Keys.ElementAt(i)] = reader.GetBool();
+                var modifierCount = reader.GetInt();
+                var modifierValues = new List<KeyValuePair<string, int>>(modifierCount);
+                for (int i = 0; i < modifierCount; i++) {
+                    var key = reader.GetString();
+                    modifierValues.Add(new(key, reader.GetInt()));
                 }
-                Modifiers.RandomTanksLower = reader.GetInt();
-                Modifiers.RandomTanksUpper = reader.GetInt();
-                Modifiers.MonochromeValue = reader.GetInt();
-                Modifiers.DisguiseValue = reader.GetInt();
+                var unknownModifiers = Modifiers.ApplyHostValues(modifierValues);
+                if (unknownModifiers.Count > 0)
+                    TankGame.ClientLog.Write($"The host has modifiers that aren't loaded here (missing a mod?): {string.Join(", ", unknownModifiers)}", Internals.LogType.Warn);
                 break;
                 #endregion
         }
@@ -767,18 +769,12 @@ public static class NetPlay {
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SyncDifficulties:
-                for (int i = 0; i < Modifiers.Map.Count; i++) {
-                    var val = reader.GetBool();
-                    message.Put(val);
+                var relayCount = reader.GetInt();
+                message.Put(relayCount);
+                for (int i = 0; i < relayCount; i++) {
+                    message.Put(reader.GetString());
+                    message.Put(reader.GetInt());
                 }
-                var lower = reader.GetInt();
-                var upper = reader.GetInt();
-                var monoValue = reader.GetInt();
-                var disguiseValue = reader.GetInt();
-                message.Put(lower);
-                message.Put(upper);
-                message.Put(monoValue);
-                message.Put(disguiseValue);
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
                 #endregion
@@ -808,4 +804,4 @@ public static class NetPlay {
 // null -> 2
 // new Owner id -> 2
 
-// [Owner = 0, Owner = 1, Owner = 2, null = 3, null = 4]
+// [Owner = 0, Owner = 1, Owner = 2, null = 3, null = 4]

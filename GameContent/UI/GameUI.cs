@@ -333,7 +333,7 @@ public static class GameUI {
             else if (MainMenuUI.ConnectToServerButton.IsVisible || MainMenuUI.DisconnectButton.IsVisible) {
                 MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
             }
-            if (MainMenuUI.TanksAreCalculators.IsVisible) {
+            if (MainMenuUI.ModifiersOpen) {
                 MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
             }
         }

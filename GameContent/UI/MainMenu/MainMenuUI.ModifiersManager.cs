@@ -1,371 +1,250 @@
-using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.UI;
-using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 
-// an idea...
-/*public static class ModifiersButtonRegistry {
-    public class ModifierButton : UITextButton {
-
-        ModifierButton(string text, SpriteFontBase font, Color color, Func<Vector2> textScale) 
-            : base(text, font, color, textScale) { }
-
-
-    }
-
-    static ModifiersButtonRegistry() {
-        // init all of it here... or sum.
-    }
-
-    public static List<ModifierButton> Buttons = [];
-}*/
-
-// todo: remake for a good visual polish?
 public static partial class MainMenuUI {
     static bool _diffButtonsInitialized;
-    public static UITextButton TanksAreCalculators; // make them calculate shots abnormally
-    public static UITextButton PieFactory;
-    public static UITextButton UltraMines;
-    public static UITextButton BulletHell;
-    public static UITextButton AllInvisible;
-    public static UITextButton AllStationary;
-    public static UITextButton Armored;
-    public static UITextButton AllHoming;
-    public static UITextButton BumpUp;
-    public static UITextButton Monochrome;
-    public static UITextButton InfiniteLives;
 
-    public static UITextButton MasterMode;
-    public static UITextButton TacticalPlanes;
-    public static UITextButton MachineGuns;
-    public static UITextButton RandomizedTanks;
-    public static UITextButton ThunderMode;
-    public static UITextButton POVMode;
-    public static UITextButton AiCompanion;
-    public static UITextButton Shotguns;
-    public static UITextButton Predictions;
-
-    public static UITextButton RandomizedPlayer;
-    public static UITextButton BulletBlocking;
-
-    public static UITextButton FFA;
-
-    public static UITextButton LanternMode;
-
-    public static UITextButton DisguiseMode;
-
+    /// <summary>Every element of the modifiers window (frame and all pages).</summary>
     public static List<UIElement> AllDifficultyButtons = [];
+    /// <summary>Every modifier row, on every page.</summary>
+    public static List<ModifierRow> AllModifierRows = [];
+
+    /// <summary>Whether the modifiers window is on screen.</summary>
+    public static bool ModifiersOpen { get; private set; }
+    /// <summary>The page on screen (0 based).</summary>
+    public static int ModifiersPage { get; private set; }
+    public static int ModifiersPageCount => Math.Max(1, _modPages.Count);
+
+    // layout...
+    internal const float ModPanelX = 150, ModPanelY = 30, ModPanelW = 1620, ModPanelH = 820;
+    internal const float ModLeftX = 190, ModColumnW = 493, ModColumnGap = 30;
+    internal const float ModTitleY = 44, ModTitleH = 54;
+    internal const float ModFirstSlotY = 114, ModSlotStep = 54, ModRowH = 48;
+    internal const float ModDescY = 716, ModDescH = 116;
+    internal const int ModColumns = 3, ModSlotsPerColumn = 11;
+
+    static float ModColumnX(int column) => ModLeftX + column * (ModColumnW + ModColumnGap);
+    static float ModSlotY(int slot) => ModFirstSlotY + slot * ModSlotStep;
+    static float ModSpanWidth(int columns) => columns * ModColumnW + (columns - 1) * ModColumnGap;
+
+    static UIPanel _modPanel;
+    static readonly List<UIElement> _modFrame = [];
+    static readonly List<UIElement> _modPagers = [];
+    static readonly List<List<UIElement>> _modPages = [];
+    static int _builtRegistryVersion = -1;
+
+    static uint _modsOpenedAt;
+    static int _sentValuesVersion = -1;
+    static int _sentPeerCount = -1;
+
+    /// <summary>Ignores the click that opened the window or switched the page (it lands on the same frame the rows appear).</summary>
+    internal static bool ModifiersInputReady => RuntimeData.UpdateCount - _modsOpenedAt > 5;
+
+    /// <summary>Only the host (or a single player) can change modifiers.</summary>
+    internal static bool CanEditModifiers => !Client.IsConnected() || Client.IsHost();
 
     // TODO: UI Layers. This is fucking ugly.
     internal static void SetDifficultiesButtonsVisibility(bool visible) {
-        TanksAreCalculators.IsVisible = visible;
-        PieFactory.IsVisible = visible;
-        UltraMines.IsVisible = visible;
-        BulletHell.IsVisible = visible;
-        AllInvisible.IsVisible = visible;
-        AllStationary.IsVisible = visible;
-        Armored.IsVisible = visible;
-        AllHoming.IsVisible = visible;
-        BumpUp.IsVisible = visible;
-        Monochrome.IsVisible = visible;
-        InfiniteLives.IsVisible = visible;
-        MasterMode.IsVisible = visible;
-        TacticalPlanes.IsVisible = visible;
-        MachineGuns.IsVisible = visible;
-        RandomizedTanks.IsVisible = visible;
-        ThunderMode.IsVisible = visible;
-        POVMode.IsVisible = visible;
-        AiCompanion.IsVisible = visible;
-        Shotguns.IsVisible = visible;
-        Predictions.IsVisible = visible;
-        RandomizedPlayer.IsVisible = visible;
-        BulletBlocking.IsVisible = visible;
-        FFA.IsVisible = visible;
-        LanternMode.IsVisible = visible;
-        DisguiseMode.IsVisible = visible;
+        if (visible && !ModifiersOpen)
+            _modsOpenedAt = RuntimeData.UpdateCount;
+        ModifiersOpen = visible;
+
+        foreach (var element in _modFrame)
+            element.IsVisible = visible;
+        foreach (var element in _modPagers)
+            element.IsVisible = visible && _modPages.Count > 1;
+        for (int i = 0; i < _modPages.Count; i++)
+            foreach (var element in _modPages[i])
+                element.IsVisible = visible && i == ModifiersPage;
     }
 
     public static void UpdateDifficulties() {
+        if (_builtRegistryVersion != Modifiers.RegistryVersion)
+            BuildModifiersWindow();
+
+        if (IsActive && Client.IsConnected() && Client.IsHost()) {
+            var peers = Server.NetManager?.ConnectedPeersCount ?? 0;
+            if (Modifiers.ValuesVersion != _sentValuesVersion || peers != _sentPeerCount) {
+                _sentValuesVersion = Modifiers.ValuesVersion;
+                _sentPeerCount = peers;
+                Client.SendDiffiulties();
+            }
+        }
+
         if (MenuState != UIState.Modifiers) return;
 
-        DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Modifiers.DisguiseValue);
-        Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Modifiers.MonochromeValue);
-        RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(Modifiers.RandomTanksLower)} | Upper: {TankID.Collection.GetKey(Modifiers.RandomTanksUpper)}";
-        Modifiers.Map[Modifiers.RANDOM_ENEMY] = Modifiers.RandomTanksLower > 0 && Modifiers.RandomTanksUpper > 0;
-
-        // me in march 2024: what the fuck is this code.
-        // also me in july 2025: what the FUCK is this code
-        // also me in october 2026: what the F U C K is this code
-        TanksAreCalculators.Color = Modifiers.Map[Modifiers.EXTRA_CALCS] ? Color.Lime : Color.Red;
-        PieFactory.Color = Modifiers.Map[Modifiers.MINE_SPAM] ? Color.Lime : Color.Red;
-        UltraMines.Color = Modifiers.Map[Modifiers.BIG_MINES] ? Color.Lime : Color.Red;
-        BulletHell.Color = Modifiers.Map[Modifiers.TRIPLE_BOUNCE] ? Color.Lime : Color.Red;
-        AllInvisible.Color = Modifiers.Map[Modifiers.INVIS] ? Color.Lime : Color.Red;
-        AllStationary.Color = Modifiers.Map[Modifiers.STATIONARY] ? Color.Lime : Color.Red;
-        AllHoming.Color = Modifiers.Map[Modifiers.HOMING] ? Color.Lime : Color.Red;
-        Armored.Color = Modifiers.Map[Modifiers.ARMOR] ? Color.Lime : Color.Red;
-        BumpUp.Color = Modifiers.Map[Modifiers.BUMP] ? Color.Lime : Color.Red;
-        Monochrome.Color = Modifiers.MonochromeValue > 0 ? Color.Lime : Color.Red;
-        InfiniteLives.Color = Modifiers.Map[Modifiers.INF_LIFE] ? Color.Lime : Color.Red;
-        MasterMode.Color = Modifiers.Map[Modifiers.MASTER] ? Color.Lime : Color.Red;
-        TacticalPlanes.Color = Modifiers.Map[Modifiers.PLANES] ? Color.Lime : Color.Red;
-        MachineGuns.Color = Modifiers.Map[Modifiers.MACHINE_GUNS] ? Color.Lime : Color.Red;
-        RandomizedTanks.Color = Modifiers.Map[Modifiers.RANDOM_ENEMY] ? Color.Lime : Color.Red;
-        ThunderMode.Color = Modifiers.Map[Modifiers.THUNDER] ? Color.Lime : Color.Red;
-        POVMode.Color = Modifiers.Map[Modifiers.POV] ? Color.Lime : Color.Red;
-        AiCompanion.Color = Modifiers.Map[Modifiers.AI_COMPANION] ? Color.Lime : Color.Red;
-        Shotguns.Color = Modifiers.Map[Modifiers.SHOTGUNS] ? Color.Lime : Color.Red;
-        Predictions.Color = Modifiers.Map[Modifiers.PREDICTIONS] ? Color.Lime : Color.Red;
-        RandomizedPlayer.Color = Modifiers.Map[Modifiers.RANDOM_PLAYER] ? Color.Lime : Color.Red;
-        BulletBlocking.Color = Modifiers.Map[Modifiers.DEFLECT] ? Color.Lime : Color.Red;
-        FFA.Color = Modifiers.Map[Modifiers.FFA] ? Color.Lime : Color.Red;
-        LanternMode.Color = Modifiers.Map[Modifiers.LANTERN] ? Color.Lime : Color.Red;
-        DisguiseMode.Color = Modifiers.Map[Modifiers.DISGUISE] ? Color.Lime : Color.Red;
-
-        if (IsActive && Client.IsConnected() && Client.IsHost())
-            Client.SendDiffiulties();
-    }
-    public static void RenderDifficultiesMenu() {
-        if (MenuState == UIState.Modifiers) {
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
-                "Ideas are welcome! Let us know in our DISCORD server!",
-                new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);
+        if (_modPages.Count > 1 && UITextInput.currentActiveBox == -1 && !ChatSystem.ActiveHandle) {
+            if (InputUtils.KeyJustPressed(Keys.Q)) {
+                CycleModifiersPage(-1);
+                SettingsUI.PlayTick();
+            }
+            else if (InputUtils.KeyJustPressed(Keys.E)) {
+                CycleModifiersPage(1);
+                SettingsUI.PlayTick();
+            }
         }
     }
+
+    /// <summary>The next (1) or previous (-1) page of the modifiers window, wrapping around.</summary>
+    public static void CycleModifiersPage(int direction) {
+        if (_modPages.Count < 2)
+            return;
+        ModifiersPage = ((ModifiersPage + direction) % _modPages.Count + _modPages.Count) % _modPages.Count;
+        _modsOpenedAt = RuntimeData.UpdateCount;
+        SetDifficultiesButtonsVisibility(ModifiersOpen);
+    }
+
+    /// <summary>Turns every modifier off.</summary>
+    public static void ResetAllModifiers() => Modifiers.ResetAll();
+
+    // initialization
     static void InitializeDifficultyButtons() {
         _diffButtonsInitialized = true;
-
-        SpriteFontBase font = FontGlobals.RebirthFont;
-        TanksAreCalculators = new("Tanks are Calculators", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "ALL tanks will begin to look for angles" +
-            "\non you (and other enemies) outside of their immediate aim." +
-            "\nDo note that this uses significantly more CPU power.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.EXTRA_CALCS] = !Modifiers.Map[Modifiers.EXTRA_CALCS]
-        };
-        PieFactory = new("Lemon Pie Factory", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Makes yellow tanks absurdly more dangerous by" +
-            "\nturning them into mine-laying machines." +
-            "\nOh, yeah. They're immune to explosions now too.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.MINE_SPAM] = !Modifiers.Map[Modifiers.MINE_SPAM]
-        };
-        UltraMines = new("Ultra Mines", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Mines are now 2x as deadly!" +
-            "\nTheir explosion radii are now 2x as big!",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.BIG_MINES] = !Modifiers.Map[Modifiers.BIG_MINES]
-        };
-        BulletHell = new("Bullet Hell", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Bullets now ricochet thrice as much as before!",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.TRIPLE_BOUNCE] = !Modifiers.Map[Modifiers.TRIPLE_BOUNCE]
-        };
-        AllInvisible = new("All Invisible", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.INVIS] = !Modifiers.Map[Modifiers.INVIS]
-        };
-        AllStationary = new("All Stationary", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every single non-player tank is now stationary." +
-            "\nThis should REDUCE difficulty.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.STATIONARY] = !Modifiers.Map[Modifiers.STATIONARY]
-        };
-        AllHoming = new("Seekers", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every enemy tank now has homing bullets.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.HOMING] = !Modifiers.Map[Modifiers.HOMING]
-        };
-        Armored = new("Armored", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every single non-player tank has 3 armor points added to it.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.ARMOR] = !Modifiers.Map[Modifiers.ARMOR]
-        };
-        BumpUp = new("Bump Up", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Makes the game a bit harder by \"Bumping up\" each tank, giving them one extra tier.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.BUMP] = !Modifiers.Map[Modifiers.BUMP]
-        };
-        Monochrome = new("Monochrome", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Makes every tank the tank of your choice." +
-            "\n\"Bump Up\" effects are ignored.",
-            OnLeftClick = (elem) => {
-                if (Modifiers.MonochromeValue + 1 >= TankID.Collection.Count)
-                    Modifiers.MonochromeValue = TankID.None;
-                else
-                    Modifiers.MonochromeValue++;
-                Modifiers.Map[Modifiers.MONOCHROME] = Modifiers.MonochromeValue != TankID.None;
-            },
-            OnRightClick = (elem) => {
-                if (Modifiers.MonochromeValue - 1 < TankID.None)
-                    Modifiers.MonochromeValue = TankID.Collection.Count - 1;
-                else
-                    Modifiers.MonochromeValue--;
-                Modifiers.Map[Modifiers.MONOCHROME] = Modifiers.MonochromeValue != TankID.None;
-            }
-        };
-        InfiniteLives = new("Infinite Lives", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "You now have infinite lives. Have fun!",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.INF_LIFE] = !Modifiers.Map[Modifiers.INF_LIFE]
-        };
-        MasterMode = new("Master Mode", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Original tanks will become much more difficult." +
-            "\nNew music, mechanics, and more!",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.MASTER] = !Modifiers.Map[Modifiers.MASTER]
-        };
-        TacticalPlanes = new("Tactical Planes", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Airplanes will occasionally come through the sky" +
-            "\nand drop smoke grenades to block your vision!",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.PLANES] = !Modifiers.Map[Modifiers.PLANES]
-        };
-        MachineGuns = new("Machine Guns", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every tank (including the player) now has the ability to fire as fast as they want.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.MACHINE_GUNS] = !Modifiers.Map[Modifiers.MACHINE_GUNS]
-        };
-        RandomizedTanks = new("Randomized Tanks", font, Color.White, 0.5f) {
-            IsVisible = false,
-            Tooltip = "Every tank is now randomized." +
-            "\nA black tank could appear where a brown tank would be!" +
-            "\n\nLeft click to increase the lower limit." +
-            "\nRight click to increase the upper limit." +
-            "\nMiddle click to reset both to 'None'.",
-            OnRightClick = (elem) => {
-                if (Modifiers.RandomTanksUpper + 1 >= TankID.Collection.Count)
-                    Modifiers.RandomTanksUpper = TankID.None;
-                else
-                    Modifiers.RandomTanksUpper++;
-                Modifiers.Map[Modifiers.RANDOM_ENEMY] = Modifiers.RandomTanksLower != TankID.None && Modifiers.RandomTanksUpper != TankID.None;
-            },
-            OnLeftClick = (elem) => {
-                if (Modifiers.RandomTanksLower + 1 >= TankID.Collection.Count)
-                    Modifiers.RandomTanksLower = TankID.None;
-                else
-                    Modifiers.RandomTanksLower++;
-                Modifiers.Map[Modifiers.RANDOM_ENEMY] = Modifiers.RandomTanksLower != TankID.None && Modifiers.RandomTanksUpper != TankID.None;
-            },
-            OnMiddleClick = (elem) => {
-                Modifiers.RandomTanksLower = TankID.None;
-                Modifiers.RandomTanksUpper = TankID.None;
-            }
-        };
-        ThunderMode = new("Thunder Mode", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "The scene is much darker, and thunder is your only source of decent light.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.THUNDER] = !Modifiers.Map[Modifiers.THUNDER]
-        };
-        POVMode = new("POV Mode", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Play the game in the POV of your tank!" +
-            "\nYou can move around inter-directionally with WASD, and aim by dragging the mouse.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.POV] = !Modifiers.Map[Modifiers.POV]
-        };
-        AiCompanion = new("AI Companion", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "A random tank will spawn at your location and help you throughout every mission.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.AI_COMPANION] = !Modifiers.Map[Modifiers.AI_COMPANION]
-        };
-        Shotguns = new("Shotguns", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every tank now fires a spread of bullets.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.SHOTGUNS] = !Modifiers.Map[Modifiers.SHOTGUNS]
-        };
-        Predictions = new("Predictions", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every tank predicts your future position.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.PREDICTIONS] = !Modifiers.Map[Modifiers.PREDICTIONS]
-        };
-        RandomizedPlayer = new("Randomized Player", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "You become a random enemy tank every life.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.RANDOM_PLAYER] = !Modifiers.Map[Modifiers.RANDOM_PLAYER]
-        };
-        BulletBlocking = new("Bullet Blocking", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Enemies *attempt* to block your bullets." +
-            "\nIt doesn't always work, sometimes even killing teammates.\nHigh fire-rate enemies are mostly affected.",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.DEFLECT] = !Modifiers.Map[Modifiers.DEFLECT]
-        };
-        FFA = new("Free-for-all", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Every tank is on their own!",
-            OnLeftClick = (elem) => Modifiers.Map[Modifiers.FFA] = !Modifiers.Map[Modifiers.FFA]
-        };
-        LanternMode = new("Lantern Mode", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "Everything is dark. Only you and your lantern can save you now.",
-            OnLeftClick = (elem) => {
-                Modifiers.Map[Modifiers.LANTERN] = !Modifiers.Map[Modifiers.LANTERN];
-            }
-        };
-        DisguiseMode = new("Disguise", font, Color.White) {
-            IsVisible = false,
-            Tooltip = "You become a tank of your choosing during gameplay.",
-            OnLeftClick = (elem) => {
-                if (Modifiers.DisguiseValue + 1 >= TankID.Collection.Count)
-                    Modifiers.DisguiseValue = TankID.None;
-                else
-                    Modifiers.DisguiseValue++;
-                Modifiers.Map[Modifiers.DISGUISE] = Modifiers.DisguiseValue != TankID.None;
-            },
-            OnRightClick = (elem) => {
-                if (Modifiers.DisguiseValue - 1 < TankID.None)
-                    Modifiers.DisguiseValue = TankID.Collection.Count - 1;
-                else
-                    Modifiers.DisguiseValue--;
-                Modifiers.Map[Modifiers.DISGUISE] = Modifiers.DisguiseValue != TankID.None;
-            }
-        };
-
-        AllDifficultyButtons.AddRange(new UITextButton[] { TanksAreCalculators, PieFactory, UltraMines, BulletHell, AllInvisible, AllStationary, Armored, AllHoming, BumpUp, Monochrome,
-        InfiniteLives, MasterMode, TacticalPlanes, MachineGuns, RandomizedTanks, ThunderMode, POVMode, AiCompanion, Shotguns, Predictions,
-        RandomizedPlayer, BulletBlocking, FFA, LanternMode, DisguiseMode });
-
-        // make all buttons not-interactable for non-host clients.
+        BuildModifiersWindow();
     }
+
     static void ArrangeDifficultyButtons() {
-        const int maxRowsPerColumn = 12;
-        Vector2 buttonSize = new Vector2(300, 40);
-        float padding = 20f;
-        int totalButtons = AllDifficultyButtons.Count;
-        int columnCount = (int)Math.Ceiling(totalButtons / (float)maxRowsPerColumn);
+        if (!_diffButtonsInitialized || _builtRegistryVersion != Modifiers.RegistryVersion)
+            InitializeDifficultyButtons();
+    }
 
-        // gets the total width of all columns combined (scaled after ToResolutionX)
-        //float totalWidth = (buttonSize.X * columnCount + padding * (columnCount - 1)).ToResolutionX();
-        float totalWidth = columnCount * buttonSize.X + (columnCount + 1) * padding;
-        float startX = totalWidth / 2f; //(WindowUtils.WindowWidth - totalWidth) / 2f;
+    static void BuildModifiersWindow() {
+        foreach (var element in AllDifficultyButtons)
+            element.Remove();
+        AllDifficultyButtons.Clear();
+        AllModifierRows.Clear();
+        _modFrame.Clear();
+        _modPagers.Clear();
+        _modPages.Clear();
+        _builtRegistryVersion = Modifiers.RegistryVersion;
 
-        for (int i = 0; i < totalButtons; i++) {
-            var button = AllDifficultyButtons[i];
-            int col = i / maxRowsPerColumn;
-            int row = i % maxRowsPerColumn;
+        _modPanel = new UIPanel((_, _) => { }) {
+            BackgroundColor = Color.Black * 0.55f,
+            IgnoreMouseInteractions = true,
+        };
+        AddModElement(_modFrame, _modPanel, ModPanelX, ModPanelY, ModPanelW, ModPanelH);
 
-            float offsetX = (buttonSize.X + padding) * col;
-            float offsetY = (buttonSize.Y + padding) * row;
+        var right = ModPanelX + ModPanelW - 40;
+        const float resetW = 240, arrowW = 110, pageLabelW = 150, gap = 12;
+        var resetX = right - resetW;
+        var nextX = resetX - gap * 2 - arrowW;
+        var labelX = nextX - pageLabelW;
+        var previousX = labelX - arrowW;
 
-            Vector2 position = new Vector2(startX + offsetX, (WindowUtils.WindowHeight * 0.1f) + offsetY);
-            button.SetDimensions(() => position.ToResolution(), () => buttonSize.ToResolution());
-            button.OnMouseOver = (a) => SoundPlayer.PlaySoundInstance(TickSound, SoundContext.Effect);
+        AddModElement(_modFrame, new ModifiersTitleBar(), ModLeftX, ModTitleY, previousX - gap - ModLeftX, ModTitleH);
+        AddModElement(_modFrame, new ModifiersResetButton(), resetX, ModTitleY, resetW, ModTitleH);
+        AddModElement(_modFrame, new ModifiersDescriptionBar(), ModLeftX, ModDescY, right - ModLeftX, ModDescH);
+        AddModElement(_modPagers, new ModifiersPageButton(-1), previousX, ModTitleY, arrowW, ModTitleH);
+        AddModElement(_modPagers, new ModifiersPageLabel(), labelX, ModTitleY, pageLabelW, ModTitleH);
+        AddModElement(_modPagers, new ModifiersPageButton(1), nextX, ModTitleY, arrowW, ModTitleH);
+
+        foreach (var page in PackSections(CollectSections())) {
+            var elements = new List<UIElement>();
+            foreach (var placed in page) {
+                var x = ModColumnX(placed.Column);
+                AddModElement(elements, new ModifiersHeader(placed.Section.Title, placed.Section.Rows), x, ModSlotY(placed.Slot),
+                    ModSpanWidth(placed.Span), ModRowH);
+
+                var rows = placed.Section.Rows;
+                for (int i = 0; i < rows.Count; i++) {
+                    var column = placed.Column + i / placed.RowsPerColumn;
+                    var slot = placed.Slot + 1 + i % placed.RowsPerColumn;
+                    AddModElement(elements, rows[i], ModColumnX(column), ModSlotY(slot), ModColumnW, ModRowH);
+                    AllModifierRows.Add(rows[i]);
+                }
+            }
+            _modPages.Add(elements);
         }
+
+        ModifiersPage = Math.Clamp(ModifiersPage, 0, ModifiersPageCount - 1);
+        SetDifficultiesButtonsVisibility(ModifiersOpen);
+    }
+
+    static void AddModElement(List<UIElement> group, UIElement element, float x, float y, float width, float height) {
+        element.SetDimensions(() => new Vector2(x, y).ToResolution(), () => new Vector2(width, height).ToResolution());
+        element.IsVisible = false;
+        group.Add(element);
+        AllDifficultyButtons.Add(element);
+    }
+
+    sealed record ModSection(string Title, List<ModifierRow> Rows);
+    sealed record PlacedSection(ModSection Section, int Column, int Span, int Slot, int RowsPerColumn);
+
+    /// <summary>One section per category, in category order. A section too big for a whole page is split into parts.</summary>
+    static List<ModSection> CollectSections() {
+        const int maxRowsPerSection = ModColumns * (ModSlotsPerColumn - 1);
+        var sections = new List<ModSection>();
+
+        foreach (var category in Modifiers.Categories) {
+            var rows = new List<ModifierRow>();
+            foreach (var definition in Modifiers.Definitions)
+                if (definition.Category == category)
+                    rows.Add(new ModifierRow(definition));
+            if (rows.Count == 0)
+                continue;
+
+            var parts = (rows.Count + maxRowsPerSection - 1) / maxRowsPerSection;
+            for (int part = 0; part < parts; part++) {
+                var slice = rows.GetRange(part * maxRowsPerSection, Math.Min(maxRowsPerSection, rows.Count - part * maxRowsPerSection));
+                sections.Add(new ModSection(parts > 1 ? $"{category} ({part + 1}/{parts})" : category, slice));
+            }
+        }
+        return sections;
+    }
+
+    // places sections on pages. Each section is a header plus its rows split evenly over one or more side-by-side columns
+    static List<List<PlacedSection>> PackSections(List<ModSection> sections) {
+        var pages = new List<List<PlacedSection>>();
+        var page = new List<PlacedSection>();
+        var fill = new int[ModColumns];
+
+        foreach (var section in sections) {
+            var placed = TryPlace(section, fill);
+            if (placed is null) {
+                pages.Add(page);
+                page = [];
+                Array.Clear(fill);
+                placed = TryPlace(section, fill)!;
+            }
+            page.Add(placed);
+            for (int c = placed.Column; c < placed.Column + placed.Span; c++)
+                fill[c] = placed.Slot + 1 + placed.RowsPerColumn;
+        }
+        if (page.Count > 0 || pages.Count == 0)
+            pages.Add(page);
+        return pages;
+    }
+
+    static PlacedSection? TryPlace(ModSection section, int[] fill) {
+        PlacedSection? best = null;
+        for (int span = 1; span <= ModColumns; span++) {
+            var rowsPerColumn = (section.Rows.Count + span - 1) / span;
+            var height = 1 + rowsPerColumn;
+            if (height > ModSlotsPerColumn)
+                continue;
+            for (int start = 0; start + span <= ModColumns; start++) {
+                var top = 0;
+                for (int c = start; c < start + span; c++)
+                    top = Math.Max(top, fill[c]);
+                if (top + height > ModSlotsPerColumn)
+                    continue;
+                if (best is null || top < best.Slot)
+                    best = new PlacedSection(section, start, span, top, rowsPerColumn);
+            }
+        }
+        return best;
     }
 }

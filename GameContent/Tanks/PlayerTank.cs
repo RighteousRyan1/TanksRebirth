@@ -44,7 +44,7 @@ public ref struct PlayerBinds {
 }
 public class PlayerTank : Tank {
 
-    public static int NumLocalPlayers => KbPlayer == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
+    public static int NumLocalPlayers => KbPlayer == -1 ? InputUtils.NumGamepadsConnected + 1 : InputUtils.NumConnectedInputs;
     #region The Rest
 
     // "My" denotes that it's for the client's tank team/tank type
@@ -338,7 +338,7 @@ public class PlayerTank : Tank {
         }
 
         // TODO: somehow i broke something here. why
-        var denyFpsAiming = !Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive;
+        var denyFpsAiming = !Modifiers.IsOn(Modifiers.POV) || LevelEditorUI.IsActive || MainMenuUI.IsActive;
         if (denyFpsAiming) {
             var mouseIndex = KbPlayer == -2 ? 0 : PlayerId;
             //int padIndex = GamepadIndex;
@@ -516,7 +516,7 @@ public class PlayerTank : Tank {
             DesiredDirection.X = 1;
         }
 
-        if (Modifiers.Map[Modifiers.POV])
+        if (Modifiers.IsOn(Modifiers.POV))
             DesiredDirection = DesiredDirection.RotatedBy(-TurretRotation + MathHelper.Pi);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {

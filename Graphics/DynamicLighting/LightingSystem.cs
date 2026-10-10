@@ -3,13 +3,14 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using TanksRebirth.GameContent;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
 /// <summary>
-/// Plug and play dynamic lighting for MonoGame 3.8 (DesktopGL / Shader Model 3).
+/// Tanks Rebirth's full lighting system.
 /// </summary>
 /// <remarks>
 /// <para>How it works:</para>
@@ -23,14 +24,9 @@ namespace TanksRebirth.Graphics.DynamicLighting;
 /// <item>The light buffer is multiplied onto the finished frame (2x modulate, so lights can also over-brighten),
 /// and the optional sun shafts are added on top.</item>
 /// </list>
-/// <para>Everything uses <see cref="SurfaceFormat.Color"/> render targets no larger than 2048 and vs_3_0 / ps_3_0
-/// shaders, so it works with the Reach profile on DesktopGL.</para>
+/// <para>Everything uses <see cref="SurfaceFormat.Color"/> render targets no larger than 2048.</para>
 /// </remarks>
 public static class LightingSystem {
-    // =============================================================================================
-    //  public settings
-    // =============================================================================================
-
     /// <summary>
     /// Master switch (the "dynamic lighting on/off" option). When false nothing is captured or drawn and the game
     /// looks exactly as it did without this system. Call <see cref="Unload"/> as well to free the video memory.
@@ -45,7 +41,7 @@ public static class LightingSystem {
     /// <summary>Whether lighting is drawn this frame.</summary>
     public static bool IsActive => Enabled && !Suspended && IsAvailable;
 
-    /// <summary>Performance limits (shadow resolutions, light counts, shafts...). See <see cref="LightingQuality"/>.</summary>
+    /// <summary>Performance limits. See <see cref="LightingQuality"/>.</summary>
     public static LightingQuality Quality = new();
 
     public static readonly AmbientLight Ambient = new();
@@ -71,20 +67,16 @@ public static class LightingSystem {
     /// <summary>Draws with a lower alpha than this are treated as transparent and ignored.</summary>
     public static float AlphaCutoff = 0.95f;
 
-    /// <summary>
-    /// Invisible solid boxes that block the sun (they are only drawn into the sun's shadow maps). Use them to seal
-    /// gaps in level geometry, like the seams where walls meet the ceiling, that would let thin lines of sunlight through.
-    /// </summary>
+    // invisible solid boxes that block the sun and affect the sun's shadow maps
     public static readonly List<BoundingBox> SunBlockers = [];
     /// <summary>Light buffer value where nothing was captured (the background). 1 = untouched.</summary>
     public static float BackgroundLight = 1f;
     /// <summary>Noise added to the light buffer to hide 8 bit banding in dark scenes.</summary>
     public static float Dither = 1.5f / 255f;
-    /// <summary>0..1, the part of the screen (from the left) shown without lighting, for before / after comparisons.</summary>
-    public static float SplitScreen;
 
-    /// <summary>Optional logger (defaults to the console).</summary>
-    public static Action<string> Log = Console.WriteLine;
+    public static bool ScreenSplitEnabled;
+    /// <summary>Splits the lighting from left to right, 0 to 1.</summary>
+    public static float ScreenSplitPercent;
 
     /// <summary>Numbers from the last rendered frame.</summary>
     public static FrameStats Stats { get; private set; }
@@ -382,7 +374,7 @@ public static class LightingSystem {
         }
         catch (Exception e) {
             IsAvailable = false;
-            Log($"[Lighting] Initialization failed, lighting disabled: {e.Message}");
+            TankGame.ClientLog.Write($"[Lighting] Initialization failed, lighting disabled: {e.Message}", LogType.ErrorSilent);
             return false;
         }
     }
@@ -631,7 +623,7 @@ public static class LightingSystem {
             CollectLights?.Invoke();
         }
         catch (Exception e) {
-            Log($"[Lighting] a light/caster callback threw: {e}");
+            TankGame.ClientLog.Write($"[Lighting] a light/caster callback threw: {e}", LogType.ErrorSilent);
         }
         _capturing = false;
 
@@ -652,7 +644,7 @@ public static class LightingSystem {
         catch (Exception e) {
             // never take the game down because of lighting
             IsAvailable = false;
-            Log($"[Lighting] rendering failed, lighting disabled: {e}");
+            TankGame.ClientLog.Write($"[Lighting] rendering failed, lighting disabled: {e}", LogType.ErrorSilent);
         }
         finally {
             _device.SetRenderTarget(target);
@@ -1422,7 +1414,7 @@ public static class LightingSystem {
         _device.SetRenderTarget(target);
         _device.DepthStencilState = DepthStencilState.None;
         _effect.CurrentTechnique = _tComposite;
-        _pSplitPosition?.SetValue(MathHelper.Clamp(SplitScreen, 0f, 1f));
+        _pSplitPosition?.SetValue(MathHelper.Clamp(ScreenSplitPercent, 0f, 1f));
 
         _device.BlendState = _modulate2X;
         _pSourceTexture?.SetValue(_lightBuffer);

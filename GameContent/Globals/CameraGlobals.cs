@@ -115,7 +115,7 @@ public static class CameraGlobals {
             DebugManager.DebugLevel == DebugManager.Id.FreeCamTest ||
             DebugManager.persistFreecam;
 
-        bool isPOV = Modifiers.Map[Modifiers.POV] && !isMainMenu;
+        bool isPOV = Modifiers.IsOn(Modifiers.POV) && !isMainMenu;
 
         if (isMainMenu)
             return CameraMode.MainMenu;

@@ -177,13 +177,13 @@ public sealed class LightingSettings {
             LightingSystem.Unload();
 
         LightingPresets.DayLengthSeconds = MathF.Max(0.1f, DayLengthMinutes) * 60f;
-        LightingShowcase.ShellLights = GameplayLights;
-        LightingShowcase.MineLights = GameplayLights;
-        LightingShowcase.ExplosionLights = GameplayLights;
-        LightingShowcase.RoomCastsShadows = RoomShadows;
+        LightManager.ShellLights = GameplayLights;
+        LightManager.MineLights = GameplayLights;
+        LightManager.ExplosionLights = GameplayLights;
+        LightManager.RoomCastsShadows = RoomShadows;
 
         if (force || LightingPresets.Current != TimeOfDay)
-            LightingShowcase.Apply(TimeOfDay);
+            LightManager.Apply(TimeOfDay);
     }
 
     /// <summary>A copy, so a menu can edit a candidate and only <see cref="Apply"/> it on "Apply" / "OK".</summary>

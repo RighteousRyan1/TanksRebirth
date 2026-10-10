@@ -100,6 +100,11 @@ public static class ModLoader {
     public static ModShell[] ModShells { get; private set; } = [];
     static List<ModShell> _modShells = [];
 
+    // i could PROBABLY make this not miserable and just have this not be a new class per modifier, but the implementation idea is nice for now
+    /// <summary>A mod-agnostic list of modded modifiers.</summary>
+    public static ModModifier[] ModModifiers { get; private set; } = [];
+    static List<ModModifier> _modModifiers = [];
+
     static bool _firstLoad = true;
     /// <summary>The error given from the mod-loading process.</summary>
     public static string Error = string.Empty;
@@ -231,11 +236,17 @@ public static class ModLoader {
             ModShell.unloadOffset += modShellCount;
             content.Shells.Clear();
 
+            foreach (var modifier in _modModifiers.FindAll(modifier => modifier.Mod == mod))
+                modifier.Unload();
+            Modifiers.UnregisterAll(mod);
+
             mod.OnUnload();
             ModRegistry.UnregisterAllConditionsForMod(mod);
             UnloadModContent(mod);
         });
         LoadedMods.Clear();
+        _modModifiers.Clear();
+        ModModifiers = [];
         // for when the unloading process is done.
         ModRegistry.singletonMap.Clear();
         _loadedAlcs.Clear();
@@ -467,6 +478,7 @@ public static class ModLoader {
             ModTanks = [.. _modTanks];
             ModBlocks = [.. _modBlocks];
             ModShells = [.. _modShells];
+            ModModifiers = [.. _modModifiers];
 
             OnFinishModLoading?.Invoke();
         });
@@ -509,6 +521,7 @@ public static class ModLoader {
             var isModTank = type.IsSubclassOf(typeof(ModTank)) && !type.IsAbstract;
             var isModBlock = type.IsSubclassOf(typeof(ModBlock)) && !type.IsAbstract;
             var isModShell = type.IsSubclassOf(typeof(ModShell)) && !type.IsAbstract;
+            var isModModifier = type.IsSubclassOf(typeof(ModModifier)) && !type.IsAbstract;
 
             if (isModTank) {
                 LoadModTank(mod, type);
@@ -518,6 +531,9 @@ public static class ModLoader {
             }
             else if (isModShell) {
                 LoadModShell(mod, type);
+            }
+            else if (isModModifier) {
+                LoadModModifier(mod, type);
             }
         }
     }
@@ -578,6 +594,20 @@ public static class ModLoader {
         modShell.Name.TryAdd(LangCode.English, $"{mod.InternalName}.{shellName}");
         TankGame.MainThreadTasks.Enqueue(modShell.Register);
         TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name[LangCode.English]}'", LogType.Info);
+    }
+    public static void LoadModModifier(TanksMod mod, Type type) {
+        var modModifier = (Activator.CreateInstance(type) as ModModifier)!;
+        modModifier.InternalName = modModifier.GetType().Name;
+        modModifier.Mod = mod;
+
+        _loadingContent = modModifier;
+        _modModifiers.Add(modModifier);
+
+        ModRegistry.singletonMap.Add(type, modModifier);
+
+        // the modifiers menu reads the registry every frame, so register on the main thread
+        TankGame.MainThreadTasks.Enqueue(modModifier.Register);
+        TankGame.ClientLog.Write($"Loaded modded modifier '{modModifier.Key}'", LogType.Info);
     }
     public static int LocateCsprojProperty(string[] contents, string match) {
         return Array.FindIndex(contents, x => {

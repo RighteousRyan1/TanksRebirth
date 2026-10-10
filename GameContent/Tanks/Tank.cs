@@ -330,13 +330,15 @@ public abstract class Tank(bool ignoresRegister) {
         Props.Clear();
     }
     void OnMissionStart() {
+        // should be called after constructor of subclasses runs
+        if (Modifiers.IsOn(Modifiers.FFA))
+            Team = TeamID.NoTeam;
+
         DoInvisibilityGFXandSFX();
     }
     public void DoInvisibilityGFXandSFX() {
         const string invisibleTankSound = "Assets/sounds/tnk_invisible.ogg";
 
-        if (Modifiers.Map[Modifiers.FFA])
-            Team = TeamID.NoTeam;
         if (!Properties.Invisible || IsDestroyed) return;
 
         SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f);
@@ -446,9 +448,9 @@ public abstract class Tank(bool ignoresRegister) {
             //if (cos is Prop2D cos2d)
             //    AddProp2D(cos2d);
 
-        if (Modifiers.Map[Modifiers.TRIPLE_BOUNCE])
+        if (Modifiers.IsOn(Modifiers.TRIPLE_BOUNCE))
             Properties.RicochetCount *= 3;
-        if (Modifiers.Map[Modifiers.MACHINE_GUNS]) {
+        if (Modifiers.IsOn(Modifiers.MACHINE_GUNS)) {
             Properties.ShellCooldown = 5;
             Properties.ShellLimit = 50;
             Properties.ShootStun = 0;
@@ -458,7 +460,7 @@ public abstract class Tank(bool ignoresRegister) {
                 tank.Parameters.DetectionForgivenessHostile *= 2;
         }
 
-        if (Modifiers.Map[Modifiers.SHOTGUNS]) {
+        if (Modifiers.IsOn(Modifiers.SHOTGUNS)) {
             Properties.ShellSpread = 0.15f;
             Properties.ShellShootCount = 3;
             Properties.ShellLimit *= 3;

@@ -133,7 +133,7 @@ public sealed class Mine : IAITankDanger {
     /// Creates a new <see cref="Mine"/>. This method is thread-agnostic.
     /// </summary>
     /// <param name="owner">The <see cref="Tank"/> which owns this <see cref="Mine"/>.</param>
-    /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
+    /// <param name="position">The position of this <see cref="Mine"/> in the game world.</param>
     /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
     /// <param name="explosionRadius">The radius of this <see cref="Mine"/>'s explosion.</param>
     public static Mine Create(Tank? owner, Vector2 position, float detonateTime, float explosionRadius = 1f) {
@@ -143,7 +143,7 @@ public sealed class Mine : IAITankDanger {
     /// <summary>Detonates this <see cref="Mine"/>.</summary>
     public void Detonate() {
         Detonated = true;
-        var scale = ExplosionRadiusInUnits * 0.101f * (Modifiers.Map[Modifiers.BIG_MINES] ? 2 : 1);
+        var scale = ExplosionRadiusInUnits * 0.101f * (Modifiers.IsOn(Modifiers.BIG_MINES) ? 2 : 1);
         var expl = new Explosion(Position, scale, Owner);
 
         if (Owner != null)

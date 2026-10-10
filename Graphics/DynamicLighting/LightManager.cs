@@ -11,37 +11,19 @@ using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
 using Preset = TanksRebirth.Graphics.DynamicLighting.LightingPresets.Preset;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
 /// <summary>
-/// Connects the lighting to Tanks Rebirth: loads the effect, feeds it the room, tanks, shells, mines and explosions,
-/// applies <see cref="LightingSettings.Current"/>, and adds hotkeys and a chat command.
+/// Manages lighting for the lighting system.
 /// </summary>
-/// <remarks>
-/// <para>The pieces, from engine to game:</para>
-/// <list type="bullet">
-/// <item><see cref="LightingSystem"/>, <see cref="Light"/> and friends, <see cref="LightCaptureEffect"/>: the renderer</item>
-/// <item><see cref="LightingQuality"/>: how expensive the renderer may be</item>
-/// <item><see cref="LightingPresets"/>: what the scene looks like (time of day, day cycle, room lamps)</item>
-/// <item><see cref="GameplayLights"/>: what headlights, shells, mines and explosion lights look like</item>
-/// <item><see cref="LightingSettings"/>: the options a graphics menu shows, mapped onto the above</item>
-/// <item>this class: the game glue (game objects, room model, hotkeys, commands)</item>
-/// </list>
-/// <list type="bullet">
-/// <item>F7 - cycle presets through the day (Sunrise ... Midnight, Blackout, DayCycle, Off)</item>
-/// <item>F8 - before / after split screen (left half = original)</item>
-/// <item>/lighting [preset name|off|split|stats]</item>
-/// <item>/lighting cycle, /lighting time [hour], /lighting daylength [minutes], /lighting pause - the 24 hour day cycle</item>
-/// </list>
-/// </remarks>
-public static class LightingShowcase {
+public static class LightManager {
     public static bool ShellLights = true;
     public static bool ExplosionLights = true;
     public static bool MineLights = true;
 
-    // allow this to be a config
     /// <summary>Lets the room (walls, window frames, curtains...) cast sun shadows even when it's off screen.</summary>
     public static bool RoomCastsShadows {
         get => _roomCastsShadows;
@@ -65,8 +47,6 @@ public static class LightingShowcase {
         if (_initialized)
             return;
         _initialized = true;
-
-        LightingSystem.Log = message => TankGame.ClientLog.Write(message, LogType.Warn);
 
         Effect effect;
         try {
@@ -99,7 +79,7 @@ public static class LightingShowcase {
         LightingPresets.PresetChanged += preset => LightingSettings.Current.TimeOfDay = preset;
         LightingSettings.Current.Apply(force: true);
 
-        TankGame.ClientLog.Write("[Lighting] Dynamic lighting ready. F7 = cycle presets, F8 = before/after split.", LogType.Info);
+        TankGame.ClientLog.Write("Lighting system loaded.", LogType.Info);
     }
 
     public static void Apply(Preset preset) {
@@ -108,7 +88,7 @@ public static class LightingShowcase {
 
     public static void Cycle() {
         Apply(LightingPresets.Next(Current));
-        ChatSystem.SendMessage($"Lighting: {Current}", Color.Gold);
+        TankGame.IngameConsole.Log($"Lighting: {Current}", Color.Gold);
     }
 
     /// <summary>Hotkeys and animation. Call from the game's Update.</summary>
@@ -116,11 +96,12 @@ public static class LightingShowcase {
         if (!_initialized)
             return;
 
+        // allow only if debug mode is on
         if (InputUtils.KeyJustPressed(Keys.F7))
             Cycle();
-        if (InputUtils.KeyJustPressed(Keys.F8)) {
-            LightingSystem.SplitScreen = LightingSystem.SplitScreen > 0f ? 0f : 0.5f;
-            ChatSystem.SendMessage(LightingSystem.SplitScreen > 0f ? "Lighting: split view (left = original)" : "Lighting: split view off", Color.Gold);
+
+        if (LightingSystem.ScreenSplitEnabled) {
+            LightingSystem.ScreenSplitPercent = MathHelper.Clamp(MouseUtils.Test.X, 0, 1);
         }
 
         // the day cycle preset advances its clock here
@@ -266,7 +247,10 @@ public static class LightingShowcase {
                         Cycle();
                         return;
                     case "split":
-                        LightingSystem.SplitScreen = LightingSystem.SplitScreen > 0f ? 0f : 0.5f;
+                        LightingSystem.ScreenSplitEnabled = !LightingSystem.ScreenSplitEnabled;
+                        if (!LightingSystem.ScreenSplitEnabled)
+                            LightingSystem.ScreenSplitPercent = 0;
+                        TankGame.PlayerMice[0].ShouldRender = !LightingSystem.ScreenSplitEnabled;
                         break;
                     case "stats":
                         TankGame.IngameConsole.Log(LightingSystem.Stats.ToString(), Color.Gold);
@@ -283,7 +267,7 @@ public static class LightingShowcase {
                         break;
                 }
                 var extra = Current == Preset.DayCycle ? $" ({LightingPresets.HourText}, a day lasts {LightingPresets.DayLengthSeconds / 60f:0.#} min)" : string.Empty;
-                ChatSystem.SendMessage($"Lighting: {Current}{extra}" + (LightingSystem.SplitScreen > 0f ? " (split view)" : string.Empty), Color.Gold);
+                ChatSystem.SendMessage($"Lighting: {Current}{extra}" + (LightingSystem.ScreenSplitPercent > 0f ? " (split view)" : string.Empty), Color.Gold);
             });
     }
 }

@@ -7,7 +7,7 @@ namespace TanksRebirth.Graphics.DynamicLighting;
 
 /// <summary>
 /// The look of the lights that follow gameplay objects (headlights, shells, mines, explosions). Takes plain
-/// positions so it doesn't depend on game types; <see cref="LightingShowcase"/> feeds it the actual tanks and shells.
+/// positions so it doesn't depend on game types; <see cref="LightManager"/> feeds it the actual tanks and shells.
 /// Brightness follows the current preset through <see cref="LightingPresets.DynamicBrightness"/>.
 /// </summary>
 /// <remarks>Lights are pooled and reused every frame, so adding them doesn't allocate.</remarks>
@@ -36,9 +36,9 @@ public static class GameplayLights {
         head.Direction = forward3 + new Vector3(0f, -0.32f, 0f);
         head.Color = new Color(255, 236, 196);
         head.Intensity = 1.7f * Brightness;
-        head.Range = 340f;
-        head.InnerAngle = MathHelper.ToRadians(5f);
-        head.OuterAngle = MathHelper.ToRadians(50f);
+        head.Range = 200f;
+        head.InnerAngle = MathHelper.ToRadians(10f);
+        head.OuterAngle = MathHelper.ToRadians(40f);
         head.CastsShadows = true;
         head.Priority = isLocalPlayer ? 10 : 8;
         LightingSystem.AddFrameLight(head);

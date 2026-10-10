@@ -133,7 +133,7 @@ public static class AIManager {
 
                 aiParams.BaseXP = 0.035f;
 
-                if (Modifiers.Map[Modifiers.MINE_SPAM]) {
+                if (Modifiers.IsOn(Modifiers.MINE_SPAM)) {
                     aiParams.ChanceMineLay = 1f;
                     aiParams.AwarenessHostileMine = 0;
                 }
@@ -616,7 +616,7 @@ public static class AIManager {
                 properties.ShellHoming = new();
                 properties.TreadPitch = 0.085f;
 
-                if (Modifiers.Map[Modifiers.MINE_SPAM]) {
+                if (Modifiers.IsOn(Modifiers.MINE_SPAM)) {
                     properties.Resistance |= ResistanceFlags.Explosions;
                     properties.MineCooldown = 10;
                     properties.MineLimit = 20;

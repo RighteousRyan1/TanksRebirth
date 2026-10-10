@@ -138,7 +138,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
 
     // 36, 18 respectively for normal size
     /// <summary>The total height of a <see cref="Block"/> when its stack is <see cref="MAX_BLOCK_HEIGHT"/>.</summary>
-    public const float FULL_SIZE = 89.28f; // 100.8 = 0.7 | 86.4 = 0.6
+    public const float FULL_SIZE = 89.6f; // 100.8 = 0.7 | 86.4 = 0.6
 
     // 141 for normal
 
