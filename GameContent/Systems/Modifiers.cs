@@ -329,7 +329,7 @@ public record Modifiers {
 
             var newTemplate = t;
 
-            newTemplate.AiTier = Server.RandomFor(Server.RandomKey.ENEMY_TIER, missionId, i).Next(RandomTanksLower, RandomTanksUpper + 1);
+            newTemplate.AIType = Server.RandomFor(Server.RandomKey.ENEMY_TIER, missionId, i).Next(RandomTanksLower, RandomTanksUpper + 1);
             tanks[i] = newTemplate;
         }
         return tanks;

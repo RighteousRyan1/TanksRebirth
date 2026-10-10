@@ -477,7 +477,7 @@ public class Campaign {
 
             if (!tnk.IsPlayer)
             {
-                tnk.AiTier = TankTier.Random;
+                tnk.AIType = TankTier.Random;
                 tnk.RandomizeRange = new();
             }
         }

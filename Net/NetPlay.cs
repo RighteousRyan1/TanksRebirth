@@ -215,7 +215,7 @@ public static class NetPlay {
                         if (tmp.IsPlayer)
                             tmp.PlayerType = typeOrTier;
                         else
-                            tmp.AiTier = typeOrTier;
+                            tmp.AIType = typeOrTier;
 
                         tankTotal.Add(tmp);
                     }

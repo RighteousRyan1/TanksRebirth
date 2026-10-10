@@ -40,10 +40,10 @@ public static class DifficultyAlgorithm {
         foreach (var tank in mission.Tanks) {
             if (tank.IsPlayer) continue;
 
-            //if (!tankCounts.TryGetValue(tank.AiTier, out int value)) tankCounts.Add(tank.AiTier, 1);
-            //else tankCounts[tank.AiTier] = ++value;
+            //if (!tankCounts.TryGetValue(tank.AIType, out int value)) tankCounts.Add(tank.AIType, 1);
+            //else tankCounts[tank.AIType] = ++value;
 
-            difficulty += TankDiffs[tank.AiTier];
+            difficulty += TankDiffs[tank.AIType];
         }
 
         foreach (var block in mission.Blocks) {

@@ -171,7 +171,7 @@ public class Crate {
         IsOpening = true;
 
         if (ContainsTank) {
-            var tier = TankToSpawn.AiTier;
+            var tier = TankToSpawn.AIType;
             if (Modifiers.IsOn(Modifiers.MASTER))
                 tier = Modifiers.VanillaToMasterModeConversions[tier];
             var t = new AITank(tier);

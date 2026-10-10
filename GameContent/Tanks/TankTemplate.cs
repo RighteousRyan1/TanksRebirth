@@ -13,7 +13,7 @@ public struct TankTemplate {
     /// <summary>If false, the template will contain data for an AI tank.</summary>
     public bool IsPlayer;
 
-    public int AiTier;
+    public int AIType;
     public int PlayerType;
 
     public Vector2 Position;
@@ -35,7 +35,7 @@ public struct TankTemplate {
         if (IsPlayer)
             throw new Exception($"{nameof(IsPlayer)} is true. This method cannot execute.");
 
-        var ai = new AITank(AiTier);
+        var ai = new AITank(AIType);
         ai.Physics.Position = Position / Tank.UNITS_PER_METER;
         ai.Position = Position;
         ai.ChassisRotation = Rotation;

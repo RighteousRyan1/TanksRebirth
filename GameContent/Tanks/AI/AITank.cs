@@ -283,7 +283,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         };
 
         aiDeathMark.StoredTank = new TankTemplate {
-            AiTier = AiTankType,
+            AIType = AiTankType,
             IsPlayer = false,
             Position = aiDeathMark.Position.FlattenZ(),
             Rotation = ChassisRotation,

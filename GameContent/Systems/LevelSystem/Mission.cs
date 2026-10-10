@@ -60,7 +60,7 @@ public record struct Mission {
                 if (tmp.IsPlayer)
                     tmp.PlayerType = (tank as PlayerTank).PlayerType;
                 else
-                    tmp.AiTier = (tank as AITank).AiTankType;
+                    tmp.AIType = (tank as AITank).AiTankType;
 
                 tanks.Add(tmp);
             }
@@ -200,7 +200,7 @@ public record struct Mission {
             writer.Write(template.Rotation);
 
             // THEORETICALLY if mods add 255 tank types then this is cooked
-            writer.Write((byte)template.AiTier);
+            writer.Write((byte)template.AIType);
             writer.Write((byte)template.PlayerType);
             writer.Write((byte)template.Team);
         }
@@ -305,7 +305,7 @@ public record struct Mission {
                 IsPlayer = isPlayer,
                 Position = new(x, y),
                 Rotation = rotation,
-                AiTier = tier,
+                AIType = tier,
                 PlayerType = pType,
                 Team = team
             });
@@ -354,7 +354,7 @@ public record struct Mission {
                 IsPlayer = isPlayer,
                 Position = new(x, y),
                 Rotation = rotation,
-                AiTier = tier,
+                AIType = tier,
                 PlayerType = pType,
                 Team = team
             });
@@ -402,7 +402,7 @@ public record struct Mission {
                 IsPlayer = isPlayer,
                 Position = new(x, y),
                 Rotation = rotation,
-                AiTier = tier,
+                AIType = tier,
                 PlayerType = pType,
                 Team = team
             });
@@ -452,7 +452,7 @@ public record struct Mission {
                 IsPlayer = isPlayer,
                 Position = new(x, y),
                 Rotation = rotation,
-                AiTier = tier,
+                AIType = tier,
                 PlayerType = pType,
                 Team = team
             });

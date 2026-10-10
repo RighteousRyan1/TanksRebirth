@@ -648,7 +648,7 @@ public static class DebugManager {
         var drop = Crate.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
         drop.Scale = 1.25f;
         drop.TankToSpawn = new TankTemplate() {
-            AiTier = TankID.ClientRandomTier(),
+            AIType = TankID.ClientRandomTier(),
             Team = TeamID.NoTeam
         };
     }

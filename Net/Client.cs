@@ -314,7 +314,7 @@ public class Client {
     ///     Then sends each: Block Count, Owner Count, Mission Name, Mission Note <para></para>
     ///         Then sends each: Mission Block (Position, Type, Stack, TpLink) <para></para>
     ///             Finally, sends each: Mission TankTemplate (Position, Rotation, IsPlayer, Team)
-    ///             if IsPlayer is true, send PlayerType, otherwise send AiTier
+    ///             if IsPlayer is true, send PlayerType, otherwise send AIType
     /// 
     /// </summary>
     /// <param name="campaign">The campaign to send.</param>
@@ -353,7 +353,7 @@ public class Client {
                 if (tank.IsPlayer)
                     message.Put(tank.PlayerType);
                 else
-                    message.Put(tank.AiTier);
+                    message.Put(tank.AIType);
             }
         }
 
