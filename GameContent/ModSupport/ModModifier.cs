@@ -27,7 +27,7 @@ public abstract class ModModifier : ILoadable, IModContent {
     public virtual string Category => Mod.InternalName;
 
     public virtual ModifierKind Kind => ModifierKind.Toggle;
-    /// <summary>The "off" value, and what Reset All and middle click go back to.</summary>
+    /// <summary>The "off" value, and what MakeSeekable All and middle click go back to.</summary>
     public virtual int Default => 0;
     /// <summary>The lowest value of a <see cref="ModifierKind.Number"/> modifier.</summary>
     public virtual int Min => 0;

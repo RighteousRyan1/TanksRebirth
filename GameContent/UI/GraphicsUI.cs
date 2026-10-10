@@ -16,7 +16,7 @@ namespace TanksRebirth.GameContent.UI;
 
 /// <summary>
 /// The Video page of the settings window (<see cref="SettingsUI.Video"/>): a "Display" column and a "Dynamic StaticLighting"
-/// column of option rows, and Apply / Reset buttons.
+/// column of option rows, and Apply / MakeSeekable buttons.
 /// </summary>
 /// <remarks>
 /// Every row is a <see cref="SettingRow"/>: left click picks the next value, right click the previous one.

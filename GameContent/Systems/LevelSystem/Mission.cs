@@ -132,94 +132,16 @@ public record struct Mission {
         }
     }
 
-    /// <summary>
-    /// Saves a mission as a <c>.mission</c> file for reading later.
-    /// </summary>
-    /// <param name="path">The path to where the mission will be stored.</param>
+    /// <summary>Saves this mission as a gzipped JSON <c>.mission</c> file.</summary>
     public readonly void Save(string path) {
         if (Path.GetExtension(path) == string.Empty)
             path += ".mission";
 
-        using var writer = new BinaryWriter(File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite));
+        var existed = File.Exists(path);
+        LevelFiles.WriteMission(path, this);
 
-        WriteToStream(writer);
-
-        if (File.Exists(path)) {
-            TankGame.ClientLog.Write($"Overwrote \"{Name}.mission\" in map save path.", LogType.Info);
-            return;
-        }
-        TankGame.ClientLog.Write($"Saved mission file \"{Name}.mission\" in map save path.", LogType.Info);
-    }
-
-    // TODO: write is bonus mission to stream
-    public readonly void WriteToStream(BinaryWriter writer) {
-        /* File Order / Format
-         * 1) File Header (TANK in ASCII) (byte[])
-         * 2) Level Editor version (to check if older levels might cause anomalies!)
-         * 3) Name (string)
-         * 4) GrantsBonusLife (bool)
-         *
-         * 5) Total Tanks Used (int)
-         *
-         * 6) Storing of Tanks (their respective templates)
-         *  - IsPlayer (bool)
-         *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
-         *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
-         *  - Facing (byte) (VERSION 6 or GREATER, was Rotation (float))
-         *  - AiType (byte) - should be as default if it's a player.
-         *  - PlayerType (byte) - should be as default if it's an AI.
-         *  - Team (byte)
-         *
-         * 7) Total Blocks Used (int)
-         *
-         * 8) Storing of Blocks (their respective templates)
-         *  - Type (byte)
-         *  - Stack (sbyte)
-         *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
-         *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
-         *  - TpLink (sbyte) (VERSION 2 or GREATER)
-         *
-         *  9) Extras
-         *   - Note (string) (NOT IMPLEMENTED YET)
-         */
-
-        writer.Write(LevelEditorUI.LevelFileHeader);
-        writer.Write(LevelEditorUI.EDITOR_VERSION);
-        writer.Write(Name);
-        writer.Write(GrantsExtraLife);
-
-        int totalTanks = Tanks.Length;
-        writer.Write(totalTanks);
-
-        for (int i = 0; i < totalTanks; i++) {
-            var template = Tanks[i];
-
-            var tankCell = MapGrid.Current.WorldToCell(template.Position);
-
-            writer.Write(template.IsPlayer);
-            writer.Write((byte)tankCell.X);
-            writer.Write((byte)tankCell.Y);
-            writer.Write((byte)template.Facing);
-
-            // THEORETICALLY if mods add 255 tank types then this is cooked
-            writer.Write((byte)template.AIType);
-            writer.Write((byte)template.PlayerType);
-            writer.Write((byte)template.Team);
-        }
-
-        int totalBlocks = Blocks.Length;
-        writer.Write(totalBlocks);
-        for (int i = 0; i < totalBlocks; i++) {
-            var temp = Blocks[i];
-            var blockCell = MapGrid.Current.WorldToCell(temp.Position);
-
-            writer.Write((byte)temp.Type);
-            writer.Write(temp.Stack);
-            writer.Write((byte)blockCell.X);
-            writer.Write((byte)blockCell.Y);
-            writer.Write(temp.TpLink);
-        }
-        ChatSystem.SendMessage($"Saved mission with {totalTanks} tank(s) and {totalBlocks} block(s).", Color.Lime);
+        TankGame.ClientLog.Write($"{(existed ? "Overwrote" : "Saved")} mission file \"{Name}.mission\".", LogType.Info);
+        TankGame.ClientLog.Write($"Saved mission with {Tanks.Length} tank(s) and {Blocks.Length} block(s).", LogType.Info);
     }
 
     /// <summary>
@@ -244,15 +166,18 @@ public record struct Mission {
             return default;
         }
 
-        using var reader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read));
+        using var stream = File.Open(path, FileMode.Open, FileAccess.Read);
 
         // ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Magenta);
 
-        return Read(reader);
+        return Read(stream);
     }
 
+    /// <summary>Reads a mission in any format. JSON and gzipped JSON are read directly and binary files go to the legacy loaders.</summary>
+    public static Mission Read(Stream stream) => LevelFiles.ReadMission(stream);
+
     /// <summary>
-    /// Reads from the current position in the <paramref name="reader"/>'s stream and returns the mission.
+    /// Reads a binary mission (versions 1 to 6) from the current position in the <paramref name="reader"/>'s stream.
     /// </summary>
     /// <param name="reader">The <see cref="BinaryReader"/> that is accessed.</param>
     /// <returns>The read mission data.</returns>
@@ -265,21 +190,49 @@ public record struct Mission {
 
         var version = reader.ReadInt32();
 
-        //if (version != LevelEditorUI.EDITOR_VERSION)
-        //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
         return version switch {
             1 => LoadMissionV2(reader),
             2 => LoadMissionV2(reader),
             3 => LoadMissionV3(reader),
             4 => LoadMissionV4(reader),
             5 => LoadMissionV5(reader),
-            6 => LoadMissionV6(reader),
-            _ => throw new Exception("This is not supposed to happen."),
+            _ => throw new FileLoadException($"This mission was saved with a newer version of the level editor ({version})."),
         };
     }
 
     // methods of loading mission data
     // preceding numbers represent the version of the editor the level was saved with
+
+    // the binary layout these used to read. only for backwards compatibility. probably at some point these methods will be removed. how many people have truly used the level editor?
+    /* File Order / Format
+     * 1) File Header (TANK in ASCII) (byte[])
+     * 2) Level Editor version (to check if older levels might cause anomalies!)
+     * 3) Name (string)
+     * 4) GrantsBonusLife (bool)
+     *
+     * 5) Total Tanks Used (int)
+     *
+     * 6) Storing of Tanks (their respective templates)
+     *  - IsPlayer (bool)
+     *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
+     *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
+     *  - Facing (byte) (VERSION 6 or GREATER, was Rotation (float))
+     *  - AiType (byte) - should be as default if it's a player.
+     *  - PlayerType (byte) - should be as default if it's an AI.
+     *  - Team (byte)
+     *
+     * 7) Total Blocks Used (int)
+     *
+     * 8) Storing of Blocks (their respective templates)
+     *  - Type (byte)
+     *  - Stack (sbyte)
+     *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
+     *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
+     *  - TpLink (sbyte) (VERSION 2 or GREATER)
+     *
+     *  9) Extras
+     *   - Note (string) (NOT IMPLEMENTED YET)
+     */
 
     // this exists solely to port from older versions (< 5) to the version where the center is actually at (0, 0)
     const float ADJUST_FOR_CENTER = 131f;
@@ -476,56 +429,6 @@ public record struct Mission {
                 Type = type,
                 Stack = stack,
                 Position = new(x, y),
-                TpLink = link
-            });
-        }
-
-        return new Mission([.. tanks], [.. blocks]) {
-            Name = name,
-            GrantsExtraLife = grantsLife
-        };
-    }
-
-    public static Mission LoadMissionV6(BinaryReader reader) {
-        List<TankTemplate> tanks = [];
-        List<BlockTemplate> blocks = [];
-        var name = reader.ReadString();
-        var grantsLife = reader.ReadBoolean();
-
-        var totalTanks = reader.ReadInt32();
-
-        for (int i = 0; i < totalTanks; i++) {
-            var isPlayer = reader.ReadBoolean();
-            var x = reader.ReadByte();
-            var y = reader.ReadByte();
-            var facing = (Facing)reader.ReadByte();
-            var tier = reader.ReadByte();
-            var pType = reader.ReadByte();
-            var team = reader.ReadByte();
-
-            tanks.Add(new() {
-                IsPlayer = isPlayer,
-                Position = MapGrid.Current.CellToWorld(x, y),
-                Rotation = facing.ToRotation(),
-                AIType = tier,
-                PlayerType = pType,
-                Team = team
-            });
-        }
-
-        var totalBlocks = reader.ReadInt32();
-
-        for (int i = 0; i < totalBlocks; i++) {
-            var type = reader.ReadByte();
-            var stack = reader.ReadByte();
-            var x = reader.ReadByte();
-            var y = reader.ReadByte();
-            var link = reader.ReadByte();
-
-            blocks.Add(new() {
-                Type = type,
-                Stack = stack,
-                Position = MapGrid.Current.CellToWorld(x, y),
                 TpLink = link
             });
         }

@@ -321,39 +321,25 @@ public class Campaign {
     /// <param name="fileName"></param>
     /// <param name="campaign"></param>
     public static void Save(string fileName, Campaign campaign) {
-        var endsWith = fileName.EndsWith(".campaign");
-        var newFileName = endsWith ? fileName : fileName + ".campaign";
-        using var writer = new BinaryWriter(File.Open(newFileName, FileMode.OpenOrCreate));
+        var newFileName = fileName.EndsWith(".campaign") ? fileName : fileName + ".campaign";
+        LevelFiles.WriteCampaign(newFileName, campaign);
 
-        writer.Write(LevelEditorUI.LevelFileHeader);
-        writer.Write(LevelEditorUI.EDITOR_VERSION);
-
-        int totalMissions = campaign.CachedMissions.Count(m => m != default);
-        writer.Write(totalMissions);
-
-        writer.Write(campaign.MetaData.Name);
-        writer.Write(campaign.MetaData.Description);
-        writer.Write(campaign.MetaData.Author);
-        writer.Write(campaign.MetaData.Tags.Length);
-
-        Array.ForEach(campaign.MetaData.Tags, writer.Write);
-        writer.Write(campaign.MetaData.StartingLives);
-
-        writer.Write(campaign.MetaData.Version);
-        writer.Write(campaign.MetaData.HasMajorVictory);
-        writer.Write(campaign.MetaData.MissionStripColor);
-        writer.Write(campaign.MetaData.BackgroundColor);
-
-        for (int i = 0; i < totalMissions; i++)
-            campaign.CachedMissions[i].WriteToStream(writer);
-
-        ChatSystem.SendMessage($"Saved campaign with {totalMissions} missions.", Color.Lime);
+        TankGame.ClientLog.Write($"Saved campaign with {campaign.CachedMissions.Count(m => m != default)} missions.", LogType.Info);
     }
 
     public static Campaign Load(string fileName) {
-        Campaign campaign = new();
+        using var stream = File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read);
 
-        using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
+        var campaign = LevelFiles.ReadCampaign(stream);
+        if (campaign is not null)
+            return campaign;
+
+        return LoadLegacy(new BinaryReader(stream), fileName);
+    }
+
+    /// <summary>Loads a campaign saved in the binary format used before version 7.</summary>
+    static Campaign LoadLegacy(BinaryReader reader, string fileName) {
+        Campaign campaign = new();
 
         var header = reader.ReadBytes(4);
         if (!header.SequenceEqual(LevelEditorUI.LevelFileHeader))
@@ -413,6 +399,8 @@ public class Campaign {
                 campaign.CachedMissions[i] = Mission.Read(reader);
             }
         }
+        else
+            throw new FileLoadException($"This campaign was saved with a newer version of the level editor ({editorVersion}). File name = \"{fileName}\"");
         return campaign;
     }
     /// <summary>The metadata for any given campaign.</summary>

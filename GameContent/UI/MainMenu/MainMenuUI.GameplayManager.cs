@@ -59,9 +59,9 @@ public static partial class MainMenuUI {
                 var bytes = WebUtils.DownloadWebFile(linkTry, out var name1, out var status);
 
                 if (status == System.Net.HttpStatusCode.OK) {
-                    using var reader1 = new BinaryReader(new MemoryStream(bytes));
+                    using var stream1 = new MemoryStream(bytes);
 
-                    _cachedMissions.Add(Mission.Read(reader1));
+                    _cachedMissions.Add(Mission.Read(stream1));
                     attempt++;
                     goto tryAgain;
                 }

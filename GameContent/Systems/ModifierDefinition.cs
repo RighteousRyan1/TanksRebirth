@@ -44,7 +44,7 @@ public sealed class ModifierDefinition {
     /// <summary>The section it's listed under (see <see cref="ModifierCategory"/>).</summary>
     public string Category { get; init; } = ModifierCategory.Other;
 
-    /// <summary>The "off" value, and what Reset All and middle click go back to.</summary>
+    /// <summary>The "off" value, and what MakeSeekable All and middle click go back to.</summary>
     public int Default { get; init; }
     public int Min { get; init; }
     public int Max { get; init; } = 1;
