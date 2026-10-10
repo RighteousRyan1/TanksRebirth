@@ -35,7 +35,7 @@ public static class ModelGlobals {
     public static Resource<Model> BlockStackAlt = new(PathGlobals.SCENE_PATH, "block_stack_alt");
 
     public static Resource<Model> GameBoundarySnowy = new(PathGlobals.CHRISTMAS_PATH, "outer_bounds_snowy");
-    public static Resource<Model> BlockStackSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_alt_snowy");
+    public static Resource<Model> BlockStackSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_snowy");
     public static Resource<Model> BlockStackAltSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_alt_snowy");
 
     // room scene models

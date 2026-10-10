@@ -433,7 +433,7 @@ public static class IntermissionSystem {
 
         device.SetRenderTarget(BackgroundBuffer);
 
-        device.Clear(RenderGlobals.BackBufferColor);
+        device.Clear(Color.Transparent);
 
         spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
 
@@ -516,7 +516,7 @@ public static class IntermissionSystem {
 
         device.SetRenderTarget(BannerBuffer);
 
-        device.Clear(RenderGlobals.BackBufferColor);
+        device.Clear(Color.Transparent);
 
         spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
 
@@ -602,7 +602,7 @@ public static class IntermissionSystem {
 
         device.SetRenderTarget(BonusBannerBuffer);
 
-        device.Clear(RenderGlobals.BackBufferColor);
+        device.Clear(Color.Transparent);
 
         // magical ass calculations
         // idk how to center it...
@@ -621,7 +621,7 @@ public static class IntermissionSystem {
 
         device.SetRenderTarget(BonusBannerTextBuffer);
 
-        device.Clear(RenderGlobals.BackBufferColor);
+        device.Clear(Color.Transparent);
 
         spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer, blendState: BlendState.NonPremultiplied);
 

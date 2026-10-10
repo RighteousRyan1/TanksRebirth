@@ -221,7 +221,7 @@ public static partial class MainMenuUI
 
         device.SetRenderTarget(TextTarget);
 
-        device.Clear(RenderGlobals.BackBufferColor);
+        device.Clear(Color.Transparent);
 
         if (MenuState == UIState.PrimaryMenu) {
 

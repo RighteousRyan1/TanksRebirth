@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
@@ -368,15 +369,28 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
 
     public void OnPreRender() { }
 
-    // somethind buhhstid with snowy block models
+    // i have to add this so snowy block models aren't doing a dun goof... but allows multiple bone support on blocks, in case there's ever custom blocks that do that fun jazz
+    // essentially allows the block's meshes to be drawn at its bone's trasnforms
+    static readonly Dictionary<Model, Matrix[]> _boneTransforms = [];
+
+    static Matrix[] GetBoneTransforms(Model model) {
+        if (!_boneTransforms.TryGetValue(model, out var bones)) {
+            bones = new Matrix[model.Bones.Count];
+            model.CopyAbsoluteBoneTransformsTo(bones);
+            _boneTransforms[model] = bones;
+        }
+        return bones;
+    }
+
     public void OnRender() {
         Projection = CameraGlobals.GameProjection;
         View = CameraGlobals.GameView;
         World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
+        var bones = GetBoneTransforms(Model);
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         foreach (var mesh in Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = World;
+                effect.World = bones[mesh.ParentBone.Index] * World;
                 effect.View = View;
                 effect.Projection = Projection;
 
