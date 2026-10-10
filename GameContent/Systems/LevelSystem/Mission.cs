@@ -163,9 +163,9 @@ public record struct Mission {
          *
          * 6) Storing of Tanks (their respective templates)
          *  - IsPlayer (bool)
-         *  - X (float)
-         *  - Y (float)
-         *  - Rotation (float)
+         *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
+         *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
+         *  - Facing (byte) (VERSION 6 or GREATER, was Rotation (float))
          *  - AiType (byte) - should be as default if it's a player.
          *  - PlayerType (byte) - should be as default if it's an AI.
          *  - Team (byte)
@@ -175,8 +175,8 @@ public record struct Mission {
          * 8) Storing of Blocks (their respective templates)
          *  - Type (byte)
          *  - Stack (sbyte)
-         *  - X (float)
-         *  - Y (float)
+         *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
+         *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
          *  - TpLink (sbyte) (VERSION 2 or GREATER)
          *
          *  9) Extras
@@ -194,10 +194,12 @@ public record struct Mission {
         for (int i = 0; i < totalTanks; i++) {
             var template = Tanks[i];
 
+            var tankCell = MapGrid.Current.WorldToCell(template.Position);
+
             writer.Write(template.IsPlayer);
-            writer.Write(template.Position.X);
-            writer.Write(template.Position.Y);
-            writer.Write(template.Rotation);
+            writer.Write((byte)tankCell.X);
+            writer.Write((byte)tankCell.Y);
+            writer.Write((byte)template.Facing);
 
             // THEORETICALLY if mods add 255 tank types then this is cooked
             writer.Write((byte)template.AIType);
@@ -209,10 +211,12 @@ public record struct Mission {
         writer.Write(totalBlocks);
         for (int i = 0; i < totalBlocks; i++) {
             var temp = Blocks[i];
+            var blockCell = MapGrid.Current.WorldToCell(temp.Position);
+
             writer.Write((byte)temp.Type);
             writer.Write(temp.Stack);
-            writer.Write(temp.Position.X);
-            writer.Write(temp.Position.Y);
+            writer.Write((byte)blockCell.X);
+            writer.Write((byte)blockCell.Y);
             writer.Write(temp.TpLink);
         }
         ChatSystem.SendMessage($"Saved mission with {totalTanks} tank(s) and {totalBlocks} block(s).", Color.Lime);
@@ -269,6 +273,7 @@ public record struct Mission {
             3 => LoadMissionV3(reader),
             4 => LoadMissionV4(reader),
             5 => LoadMissionV5(reader),
+            6 => LoadMissionV6(reader),
             _ => throw new Exception("This is not supposed to happen."),
         };
     }
@@ -471,6 +476,56 @@ public record struct Mission {
                 Type = type,
                 Stack = stack,
                 Position = new(x, y),
+                TpLink = link
+            });
+        }
+
+        return new Mission([.. tanks], [.. blocks]) {
+            Name = name,
+            GrantsExtraLife = grantsLife
+        };
+    }
+
+    public static Mission LoadMissionV6(BinaryReader reader) {
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+        var name = reader.ReadString();
+        var grantsLife = reader.ReadBoolean();
+
+        var totalTanks = reader.ReadInt32();
+
+        for (int i = 0; i < totalTanks; i++) {
+            var isPlayer = reader.ReadBoolean();
+            var x = reader.ReadByte();
+            var y = reader.ReadByte();
+            var facing = (Facing)reader.ReadByte();
+            var tier = reader.ReadByte();
+            var pType = reader.ReadByte();
+            var team = reader.ReadByte();
+
+            tanks.Add(new() {
+                IsPlayer = isPlayer,
+                Position = MapGrid.Current.CellToWorld(x, y),
+                Rotation = facing.ToRotation(),
+                AIType = tier,
+                PlayerType = pType,
+                Team = team
+            });
+        }
+
+        var totalBlocks = reader.ReadInt32();
+
+        for (int i = 0; i < totalBlocks; i++) {
+            var type = reader.ReadByte();
+            var stack = reader.ReadByte();
+            var x = reader.ReadByte();
+            var y = reader.ReadByte();
+            var link = reader.ReadByte();
+
+            blocks.Add(new() {
+                Type = type,
+                Stack = stack,
+                Position = MapGrid.Current.CellToWorld(x, y),
                 TpLink = link
             });
         }

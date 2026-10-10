@@ -43,7 +43,7 @@ public static partial class LevelEditorUI {
         SavingThings,
     }
     public static readonly byte[] LevelFileHeader = [84, 65, 78, 75]; // T, A, N, K
-    public const int EDITOR_VERSION = 5;
+    public const int EDITOR_VERSION = 6;
     public const int MAX_MISSION_CHARS = 30;
     public const float BAR_WIDTH = 256.0f;
     public const float BAR_START_X = 34.0f;

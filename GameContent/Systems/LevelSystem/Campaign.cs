@@ -389,7 +389,7 @@ public class Campaign {
                 campaign.CachedMissions[i].GrantsExtraLife = isIdMatched;
             }
         }
-        else if (editorVersion == 4 || editorVersion == 5) {
+        else if (editorVersion is >= 4 and <= 6) {
             var totalMissions = reader.ReadInt32();
 
             campaign.CachedMissions = new Mission[totalMissions];

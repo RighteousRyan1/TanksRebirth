@@ -9,6 +9,25 @@ using TanksRebirth.Internals.Common.Framework;
 
 namespace TanksRebirth.GameContent.Tanks;
 
+/// <summary>The direction a placed tank faces, in quarter turns.</summary>
+public enum Facing : byte {
+    Down,
+    Left,
+    Up,
+    Right
+}
+
+public static class FacingExtensions {
+    /// <summary>The chassis rotation in radians for this facing.</summary>
+    public static float ToRotation(this Facing facing) => (byte)facing * MathHelper.PiOver2;
+
+    /// <summary>The facing closest to a rotation in radians.</summary>
+    public static Facing ToFacing(this float rotation) {
+        var quarters = (int)MathF.Round(rotation / MathHelper.PiOver2);
+        return (Facing)((quarters % 4 + 4) % 4);
+    }
+}
+
 public struct TankTemplate {
     /// <summary>If false, the template will contain data for an AI tank.</summary>
     public bool IsPlayer;
@@ -20,9 +39,15 @@ public struct TankTemplate {
 
     private float _backingRotationField;
 
-    public float Rotation { // Rounded to avoid issues when calculating rotation.
+    public float Rotation {
         readonly get => _backingRotationField;
         set => _backingRotationField = MathF.Round(value, 5);
+    }
+
+    /// <summary>The facing closest to <see cref="Rotation"/>. Setting it sets the rotation.</summary>
+    public Facing Facing {
+        readonly get => Rotation.ToFacing();
+        set => Rotation = value.ToRotation();
     }
 
     public int Team;
