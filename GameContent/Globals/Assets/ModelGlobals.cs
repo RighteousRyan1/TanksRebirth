@@ -56,4 +56,7 @@ public static class ModelGlobals {
 
     // misc
     public static Resource<Model> Logo = new(PathGlobals.MODEL_PATH + "/logo", "logo");
+
+    // decorations
+    public static Resource<Model> JackOLantern = new(PathGlobals.DECO_PATH, "pumpkin");
 }

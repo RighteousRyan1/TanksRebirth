@@ -28,7 +28,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Added a second hand to the clock (thank you BigKitty)
 - Added heaps more graphics settings for regular gameplay, including Anti-Aliasing, FPS limit, and more!
 - New setting which allows the display of team colors on tanks
-	- I'd suggest only using this in non-standard campaigns (i.e: campaigns where it's only players vs ai tanks, 2 teams)
+	- I'd suggest only using this in non-standard campaigns (e.g: campaigns where it's only players vs ai tanks, 2 teams)
 
 # Changes
 
@@ -124,7 +124,7 @@ The game design, direction and the vast majority of the codebase are still mine,
 
 Thanks for reading, and I hope you enjoy the update!
 
-PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
+*PLEASE*, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.
 
 Happy tanking!

@@ -41,7 +41,7 @@ public static class SettingsUI {
     /// <summary>The page on screen (or the one that opens next time).</summary>
     public static SettingsPage Current { get; private set; } = Audio;
 
-    // ------------------------------------------------------------------------------------------ layout (1920x1080 units)
+    // layout
 
     public const float PanelX = 150, PanelY = 30, PanelW = 1620, PanelH = 800;
     public const float LeftX = 190, RightX = 990, CenterX = 590, ColumnW = 740;
@@ -59,7 +59,7 @@ public static class SettingsUI {
     /// <summary>Ignores the click that opened the window or switched the page (it lands on the same frame the rows appear).</summary>
     public static bool InputReady => RuntimeData.UpdateCount - _openedAt > 5;
 
-    // ------------------------------------------------------------------------------------------ setup
+    // setup
 
     /// <summary>Builds the window frame (panel, tabs, description bar). Call before the pages' Initialize.</summary>
     public static void Initialize() {
@@ -95,7 +95,7 @@ public static class SettingsUI {
         _frame.Add(element);
     }
 
-    // ------------------------------------------------------------------------------------------ open / close / switch
+    // state management
 
     /// <summary>Shows the window on <paramref name="page"/> (the last used page if null).</summary>
     public static void Open(SettingsPage? page = null) {
@@ -184,7 +184,7 @@ public static class SettingsUI {
             element.IsVisible = visible;
     }
 
-    // ------------------------------------------------------------------------------------------ drawing
+    // drawing
 
     static void DrawFrame(SpriteBatch sb) {
         if (!IsOpen || !Validate())
@@ -206,13 +206,13 @@ public static class SettingsUI {
 }
 
 /// <summary>One page of the settings window: its rows, buttons and headers.</summary>
-public sealed class SettingsPage {
+public sealed class SettingsPage(string name, string description, string hint) {
     /// <summary>Tab title.</summary>
-    public readonly string Name;
+    public readonly string Name = name;
     /// <summary>Shown when the mouse is over the tab.</summary>
-    public readonly string Description;
+    public readonly string Description = description;
     /// <summary>Shown in the description bar when the mouse isn't over anything on the page.</summary>
-    public readonly string Hint;
+    public readonly string Hint = hint;
 
     /// <summary>Runs when the page comes on screen.</summary>
     public Action? Opened;
@@ -226,12 +226,6 @@ public sealed class SettingsPage {
 
     readonly List<UIElement> _elements = [];
     readonly Dictionary<UITextButton, (string Description, Func<bool> Enabled, bool Highlight)> _buttons = [];
-
-    public SettingsPage(string name, string description, string hint) {
-        Name = name;
-        Description = description;
-        Hint = hint;
-    }
 
     /// <summary>Removes everything on the page (call at the start of the page's Initialize).</summary>
     public void Clear() {
@@ -266,13 +260,14 @@ public sealed class SettingsPage {
     public UITextButton Button(float x, float y, float width, string text, string description, Action onClick,
         Func<bool>? enabled = null, bool highlight = false) {
         enabled ??= () => true;
-        var button = new UITextButton(text, FontGlobals.RebirthFont, Color.WhiteSmoke, 0.75f);
-        button.OnLeftClick = _ => {
-            if (!SettingsUI.InputReady || !enabled())
-                return;
-            onClick();
+        var button = new UITextButton(text, FontGlobals.RebirthFont, Color.WhiteSmoke, 0.75f) {
+            OnLeftClick = _ => {
+                if (!SettingsUI.InputReady || !enabled())
+                    return;
+                onClick();
+            },
+            OnMouseOver = _ => SettingsUI.PlayTick()
         };
-        button.OnMouseOver = _ => SettingsUI.PlayTick();
         Add(button, x, y, width, SettingsUI.RowH);
         _buttons[button] = (description, enabled, highlight);
         return button;

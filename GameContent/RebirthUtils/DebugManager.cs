@@ -10,6 +10,7 @@ using System.Linq;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Seasonal;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.LevelSystem;
@@ -241,6 +242,7 @@ public static class DebugManager {
             Display.Text = powerups[mode].Name;
         };
     }
+    static JackOLantern jol;
     public static void UpdateDebug() {
         if (!GameLauncher.IsConsoleAllocated) return;
         if (InputUtils.KeyJustPressed(Keys.F4))
@@ -267,6 +269,11 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.H)) {
             _hideUi = !_hideUi;
             TankGame.gameUiDraw = !TankGame.gameUiDraw;
+        }
+
+        if (InputUtils.KeyJustPressed(Keys.L)) {
+            jol?.Remove();
+            jol = JackOLantern.Create(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, 0) + new Vector3(0, 35, 0), 0f, 15f);
         }
 
         if (SuperSecretDevOption) {

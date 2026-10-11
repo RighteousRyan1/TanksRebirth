@@ -166,7 +166,7 @@ public static class GraphicsUI {
         ResetBtn = Page.Button(LeftX + (ColumnW + 20) / 2, RowY(9), (ColumnW - 20) / 2, "Reset to Defaults",
             "Puts every option on this page back to its default (the display mode still needs Apply).", ResetToDefaults);
 
-        // ---------------------------------------------------------------- dynamic lighting
+        // dynamic lighting
         LightingBtn = Row(RightX, RowY(0), "Dynamic Lighting",
             "Real-time sun, shadows, lamps and light beams. Turn it off for the original look (and the best performance).",
             () => OnOff(Lighting.Enabled) + (LightingSystem.IsAvailable || !Lighting.Enabled ? "" : " (unavailable)"),
@@ -192,7 +192,7 @@ public static class GraphicsUI {
             dir => { Lighting.SunShadows = Cycle(Enum.GetValues<ShadowQuality>(), Lighting.SunShadows, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
-        LampShadowsBtn = Row(RightX, RowY(3), "Lamp Shadows",
+        LampShadowsBtn = Row(RightX, RowY(3), "Light Shadows",
             "Shadows from lamps, tank headlights and explosions. Higher settings shadow more lights with smoother edges.",
             () => QualityName(Lighting.LampShadows),
             dir => { Lighting.LampShadows = Cycle(Enum.GetValues<ShadowQuality>(), Lighting.LampShadows, dir); ApplyLighting(true); },

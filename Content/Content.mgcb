@@ -545,6 +545,25 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/models/scene/block_stack_alt.fbx
 
+#begin Assets/models/scene/decoration/pumpkin.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/processorParam:ColorKeyColor=0,0,0,0
+/processorParam:ColorKeyEnabled=True
+/processorParam:DefaultEffect=BasicEffect
+/processorParam:GenerateMipmaps=True
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/models/scene/decoration/pumpkin.fbx
+
 #begin Assets/models/scene/hut.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -740,23 +759,17 @@
 /processorParam:DebugMode=Auto
 /build:Assets/shaders/gaussian_blur.fx
 
-#begin Assets/shaders/lighting/lighting.fx
-/importer:EffectImporter
-/processor:EffectProcessor
-/processorParam:DebugMode=Auto
-/build:Assets/shaders/lighting/lighting.fx
-
 #begin Assets/shaders/lantern.fx
 /importer:EffectImporter
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:Assets/shaders/lantern.fx
 
-#begin Assets/shaders/tank.fx
+#begin Assets/shaders/lighting/lighting.fx
 /importer:EffectImporter
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
-/build:Assets/shaders/tank.fx
+/build:Assets/shaders/lighting/lighting.fx
 
 #begin Assets/shaders/mouse.fx
 /importer:EffectImporter
@@ -769,4 +782,10 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:Assets/shaders/rainbow_grad_anim.fx
+
+#begin Assets/shaders/tank.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/shaders/tank.fx
 

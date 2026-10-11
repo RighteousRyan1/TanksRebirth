@@ -708,8 +708,8 @@ public static class LightingSystem {
         Composite(target, shafts);
 
         // debug for showing lights
-        /*foreach (var light in Lights) {
-            light.CastsShadows = true;
+        foreach (var light in Lights) {
+            /*light.CastsShadows = true;
             light.Color = Color.White;
             light.Intensity = 1f;
             light.Wrap = 1f;
@@ -719,11 +719,11 @@ public static class LightingSystem {
                 s.OuterAngle = MathHelper.ToRadians(30);
                 s.InnerAngle = MathHelper.ToRadians(10);
                 s.Direction = Vector3.Normalize(new Vector3(0, -1, MathF.Sin(RuntimeData.RunTime / 20) / 5));
-            }
-            //GameHandler.Particles.MakeShineSpot(light.Position, Color.White, 1f);
-            //if (light is SpotLight s)
-            //    GameHandler.Particles.MakeShineSpot(light.Position + s.Direction * 25, Color.White, 0.5f);
-        }*/
+            }*/
+            GameHandler.Particles.MakeShineSpot(light.Position, Color.White, 0.4f);
+            if (light is SpotLight s)
+                GameHandler.Particles.MakeShineSpot(light.Position + s.Direction * 25, Color.White, 0.2f);
+        }
 
         Stats = stats;
     }

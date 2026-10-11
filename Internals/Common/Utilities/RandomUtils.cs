@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -13,11 +11,11 @@ public static class RandomUtils {
     /// <summary>
     /// Generates a random <see langword="float"/> within the range [<paramref name="min"/>, <paramref name="max"/>).
     /// </summary>
-    /// <param name="random">The random.</param>
-    /// <param name="min">The inclusive minimum.</param>
-    /// <param name="max">The exclusive maximum.</param>
-    /// <returns>The random number.</returns>
     public static float NextFloat(this Random random, float min, float max) => random.NextSingle() * (max - min) + min;
+    /// <summary>Returns a random float between [0, <paramref name="max"/>]</summary>
+    public static float NextFloat(this Random random, float max) => random.NextSingle() * max;
+    /// <summary>Returns a random float between [0, 1)</summary>
+    public static float NextFloat(this Random random) => random.NextSingle();
     /// <summary>
     /// Generates a random <see langword="double"/> within the range [<paramref name="min"/>, <paramref name="max"/>).
     /// </summary>

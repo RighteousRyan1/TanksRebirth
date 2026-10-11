@@ -24,7 +24,7 @@ public static class LightingPresets {
         Dusk,
         Midnight,
         Blackout,
-        /// <summary>A running clock: the sun and moon move across the sky minute by minute and the colors follow. See <see cref="DayLengthSeconds"/>.</summary>
+        /// <summary>The sun and moon move across the sky minute by minute and the colors follow. See <see cref="DayLengthSeconds"/>.</summary>
         DayCycle,
     }
 
