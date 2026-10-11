@@ -68,6 +68,19 @@ public static partial class LevelEditorUI {
 
     static Dictionary<EditorCategory, List<Particle>> _categoryParticles;
 
+    // the floor plane the block stack sinks into
+    static Particle _stackFloor;
+    // what the stack preview currently shows, so it's only rebuilt when the selection changes
+    static int _previewType = -1, _previewStack = -1;
+    static MapTheme _previewTheme;
+    static readonly BlendState _depthOnly = new() {
+        Name = "LevelEditor.DepthOnly",
+        ColorWriteChannels = ColorWriteChannels.None,
+    };
+
+    static Particle mask;
+    // tracks if the latest placement preview block is stackable or not
+    static bool _latestStackable = true;
     public static float ElementRotation => RuntimeData.RunTime / 100;
     // this is causing sometimes for block shadows to not be destroyed
     static void OpenPeripherals() {
@@ -84,18 +97,23 @@ public static partial class LevelEditorUI {
         // ensure particle trimming for blocks
         // spawn block model particle
         // this is for stacks
+        // make this a field too?
         var bp = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.BlockStack.Asset, GameScene.Assets["block.1"]);
         bp.Scale = Vector3.One * 2;
         bp.Alpha = 1f;
         bp.Color = Color.Black;
+        bp.MeshesToIgnore = ["Shadow"];
+        _previewType = -1;
         bp.UniqueBehavior = (p) => {
+            UpdatePlacementInfo(bp);
             // bp.Model = (Block.WouldUseAlternateModel(BlockStack) ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack).Asset;
             bp.Position = DrawUtils.CenteredOrthoToScreen(PlaceInfoStart).Expand();
             bp.Yaw = MathHelper.PiOver4;
             bp.Alpha = CurCategory == EditorCategory.Terrain ? 1 : 0;
         };
 
-        var mask = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.FlatFace.Asset, TextureGlobals.Pixels[Color.Gray]);
+        mask = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.FlatFace.Asset, TextureGlobals.Pixels[Color.Gray]);
+        _stackFloor = mask;
 
         // most of these values are magical. the particle system is truly fucked
         mask.Scale = Vector3.One * 10;
@@ -105,9 +123,10 @@ public static partial class LevelEditorUI {
         mask.Color = Color.Black;
         mask.ApplyGameLight = false;
         mask.UniqueBehavior = (p) => {
-            var curHeight = Block.GetOffsetY(BlockStack, true);
+            // true cuz there's no need to lower the Y
+            var curHeight = Block.GetOffsetY(BlockStack, true) / Block.BLOCK_DEF_SCALING;
             mask.Position = bp.Position + Vector3.Up * curHeight * bp.Scale;
-            mask.Alpha = bp.Alpha * 0.25f;
+            mask.Alpha = _latestStackable ? bp.Alpha * 0.25f : 0f;
         };
 
         for (int i = TankID.Brown; i < TankID.Collection.Count; i++) {
@@ -227,21 +246,6 @@ public static partial class LevelEditorUI {
                     MathHelper.Pi,
                     FontGlobals.RebirthFont.MeasureString("v") / 2);
         }
-        // draw obstacle placement info
-        else if (CurCategory == EditorCategory.Terrain) {
-            helpText = TankGame.GameLanguage.LevelEdit.BlockStackFlavor;
-            // TODO: add static dict for specific types?
-            PlaceInfoStart = new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 250.ToResolutionY());
-
-            /*var tex = SelectedBlockType != BlockID.Hole ? $"{BlockID.Collection.GetKey(SelectedBlockType)}_{BlockStack}" : $"{BlockID.Collection.GetKey(SelectedBlockType)}";
-            var size = RenderTextures[tex].Size();
-            sb.Draw(RenderTextures[tex], PlaceInfoStart, null, Color.White, 0f, new Vector2(size.X / 2, size.Y), Vector2.One.ToResolution(), default, 0f);
-            // TODO: reduce the hardcode for modders, yeah
-            if (SelectedBlockType != BlockID.Teleporter && SelectedBlockType != BlockID.Hole) {
-                sb.DrawString(FontGlobals.RebirthFontLarge, "v", new Vector2(PlaceInfoStart.X + 100.ToResolutionX(), PlaceInfoStart.Y - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, FontGlobals.RebirthFontLarge.MeasureString("v") / 2);
-                sb.DrawString(FontGlobals.RebirthFontLarge, "v", new Vector2(PlaceInfoStart.X - 100.ToResolutionX(), PlaceInfoStart.Y - 25.ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, FontGlobals.RebirthFontLarge.MeasureString("v") / 2);
-            }*/
-        }
         sb.DrawString(FontGlobals.RebirthFont, helpText, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 70.ToResolutionY()), Color.White, new Vector2(0.5f).ToResolution(), 0f, FontGlobals.RebirthFont.MeasureString(helpText) / 2);
         sb.Draw(TextureGlobals.Pixels[Color.White], _curHoverRect, null, HoverBoxColor * 0.5f, 0f, Vector2.Zero, default, 0f);
 
@@ -253,9 +257,65 @@ public static partial class LevelEditorUI {
         TankGame.Instance.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         TankGame.Instance.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 
+        // write the floor's depth before anything is drawn, so the part of the stack below the floor is hidden
+        if (_stackFloor is { Destroyed: false, Alpha: > 0f })
+            DrawFloorDepth(_stackFloor);
+
         RenderEditorParticles(sb);
 
         sb.Begin();
+        // draw obstacle placement info
+        // this is after RenderEditorParticles because the text needs to draw over the model
+        // i love doing hacky shit cuz idk a better way (and am too lazy to find a better way)
+        if (CurCategory == EditorCategory.Terrain) {
+            helpText = TankGame.GameLanguage.LevelEdit.BlockStackFlavor;
+            // TODO: add static dict for specific types?
+            PlaceInfoStart = new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 350.ToResolutionY());
+
+            // TODO: reduce the hardcode for modders, yeah
+            if (_latestStackable) {
+                // var stackPos = new Vector2(PlaceInfoStart.X + 100.ToResolutionX(), PlaceInfoStart.Y - 75.ToResolutionY());
+                var stackPos = PlaceInfoStart + new Vector2(25, -10).ToResolution();
+                var blst = BlockStack.ToString();
+                var meas = FontGlobals.RebirthFontLarge.MeasureString(blst) / 2;
+                DrawUtils.DrawStringWithBorderAndShadow(sb, FontGlobals.RebirthFontLarge, stackPos, Vector2.One, BlockStack.ToString(),
+                    Color.White, Color.Black, Vector2.One, 1f, shadowAlpha: 0.5f);
+
+            }
+        }
+
+        sb.End();
+
+        sb.Begin();
+    }
+
+    static void UpdatePlacementInfo(Particle preview) {
+        if (_previewType == SelectedBlockType && _previewStack == BlockStack && _previewTheme == GameScene.Theme)
+            return;
+        _previewType = SelectedBlockType;
+        _previewStack = BlockStack;
+        _previewTheme = GameScene.Theme;
+
+        // a dummy block to scrape da assets
+        var block = new Block(SelectedBlockType, BlockStack, new Vector2(float.MaxValue), true);
+        _latestStackable = block.Properties.CanStack;
+        preview.Texture = block.Texture;
+        preview.Model = block.Model;
+        preview.Texturing = block.TextureMap;
+        block.Remove();
+    }
+    // draws a mask particle to the depth buffer to give the illusion of the block changing stack, just like ingame
+    static void DrawFloorDepth(Particle floor) {
+        var device = TankGame.Instance.GraphicsDevice;
+        var blend = device.BlendState;
+        var scale = floor.Scale;
+        device.BlendState = _depthOnly;
+
+        // wider than the visible floor so the stack can't show past its edges
+        floor.Scale = scale * 1.5f;
+        floor.DrawModel();
+        floor.Scale = scale;
+        device.BlendState = blend;
     }
     public static void DrawLevelInfo(SpriteBatch sb) {
         sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 125).ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);

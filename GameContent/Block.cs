@@ -60,7 +60,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
     public const float BLOCK_DEF_SCALING = 0.646f;
 
     Vector3 _offset;
-    Vector3 _scaling = new(0.646f);
+    Vector3 _scaling = new(BLOCK_DEF_SCALING);
     public Texture2D Texture;
     Particle _shadow;
 
