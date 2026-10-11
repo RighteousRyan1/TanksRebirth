@@ -31,13 +31,10 @@ public enum EffectQuality {
 }
 
 /// <summary>
-/// Everything a graphics settings page needs for the dynamic lighting, as plain properties so it can be saved with
-/// the rest of the settings (for example as <c>public LightingSettings StaticLighting { get; set; } = new();</c> in GameConfig).
+/// Lighting options for the graphics settings page. Plain properties, so it saves alongside the rest of the config.
 /// </summary>
 /// <remarks>
-/// <para>Edit the properties, then call <see cref="Apply"/>. <see cref="SetQualityLevel"/> fills in all the
-/// individual options at once (the "preset" dropdown); changing an option by hand afterwards makes it Custom.</para>
-/// <para>This is the only place that turns menu choices into numbers: the mapping lives in <see cref="ToQuality"/>.</para>
+/// Change properties, then call <see cref="Apply"/>.
 /// </remarks>
 public sealed class LightingSettings {
     /// <summary>The settings in use. Replace it (e.g. with the loaded config) and call <see cref="Apply"/>.</summary>
@@ -100,10 +97,7 @@ public sealed class LightingSettings {
         }
     }
 
-    /// <summary>
-    /// Call after changing an individual option from the menu: switches <see cref="QualityLevel"/> to Custom unless
-    /// the options still match a preset exactly.
-    /// </summary>
+    /// <summary>Call after changing an individual option from the menu.</summary>
     public void UpdateQualityLevel() {
         foreach (var level in new[] { LightingQualityLevel.Low, LightingQualityLevel.Medium, LightingQualityLevel.High, LightingQualityLevel.Ultra }) {
             var preset = new LightingSettings();
@@ -120,8 +114,7 @@ public sealed class LightingSettings {
     /// <summary>Turns the menu options into the numbers <see cref="LightingSystem"/> works with.</summary>
     public LightingQuality ToQuality() {
         var q = new LightingQuality {
-            // sun: resolution of the board and room shadow maps (Ultra = 4096, HiDef only). The room map stays on even at
-            // Low: without it the sun shines through the walls everywhere away from the board
+            // low still looks pretty decent
             SunShadows = SunShadows != ShadowQuality.Off
         };
         // (the board map is fitted tightly to the board, so 2048 is already sharp; Ultra's 4096 is for close-ups)
@@ -136,19 +129,16 @@ public sealed class LightingSettings {
         // lamps: how many get shadows, how sharp, how smooth
         (q.MaxShadowedPointLights, q.MaxShadowedSpotLights, q.ShadowAtlasSize, q.SoftLocalShadows) = LampShadows switch {
             ShadowQuality.Off => (0, 0, 2048, false),
-            // spot shadows are cheap (one render each, point lights need six), and a headlight that loses its shadow
-            // shines straight through blocks and tanks, so every level keeps all 4 player headlights shadowed
-            // each shadowed point light costs six shadow renders, so even Ultra stays at 4: the scene rarely has more
-            // than a lamp or two plus an explosion, and lights past the cap still shine, just without shadows
-            ShadowQuality.Low => (1, 4, 2048, false),
-            ShadowQuality.Medium => (2, 4, 2048, true),
-            ShadowQuality.High => (3, 4, 4096, true),
-            ShadowQuality.Ultra => (4, 4, 4096, true),
+            // low is quite cheap, medium is still pretty cheap, high is slightly cheap, ultra is maxed out
+            ShadowQuality.Low => (2, 2, 2048, false),
+            ShadowQuality.Medium => (4, 4, 2048, true),
+            ShadowQuality.High => (6, 6, 4096, true),
+            ShadowQuality.Ultra => (LightingSystem.MAX_SHADOW_SLOTS, LightingSystem.MAX_SHADOW_SLOTS, 4096, true),
             _ => (4, 4, 2048, true),
         };
 
         q.LightShafts = LightShafts != EffectQuality.Off;
-        // the beams are soft anyway: full resolution costs 4x half resolution and looks the same
+        // full resolution costs 4x half resolution and looks the same. oh well, people can fry their gpus
         q.ShaftDownsample = LightShafts switch {
             EffectQuality.Low => 4,
             EffectQuality.Medium => 3,
@@ -165,8 +155,7 @@ public sealed class LightingSettings {
     }
 
     /// <summary>
-    /// Pushes these settings into the lighting system. Cheap; call it whenever the menu changes something.
-    /// The time of day is only re-applied when it changed (so a running day cycle keeps its clock), unless <paramref name="force"/>.
+    /// Pushes these settings into the lighting system.
     /// </summary>
     public void Apply(bool force = false) {
         var wasEnabled = LightingSystem.Enabled;

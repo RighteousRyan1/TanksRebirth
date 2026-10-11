@@ -415,7 +415,7 @@ public static class LightingPresets {
                 ambient.Intensity = 0.45f;
                 sun.Enabled = false;
                 sun.Shafts.Enabled = false;
-                LightingSystem.MaxShadowedPointLights = 4;
+                LightingSystem.MaxShadowedPointLights = LightingSystem.MAX_SHADOW_SLOTS;
                 LightingSystem.BackgroundLight = 0.1f;
                 WantsHeadlights = true;
                 DynamicBrightness = 1.3f;
@@ -464,7 +464,7 @@ public static class LightingPresets {
             if (lamp.Intensity > 0.01f)
                 lights.Add(lamp);
         }
-        LightingSystem.MaxShadowedPointLights = lights.Count > 1 ? 5 : 4;
+        LightingSystem.MaxShadowedPointLights = LightingSystem.MAX_SHADOW_SLOTS;
 
         var glowing = time.TableLamp > 0.2f;
         // (only touch the meshes when the lamps switch on or off)

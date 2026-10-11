@@ -230,6 +230,12 @@ public static class LightManager {
                         }
                         ChatSystem.SendMessage($"Lighting: quality {LightingSettings.Current.QualityLevel}", Color.Gold);
                         return;
+                    case "test":
+                        LightingStressTest.Toggle();
+                        ChatSystem.SendMessage(LightingStressTest.IsRunning
+                            ? $"Lighting test on ({LightingSystem.MAX_SHADOW_SLOTS} point and {LightingSystem.MAX_SHADOW_SLOTS} spot lights, quality {LightingSettings.Current.QualityLevel})"
+                            : "Lighting test off", Color.Gold);
+                        return;
                     case "enable":
                     case "disable":
                         LightingSettings.Current.Enabled = parts[0] == "enable";

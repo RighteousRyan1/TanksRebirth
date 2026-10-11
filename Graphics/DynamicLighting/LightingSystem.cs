@@ -10,31 +10,20 @@ using TanksRebirth.Net;
 namespace TanksRebirth.Graphics.DynamicLighting;
 
 /// <summary>
-/// Tanks Rebirth's full lighting system.
+/// Tanks Rebirth's lighting system.
 /// </summary>
 /// <remarks>
-/// <para>How it works:</para>
-/// <list type="number">
-/// <item>Every <see cref="Model"/> passed to <see cref="Instrument"/> gets <see cref="LightCaptureEffect"/>s.
-/// They look and behave exactly like the original <see cref="BasicEffect"/>s, but every mesh part drawn between
-/// <see cref="BeginFrame"/> and <see cref="EndFrame"/> is recorded with its world matrix. Nothing else in the game
-/// has to change how it draws.</item>
-/// <item>At <see cref="EndFrame"/> the recorded geometry is rendered again into shadow maps (sun + an atlas for
-/// point and spot lights) and into a light buffer (ambient + sun + local lights, with PCF shadows).</item>
-/// <item>The light buffer is multiplied onto the finished frame (2x modulate, so lights can also over-brighten),
-/// and the optional sun shafts are added on top.</item>
-/// </list>
-/// <para>Everything uses <see cref="SurfaceFormat.Color"/> render targets no larger than 2048.</para>
+/// <para><see cref="Instrument"/> swaps each model's <see cref="BasicEffect"/>s for <see cref="LightCaptureEffect"/>s,
+/// which draw the same way but also record what was drawn between <see cref="BeginFrame"/> and <see cref="EndFrame"/>.
+/// The rest of the game's drawing code doesn't change.</para>
+/// <para>At <see cref="EndFrame"/>, that geometry is redrawn into shadow maps and a light buffer. The light buffer is
+/// then multiplied onto the frame (2x, so lights can brighten as well as darken), and sun shafts are added if enabled.</para>
+/// <para>All render targets are <see cref="SurfaceFormat.Color"/>, max 2048.</para>
 /// </remarks>
 public static class LightingSystem {
-    /// <summary>
-    /// Master switch (the "dynamic lighting on/off" option). When false nothing is captured or drawn and the game
-    /// looks exactly as it did without this system. Call <see cref="Unload"/> as well to free the video memory.
-    /// </summary>
+    /// <summary>The master switch. Call <see cref="Unload"/> to free the video memory.</summary>
     public static bool Enabled = true;
-    /// <summary>
-    /// Set by the scene (the Off preset) to show the unlit game without touching the user's <see cref="Enabled"/> choice.
-    /// </summary>
+    /// <summary>Set by the scene to show the unlit game without touching the user's <see cref="Enabled"/> choice.</summary>
     public static bool Suspended;
     /// <summary>True once <see cref="Initialize"/> succeeded and no unrecoverable error happened.</summary>
     public static bool IsAvailable { get; private set; }
@@ -94,8 +83,10 @@ public static class LightingSystem {
         public int SunShadowDraws, RoomShadowDraws, LocalShadowDraws;
         /// <summary>True when the room map was reused from an earlier frame instead of re-rendered.</summary>
         public bool RoomShadowsCached;
-        /// <summary>Lamp / headlight shadow maps reused from an earlier frame (the light didn't move).</summary>
+        /// <summary>Lamp / headlight shadow maps reused from an earlier frame.</summary>
         public int CachedShadowMaps;
+        /// <summary>Lamp / headlight atlases allocated right now.</summary>
+        public int ShadowAtlases;
         /// <summary>Point light cube faces / spot maps skipped because nothing they cover is on screen.</summary>
         public int SkippedShadowViews;
         public int ShaftDraws;
@@ -103,27 +94,34 @@ public static class LightingSystem {
         public override readonly string ToString() =>
             $"draws {CapturedDraws} (+{ShadowOnlyDraws} shadow-only), points {PointLights} ({ShadowedPointLights} shadowed), " +
             $"spots {SpotLights} ({ShadowedSpotLights} shadowed) | GPU draw calls {TotalDraws}: shadows {ShadowDraws} " +
-            $"(sun {SunShadowDraws}, room {RoomShadowDraws}{(RoomShadowsCached ? " cached" : "")}, lamps {LocalShadowDraws}, {CachedShadowMaps} maps cached, {SkippedShadowViews} views skipped), " +
+            $"(sun {SunShadowDraws}, room {RoomShadowDraws}{(RoomShadowsCached ? " cached" : "")}, lamps {LocalShadowDraws}, {CachedShadowMaps} maps cached, {SkippedShadowViews} views skipped, {ShadowAtlases} atlases), " +
             $"light {LightBufferDraws}, shafts {ShaftDraws}";
     }
 
     // state machine
 
-    // atlas layout for a 2048 atlas; everything doubles with a 4096 atlas (see LightingQuality.ShadowAtlasSize)
+    // atlas layout for a 2048 atlas. everything doubles with a 4096 atlas
     static int ATLAS_SIZE = 2048;
     static int CUBE_TILE = 256;
     static int SPOT_TILE = 512;
-    const int MAX_POINT_SHADOW_SLOTS = 6;
-    const int MAX_SPOT_SHADOW_SLOTS = 6;
+    /// <summary>The most point lights, and the most spot lights, that can have shadows at the same time.</summary>
+    public const int MAX_SHADOW_SLOTS = 16;
+    const int MAX_POINT_SHADOW_SLOTS = MAX_SHADOW_SLOTS;
+    const int MAX_SPOT_SHADOW_SLOTS = MAX_SHADOW_SLOTS;
+    // each atlas holds this many point slots and this many spot slots
+    const int SLOTS_PER_ATLAS = 6;
+    const int MAX_ATLASES = (MAX_SHADOW_SLOTS + SLOTS_PER_ATLAS - 1) / SLOTS_PER_ATLAS;
+    // extra atlases are freed after going unused for this many frames
+    const int ATLAS_IDLE_FRAMES = 600;
     const int LIGHTS_PER_PASS = 4;
 
     [Flags]
     enum DrawFlags : byte {
-        None = 0,
-        CastsShadows = 1,
-        Lit = 2,
-        ShadowOnly = 4,
-        HasNormals = 8,
+        None = 1 << 0,
+        CastsShadows = 1 << 1,
+        Lit = 1 << 2,
+        ShadowOnly = 1 << 3,
+        HasNormals = 1 << 4,
     }
 
     struct DrawRecord {
@@ -136,17 +134,22 @@ public static class LightingSystem {
     }
 
     enum DrawMode {
-        /// <summary>world matrix only, the view projection was set for the whole shadow view</summary>
+        /// <summary>World matrix only, the view projection was set for the whole shadow view</summary>
         Shadow,
-        /// <summary>world + the camera view projection recorded with the draw</summary>
+        /// <summary>World + the camera view projection recorded with the draw</summary>
         Camera,
-        /// <summary>like Camera, for the lit techniques</summary>
+        /// <summary>Like Camera, for the lit techniques</summary>
         CameraLit,
     }
 
     struct ShadowSlot {
         public Vector4 Rect;     // xy origin (uv), z tile size (uv), w inset
         public Point Origin;     // pixels
+        public int Atlas;        // index into _shadowAtlases
+    }
+
+    struct LightBatch {
+        public int Start, Count, Atlas;
     }
 
     static GraphicsDevice _device = null!;
@@ -155,7 +158,14 @@ public static class LightingSystem {
     static RenderTarget2D? _sunShadowMap;
     static RenderTarget2D? _roomShadowMap;
     static RenderTarget2D? _roomShadowDilated;
-    static RenderTarget2D? _shadowAtlas;
+    // atlas 0 exists whenever lamp shadows are on, the others only while enough shadowed lights need them
+    static readonly RenderTarget2D?[] _shadowAtlases = new RenderTarget2D?[MAX_ATLASES];
+    static readonly int[] _atlasLastUsed = new int[MAX_ATLASES];
+    static int _atlasFrame;
+    // atlases past the first have no depth buffer. Their maps are rendered here, then copied over
+    static RenderTarget2D? _shadowScratch;
+    static SpriteBatch? _atlasCopyBatch;
+    static RenderTarget2D? _boundShadowTarget;
     static RenderTarget2D? _lightBuffer;
     static RenderTarget2D? _shaftBuffer;
 
@@ -172,6 +182,10 @@ public static class LightingSystem {
     static readonly List<PointLight> _points = [];
     static readonly List<SpotLight> _spots = [];
     static readonly Dictionary<Light, ShadowSlot> _shadowSlots = [];
+    static readonly List<Light> _batchLights = [];
+    static readonly List<LightBatch> _batches = [];
+    static readonly List<Light>[] _lightsByAtlas = CreateLightLists(MAX_ATLASES);
+    static readonly List<Light> _unshadowedLights = [];
 
     /// <summary>What each atlas slot holds, so a light that keeps its slot can reuse last frame's shadow map.</summary>
     sealed class SlotState {
@@ -186,6 +200,12 @@ public static class LightingSystem {
     static readonly Dictionary<Light, SlotState> _slotStateOf = [];
     static readonly List<Light> _pointCandidates = [], _spotCandidates = [];
     static int _frameIndex;
+
+    static List<Light>[] CreateLightLists(int count) {
+        var lists = new List<Light>[count];
+        for (int i = 0; i < count; i++) lists[i] = [];
+        return lists;
+    }
 
     static SlotState[] CreateSlotStates(int count) {
         var states = new SlotState[count];
@@ -209,7 +229,7 @@ public static class LightingSystem {
     static Matrix _sunViewProjection;
     static Matrix _roomViewProjection;
     static bool _roomShadowsActive;
-    // the room map is reused while the sun stands still (see LightingQuality.RoomShadowRefreshInterval)
+    // the room map is reused while the sun stands still
     static bool _roomCacheValid;
     static Vector3 _roomCacheDirection;
     static int _roomCacheAge;
@@ -394,21 +414,26 @@ public static class LightingSystem {
         //      [pt4 ][pt5 ][sp2]     rows 4C..6C
         //      [wht][sp4][sp5][sp3]  rows 6C..8C
         // point lights: 3x2 blocks of cube faces
+        // every atlas uses this layout. slots 0 to 5 are in atlas 0, 6 to 11 in atlas 1, and so on
         for (int i = 0; i < MAX_POINT_SHADOW_SLOTS; i++) {
-            var origin = new Point(i % 2 * CUBE_TILE * 3, i / 2 * CUBE_TILE * 2);
+            var local = i % SLOTS_PER_ATLAS;
+            var origin = new Point(local % 2 * CUBE_TILE * 3, local / 2 * CUBE_TILE * 2);
             _pointSlots[i] = new ShadowSlot {
                 Origin = origin,
                 Rect = new Vector4(origin.X * texel, origin.Y * texel, CUBE_TILE * texel, inset / CUBE_TILE),
+                Atlas = i / SLOTS_PER_ATLAS,
             };
         }
         // spot lights: the right column, then along the bottom row
         for (int i = 0; i < MAX_SPOT_SHADOW_SLOTS; i++) {
-            var origin = i < 4
-                ? new Point(CUBE_TILE * 6, i * SPOT_TILE)
-                : new Point((i - 3) * SPOT_TILE, CUBE_TILE * 6);
+            var local = i % SLOTS_PER_ATLAS;
+            var origin = local < 4
+                ? new Point(CUBE_TILE * 6, local * SPOT_TILE)
+                : new Point((local - 3) * SPOT_TILE, CUBE_TILE * 6);
             _spotSlots[i] = new ShadowSlot {
                 Origin = origin,
                 Rect = new Vector4(origin.X * texel, origin.Y * texel, SPOT_TILE * texel, inset / SPOT_TILE),
+                Atlas = i / SLOTS_PER_ATLAS,
             };
         }
         // the bottom left spot-sized tile is never rendered and stays white (= fully lit)
@@ -481,9 +506,7 @@ public static class LightingSystem {
     public static void ClearMeshLighting(ModelMesh mesh) => _meshLighting.Remove(mesh);
     public static MeshLighting GetMeshLighting(ModelMesh mesh) => _meshLighting.TryGetValue(mesh, out var s) ? s : MeshLighting.Default;
 
-    // =============================================================================================
-    //  frame capture
-    // =============================================================================================
+    // frame capture
 
     /// <summary>Start recording draws. Call right before the world is drawn.</summary>
     public static void BeginFrame(Matrix view, Matrix projection) {
@@ -684,6 +707,9 @@ public static class LightingSystem {
 
         if (_shadowSlots.Count > 0)
             RenderLocalShadows(ref stats);
+        foreach (var atlas in _shadowAtlases)
+            if (atlas is not null)
+                stats.ShadowAtlases++;
 
         SetCameraParameters();
         _pSunShadowEnabled?.SetValue(sunShadows ? 1f : 0f);
@@ -691,8 +717,9 @@ public static class LightingSystem {
         // the shafts always march through the room map; without a room cascade they get the board cascade instead
         _pRoomShadowEnabled?.SetValue(_roomShadowsActive ? 1f : 0f);
         _pRoomShadowMap?.SetValue(_roomShadowsActive ? _roomShadowDilated : sunShadows ? _sunShadowMap : _white);
-        // no shadowed lamps this frame (or none allowed): every light reads "fully lit" from a white texel
-        _pShadowAtlas?.SetValue(_shadowSlots.Count > 0 && _shadowAtlas is not null ? _shadowAtlas : _white);
+        // each light pass binds the atlas its lights are in (see RenderLightBuffer). Lights without a shadow read
+        // "fully lit" from a white texel
+        _pShadowAtlas?.SetValue(_white);
         _pAtlasSize?.SetValue(new Vector2(ATLAS_SIZE, 1f / ATLAS_SIZE));
         _pLightScale?.SetValue(0.5f);
         _pDither?.SetValue(Dither);
@@ -708,8 +735,8 @@ public static class LightingSystem {
         Composite(target, shafts);
 
         // debug for showing lights
-        foreach (var light in Lights) {
-            /*light.CastsShadows = true;
+        /*foreach (var light in Lights) {
+            light.CastsShadows = true;
             light.Color = Color.White;
             light.Intensity = 1f;
             light.Wrap = 1f;
@@ -719,11 +746,11 @@ public static class LightingSystem {
                 s.OuterAngle = MathHelper.ToRadians(30);
                 s.InnerAngle = MathHelper.ToRadians(10);
                 s.Direction = Vector3.Normalize(new Vector3(0, -1, MathF.Sin(RuntimeData.RunTime / 20) / 5));
-            }*/
-            GameHandler.Particles.MakeShineSpot(light.Position, Color.White, 0.4f);
-            if (light is SpotLight s)
-                GameHandler.Particles.MakeShineSpot(light.Position + s.Direction * 25, Color.White, 0.2f);
-        }
+            }
+            //GameHandler.Particles.MakeShineSpot(light.Position, Color.White, 1f);
+            //if (light is SpotLight s)
+            //    GameHandler.Particles.MakeShineSpot(light.Position + s.Direction * 25, Color.White, 0.5f);
+        }*/
 
         Stats = stats;
     }
@@ -733,6 +760,7 @@ public static class LightingSystem {
         _points.Clear();
         _spots.Clear();
         _shadowSlots.Clear();
+        _atlasFrame++;
 
         foreach (var l in Lights) ConsiderLight(l);
         foreach (var l in _frameLights) ConsiderLight(l);
@@ -742,7 +770,7 @@ public static class LightingSystem {
             _activeLights.RemoveRange(maxLights, _activeLights.Count - maxLights);
 
         // the scene asks, quality caps; without an atlas (quality turned lamp shadows off) nothing gets a slot
-        var atlas = _shadowAtlas is not null;
+        var atlas = _shadowAtlases[0] is not null;
         int pointShadowBudget = atlas ? Math.Clamp(Math.Min(MaxShadowedPointLights, Quality.MaxShadowedPointLights), 0, MAX_POINT_SHADOW_SLOTS) : 0;
         int spotShadowBudget = atlas ? Math.Clamp(Math.Min(MaxShadowedSpotLights, Quality.MaxShadowedSpotLights), 0, MAX_SPOT_SHADOW_SLOTS) : 0;
 
@@ -765,6 +793,9 @@ public static class LightingSystem {
         _slotStateOf.Clear();
         AssignSlots(_pointCandidates, _pointSlotStates, _pointSlots, pointShadowBudget);
         AssignSlots(_spotCandidates, _spotSlotStates, _spotSlots, spotShadowBudget);
+        foreach (var slot in _shadowSlots.Values)
+            _atlasLastUsed[slot.Atlas] = _atlasFrame;
+        ReleaseIdleAtlases();
         stats.ShadowedPointLights = _pointCandidates.Count;
         stats.ShadowedSpotLights = _spotCandidates.Count;
         stats.PointLights = _points.Count;
@@ -845,7 +876,7 @@ public static class LightingSystem {
             _roomShadowMap?.Dispose();
             _roomShadowMap = new RenderTarget2D(_device, roomSize, roomSize, false, SurfaceFormat.Color, DepthFormat.Depth24);
             _roomShadowDilated?.Dispose();
-            // kept between frames (the room map is cached), so the contents must survive
+            // kept between frames to cache and save time, so the contents must survive
             _roomShadowDilated = new RenderTarget2D(_device, roomSize, roomSize, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             _roomCacheValid = false;
         }
@@ -853,20 +884,19 @@ public static class LightingSystem {
         // point / spot shadow atlas
         var atlasWanted = q.MaxShadowedPointLights > 0 || q.MaxShadowedSpotLights > 0;
         var atlasSize = q.ShadowAtlasSize >= 4096 && maxSize >= 4096 ? 4096 : 2048;
-        if (!atlasWanted)
-            Release(ref _shadowAtlas);
-        else if (_shadowAtlas is null || _shadowAtlas.IsDisposed || _shadowAtlas.Width != atlasSize) {
-            _shadowAtlas?.Dispose();
+        var first = _shadowAtlases[0];
+        if (!atlasWanted) {
+            ReleaseAtlases();
+            Release(ref _shadowScratch);
+        }
+        else if (first is null || first.IsDisposed || first.Width != atlasSize) {
+            ReleaseAtlases();
             ATLAS_SIZE = atlasSize;
             CUBE_TILE = atlasSize / 8;
             SPOT_TILE = atlasSize / 4;
             BuildAtlasLayout();
-            // kept between frames (cached shadow maps), so the contents must survive
-            _shadowAtlas = new RenderTarget2D(_device, ATLAS_SIZE, ATLAS_SIZE, false, SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.PreserveContents);
             ResetSlotStates();
-            // clear once so the reserved "no shadow" region is white even before the first shadow render
-            _device.SetRenderTarget(_shadowAtlas);
-            _device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.White, 1f, 0);
+            CreateAtlas(0);
         }
 
         if (_lightBuffer is null || _lightBuffer.IsDisposed || _lightBuffer.Width != target.Width || _lightBuffer.Height != target.Height) {
@@ -890,14 +920,55 @@ public static class LightingSystem {
         target = null;
     }
 
-    // ------------------------------------------------------------------------------------------ shadows
+    static RenderTarget2D CreateAtlas(int index) {
+        // kept between frames. only atlas 0 has a depth buffer and is rendered into directly
+        var depth = index == 0 ? DepthFormat.Depth24 : DepthFormat.None;
+        var atlas = new RenderTarget2D(_device, ATLAS_SIZE, ATLAS_SIZE, false, SurfaceFormat.Color, depth, 0, RenderTargetUsage.PreserveContents) {
+            Name = $"Lighting.ShadowAtlas{index}",
+        };
+        _device.SetRenderTarget(atlas);
+        _device.Clear(index == 0 ? ClearOptions.Target | ClearOptions.DepthBuffer : ClearOptions.Target, Color.White, 1f, 0);
+        _shadowAtlases[index] = atlas;
+        _atlasLastUsed[index] = _atlasFrame;
+        return atlas;
+    }
 
+    static void ReleaseAtlases() {
+        for (int i = 0; i < MAX_ATLASES; i++)
+            Release(ref _shadowAtlases[i]);
+    }
+
+    static void ReleaseIdleAtlases() {
+        // atlas 0 stays. a slot is only kept while its light is a candidate, so an idle atlas has no owners left
+        var extras = false;
+        for (int i = 1; i < MAX_ATLASES; i++) {
+            if (_shadowAtlases[i] is not null && _atlasFrame - _atlasLastUsed[i] > ATLAS_IDLE_FRAMES)
+                Release(ref _shadowAtlases[i]);
+            extras |= _shadowAtlases[i] is not null;
+        }
+        if (!extras)
+            Release(ref _shadowScratch);
+    }
+
+    static RenderTarget2D EnsureScratch() {
+        // big enough for one point light's six faces, which also fits a spot tile. Preserved so binding it doesn't
+        // clear it, since each light clears only the area it uses
+        if (_shadowScratch is null || _shadowScratch.IsDisposed || _shadowScratch.Width != CUBE_TILE * 3) {
+            _shadowScratch?.Dispose();
+            _shadowScratch = new RenderTarget2D(_device, CUBE_TILE * 3, CUBE_TILE * 2, false, SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.PreserveContents) {
+                Name = "Lighting.ShadowScratch",
+            };
+        }
+        return _shadowScratch;
+    }
+
+    // shadows
     static void RenderSunShadows(ref FrameStats stats) {
         var size = _sunShadowMap!.Width;
         var dir = SafeNormalize(Sun.Direction, Vector3.Down);
         var up = MathF.Abs(dir.Y) > 0.99f ? Vector3.UnitZ : Vector3.UnitY;
 
-        // ---- cascade 1: sharp map around the board
+        // cascade that covers the board. if Room Shadows is off, it can save a considerable amount of frame time
         var depth = MathF.Max(10f, Sun.ShadowDepth);
         float texelWorld;
         if (Sun.ShadowBounds is { } bounds)
@@ -919,11 +990,10 @@ public static class LightingSystem {
         SetCascadeParameters(_pSunClipX, _pSunClipY, _pSunClipZ, _pSunShadowParams, _sunViewProjection,
             new Vector4(1f / size, size, Sun.ShadowBias / depth, texelWorld * 1.5f));
 
-        // ---- cascade 2: coarse map over the whole room (everything outside cascade 1, and the shafts)
+        // the cascade that covers the whole room
         if (Sun.RoomShadows && Quality.RoomShadows && _roomShadowMap is not null && _roomShadowDilated is not null) {
             _roomShadowsActive = true;
-            // The room map mostly holds the room itself, which never moves, so it's only re-rendered when the sun
-            // has moved noticeably or every RoomShadowRefreshInterval frames (moving tanks are covered by the board map).
+            // attempts to reduce redraws when the room doesn't need lighting drawn again
             _roomCacheAge++;
             var refresh = !_roomCacheValid
                 || _roomCacheAge >= Math.Max(1, Quality.RoomShadowRefreshInterval)
@@ -964,8 +1034,7 @@ public static class LightingSystem {
     }
 
     /// <summary>
-    /// Fits the sharp cascade tightly around <paramref name="box"/> as seen from the sun. For a low sun the box looks
-    /// thin from the light's point of view, so the texels get spent where they are needed instead of on a square.
+    /// Fits the sharp cascade tightly around <paramref name="box"/> as seen from the sun.
     /// Casters between the box and the sun are kept by extending the depth range <paramref name="depthTowardsSun"/> towards it.
     /// </summary>
     static Matrix FitBoardCascade(BoundingBox box, Vector3 dir, Vector3 up, int size, float depthTowardsSun, out float texelWorld, out float depth) {
@@ -1142,72 +1211,102 @@ public static class LightingSystem {
     static void RenderLocalShadows(ref FrameStats stats) {
         _frameIndex++;
         var interval = Math.Max(1, Quality.StaticLightShadowInterval);
-        var targetSet = false;
+        _boundShadowTarget = null;
 
-        foreach (var (light, slot) in _shadowSlots) {
-            var state = _slotStateOf[light];
-            var spot = light as SpotLight;
-            var direction = spot?.Direction ?? Vector3.Zero;
-            var angle = spot?.OuterAngle ?? 0f;
-            var changed = state.OwnerChanged
-                || Vector3.DistanceSquared(state.Position, light.Position) > 0.01f
-                || Vector3.DistanceSquared(state.Direction, direction) > 1e-6f
-                || state.Range != light.Range || state.Angle != angle;
-            if (!changed && _frameIndex - state.LastRendered < interval) {
-                stats.CachedShadowMaps++;
-                continue;
-            }
+        // atlas 0 first, so all of its lights share one render target switch
+        foreach (var (light, slot) in _shadowSlots)
+            if (slot.Atlas == 0)
+                RenderSlotShadow(light, slot, interval, ref stats);
+        foreach (var (light, slot) in _shadowSlots)
+            if (slot.Atlas != 0)
+                RenderSlotShadow(light, slot, interval, ref stats);
+    }
 
-            if (!targetSet) {
-                _device.SetRenderTarget(_shadowAtlas);
-                _device.BlendState = BlendState.Opaque;
-                targetSet = true;
-            }
+    static void RenderSlotShadow(Light light, ShadowSlot slot, int interval, ref FrameStats stats) {
+        var state = _slotStateOf[light];
+        var spot = light as SpotLight;
+        var direction = spot?.Direction ?? Vector3.Zero;
+        var angle = spot?.OuterAngle ?? 0f;
+        var changed = state.OwnerChanged
+            || Vector3.DistanceSquared(state.Position, light.Position) > 0.01f
+            || Vector3.DistanceSquared(state.Direction, direction) > 1e-6f
+            || state.Range != light.Range || state.Angle != angle;
+        if (!changed && _frameIndex - state.LastRendered < interval) {
+            stats.CachedShadowMaps++;
+            return;
+        }
 
-            // clear this light's tiles only (the rest of the atlas holds other lights' cached maps)
-            _device.Viewport = spot is not null
-                ? new Viewport(slot.Origin.X, slot.Origin.Y, SPOT_TILE, SPOT_TILE)
-                : new Viewport(slot.Origin.X, slot.Origin.Y, CUBE_TILE * 3, CUBE_TILE * 2);
-            _device.DepthStencilState = _clearDepth;
-            _effect.CurrentTechnique = _tComposite;
-            _pSourceTexture?.SetValue(_white);
-            _pSplitPosition?.SetValue(0f);
-            _effect.CurrentTechnique.Passes[0].Apply();
-            _device.DrawUserPrimitives(PrimitiveType.TriangleStrip, _farQuad, 0, 2);
-            _pSourceTexture?.SetValue((Texture2D?)null);
+        // atlas 0 is rendered into directly. Lights in the other atlases go through the scratch target
+        var direct = slot.Atlas == 0;
+        var target = direct ? _shadowAtlases[0]! : EnsureScratch();
+        var origin = direct ? slot.Origin : Point.Zero;
+        if (_boundShadowTarget != target) {
+            _device.SetRenderTarget(target);
+            _boundShadowTarget = target;
+        }
+        _device.BlendState = BlendState.Opaque;
+        _device.RasterizerState = RasterizerState.CullNone;
 
-            _device.DepthStencilState = DepthStencilState.Default;
-            _effect.CurrentTechnique = _tShadowLinear;
+        // clear this light's tiles only
+        var width = spot is not null ? SPOT_TILE : CUBE_TILE * 3;
+        var height = spot is not null ? SPOT_TILE : CUBE_TILE * 2;
+        _device.Viewport = new Viewport(origin.X, origin.Y, width, height);
+        _device.DepthStencilState = _clearDepth;
+        _effect.CurrentTechnique = _tComposite;
+        _pSourceTexture?.SetValue(_white);
+        _pSplitPosition?.SetValue(0f);
+        _effect.CurrentTechnique.Passes[0].Apply();
+        _device.DrawUserPrimitives(PrimitiveType.TriangleStrip, _farQuad, 0, 2);
+        _pSourceTexture?.SetValue((Texture2D?)null);
 
-            var range = light.Range;
-            var near = MathF.Max(0.5f, range * 0.005f);
-            var lightSphere = new BoundingSphere(light.Position, range);
-            _pShadowLightPosInvRange?.SetValue(new Vector4(light.Position, 1f / range));
+        _device.DepthStencilState = DepthStencilState.Default;
+        _effect.CurrentTechnique = _tShadowLinear;
 
-            if (spot is not null) {
-                GetSpotShadowCamera(spot, near, out var view, out var projection, out _, out _);
-                _device.Viewport = new Viewport(slot.Origin.X, slot.Origin.Y, SPOT_TILE, SPOT_TILE);
+        var range = light.Range;
+        var near = MathF.Max(0.5f, range * 0.005f);
+        var lightSphere = new BoundingSphere(light.Position, range);
+        _pShadowLightPosInvRange?.SetValue(new Vector4(light.Position, 1f / range));
+
+        if (spot is not null) {
+            GetSpotShadowCamera(spot, near, out var view, out var projection, out _, out _);
+            _device.Viewport = new Viewport(origin.X, origin.Y, SPOT_TILE, SPOT_TILE);
+            RenderShadowView(view * projection, lightSphere, ref stats);
+        }
+        else {
+            var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, near, range);
+            for (int face = 0; face < 6; face++) {
+                var view = Matrix.CreateLookAt(light.Position, light.Position + _cubeForward[face], _cubeUp[face]);
+                _device.Viewport = new Viewport(origin.X + face % 3 * CUBE_TILE, origin.Y + face / 3 * CUBE_TILE, CUBE_TILE, CUBE_TILE);
                 RenderShadowView(view * projection, lightSphere, ref stats);
             }
-            else {
-                var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, near, range);
-                for (int face = 0; face < 6; face++) {
-                    var view = Matrix.CreateLookAt(light.Position, light.Position + _cubeForward[face], _cubeUp[face]);
-                    _device.Viewport = new Viewport(slot.Origin.X + face % 3 * CUBE_TILE, slot.Origin.Y + face / 3 * CUBE_TILE, CUBE_TILE, CUBE_TILE);
-                    RenderShadowView(view * projection, lightSphere, ref stats);
-                }
-            }
-
-            state.LastRendered = _frameIndex;
-            state.Position = light.Position;
-            state.Direction = direction;
-            state.Range = light.Range;
-            state.Angle = angle;
         }
+        if (!direct)
+            CopyToAtlas(slot, width, height);
+
+        state.LastRendered = _frameIndex;
+        state.Position = light.Position;
+        state.Direction = direction;
+        state.Range = light.Range;
+        state.Angle = angle;
+    }
+
+    static void CopyToAtlas(ShadowSlot slot, int width, int height) {
+        var atlas = _shadowAtlases[slot.Atlas] ?? CreateAtlas(slot.Atlas);
+        var sampler = _device.SamplerStates[0];
+        _device.SetRenderTarget(atlas);
+        _boundShadowTarget = atlas;
+        _device.Viewport = new Viewport(0, 0, atlas.Width, atlas.Height);
+        _atlasCopyBatch ??= new SpriteBatch(_device);
+        _atlasCopyBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+        _atlasCopyBatch.Draw(_shadowScratch, new Rectangle(slot.Origin.X, slot.Origin.Y, width, height), new Rectangle(0, 0, width, height), Color.White);
+        _atlasCopyBatch.End();
+        // the scratch target is rendered into again next, so it can't stay bound as a texture
+        _device.Textures[0] = null;
+        _device.SamplerStates[0] = sampler;
     }
 
     static void RenderShadowView(Matrix viewProjection, BoundingSphere lightSphere, ref FrameStats stats) {
-        // a shadow view only matters if something it covers can be seen: skip cube faces / spots facing away from the camera
+        // a shadow view only matters if something it covers can be seen
         _shadowViewFrustum.Matrix = viewProjection;
         if (!_shadowViewFrustum.Intersects(_cameraFrustum)) {
             stats.SkippedShadowViews++;
@@ -1241,7 +1340,7 @@ public static class LightingSystem {
         axisY = new Vector3(view.M12, view.M22, view.M32) * scale;
     }
 
-    // ------------------------------------------------------------------------------------------ light buffer
+    // light buffer
 
     static void SetCameraParameters() {
         var inverseView = Matrix.Invert(_cameraView);
@@ -1256,7 +1355,7 @@ public static class LightingSystem {
         var background = new Vector3(MathHelper.Clamp(BackgroundLight * 0.5f, 0f, 1f));
         _device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, new Color(background), 1f, 0);
 
-        // pass 1: ambient + sun, writes depth
+        // ambient + sun, writes depth
         _device.BlendState = BlendState.Opaque;
         _device.DepthStencilState = DepthStencilState.Default;
 
@@ -1282,15 +1381,16 @@ public static class LightingSystem {
             stats.LightBufferDraws++;
         }
 
-        // pass 2+: local lights, additive, depth test against pass 1
+        // local lights, additive, depth test against pass 1
         _device.BlendState = _additive;
         _device.DepthStencilState = _depthReadLessEqual;
 
-        for (int start = 0; start < _points.Count; start += LIGHTS_PER_PASS) {
-            int count = Math.Min(LIGHTS_PER_PASS, _points.Count - start);
+        BuildBatches(_points);
+        foreach (var batch in _batches) {
+            int count = batch.Count;
             for (int i = 0; i < LIGHTS_PER_PASS; i++) {
                 if (i < count) {
-                    var light = _points[start + i];
+                    var light = _batchLights[batch.Start + i];
                     FillCommon(i, light);
                     _batchSpheres[i] = new BoundingSphere(light.Position, light.Range);
                 }
@@ -1299,15 +1399,17 @@ public static class LightingSystem {
                 }
             }
             UploadLightArrays();
+            _pShadowAtlas?.SetValue(AtlasFor(batch.Atlas));
             _effect.CurrentTechnique = Quality.SoftLocalShadows ? _tPointLights : _tPointLightsFast;
             DrawLitBatch(count, ref stats);
         }
 
-        for (int start = 0; start < _spots.Count; start += LIGHTS_PER_PASS) {
-            int count = Math.Min(LIGHTS_PER_PASS, _spots.Count - start);
+        BuildBatches(_spots);
+        foreach (var batch in _batches) {
+            int count = batch.Count;
             for (int i = 0; i < LIGHTS_PER_PASS; i++) {
                 if (i < count) {
-                    var spot = _spots[start + i];
+                    var spot = (SpotLight)_batchLights[batch.Start + i];
                     FillCommon(i, spot);
                     var near = MathF.Max(0.5f, spot.Range * 0.005f);
                     GetSpotShadowCamera(spot, near, out _, out _, out var axisX, out var axisY);
@@ -1324,10 +1426,49 @@ public static class LightingSystem {
                 }
             }
             UploadLightArrays();
+            _pShadowAtlas?.SetValue(AtlasFor(batch.Atlas));
             _effect.CurrentTechnique = Quality.SoftLocalShadows ? _tSpotLights : _tSpotLightsFast;
             DrawLitBatch(count, ref stats);
         }
     }
+
+    /// <summary>Splits lights into passes of four where every pass reads from one atlas. Lights without a shadow fill the gaps.</summary>
+    static void BuildBatches<T>(List<T> lights) where T : Light {
+        _batchLights.Clear();
+        _batches.Clear();
+        _unshadowedLights.Clear();
+        foreach (var list in _lightsByAtlas)
+            list.Clear();
+        foreach (var light in lights) {
+            if (_shadowSlots.TryGetValue(light, out var slot))
+                _lightsByAtlas[slot.Atlas].Add(light);
+            else
+                _unshadowedLights.Add(light);
+        }
+
+        int next = 0;
+        for (int atlas = 0; atlas < MAX_ATLASES; atlas++) {
+            var group = _lightsByAtlas[atlas];
+            for (int i = 0; i < group.Count; i += LIGHTS_PER_PASS) {
+                var start = _batchLights.Count;
+                int count = Math.Min(LIGHTS_PER_PASS, group.Count - i);
+                for (int j = 0; j < count; j++)
+                    _batchLights.Add(group[i + j]);
+                for (; count < LIGHTS_PER_PASS && next < _unshadowedLights.Count; count++)
+                    _batchLights.Add(_unshadowedLights[next++]);
+                _batches.Add(new LightBatch { Start = start, Count = count, Atlas = atlas });
+            }
+        }
+        while (next < _unshadowedLights.Count) {
+            var start = _batchLights.Count;
+            int count = Math.Min(LIGHTS_PER_PASS, _unshadowedLights.Count - next);
+            for (int j = 0; j < count; j++)
+                _batchLights.Add(_unshadowedLights[next++]);
+            _batches.Add(new LightBatch { Start = start, Count = count, Atlas = -1 });
+        }
+    }
+
+    static Texture2D AtlasFor(int index) => index >= 0 && _shadowAtlases[index] is { } atlas ? atlas : _white;
 
     static void FillCommon(int i, Light light) {
         var range = MathF.Max(light.Range, 0.01f);
@@ -1385,7 +1526,7 @@ public static class LightingSystem {
         }
     }
 
-    // ------------------------------------------------------------------------------------------ shafts + composite
+    // shafts and composite
 
     static void RenderShafts() {
         _device.SetRenderTarget(_shaftBuffer);
@@ -1436,7 +1577,7 @@ public static class LightingSystem {
     }
 
     static void DrawPart(in DrawRecord d, DrawMode mode) {
-        // every captured draw normally shares the camera's view projection; only upload it when it changes
+        // every captured draw normally shares the camera's view projection
         if (mode != DrawMode.Shadow && d.ViewProjection != _lastViewProjection) {
             _pViewProjection?.SetValue(d.ViewProjection);
             _lastViewProjection = d.ViewProjection;
@@ -1456,8 +1597,7 @@ public static class LightingSystem {
     }
 
     /// <summary>
-    /// Forces cached shadows (the room map) to be re-rendered next frame. Call after moving or changing static
-    /// geometry. Changing presets, the sun or <see cref="SunBlockers"/> is picked up automatically.
+    /// Forces cached shadows to be re-rendered next frame.
     /// </summary>
     public static void InvalidateShadowCache() {
         _roomCacheValid = false;
@@ -1469,7 +1609,9 @@ public static class LightingSystem {
         _sunShadowMap?.Dispose(); _sunShadowMap = null;
         _roomShadowMap?.Dispose(); _roomShadowMap = null;
         _roomShadowDilated?.Dispose(); _roomShadowDilated = null;
-        _shadowAtlas?.Dispose(); _shadowAtlas = null;
+        ReleaseAtlases();
+        _shadowScratch?.Dispose(); _shadowScratch = null;
+        _atlasCopyBatch?.Dispose(); _atlasCopyBatch = null;
         _lightBuffer?.Dispose(); _lightBuffer = null;
         _shaftBuffer?.Dispose(); _shaftBuffer = null;
     }
