@@ -327,6 +327,8 @@ public static class RoomScene {
         RoomSkyboxScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         RoomSkyboxScene!.Root.Transform = World;
 
+        var device = TankGame.Instance.GraphicsDevice;
+        device.BlendState = BlendState.Opaque;
         foreach (var mesh in OpaqueMeshes) {
             // multiply by 100 because it's so fucked man
             var bs = mesh.BoundingSphere;
@@ -343,6 +345,7 @@ public static class RoomScene {
             mesh.Draw();
         }
 
+        device.BlendState = BlendState.AlphaBlend;
         foreach (var mesh in GlassMeshes) {
             var bs = mesh.BoundingSphere;
             bs.Center = Vector3.Transform(bs.Center, _boneTransforms[mesh.ParentBone.Index]);

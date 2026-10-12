@@ -326,7 +326,7 @@ public class GameConsole {
 
     // eventually or osmething
     void PrepareBuffer() {
-        // RenderGlobals.EnsureRenderTargetOK(ref )
+        // RenderGlobals.EnsureOK(ref )
     }
 
     public void Draw(SpriteBatch spriteBatch) {

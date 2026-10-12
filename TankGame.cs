@@ -45,6 +45,7 @@ using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Graphics.Shaders;
 
 namespace TanksRebirth;
 
@@ -1021,6 +1022,10 @@ public class TankGame : Game {
 
         // maybe freeze RT?
 
+        // goofy ahh hardcode
+        GaussianBlur.Prepare(GraphicsDevice, SpriteRenderer, GameFrameBuffer,
+            MainMenuUI.IsActive && GameScene.UpdateAndRender ? GameShaders.BlurFactor : 0f);
+
         PrepareGameBuffers(SpriteRenderer);
         MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);
 
@@ -1028,8 +1033,20 @@ public class TankGame : Game {
     }
 
     public static void DrawGameElements() {
-        var shader = Modifiers.IsOn(Modifiers.LANTERN) && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
+        var shader = Modifiers.IsOn(Modifiers.LANTERN) && !MainMenuUI.IsActive ? GameShaders.LanternShader : null;
         if (!GameScene.UpdateAndRender) shader = null;
+
+        // stretches the blur across the entire screen, since the blur is rendered at a smaller scale
+        // also this is some serious pattern matching black magic
+        if (GaussianBlur.Result is { } blurred) {
+            SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.Opaque, SamplerState.LinearClamp);
+            SpriteRenderer.Draw(blurred, new Rectangle(0, 0, GameFrameBuffer.Width, GameFrameBuffer.Height), Color.White);
+            SpriteRenderer.End();
+            return;
+        }
+
+        if (MainMenuUI.IsActive && GameScene.UpdateAndRender)
+            shader = GaussianBlur.Unblurred();
 
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);

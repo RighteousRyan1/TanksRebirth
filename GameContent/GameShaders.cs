@@ -35,8 +35,7 @@ public class GameShaders {
     }
 
     /// <param name="teamColor">If set, the mesh's wooden trim is tinted with this color (see <see cref="Tanks.Tank.ShowTeamVisuals"/>).</param>
-    /// <param name="sceneLit">Whether the scene's light darkens / tints the tank like it does other models (see <see cref="StaticLighting.RelativeSceneLight"/>).
-    /// Off for previews that shouldn't follow the scene, like UI.</param>
+    /// <param name="sceneLit">Whether the scene's light darkens / tints the tank like it does other models.</param>
     public static void DrawTankMesh(ModelMesh mesh, Matrix world, Matrix view, Matrix projection,
         Texture2D texture, float opacity, bool useEnvironment = false, Color? teamColor = null, bool sceneLit = true) {
         // the tank shader isn't a BasicEffect, so tell the lighting system about this mesh directly
@@ -79,17 +78,6 @@ public class GameShaders {
         AnimatedRainbow.Parameters["oAngle"].SetValue(RuntimeData.RunTime * 0.1f);
         AnimatedRainbow.Parameters["oSpeed"].SetValue(0.5f);
         AnimatedRainbow.Parameters["oMinLum"].SetValue(0.1f);
-
-        // MouseShader.Parameters["oRotation"].SetValue(MathHelper.Pi);
-
-        GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
-        GaussianBlurShader.Parameters["oBlurFactor"].SetValue(BlurFactor);
-        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenuUI.IsActive);
-
-        /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
-            val += 0.01f;
-        else if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
-            val -= 0.01f;*/
 
 
         LanternShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);

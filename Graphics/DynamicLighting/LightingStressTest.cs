@@ -74,15 +74,14 @@ public static class LightingStressTest {
             light.Position = new Vector3(MathF.Cos(angle) * HALF_WIDTH * radius, 28f + 10f * MathF.Sin(_time * 2f + i), MathF.Sin(angle) * HALF_DEPTH * radius);
             LightingSystem.AddFrameLight(light);
         }
-
         // spot lights hang above the board edges and sweep their beams across it
         for (int i = 0; i < _spots.Length; i++) {
             var count = (float)_spots.Length;
             var angle = i / count * MathHelper.TwoPi + _time * 0.2f;
             var sweep = -angle * 1.5f + _time * (0.7f + i % 4 * 0.15f);
             var light = _spots[i];
-            light.Position = new Vector3(MathF.Cos(angle) * HALF_WIDTH * 1.1f, 110f, MathF.Sin(angle) * HALF_DEPTH * 1.1f);
-            light.LookAt(new Vector3(MathF.Cos(sweep) * HALF_WIDTH * 0.6f, 0f, MathF.Sin(sweep) * HALF_DEPTH * 0.6f));
+            light.Position = new Vector3(MathF.Cos(angle) * HALF_WIDTH * 1.8f, 5f, MathF.Sin(angle) * HALF_DEPTH * 1.5f);
+            light.LookAt(new Vector3(MathF.Cos(sweep) * HALF_WIDTH, 0f, MathF.Sin(sweep) * HALF_DEPTH));
             LightingSystem.AddFrameLight(light);
         }
     }

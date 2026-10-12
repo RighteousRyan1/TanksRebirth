@@ -32,7 +32,7 @@ public sealed class LightingQuality {
     /// <summary>Smooth 3x3 filtered lamp shadows (16 taps) instead of the cheaper 2x2 filter (4 taps).</summary>
     public bool SoftLocalShadows = true;
     /// <summary>A shadowed light that didn't move re-renders its shadow map only every this many frames.</summary>
-    public int StaticLightShadowInterval = 6;
+    public int StaticLightShadowInterval = 3;
 
     // light shafts
 

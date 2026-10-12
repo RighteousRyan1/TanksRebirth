@@ -163,7 +163,7 @@ public static class LightingSystem {
     static readonly int[] _atlasLastUsed = new int[MAX_ATLASES];
     static int _atlasFrame;
     // atlases past the first have no depth buffer. Their maps are rendered here, then copied over
-    static RenderTarget2D? _shadowScratch;
+    static RenderTarget2D? _shadowTemp;
     static SpriteBatch? _atlasCopyBatch;
     static RenderTarget2D? _boundShadowTarget;
     static RenderTarget2D? _lightBuffer;
@@ -887,7 +887,7 @@ public static class LightingSystem {
         var first = _shadowAtlases[0];
         if (!atlasWanted) {
             ReleaseAtlases();
-            Release(ref _shadowScratch);
+            Release(ref _shadowTemp);
         }
         else if (first is null || first.IsDisposed || first.Width != atlasSize) {
             ReleaseAtlases();
@@ -947,19 +947,19 @@ public static class LightingSystem {
             extras |= _shadowAtlases[i] is not null;
         }
         if (!extras)
-            Release(ref _shadowScratch);
+            Release(ref _shadowTemp);
     }
 
     static RenderTarget2D EnsureScratch() {
         // big enough for one point light's six faces, which also fits a spot tile. Preserved so binding it doesn't
         // clear it, since each light clears only the area it uses
-        if (_shadowScratch is null || _shadowScratch.IsDisposed || _shadowScratch.Width != CUBE_TILE * 3) {
-            _shadowScratch?.Dispose();
-            _shadowScratch = new RenderTarget2D(_device, CUBE_TILE * 3, CUBE_TILE * 2, false, SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.PreserveContents) {
+        if (_shadowTemp is null || _shadowTemp.IsDisposed || _shadowTemp.Width != CUBE_TILE * 3) {
+            _shadowTemp?.Dispose();
+            _shadowTemp = new RenderTarget2D(_device, CUBE_TILE * 3, CUBE_TILE * 2, false, SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.PreserveContents) {
                 Name = "Lighting.ShadowScratch",
             };
         }
-        return _shadowScratch;
+        return _shadowTemp;
     }
 
     // shadows
@@ -1298,7 +1298,7 @@ public static class LightingSystem {
         _device.Viewport = new Viewport(0, 0, atlas.Width, atlas.Height);
         _atlasCopyBatch ??= new SpriteBatch(_device);
         _atlasCopyBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
-        _atlasCopyBatch.Draw(_shadowScratch, new Rectangle(slot.Origin.X, slot.Origin.Y, width, height), new Rectangle(0, 0, width, height), Color.White);
+        _atlasCopyBatch.Draw(_shadowTemp, new Rectangle(slot.Origin.X, slot.Origin.Y, width, height), new Rectangle(0, 0, width, height), Color.White);
         _atlasCopyBatch.End();
         // the scratch target is rendered into again next, so it can't stay bound as a texture
         _device.Textures[0] = null;
@@ -1610,7 +1610,7 @@ public static class LightingSystem {
         _roomShadowMap?.Dispose(); _roomShadowMap = null;
         _roomShadowDilated?.Dispose(); _roomShadowDilated = null;
         ReleaseAtlases();
-        _shadowScratch?.Dispose(); _shadowScratch = null;
+        _shadowTemp?.Dispose(); _shadowTemp = null;
         _atlasCopyBatch?.Dispose(); _atlasCopyBatch = null;
         _lightBuffer?.Dispose(); _lightBuffer = null;
         _shaftBuffer?.Dispose(); _shaftBuffer = null;

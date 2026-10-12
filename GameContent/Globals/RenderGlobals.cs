@@ -28,13 +28,17 @@ public static class RenderGlobals {
         AddressV = TextureAddressMode.Clamp,
     };
 
-    public static void EnsureRenderTargetOK(ref RenderTarget2D rt, GraphicsDevice device, int desiredWidth, int desiredHeight) {
-        if (rt == null || rt.IsDisposed || rt.Size() != new Vector2(desiredWidth, desiredHeight)) {
+    public static RenderTarget2D EnsureOK(ref RenderTarget2D? rt, GraphicsDevice device, int desiredWidth, int desiredHeight, string? name = null) {
+        if (rt == null || rt.IsDisposed || rt.Width != desiredWidth || rt.Height != desiredHeight) {
             rt?.Dispose();
             var presentationParams = TankGame.Instance.GraphicsDevice.PresentationParameters;
             rt = new RenderTarget2D(device,
                 desiredWidth, desiredHeight, false,
-                presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
+                presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents) {
+                Name = name
+            };
         }
+
+        return rt;
     }
 }

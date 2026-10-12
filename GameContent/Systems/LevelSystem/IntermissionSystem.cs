@@ -387,10 +387,10 @@ public static class IntermissionSystem {
         _snareDrums = SoundPlayer.PlaySoundInstance(tune, SoundContext.Effect, 1f);
     }
     public static void PrepareBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
-        RenderGlobals.EnsureRenderTargetOK(ref BackgroundBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
-        RenderGlobals.EnsureRenderTargetOK(ref BannerBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
-        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerBuffer, device, /*(int)(WindowUtils.WindowWidth * 0.75f)*/ WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
-        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, device, WindowUtils.WindowWidth / 3, (int)125.ToResolutionY());
+        RenderGlobals.EnsureOK(ref BackgroundBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
+        RenderGlobals.EnsureOK(ref BannerBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
+        RenderGlobals.EnsureOK(ref BonusBannerBuffer, device, /*(int)(WindowUtils.WindowWidth * 0.75f)*/ WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
+        RenderGlobals.EnsureOK(ref BonusBannerTextBuffer, device, WindowUtils.WindowWidth / 3, (int)125.ToResolutionY());
 
         if (TankGame.Instance.IsActive) {
             // System.Diagnostics.Debug.WriteLine(TimeBlack);
