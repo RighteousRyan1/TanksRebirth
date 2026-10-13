@@ -74,7 +74,7 @@ public static class ModLoader {
     public static int ActionsComplete { get; private set; }
     /// <summary>The current status of the mod loader.</summary>
     public static LoadStatus Status { get; private set; } = LoadStatus.Inactive;
-    /// <summary>The name of the mod being loaded.</summary>
+    /// <summary>The namespace of the mod being loaded.</summary>
     public static string ModBeingLoaded { get; private set; } = string.Empty;
     /// <summary>The path to where mods are loaded from.</summary>
     public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
@@ -538,66 +538,77 @@ public static class ModLoader {
         }
     }
     public static void LoadModTank(TanksMod mod, Type type) {
-        var modTank = (Activator.CreateInstance(type) as ModTank)!;
-        var tankName = modTank.GetType().Name;
-        modTank.InternalName = tankName;
+        var modContent = (Activator.CreateInstance(type) as ModTank)!;
+        var modType = modContent.GetType();
+        modContent.ContentKey = $"{type.Assembly.GetName().Name}.{modType.Name}";
+        var @namespace = string.Join(Path.DirectorySeparatorChar, modType.FullName!.Split('.')[1..]);
 
-        _loadingContent = modTank;
+        _loadingContent = modContent;
 
-        mod.Data.Tanks.Add(modTank);
-        _modTanks.Add(modTank);
-        modTank.Mod = mod;
+        mod.Data.Tanks.Add(modContent);
+        _modTanks.Add(modContent);
+        modContent.Mod = mod;
 
         // load each tank and its data, add to moddedTypes the singleton of the ModTank.
-        ModRegistry.singletonMap.Add(type, modTank);
+        ModRegistry.singletonMap.Add(type, modContent);
 
-        modTank.Name ??= new();
-        modTank.Texture ??= tankName;
+        modContent.Name ??= new();
+        modContent.Texture ??= @namespace;
 
         // doesn't insert anything if there is already something for English
-        modTank.Name.TryAdd(LangCode.English, $"{mod.InternalName}.{tankName}");
-        DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
-        modTank!.Register();
-        TankGame.ClientLog.Write($"Loaded modded tank '{modTank.Name[LangCode.English]}'", LogType.Info);
+        modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
+        DifficultyAlgorithm.TankDiffs[modContent.Type] = 0f;
+
+        modContent!.Register();
+        TankGame.ClientLog.Write($"Loaded modded tank '{modContent.ContentKey}'", LogType.Info);
     }
     public static void LoadModBlock(TanksMod mod, Type type) {
-        var modBlock = (Activator.CreateInstance(type) as ModBlock)!;
-        var blockName = modBlock.GetType().Name;
+        var modContent = (Activator.CreateInstance(type) as ModBlock)!;
+        var modType = modContent.GetType();
+        modContent.ContentKey = $"{type.Assembly.GetName().Name}.{modType.Name}";
+        var @namespace = string.Join(Path.DirectorySeparatorChar, modType.FullName!.Split('.')[1..]);
 
-        _loadingContent = modBlock;
+        _loadingContent = modContent;
 
-        mod.Data.Blocks.Add(modBlock);
-        _modBlocks.Add(modBlock);
-        modBlock!.Mod = mod;
+        mod.Data.Blocks.Add(modContent);
+        _modBlocks.Add(modContent);
+        modContent!.Mod = mod;
+
+        modContent.Name ??= new();
+        modContent.Texture ??= @namespace;
 
         // again, but with modlbocks
-        ModRegistry.singletonMap.Add(type, modBlock);
+        ModRegistry.singletonMap.Add(type, modContent);
 
-        modBlock.Name.TryAdd(LangCode.English, $"{mod.InternalName}.{blockName}");
-        modBlock.Register();
-        TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name[LangCode.English]}'", LogType.Info);
+        modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
+        modContent.Register();
+        TankGame.ClientLog.Write($"Loaded modded block '{modContent.ContentKey}'", LogType.Info);
     }
     public static void LoadModShell(TanksMod mod, Type type) {
-        var modShell = (Activator.CreateInstance(type) as ModShell)!;
-        var shellName = modShell.GetType().Name;
-        modShell.InternalName = shellName;
+        var modContent = (Activator.CreateInstance(type) as ModShell)!;
+        var modType = modContent.GetType();
+        modContent.ContentKey = $"{type.Assembly.GetName().Name}.{modType.Name}";
+        var @namespace = string.Join(Path.DirectorySeparatorChar, modType.FullName!.Split('.')[1..]);
 
-        _loadingContent = modShell;
+        _loadingContent = modContent;
 
-        mod.Data.Shells.Add(modShell);
-        _modShells.Add(modShell);
-        modShell!.Mod = mod;
+        mod.Data.Shells.Add(modContent);
+        _modShells.Add(modContent);
+        modContent!.Mod = mod;
+
+        modContent.Name ??= new();
+        modContent.Texture ??= @namespace;
 
         // again, but with modshels
-        ModRegistry.singletonMap.Add(type, modShell);
+        ModRegistry.singletonMap.Add(type, modContent);
 
-        modShell.Name.TryAdd(LangCode.English, $"{mod.InternalName}.{shellName}");
-        TankGame.MainThreadTasks.Enqueue(modShell.Register);
-        TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name[LangCode.English]}'", LogType.Info);
+        modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
+        TankGame.MainThreadTasks.Enqueue(modContent.Register);
+        TankGame.ClientLog.Write($"Loaded modded shell '{modContent.ContentKey}'", LogType.Info);
     }
     public static void LoadModModifier(TanksMod mod, Type type) {
         var modModifier = (Activator.CreateInstance(type) as ModModifier)!;
-        modModifier.InternalName = modModifier.GetType().Name;
+        modModifier.ContentKey = modModifier.GetType().Name;
         modModifier.Mod = mod;
 
         _loadingContent = modModifier;
@@ -674,7 +685,7 @@ public static class ModLoader {
         var statusText = Error != string.Empty ? $"ERROR: {Error}" : $"{Status}: {ModBeingLoaded}...";
         var statusScale = new Vector2(0.9f).ToResolution();
         var contentScale = statusScale * 0.5f;
-        var currentContentLoading = _loadingContent != null ? _loadingContent.InternalName : string.Empty;
+        var currentContentLoading = _loadingContent != null ? _loadingContent.ContentKey : string.Empty;
         var cmclSize = font.MeasureString(currentContentLoading) * contentScale;
         var statusSize = font.MeasureString(statusText) * statusScale;
 

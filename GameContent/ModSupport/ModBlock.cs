@@ -10,17 +10,21 @@ namespace TanksRebirth.GameContent.ModSupport;
 public class ModBlock : ILoadable, IModContent {
     Texture2D? _texture;
 
-    public string InternalName { get; set; }
+    public string ContentKey { get; internal set; }
+    string IModContent.ContentKey {
+        get => ContentKey;
+        set => ContentKey = value;
+    }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModBlock"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     public Block Block { get; internal set; }
     public int Type { get; set; }
-    public virtual string Texture => string.Empty;
+    public virtual string Texture { get; internal set; } = string.Empty;
     /// <summary>
     /// The name of this block.<br></br>
     /// The English localized name will be the name that gets added to the game internally.
     /// </summary>
-    public virtual LocalizedString Name => new();
+    public virtual LocalizedString Name { get; internal set; }
     /// <summary>
     /// Describe how your tank works, in preferably multiple languages.<br></br>
     /// This description will appear in the level editor menu.

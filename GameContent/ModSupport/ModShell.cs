@@ -10,7 +10,11 @@ namespace TanksRebirth.GameContent.ModSupport;
 
 #pragma warning disable CS8618
 public class ModShell : ILoadable, IModContent {
-    public string InternalName { get; set; }
+    public string ContentKey { get; internal set; }
+    string IModContent.ContentKey {
+        get => ContentKey;
+        set => ContentKey = value;
+    }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModShell"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     public Shell Shell { get; set; }
@@ -18,12 +22,12 @@ public class ModShell : ILoadable, IModContent {
 
     private Texture2D? _texture;
     /// <summary>If not assigned manually, the texture will default to the regular, (mostly) white shell texture.</summary>
-    public virtual string Texture => string.Empty;
+    public virtual string Texture { get; internal set; } = string.Empty;
     /// <summary>The sound for when this shell is shot. Utilize Path.Combine(ModPath, ...)</summary>
     public virtual string ShootSound => string.Empty;
     /// <summary>The sound for while this shell is flying. Utilize Path.Combine(ModPath, ...)</summary>
     public virtual string TrailSound => string.Empty;
-    public virtual LocalizedString Name => new();
+    public virtual LocalizedString Name { get; internal set; }
 
     /// <summary>Initialize what you want alongside the loading of your modded shell.</summary>
     public virtual void OnLoad() { }

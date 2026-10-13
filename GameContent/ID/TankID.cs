@@ -44,7 +44,10 @@ public sealed class TankID {
      * 
      * Rampart tank: creates a shield (or something similar) that blocks projectiles
      * Charging tank: charges at you upon line of sight
+     * Trailblazer tank: shots lay a trail of fire that *enemy* tanks cannot pass through for X amount of time
+     * Toxic tank: bullet bounces (or kills) spawn gas clouds that slow movement and decrease fire rate
      * 
+     * ... more ideas later...
      */
 
     public static ReflectionDictionary<TankID> Collection { get; internal set; } = new(MemberType.Fields);

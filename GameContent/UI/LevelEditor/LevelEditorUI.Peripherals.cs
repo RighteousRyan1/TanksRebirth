@@ -77,8 +77,6 @@ public static partial class LevelEditorUI {
         Name = "LevelEditor.DepthOnly",
         ColorWriteChannels = ColorWriteChannels.None,
     };
-
-    static Particle mask;
     // tracks if the latest placement preview block is stackable or not
     static bool _latestStackable = true;
     public static float ElementRotation => RuntimeData.RunTime / 100;
@@ -112,21 +110,20 @@ public static partial class LevelEditorUI {
             bp.Alpha = CurCategory == EditorCategory.Terrain ? 1 : 0;
         };
 
-        mask = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.FlatFace.Asset, TextureGlobals.Pixels[Color.Gray]);
-        _stackFloor = mask;
+        _stackFloor = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.FlatFace.Asset, TextureGlobals.Pixels[Color.Gray]);
 
         // most of these values are magical. the particle system is truly fucked
-        mask.Scale = Vector3.One * 10;
-        mask.Alpha = 1f;
-        mask.Yaw = MathHelper.PiOver4;
-        mask.LightPower = 0.775f;
-        mask.Color = Color.Black;
-        mask.ApplyGameLight = false;
-        mask.UniqueBehavior = (p) => {
+        _stackFloor.Scale = Vector3.One * 10;
+        _stackFloor.Alpha = 1f;
+        _stackFloor.Yaw = MathHelper.PiOver4;
+        _stackFloor.LightPower = 0.775f;
+        _stackFloor.Color = Color.Black;
+        _stackFloor.ApplyGameLight = false;
+        _stackFloor.UniqueBehavior = (p) => {
             // true cuz there's no need to lower the Y
             var curHeight = Block.GetOffsetY(BlockStack, true) / Block.BLOCK_DEF_SCALING;
-            mask.Position = bp.Position + Vector3.Up * curHeight * bp.Scale;
-            mask.Alpha = _latestStackable ? bp.Alpha * 0.25f : 0f;
+            _stackFloor.Position = bp.Position + Vector3.Up * curHeight * bp.Scale;
+            _stackFloor.Alpha = _latestStackable ? bp.Alpha * 0.25f : 0f;
         };
 
         for (int i = TankID.Brown; i < TankID.Collection.Count; i++) {
@@ -304,7 +301,7 @@ public static partial class LevelEditorUI {
         preview.Texturing = block.TextureMap;
         block.Remove();
     }
-    // draws a mask particle to the depth buffer to give the illusion of the block changing stack, just like ingame
+    // draws a _stackFloor particle to the depth buffer to give the illusion of the block changing stack, just like ingame
     static void DrawFloorDepth(Particle floor) {
         var device = TankGame.Instance.GraphicsDevice;
         var blend = device.BlendState;

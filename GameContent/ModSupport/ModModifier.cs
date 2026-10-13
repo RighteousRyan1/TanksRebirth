@@ -8,19 +8,19 @@ namespace TanksRebirth.GameContent.ModSupport;
 #pragma warning disable CS8618
 /// <summary>A modifier added by a mod. Multiplayer sync is handled automatically.</summary>
 public abstract class ModModifier : ILoadable, IModContent {
-    public string InternalName { get; set; }
+    public string ContentKey { get; set; }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModModifier"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     /// <summary>Its position in <see cref="Modifiers.Definitions"/> when it was registered.</summary>
     public int Type { get; set; }
 
     /// <summary>The key it's stored and synced under: "ModName.ClassName".</summary>
-    public string Key => $"{Mod.InternalName}.{InternalName}";
+    public string Key => $"{Mod.InternalName}.{ContentKey}";
     /// <summary>The registered definition (null until registered).</summary>
     public ModifierDefinition? Definition { get; private set; }
 
     /// <summary>The name shown in the modifiers menu. Read every frame, so it can follow the game's language.</summary>
-    public virtual string DisplayName => InternalName;
+    public virtual string DisplayName => ContentKey;
     /// <summary>What the modifier does, shown when the mouse is over it. Can be multiple lines.</summary>
     public virtual string Description => string.Empty;
     /// <summary>The section it's listed under. Use one of <see cref="ModifierCategory"/>'s names to join a base game section, or any other name to make a new one. Defaults to the mod's name.</summary>

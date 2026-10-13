@@ -25,7 +25,11 @@ public class ModTank : ILoadable, IModContent {
     List<OggMusic> _music;
     Texture2D? _texture;
 
-    public string InternalName { get; set; }
+    public string ContentKey { get; internal set; }
+    string IModContent.ContentKey {
+        get => ContentKey;
+        set => ContentKey = value;
+    }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModTank"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     /// <summary>The AI Tier ID for the modded tank.</summary>
