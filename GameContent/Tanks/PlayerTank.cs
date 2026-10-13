@@ -44,7 +44,7 @@ public ref struct PlayerBinds {
 }
 public class PlayerTank : Tank {
 
-    public static int NumLocalPlayers => KbPlayer == -1 ? InputUtils.NumGamepadsConnected + 1 : InputUtils.NumConnectedInputs;
+    public static int NumLocalPlayers => KbPlayer == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
     #region The Rest
 
     // "My" denotes that it's for the client's tank team/tank type

@@ -695,7 +695,7 @@ public class TankGame : Game {
                 PlayerMice[PlayerTank.KbPlayer].Position = MouseUtils.MousePosition;
             }
             // more hacks, more hacks. but it works
-            else if (MainMenuUI.IsActive || PlayerTank.KbPlayer <= -1 || GameUI.Paused) {
+            else if (MainMenuUI.IsActive || PlayerTank.KbPlayer < -1 || GameUI.Paused) {
                 var myClient = NetPlay.GetMyClientId();
                 PlayerMice[0].Position = MouseUtils.MousePosition;
                 PlayerMice[0].MouseColor = PlayerID.PlayerTankColors[myClient];

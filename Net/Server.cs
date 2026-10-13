@@ -58,7 +58,7 @@ public class Server {
     public static int NewSessionSeed() => Guid.NewGuid().GetHashCode();
 
     /// <summary>
-    /// A random generator for one specific roll, the same on every client: it's seeded from <see cref="SessionSeed"/> and
+    /// A random generator for one specific roll, the same on every client, as it's seeded from <see cref="SessionSeed"/> and
     /// <paramref name="key"/> only, so it doesn't matter what else was drawn before, or in what order. Give every roll its
     /// own key (what it's for, the mission, which tank...): e.g. <c>RandomFor(RandomKey.ENEMY_TIER, missionId, tankIndex)</c>.
     /// </summary>

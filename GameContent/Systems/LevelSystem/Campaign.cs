@@ -175,6 +175,7 @@ public class Campaign {
         if (lives <= 0) return;
 
         if (isLocalGame && !LevelEditorUI.IsActive) {
+            // probably should introduce a method for this
             int inputCheckValue = PlayerTank.NumLocalPlayers;
             var isValidLocalPlayer = template.PlayerType < inputCheckValue;
             if (!isValidLocalPlayer) return;

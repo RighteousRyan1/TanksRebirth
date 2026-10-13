@@ -216,6 +216,14 @@ public static class ControlsUI {
         PlayerTank.KbPlayer = next;
         if (GameUI.KeyboardPlayerButton is not null)
             GameUI.KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(next)}";
+
+        // properly hide unused mice/input methods
+        var mice = TankGame.PlayerMice;
+        for (int i = 0; i < mice.Length; i++) {
+            if (mice[i] is null) continue;
+            mice[i].ShouldRender = true;
+            if (i >= PlayerTank.NumLocalPlayers) mice[i].ShouldRender = false;
+        }
     }
 
     /// <summary>Opens the settings window on this page.</summary>
