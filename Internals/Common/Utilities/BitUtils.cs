@@ -8,7 +8,7 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class BitUtils {
     /// <summary>
-    /// 
+    /// Reads 4 bytes as an integer, with an offset provided.
     /// </summary>
     /// <param name="buffer">The buffer of data that contains convertible data.</param>
     /// <param name="offset">The location in <paramref name="buffer"/> of the data to parse to <see cref="int"/>.</param>
@@ -26,5 +26,36 @@ public static class BitUtils {
             _buffer[i ^ 0x3] = buffer[offset + i];
 
         return BitConverter.ToInt32(_buffer);
+    }
+
+    // googled a quick and efficient checksum lol
+    /// <summary>
+    /// Performs a checksum using the FNV-1a checksum algorithm.
+    /// </summary>
+    /// <param name="data">The bytes to perform the checksum on.</param>
+    /// <returns>The checksum.</returns>
+    public static uint ChecksumFNV(ReadOnlySpan<byte> data) {
+        uint hash = 2166136261;
+
+        foreach (byte b in data) {
+            hash ^= b;
+            hash *= 16777619;
+        }
+
+        return hash;
+    }
+
+    /// <summary>
+    /// Performs a checksum using XOR on each byte.
+    /// </summary>
+    /// <param name="data">The bytes to perform the checksum on.</param>
+    /// <returns>The checksum.</returns>
+    public static byte ChecksumXOR(ReadOnlySpan<byte> data) {
+        byte checksum = 0;
+
+        foreach (byte b in data)
+            checksum ^= b;
+
+        return checksum;
     }
 }

@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
@@ -158,76 +159,6 @@ public static class NetPlay {
                 var cmd = reader.GetString();
                 TankGame.IngameConsole.ProcessCommand(cmd, false);
                 break;
-            case PacketID.SendCampaign:
-                var campaign = new Campaign();
-
-                var cName = reader.GetString();
-                var startLives = reader.GetInt();
-                var bgColor = reader.GetColor();
-                var stripColor = reader.GetColor();
-
-                campaign.MetaData.Name = cName;
-                campaign.MetaData.StartingLives = startLives;
-                campaign.MetaData.BackgroundColor = bgColor;
-                campaign.MetaData.MissionStripColor = stripColor;
-
-                var missionCount = reader.GetInt();
-
-                campaign.CachedMissions = new Mission[missionCount];
-
-                for (int i = 0; i < missionCount; i++) {
-                    var blockLen = reader.GetInt();
-                    var tnkLen = reader.GetInt();
-
-                    var missionName = reader.GetString();
-                    var note = reader.GetString();
-
-                    List<BlockTemplate> blockTotal = [];
-                    List<TankTemplate> tankTotal = [];
-
-                    for (int m = 0; m < blockLen; m++) {
-                        var bPos = reader.GetVector2();
-                        var bType = reader.GetInt();
-                        var bStack = reader.GetByte();
-                        var tpLink = reader.GetByte();
-
-                        blockTotal.Add(new() {
-                            Position = bPos,
-                            Type = bType,
-                            Stack = bStack,
-                            TpLink = tpLink,
-                        });
-                    }
-                    for (var t = 0; t < tnkLen; t++) {
-                        var tPos = reader.GetVector2();
-                        var tRot = reader.GetFloat();
-                        var tIsPlayer = reader.GetBool();
-                        var tTeam = reader.GetInt();
-                        var typeOrTier = reader.GetInt();
-
-                        TankTemplate tmp = new() {
-                            Position = tPos,
-                            Rotation = tRot,
-                            IsPlayer = tIsPlayer,
-                            Team = tTeam
-                        };
-
-                        if (tmp.IsPlayer)
-                            tmp.PlayerType = typeOrTier;
-                        else
-                            tmp.AIType = typeOrTier;
-
-                        tankTotal.Add(tmp);
-                    }
-
-                    campaign.CachedMissions[i] = new(tankTotal.ToArray(), blockTotal.ToArray()) {
-                        Name = missionName,
-                        Note = note
-                    };
-                }
-                CampaignGlobals.LoadedCampaign = campaign;
-
-                break;
             case PacketID.StartGame:
                 int checkpoint = reader.GetInt();
                 bool shouldProgress = reader.GetBool();
@@ -240,6 +171,22 @@ public static class NetPlay {
                 break;
             case PacketID.QuitLevel:
                 GameUI.QuitOut(true);
+                break;
+            case PacketID.MissionEnd:
+                int endRestartTime = reader.GetInt();
+                var endContext = (MissionEndContext)reader.GetInt();
+                bool endExtraLife = reader.GetBool();
+                int endMissionId = reader.GetInt();
+
+                // the host's lives are the real ones
+                int endLifeCount = reader.GetInt();
+                for (int i = 0; i < endLifeCount; i++) {
+                    int hostLives = reader.GetInt();
+                    if (i < PlayerTank.Lives.Length)
+                        PlayerTank.Lives[i] = hostLives;
+                }
+
+                IntermissionHandler.ApplyHostMissionEnd(endRestartTime, endContext, endExtraLife, endMissionId);
                 break;
             case PacketID.PlayerSpawn:
 
@@ -419,6 +366,10 @@ public static class NetPlay {
                 var clid = reader.GetInt();
                 var lives = reader.GetInt();
 
+                // the host already took the life away when the tank died. a send from before that client saw its own death would give it back
+                if (Client.IsHost() && CampaignGlobals.InMission && GameHandler.AllPlayerTanks[clid] is { IsDestroyed: true })
+                    break;
+
                 PlayerTank.Lives[clid] = lives;
                 break;
             case PacketID.SyncKills:
@@ -531,6 +482,23 @@ public static class NetPlay {
             case PacketID.QuitLevel:
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
+            case PacketID.MissionEnd:
+                int endRestartTime = reader.GetInt();
+                int endContext = reader.GetInt();
+                bool endExtraLife = reader.GetBool();
+                int endMissionId = reader.GetInt();
+                message.Put(endRestartTime);
+                message.Put(endContext);
+                message.Put(endExtraLife);
+                message.Put(endMissionId);
+
+                int endLifeCount = reader.GetInt();
+                message.Put(endLifeCount);
+                for (int i = 0; i < endLifeCount; i++)
+                    message.Put(reader.GetInt());
+
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
+                break;
             case PacketID.PlayerSpawn:
                 var type = reader.GetInt();
                 var team = reader.GetInt();
@@ -600,61 +568,6 @@ public static class NetPlay {
                 message.Put(minePos);
                 message.Put(detTime);
                 message.Put(mineOwner);
-                Server.NetManager.SendToAll(message, deliveryMethod, peer);
-                break;
-            case PacketID.SendCampaign:
-                var cName = reader.GetString();
-                var startLives = reader.GetInt();
-                var bgColor = reader.GetColor();
-                var stripColor = reader.GetColor();
-
-                var missionCount = reader.GetInt();
-
-                message.Put(cName);
-                message.Put(startLives);
-                message.Put(bgColor);
-                message.Put(stripColor);
-                message.Put(missionCount);
-
-                for (int i = 0; i < missionCount; i++) {
-                    var blockLen = reader.GetInt();
-                    var tnkLen = reader.GetInt();
-
-                    var missionName = reader.GetString();
-                    var note = reader.GetString();
-
-                    message.Put(blockLen);
-                    message.Put(tnkLen);
-
-                    message.Put(missionName);
-                    message.Put(note);
-
-                    for (int m = 0; m < blockLen; m++) {
-                        var bPos = reader.GetVector2();
-                        var bType = reader.GetInt();
-                        var bStack = reader.GetSByte();
-                        var tpLink = reader.GetSByte();
-
-                        message.Put(bPos);
-                        message.Put(bType);
-                        message.Put(bStack);
-                        message.Put(tpLink);
-                    }
-                    for (var t = 0; t < tnkLen; t++) {
-                        var tPos = reader.GetVector2();
-                        var tRot = reader.GetFloat();
-                        var tIsPlayer = reader.GetBool();
-                        var tTeam = reader.GetInt();
-                        var typeOrTier = reader.GetInt();
-
-                        message.Put(tPos);
-                        message.Put(tRot);
-                        message.Put(tIsPlayer);
-                        message.Put(tTeam);
-                        message.Put(typeOrTier);
-                    }
-                }
-
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SendCampaignByName:
@@ -804,4 +717,4 @@ public static class NetPlay {
 // null -> 2
 // new Owner id -> 2
 
-// [Owner = 0, Owner = 1, Owner = 2, null = 3, null = 4]
+// [Owner = 0, Owner = 1, Owner = 2, null = 3, null = 4]

@@ -4,6 +4,7 @@ using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.Net;
 
 
 namespace TanksRebirth.GameContent.Systems.LevelSystem; 
@@ -52,13 +53,14 @@ public static class CampaignProgression {
     /// Checks if the current state of the level satisfies all mission completion conditions, including modded ones.
     /// </summary>
     public static void CheckMissionCompletion() {
-        // if (Client.IsConnected() && !Client.IsHost()) return;
+        // the host decides how a mission ends and sends it to everyone (IntermissionHandler.ApplyHostMissionEnd)
+        // ... under laggy conditions this could be flawed. i hope not.
+        if (Client.IsConnected() && !Client.IsHost()) return;
 
         if (CampaignGlobals.LoadedCampaign.CachedMissions[0].Name is null)
             return;
 
         // check modded first because i'd assume they're the least intensive?
-
 
         var nothingAnymore = VanillaCheckCompletion(CampaignGlobals.LoadedCampaign.CurrentMission, out var finalTeam);
         var myTank = PlayerTank.ClientTank;

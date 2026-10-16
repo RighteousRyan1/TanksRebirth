@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -124,21 +125,13 @@ public static class IntermissionHandler {
         }
     }
     public static void PrepareIntermission(bool victory) {
-        IntermissionSystem.IsAwaitingNewMission = true;
-        CampaignGlobals.InMission = false;
-
-        foreach (var tank in GameHandler.AllTanks) {
-            if (tank is null) continue;
-            tank.Velocity = Vector2.Zero;
-            tank.Physics.LinearVelocity = Vector2.Zero;
-        }
+        StopMission();
 
         if (!CampaignGlobals.InMission && _wasInMission) {
             bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].GrantsExtraLife;
             int restartTime;
             MissionEndContext endContext;
 
-            IntermissionSystem.InitializeCountdowns(isExtraLifeMission && victory);
             if (victory) {
                 restartTime = DEF_INTERMISSION_TIME;
 
@@ -173,20 +166,11 @@ public static class IntermissionHandler {
                 bool everyoneLostAllLives = true;
 
                 if (allPlayersDead) {
-                    // networking is *consistently* behind the host here
-                    var clientConnected = Client.IsConnected();
+                    // only the host (or a single player) gets here, and PlayerTank.Destroy already took each dead player's life away
                     for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++) {
-                        var tank = GameHandler.AllPlayerTanks[i];
-                        if (tank is null) continue;
-                        var lives = PlayerTank.Lives[i];
-                        int livesCountLocal = lives;
-                        if (tank.IsDestroyed) {
-                            if (clientConnected) {
-                                livesCountLocal = i != NetPlay.GetMyClientId() ? lives - 1 : lives;
-                            }
-                        }
+                        if (GameHandler.AllPlayerTanks[i] is null) continue;
                         // if any player has any lives remaining, the campaign isn't over
-                        if (livesCountLocal > 0)
+                        if (PlayerTank.Lives[i] > 0)
                             everyoneLostAllLives = false;
                     }
                 }
@@ -204,8 +188,36 @@ public static class IntermissionHandler {
                 if (Modifiers.IsOn(Modifiers.INF_LIFE))
                     endContext = MissionEndContext.Lose;
             }
-            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext);
+            var extraLife = isExtraLifeMission && victory;
+            // send before ending, since a win moves CurrentMissionId to the next mission
+            Client.SendMissionEnd(restartTime, endContext, extraLife);
+            EndMission(restartTime, endContext, extraLife);
         }
+    }
+    /// <summary>Applies the result the host decided for the current mission. Clients don't judge missions themselves.</summary>
+    public static void ApplyHostMissionEnd(int restartTime, MissionEndContext context, bool extraLife, int missionId) {
+        StopMission();
+
+        if (CampaignGlobals.LoadedCampaign.CurrentMissionId != missionId) {
+            TankGame.ClientLog.Write($"Mission desync: on mission {CampaignGlobals.LoadedCampaign.CurrentMissionId} but the host ended mission {missionId}. Following the host.", LogType.Warn);
+            CampaignGlobals.LoadedCampaign.LoadMission(missionId);
+        }
+
+        EndMission(restartTime, context, extraLife);
+    }
+    static void StopMission() {
+        IntermissionSystem.IsAwaitingNewMission = true;
+        CampaignGlobals.InMission = false;
+
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is null) continue;
+            tank.Velocity = Vector2.Zero;
+            tank.Physics.LinearVelocity = Vector2.Zero;
+        }
+    }
+    static void EndMission(int restartTime, MissionEndContext context, bool extraLife) {
+        IntermissionSystem.InitializeCountdowns(extraLife);
+        CampaignGlobals.MissionEndEvent_Invoke(restartTime, context);
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>
     public static void BeginIntroSequence() {
