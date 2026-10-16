@@ -266,7 +266,7 @@ public static class CameraGlobals {
 
         Vector3 offsetVector = new(0, POV_CAM_OFFSET_Y, 0);
         var plOffset = clientTank.Position3D + offsetVector;
-        if (clientTank.IsDestroyed) {
+        if (!clientTank.IsDestroyed) {
             SpectatorId = NetPlay.GetMyClientId();
             POVCameraPosition = plOffset;
             POVCameraRotation = -clientTank.TurretRotation;
@@ -277,8 +277,15 @@ public static class CameraGlobals {
             else if (InputUtils.KeyJustPressed(Keys.Right))
                 SpectatorId = SpectateValidTank(SpectatorId, true);
 
-            POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ() + offsetVector;
-            POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
+            var spectated = GameHandler.AllPlayerTanks[SpectatorId];
+            if (spectated is null || spectated.IsDestroyed) {
+                SpectatorId = SpectateValidTank(SpectatorId, true);
+                spectated = GameHandler.AllPlayerTanks[SpectatorId];
+            }
+            if (spectated is not null) {
+                POVCameraPosition = spectated.Position.ExpandZ() + offsetVector;
+                POVCameraRotation = -spectated.TurretRotation;
+            }
         }
         var anim = IntermissionHandler.ThirdPersonTransition;
         if (anim is not null && clientTank is not null) {
@@ -306,20 +313,13 @@ public static class CameraGlobals {
     }
 
     public static int SpectateValidTank(int id, bool increase) {
-        var count = GameHandler.AllPlayerTanks.Count(x => x is not null);
-
-        if (count == 0)
-            return 0;
-
-        var arr = GameHandler.AllPlayerTanks.Where(x => x is not null).ToArray();
-
-        var newId = id + (increase ? 1 : -1);
-
-        if (newId < 0) newId = arr.Length - 1;
-        else if (newId >= arr.Length) newId = 0;
-
-        if (arr[newId].IsDestroyed)
-            return SpectateValidTank(newId, increase); // this should just return the only player then...?
-        else return newId;
+        var tanks = GameHandler.AllPlayerTanks;
+        for (int step = 1; step <= tanks.Length; step++) {
+            // maintains id in array bounds. looks funny but works
+            var next = ((increase ? id + step : id - step) % tanks.Length + tanks.Length) % tanks.Length;
+            if (tanks[next] is { IsDestroyed: false })
+                return next;
+        }
+        return id;
     }
 }

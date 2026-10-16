@@ -46,6 +46,7 @@ public sealed class TankID {
      * Charging tank: charges at you upon line of sight
      * Trailblazer tank: shots lay a trail of fire that *enemy* tanks cannot pass through for X amount of time
      * Toxic tank: bullet bounces (or kills) spawn gas clouds that slow movement and decrease fire rate
+     * Ghost Tank: moves through any block (except for outer border)
      * 
      * ... more ideas later...
      */

@@ -763,10 +763,11 @@ public class TankGame : Game {
             }
 
             // this should only be done once and not every frame... this is so ass lol
+            var showMice = !Modifiers.IsOn(Modifiers.POV) || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
             for (int i = 0; i < PlayerMice.Length; i++) {
-                var elem = PlayerMice[i];
-                if (elem is null) continue;
-                elem.ShouldRender = (!Modifiers.IsOn(Modifiers.POV) || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride && elem.ShouldRender;
+                var mouse = PlayerMice[i];
+                if (mouse is null) continue;
+                mouse.ShouldRender = showMice && miceForceDrawOverride;
             }
 
             UIElement.UpdateElements();

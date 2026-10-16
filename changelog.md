@@ -12,13 +12,13 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- Not the most stable, so please report Wiimote bugs in my server
 - Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better
 - Added slight randomized pitch shifting in many game-related sound effects
-- Way more localization where previously missing
 - Added a ton of new options in the settings menu
 - Added a new mods menu!
 	- It appears in the top right of the main menu
 	- It allows you to quickly load/unload/reload mods instead of having to use debug functions or restart the game
 - Added a new dev console which is accessible from the tilde key (~)
 - Player bullet count UI is now shown for all players (including in online contexts)
+- Way more localization where previously missing
 - Even more localization!
 	- Translators are still welcome to correct any faulty translations- some translations were done via machine translation
 - Added a new animation/text popup when a mission attempt is over

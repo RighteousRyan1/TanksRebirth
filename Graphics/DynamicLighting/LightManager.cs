@@ -256,7 +256,7 @@ public static class LightManager {
                         LightingSystem.ScreenSplitEnabled = !LightingSystem.ScreenSplitEnabled;
                         if (!LightingSystem.ScreenSplitEnabled)
                             LightingSystem.ScreenSplitPercent = 0;
-                        TankGame.PlayerMice[0].ShouldRender = !LightingSystem.ScreenSplitEnabled;
+                        TankGame.miceForceDrawOverride = !LightingSystem.ScreenSplitEnabled;
                         break;
                     case "stats":
                         TankGame.IngameConsole.Log(LightingSystem.Stats.ToString(), Color.Gold);
