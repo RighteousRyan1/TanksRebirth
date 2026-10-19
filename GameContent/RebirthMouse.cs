@@ -48,9 +48,7 @@ public class RebirthMouse {
     public bool HasTrail { get; set; } = true;
 
     public RebirthMouse(Color mouseColor, Color trailColor, int player, int dotCount = 10, bool hasTrail = true) {
-        CursorTrail = new(TankGame.Instance.GraphicsDevice, trailColor) {
-            StartWidth = 15f
-        };
+        CursorTrail = new(TankGame.Instance.GraphicsDevice, trailColor);
         DotCount = dotCount;
         HasTrail = hasTrail;
 
@@ -102,7 +100,10 @@ public class RebirthMouse {
         }
 
         if (HasTrail) {
-            CursorTrail!.StartWidth = 10f.ToResolutionF() + _scaleOscillation;
+            // why is this in a constant update???
+            CursorTrail!.StartWidth = 10f.ToResolutionF();
+            CursorTrail.EdgeSoftness = 1.25f.ToResolutionF();
+            CursorTrail.PointSpacing = 3f.ToResolutionF();
 
             CursorTrail?.Update(Position);
             CursorTrail?.Draw();
