@@ -24,7 +24,6 @@ public static class GameplayLights {
         _spotsUsed = 0;
     }
 
-    /// <summary>A tank headlight. <paramref name="forward"/> is the turret direction on the XZ plane.</summary>
     public static void AddHeadlight(Vector3 relativePosition, Vector2 forward, bool isLocalPlayer) {
         if (forward.LengthSquared() < 1e-6f)
             forward = new Vector2(0f, 1f);
@@ -44,7 +43,6 @@ public static class GameplayLights {
         LightingSystem.AddFrameLight(head);
     }
 
-    /// <summary>Small light travelling with a shell.</summary>
     public static void AddShellLight(Vector3 position, Color color) {
         var light = NextPoint();
         light.Position = position;
@@ -57,7 +55,6 @@ public static class GameplayLights {
         LightingSystem.AddFrameLight(light);
     }
 
-    /// <summary>Red blinking mine light; <paramref name="fuse"/> goes from 1 (just placed) to 0 (detonating).</summary>
     public static void AddMineLight(Mine mine) {
         var light = NextPoint();
         light.Position = mine.Position3D + new Vector3(0f, 9f, 0f);
@@ -71,10 +68,9 @@ public static class GameplayLights {
         LightingSystem.AddFrameLight(light);
     }
 
-    /// <summary>Shadow casting explosion flash. <paramref name="life"/> goes from 1 (new) to 0 (gone).</summary>
     public static void AddExplosionLight(Vector3 position, float radius, float life) {
-        if (life <= 0f)
-            return;
+        if (life <= 0f) return;
+
         var light = NextPoint();
         light.Position = position + new Vector3(0f, 14f, 0f);
         light.Color = new Color(255, 168, 82);
@@ -83,6 +79,20 @@ public static class GameplayLights {
         light.Wrap = 0.2f;
         light.CastsShadows = true;
         light.Priority = 9;
+        LightingSystem.AddFrameLight(light);
+    }
+
+    public static void AddLantern(Vector3 position, float time, bool isLocalPlayer) {
+        // i keep having to ask ai how to make a good flickering effect :cry:
+        var flicker = 0.9f + 0.06f * MathF.Sin(time * 2.1f) + 0.03f * MathF.Sin(time * 7.7f + 1.3f) + 0.02f * MathF.Sin(time * 17.3f + 4.1f);
+        var light = NextPoint();
+        light.Position = position;
+        light.Color = new Color(255, 178, 76);
+        light.Intensity = 1.6f * flicker;
+        light.Range = 100f * (0.97f + 0.03f * flicker);
+        light.Wrap = 0.3f;
+        light.CastsShadows = true;
+        light.Priority = isLocalPlayer ? 11 : 9;
         LightingSystem.AddFrameLight(light);
     }
 

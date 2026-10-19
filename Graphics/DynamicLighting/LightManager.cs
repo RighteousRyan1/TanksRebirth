@@ -8,11 +8,14 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using Preset = TanksRebirth.Graphics.DynamicLighting.LightingPresets.Preset;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
@@ -104,8 +107,98 @@ public static class LightManager {
             LightingSystem.ScreenSplitPercent = MathHelper.Clamp(MouseUtils.Test.X, 0, 1);
         }
 
+        UpdateModifierLooks();
+
         // the day cycle preset advances its clock here
         LightingPresets.UpdateDayCycle((float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds, RoomScene.RoomSkyboxScene);
+    }
+
+    // modifiers
+
+    /// <summary>Height of the lanterns above the tanks. Lower than the top of a tank and the tank shadows everything around it.</summary>
+    public static float LanternHeight = 30f;
+    /// <summary>How much of the time of day's light is left during a storm.</summary>
+    public static float StormDarkness = 0.4f;
+    public static Color StormSky = new(70, 80, 104);
+    public static Color StormGround = new(36, 38, 46);
+    public static Color LightningColor = new(196, 214, 255);
+    /// <summary>Sun intensity of the brightest lightning.</summary>
+    public static float LightningIntensity = 1.5f;
+
+    static bool _storm, _lantern, _filtering;
+    static Thunder? _lastStrike;
+    static Vector3 _strikeDirection = Vector3.Down;
+
+    static void UpdateModifierLooks() {
+        _storm = Modifiers.IsOn(Modifiers.THUNDER) && !MainMenuUI.IsActive;
+        _lantern = Modifiers.IsOn(Modifiers.LANTERN) && !MainMenuUI.IsActive;
+
+        var filtering = _storm || _lantern;
+        if (!filtering && !_filtering)
+            return;
+        _filtering = filtering;
+        LightingPresets.Filter = filtering ? FilterLook : null;
+
+        if (_storm && SceneManager.ThunderStrike != _lastStrike) {
+            _lastStrike = SceneManager.ThunderStrike;
+            _strikeDirection = PickStrikeDirection();
+        }
+
+        // static presets apply their look only once, so it's applied again while the modifiers change it (and once more to undo them)
+        LightingPresets.Refresh(RoomScene.RoomSkyboxScene);
+    }
+
+    static void FilterLook(ref LightingPresets.TimeOfDay time) {
+        if (_lantern) {
+            // everything is dark, only the lanterns light the board
+            time.Sky = new Color(22, 24, 38);
+            time.Ground = new Color(10, 10, 14);
+            time.Ambient = 0.3f;
+            time.SunIntensity = 0f;
+            time.ShaftDensity = 0f;
+            time.TableLamp = time.DeskLamp = time.ClockLight = time.FloorLamp = 0f;
+            time.Background = 0.05f;
+            time.Headlights = 0f;
+            time.DynamicBrightness = 1.3f;
+        }
+
+        if (!_storm)
+            return;
+
+        // overcast: no direct sun, and a darker, bluer version of the time of day
+        time.Sky = Color.Lerp(time.Sky, StormSky, 0.6f);
+        time.Ground = Color.Lerp(time.Ground, StormGround, 0.6f);
+        time.Ambient *= StormDarkness;
+        time.Background *= StormDarkness;
+        if (!_lantern) {
+            time.Headlights = 1f;
+            time.DynamicBrightness = MathF.Max(time.DynamicBrightness, 1f);
+        }
+
+        // the lightning takes the place of the sun, so it casts shadows through the windows
+        var flash = SceneManager.ThunderFlash;
+        time.SunDirection = _strikeDirection;
+        time.SunColor = LightningColor;
+        time.SunIntensity = flash * LightningIntensity;
+        time.SunWrap = 0.3f;
+        time.ShadowRadius = 620f;
+        time.ShaftColor = LightningColor;
+        time.ShaftDensity = flash * 0.3f;
+        time.ShaftAnisotropy = 0.4f;
+        time.ShaftMarch = 1800f;
+        time.Sky = Color.Lerp(time.Sky, LightningColor, flash * 0.5f);
+        time.Ambient += flash * 0.5f;
+        time.Background += flash * 0.8f;
+    }
+
+    // picks a lightning strike direction... should probably sync at some point
+    static Vector3 PickStrikeDirection() {
+        var rng = Client.ClientRandom;
+        var to = new Vector3(rng.NextFloat(-200f, 200f), 0f, rng.NextFloat(-150f, 150f));
+        var from = rng.Next(2) == 0
+            ? LightingPresets.BackWindows + new Vector3(rng.NextFloat(-400f, 300f), rng.NextFloat(0f, 150f), 0f)
+            : LightingPresets.SideWindows + new Vector3(0f, rng.NextFloat(0f, 350f), rng.NextFloat(-500f, 0f));
+        return Vector3.Normalize(to - from);
     }
 
     static void CollectShadowCasters() {
@@ -128,11 +221,18 @@ public static class LightManager {
     static void CollectLights() {
         GameplayLights.BeginFrame();
 
-        if (LightingPresets.WantsHeadlights) {
+        var anySortOfTankLighting = LightingPresets.HeadlightsEnabled || _lantern;
+        if (anySortOfTankLighting) {
+            var lights = LightingPresets.HeadlightsEnabled;
             foreach (var tank in GameHandler.AllPlayerTanks) {
-                if (tank is null || tank.IsDestroyed)
-                    continue;
-                GameplayLights.AddHeadlight(tank.TurretPosition3D - new Vector3(0, 5, 0), tank.TurretPosition - tank.Position, tank == PlayerTank.ClientTank);
+                if (tank is null || tank.IsDestroyed) continue;
+
+                if (lights) GameplayLights.AddHeadlight(tank.TurretPosition3D - new Vector3(0, 5, 0), tank.TurretPosition - tank.Position, tank == PlayerTank.ClientTank);
+                if (_lantern) {
+                    // RuntimeData.RunTime produces weird results
+                    var time = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
+                    GameplayLights.AddLantern(tank.Position3D + new Vector3(0, LanternHeight, 0), time + tank.PlayerId * 1.7f, tank == PlayerTank.ClientTank);
+                }
             }
         }
 
@@ -256,7 +356,7 @@ public static class LightManager {
                         LightingSystem.ScreenSplitEnabled = !LightingSystem.ScreenSplitEnabled;
                         if (!LightingSystem.ScreenSplitEnabled)
                             LightingSystem.ScreenSplitPercent = 0;
-                        TankGame.miceForceDrawOverride = !LightingSystem.ScreenSplitEnabled;
+                        TankGame.PlayerMice[0].ShouldRender = !LightingSystem.ScreenSplitEnabled;
                         break;
                     case "stats":
                         TankGame.IngameConsole.Log(LightingSystem.Stats.ToString(), Color.Gold);

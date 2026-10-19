@@ -11,6 +11,7 @@ using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Utilities;
@@ -30,6 +31,10 @@ public static class SceneManager {
         Brightness = 0.75f,
     };
     public static Color ThunderColor = Color.DeepSkyBlue;
+    /// <summary>The brightest thunder this frame, or null when there is none.</summary>
+    public static Thunder? ThunderStrike { get; private set; }
+    /// <summary>How bright the lightning is right now, from 0 to 1.</summary>
+    public static float ThunderFlash { get; private set; }
     static bool _musicLoaded;
 
     // campaign ending
@@ -191,6 +196,7 @@ public static class SceneManager {
         }
     }
     static void DoThunderStuff() {
+        ThunderFlash = 0f;
         if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenuUI.IsActive || GameUI.Paused) {
             if (Thunder.SoftRain!.IsPlaying()) {
                 Thunder.SoftRain.Instance.Stop();
@@ -233,16 +239,27 @@ public static class SceneManager {
             }
         }
 
+        ThunderStrike = brightest;
+        if (brightest is not null && brightest.CurBright > minThresh)
+            ThunderFlash = MathHelper.Clamp(brightest.CurBright, 0f, 1f);
+
+        // the regular old impl
+        if (LightingSystem.IsActive) {
+            GameLight.Color = new(150, 150, 170);
+            GameLight.Brightness = 0.71f;
+            GameLight.Apply(false);
+            RenderGlobals.BackBufferColor = Color.Transparent;
+            return;
+        }
+
         GameLight.Color = Color.Multiply(Color.DeepSkyBlue, 0.5f); // DeepSkyBlue
 
 
         if (brightest is not null && brightest.CurBright > minThresh) {
             RenderGlobals.BackBufferColor = Color.DeepSkyBlue * brightest.CurBright;
             GameLight.Brightness = brightest.CurBright / 2;
-            Console.WriteLine("no balls");
         }
         else {
-            Console.WriteLine("balls");
             GameLight.Brightness = minThresh;
         }
 

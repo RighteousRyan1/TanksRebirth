@@ -763,11 +763,10 @@ public class TankGame : Game {
             }
 
             // this should only be done once and not every frame... this is so ass lol
-            var showMice = !Modifiers.IsOn(Modifiers.POV) || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
             for (int i = 0; i < PlayerMice.Length; i++) {
-                var mouse = PlayerMice[i];
-                if (mouse is null) continue;
-                mouse.ShouldRender = showMice && miceForceDrawOverride;
+                var elem = PlayerMice[i];
+                if (elem is null) continue;
+                elem.ShouldRender = (!Modifiers.IsOn(Modifiers.POV) || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride && elem.ShouldRender;
             }
 
             UIElement.UpdateElements();
@@ -1034,7 +1033,8 @@ public class TankGame : Game {
     }
 
     public static void DrawGameElements() {
-        var shader = Modifiers.IsOn(Modifiers.LANTERN) && !MainMenuUI.IsActive ? GameShaders.LanternShader : null;
+        // the dynamic lighting has its own lanterns
+        var shader = Modifiers.IsOn(Modifiers.LANTERN) && !MainMenuUI.IsActive && !LightingSystem.IsActive ? GameShaders.LanternShader : null;
         if (!GameScene.UpdateAndRender) shader = null;
 
         // stretches the blur across the entire screen, since the blur is rendered at a smaller scale

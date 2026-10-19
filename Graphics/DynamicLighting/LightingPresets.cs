@@ -34,9 +34,13 @@ public static class LightingPresets {
     public static event Action<Preset>? PresetChanged;
 
     /// <summary>Whether the current preset wants headlights on the player tanks.</summary>
-    public static bool WantsHeadlights { get; private set; }
+    public static bool HeadlightsEnabled { get; private set; }
     /// <summary>Multiplier for gameplay lights (shells, mines, explosions, headlights).</summary>
     public static float DynamicBrightness { get; private set; } = 1f;
+
+    public delegate void LookFilter(ref TimeOfDay time);
+    /// <summary>Changes every look right before it is applied, for weather and modifiers. Call <see cref="Refresh"/> after changing what it does.</summary>
+    public static LookFilter? Filter;
 
     // The room model is drawn at scale 10 around RoomScene.TableScenePos * 10, the board sits on the table at y = 0.
 
@@ -89,29 +93,29 @@ public static class LightingPresets {
         public float Headlights;
 
         public static TimeOfDay Lerp(in TimeOfDay a, in TimeOfDay b, float t) {
-            static float F(float x, float y, float t) => x + (y - x) * t;
+            // jus lerpin
             var dir = Vector3.Lerp(a.SunDirection, b.SunDirection, t);
             dir = dir.LengthSquared() > 1e-6f ? Vector3.Normalize(dir) : b.SunDirection;
             return new TimeOfDay {
                 Sky = Color.Lerp(a.Sky, b.Sky, t),
                 Ground = Color.Lerp(a.Ground, b.Ground, t),
-                Ambient = F(a.Ambient, b.Ambient, t),
+                Ambient = MathHelper.Lerp(a.Ambient, b.Ambient, t),
                 SunDirection = dir,
                 SunColor = Color.Lerp(a.SunColor, b.SunColor, t),
-                SunIntensity = F(a.SunIntensity, b.SunIntensity, t),
-                SunWrap = F(a.SunWrap, b.SunWrap, t),
+                SunIntensity = MathHelper.Lerp(a.SunIntensity, b.SunIntensity, t),
+                SunWrap = MathHelper.Lerp(a.SunWrap, b.SunWrap, t),
                 ShaftColor = Color.Lerp(a.ShaftColor, b.ShaftColor, t),
-                ShaftDensity = F(a.ShaftDensity, b.ShaftDensity, t),
-                ShaftAnisotropy = F(a.ShaftAnisotropy, b.ShaftAnisotropy, t),
-                ShaftMarch = F(a.ShaftMarch, b.ShaftMarch, t),
-                ShadowRadius = F(a.ShadowRadius, b.ShadowRadius, t),
-                TableLamp = F(a.TableLamp, b.TableLamp, t),
-                DeskLamp = F(a.DeskLamp, b.DeskLamp, t),
-                ClockLight = F(a.ClockLight, b.ClockLight, t),
-                FloorLamp = F(a.FloorLamp, b.FloorLamp, t),
-                Background = F(a.Background, b.Background, t),
-                DynamicBrightness = F(a.DynamicBrightness, b.DynamicBrightness, t),
-                Headlights = F(a.Headlights, b.Headlights, t),
+                ShaftDensity = MathHelper.Lerp(a.ShaftDensity, b.ShaftDensity, t),
+                ShaftAnisotropy = MathHelper.Lerp(a.ShaftAnisotropy, b.ShaftAnisotropy, t),
+                ShaftMarch = MathHelper.Lerp(a.ShaftMarch, b.ShaftMarch, t),
+                ShadowRadius = MathHelper.Lerp(a.ShadowRadius, b.ShadowRadius, t),
+                TableLamp = MathHelper.Lerp(a.TableLamp, b.TableLamp, t),
+                DeskLamp = MathHelper.Lerp(a.DeskLamp, b.DeskLamp, t),
+                ClockLight = MathHelper.Lerp(a.ClockLight, b.ClockLight, t),
+                FloorLamp = MathHelper.Lerp(a.FloorLamp, b.FloorLamp, t),
+                Background = MathHelper.Lerp(a.Background, b.Background, t),
+                DynamicBrightness = MathHelper.Lerp(a.DynamicBrightness, b.DynamicBrightness, t),
+                Headlights = MathHelper.Lerp(a.Headlights, b.Headlights, t),
             };
         }
     }
@@ -196,6 +200,13 @@ public static class LightingPresets {
         shaftColor: new Color(120, 150, 255), shaftDensity: 0.12f, dynamicBrightness: 1f)
         with { TableLamp = 0.8f, DeskLamp = 0.9f, ClockLight = 3.5f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f };
 
+    /// <summary>almost nothing but what the tanks carry</summary>
+    public static TimeOfDay Blackout = new() {
+        Sky = new Color(26, 30, 48), Ground = new Color(14, 14, 20), Ambient = 0.45f,
+        SunDirection = Vector3.Down, ShaftAnisotropy = 0.3f, ShaftMarch = 1400f, ShadowRadius = 560f,
+        Background = 0.1f, DynamicBrightness = 1.3f, Headlights = 1f,
+    };
+
     /// <summary>The static time-of-day presets.</summary>
     public static TimeOfDay? GetTimeOfDay(Preset preset) => preset switch {
         Preset.Sunrise => Sunrise,
@@ -207,6 +218,7 @@ public static class LightingPresets {
         Preset.Evening => Evening,
         Preset.Dusk => Dusk,
         Preset.Midnight => Midnight,
+        Preset.Blackout => Blackout,
         _ => null,
     };
 
@@ -400,26 +412,9 @@ public static class LightingPresets {
         sun.RoomShadowBounds = RoomBounds;
         sun.ShadowBounds = BoardBounds;
 
-        switch (preset) {
-            case Preset.DayCycle:
-                ApplyTimeOfDay(SampleDay(_hour), room);
-                return;
-
-            case Preset.Blackout:
-                // almost nothing but what the tanks carry
-                LightingSystem.Lights.Clear();
-                SetLampShades(room, false);
-                var ambient = LightingSystem.Ambient;
-                ambient.Sky = new Color(26, 30, 48);
-                ambient.Ground = new Color(14, 14, 20);
-                ambient.Intensity = 0.45f;
-                sun.Enabled = false;
-                sun.Shafts.Enabled = false;
-                LightingSystem.MaxShadowedPointLights = LightingSystem.MAX_SHADOW_SLOTS;
-                LightingSystem.BackgroundLight = 0.1f;
-                WantsHeadlights = true;
-                DynamicBrightness = 1.3f;
-                return;
+        if (preset == Preset.DayCycle) {
+            ApplyTimeOfDay(SampleDay(_hour), room);
+            return;
         }
 
         if (GetTimeOfDay(preset) is TimeOfDay time)
@@ -433,8 +428,17 @@ public static class LightingPresets {
 
     static bool _shadesGlowing;
 
+    /// <summary>Applies the current preset's look again so a changed <see cref="Filter"/> shows up. The day cycle already does this every update.</summary>
+    public static void Refresh(Model? room = null) {
+        if (Current != Preset.DayCycle && GetTimeOfDay(Current) is TimeOfDay time)
+            ApplyTimeOfDay(time, room);
+    }
+
     /// <summary>Pushes a <see cref="TimeOfDay"/> into the lighting system. Cheap enough to call every frame.</summary>
-    public static void ApplyTimeOfDay(in TimeOfDay time, Model? room = null) {
+    public static void ApplyTimeOfDay(in TimeOfDay look, Model? room = null) {
+        var time = look;
+        Filter?.Invoke(ref time);
+
         var a = LightingSystem.Ambient;
         a.Sky = time.Sky;
         a.Ground = time.Ground;
@@ -468,13 +472,11 @@ public static class LightingPresets {
 
         var glowing = time.TableLamp > 0.2f;
         // (only touch the meshes when the lamps switch on or off)
-        if (room is not null && (glowing != _shadesGlowing || Current != Preset.DayCycle)) {
+        if (glowing != _shadesGlowing)
             SetLampShades(room, glowing);
-            _shadesGlowing = glowing;
-        }
 
         LightingSystem.BackgroundLight = time.Background;
-        WantsHeadlights = time.Headlights > 0.5f;
+        HeadlightsEnabled = time.Headlights > 0.5f;
         DynamicBrightness = time.DynamicBrightness;
     }
 
@@ -502,6 +504,7 @@ public static class LightingPresets {
     static void SetLampShades(Model? room, bool glowing) {
         if (room is null)
             return;
+        _shadesGlowing = glowing;
         foreach (var mesh in room.Meshes) {
             foreach (var name in _shadeMeshes) {
                 if (!mesh.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
