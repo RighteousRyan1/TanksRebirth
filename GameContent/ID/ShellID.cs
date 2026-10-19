@@ -11,6 +11,8 @@ public sealed class ShellID
     public const int Supressed = 4;
     public const int Explosive = 5;
 
+    public const int VanillaCount = Explosive + 1;
+
     /* IDEAS:
      * Clustering shell: explodes into multiple smaller shells (after X amount of time or distance?)
      * Grenade...? self explanatory

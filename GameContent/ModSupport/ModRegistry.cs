@@ -44,7 +44,7 @@ public static class ModRegistry {
     }
     public static bool TryGetModShellById(int id, out ModShell? block) {
         block = null;
-        if (id < BlockID.VanillaCount) return false;
+        if (id < ShellID.VanillaCount) return false;
 
         block = idToModShell[id];
         return true;

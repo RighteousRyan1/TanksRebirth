@@ -908,6 +908,7 @@ public static partial class LevelEditorUI {
             BlockID.Wood => TankGame.GameLanguage.LevelEdit.ObstaclePlace.WoodFlavor,
             BlockID.Cork => TankGame.GameLanguage.LevelEdit.ObstaclePlace.CorkFlavor,
             BlockID.Hole => TankGame.GameLanguage.LevelEdit.ObstaclePlace.HoleFlavor,
+            // TODO: teleporter needs some flavor!!!
             _ => ModRegistry.TryGetModBlockById(id, out var block) ? 
             block!.Description[TankGame.GameLanguage.ActiveLang] : CUSTOM_CONTENT_WARNING
         };
