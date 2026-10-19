@@ -35,7 +35,18 @@ public static class WiimoteSystem {
     public static float MaxDeadzone;
     /// <summary>Will be Zero if disconnected.</summary>
     public static Vector2 NunchukAxis { get; private set; }
+    // pretty sure this doesn't even work. and the original game doesn't even use it. why is it here? probably removing
     public static Vector3 Motion => new Vector3(_wm.WiimoteState.AccelState.Values.X, _wm.WiimoteState.AccelState.Values.Y, _wm.WiimoteState.AccelState.Values.Z);
+
+    // this needs to be fully tested. pushing anyway xd
+    /// <summary>Higher is snappier, lower is smoother.</summary>
+    public static float Smoothing = 25f;
+    static bool _hasTarget;
+    // where the wiimote points as normalized coordinates
+    static Vector2 _target, _pointer;
+
+    // used so the wiimote points instead of gliding in from the corner
+    static bool _pointerStarted;
 
     public static bool TryConnect() {
         try {
@@ -53,7 +64,7 @@ public static class WiimoteSystem {
             TankGame.ClientLog.Write("Wiimote connected and mapped successfully.", LogType.Info);
             return true;
         } catch (Exception e) {
-            TankGame.ClientLog.Write($"Failed to connect Wiimote: {e.Message} (did you set-up your wiimote with your OS?)", LogType.ErrorSilent);
+            TankGame.ClientLog.Write($"Failed to connect Wiimote: {e.Message} (did you setup your wiimote with your OS?)", LogType.Warn);
             return false;
         }
     }
@@ -67,6 +78,8 @@ public static class WiimoteSystem {
         _wm = null;
 
         IsConnected = false;
+        _hasTarget = false;
+        _pointerStarted = false;
 
         TankGame.ClientLog.Write("Wiimote disconnected successfully.", LogType.Info);
 
@@ -100,19 +113,18 @@ public static class WiimoteSystem {
             -InputUtils.ApplyDeadzone(nunState.Joystick.Y, MinDeadzone, MaxDeadzone, min_any, max_any)
         );
 
-        // calculates the cursor position in screen coordinates
-        float screenX = 1 - state.IRState.IRSensors[1].Position.X;
-        float screenY = state.IRState.IRSensors[1].Position.Y;
-
-        state.IRState.Mode = IRMode.Extended;
-
-        var realX = state.IRState.IRSensors[0].Position.X + state.IRState.IRSensors[1].Position.X / 2 - 0.5f;
-        var realY = state.IRState.IRSensors[0].Position.Y + state.IRState.IRSensors[1].Position.Y / 2 - 0.5f;
-
-        var realPos = new Vector2(
-            MathHelper.Clamp((1f - realX), 0, 1) * WindowUtils.WindowWidth,
-            MathHelper.Clamp(realY, 0, 1) * WindowUtils.WindowHeight
-        );
+        // i think the wii did something like this in case a wiimote was aiming too far off of the ir sensors?
+        var ir = state.IRState.IRSensors;
+        Vector2? point = (ir[0].Found, ir[1].Found) switch {
+            (true, true) => new Vector2((ir[0].Position.X + ir[1].Position.X) / 2f, (ir[0].Position.Y + ir[1].Position.Y) / 2f),
+            (true, false) => new Vector2(ir[0].Position.X, ir[0].Position.Y),
+            (false, true) => new Vector2(ir[1].Position.X, ir[1].Position.Y),
+            _ => null,
+        };
+        if (point is Vector2 p) {
+            _target = new Vector2(MathHelper.Clamp(1f - p.X, 0f, 1f), MathHelper.Clamp(p.Y, 0f, 1f));
+            _hasTarget = true;
+        }
 
         HandleInputs(state);
 
@@ -124,16 +136,26 @@ public static class WiimoteSystem {
         //Console.WriteLine($"PixelPos: {realPos}\n");
         //Console.WriteLine("IR 1: " + state.IRState.IRSensors[1]);
 
-        float smoothing = 0.4f;
-        var mousePos = new Vector2(
-            (int)MathHelper.Lerp(MouseUtils.MousePosition.X, realPos.X, smoothing),
-            (int)MathHelper.Lerp(MouseUtils.MousePosition.Y, realPos.Y, smoothing)
-        );
-
-        Microsoft.Xna.Framework.Input.Mouse.SetPosition((int)mousePos.X, (int)mousePos.Y);
-
-
         PreviousButtons = state.ButtonState;
+    }
+
+    public static void UpdatePointer() {
+        if (!IsConnected || !_hasTarget || !TankGame.Instance.IsActive) return;
+
+        var target = _target * new Vector2(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
+
+        if (!_pointerStarted) {
+            _pointer = target;
+            _pointerStarted = true;
+        }
+
+        // this should hopefully emulate the feeling that the original wiimote had as opposed to the jerkiness that existed prior
+        var t = 1f - MathF.Exp(-Smoothing * (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds);
+        _pointer = Vector2.Lerp(_pointer, target, t);
+
+        // love how wiimotelib has a Mouse
+        // i INITIALLY rounded prior to int cast here, but cast by itself is probably fine
+        Microsoft.Xna.Framework.Input.Mouse.SetPosition((int)_pointer.X, (int)_pointer.Y);
     }
 
     static void HandleInputs(WiimoteState state) {

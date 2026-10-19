@@ -91,9 +91,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
 
     public Model Model;
 
-    public Matrix World;
-    public Matrix View;
-    public Matrix Projection;
+    public BasicDrawParams DrawParams;
     /// <summary>Represents how tall (in arbitrary units) the top of this block is from the ground.</summary>
     public float HeightFromGround { get; private set; }
     /// <summary>The physics body for this <see cref="Block"/>.</summary>
@@ -246,6 +244,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         Stack = (byte)MathHelper.Clamp(height, 0, 7);
         Type = type;
 
+        // this is abysmally shit. maybe make this ctor private and use something like Block.Create
         var modelname = GameScene.Theme switch {
             MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/block_stack_alt" : "Assets/models/scene/block_stack",
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/block_stack_alt_snowy" : "Assets/christmas/block_stack_snowy",
@@ -257,7 +256,6 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         Position = position;
 
         if (!ignoreRegister) {
-
             Id = Array.FindIndex(AllBlocks, block => block is null);
             AllBlocks[Id] = this;
 
@@ -378,22 +376,24 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
     }
 
     public void OnRender() {
-        Projection = CameraGlobals.GameProjection;
-        View = CameraGlobals.GameView;
-        World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
+        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.View = CameraGlobals.GameView;
+        DrawParams.World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
         var bones = GetBoneTransforms(Model);
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         foreach (var mesh in Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = bones[mesh.ParentBone.Index] * World;
-                effect.View = View;
-                effect.Projection = Projection;
+                effect.World = bones[mesh.ParentBone.Index] * DrawParams.World;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Projection;
 
                 effect.TextureEnabled = true;
                 effect.Texture = TextureMap[mesh.Name];
 
+                // does this have to be some arbitrary magic number?
                 effect.SetDefaultGameLighting_IngameEntities(10f);
 
+                // ...wtf.
                 effect.DirectionalLight0.Direction *= 0.1f;
                 effect.Alpha = 1f;
             }
@@ -412,15 +412,21 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         Hitbox = new((int)(Position.X - SIDE_LENGTH / 2 + 1), (int)(Position.Y - SIDE_LENGTH / 2), (int)SIDE_LENGTH - 1, (int)SIDE_LENGTH);
         _offset = new();
 
+        // this just sucks bro. this code should not run for everything
+        // fwiw: could just be stored upon level load... but not sure how good that would be for debugging.
         if (Type == BlockID.Teleporter) {
             foreach (var tnk in GameHandler.AllTanks) {
                 if (tnk is null) continue;
                 if (--_tankCooldowns[tnk.WorldId] > 0) continue;
                 if (Vector2.Distance(tnk.Position, Position) >= SIDE_LENGTH) continue;
 
-                var otherTp = AllBlocks.FirstOrDefault(bl => bl != null && bl != this && bl.TpLink == TpLink);
+                var otherTp = AllBlocks.FirstOrDefault(bl => 
+                    bl != null && 
+                    bl != this && 
+                    bl.Type == Type && 
+                    bl.TpLink == TpLink);
 
-                if (Array.IndexOf(AllBlocks, otherTp) <= -1) continue;
+                if (otherTp is null) continue;
 
                 otherTp!._tankCooldowns[tnk.WorldId] = 120;
                 tnk.Position = otherTp.Position;

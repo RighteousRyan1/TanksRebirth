@@ -831,6 +831,7 @@ public class TankGame : Game {
         LightManager.Update();
 
         InputUtils.PollGamepad();
+        WiimoteSystem.UpdatePointer();
         InputUtils.PollKBM();
         InputUtils.Watch();
 
