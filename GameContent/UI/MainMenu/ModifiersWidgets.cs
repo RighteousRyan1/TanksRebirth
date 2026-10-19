@@ -99,6 +99,7 @@ public sealed class ModifierRow : UIElement {
 
         if (IsPicker)
             DrawPicker(spriteBatch, labelRight, pad, scale, active, hovered, editable);
+        // debating just straight up removing (or replacing) the switches.... they look a little out of place kinda?
         else
             DrawSwitch(spriteBatch, pad, active, editable);
     }
@@ -219,7 +220,6 @@ public sealed class ModifiersTitleBar : UIElement {
     }
 }
 
-/// <summary>Turns every modifier off.</summary>
 public sealed class ModifiersResetButton : UIElement {
     public const string Description = "Turns every modifier off.";
 
@@ -252,8 +252,8 @@ public sealed class ModifiersResetButton : UIElement {
     }
 }
 
-/// <summary>What the modifier under the mouse does (or how to use the window, when the mouse isn't over one).</summary>
 public sealed class ModifiersDescriptionBar : UIElement {
+    // localize ts!!!!
     const string PickerHint = "Left click: next  |  Right click: previous  |  Middle click: reset";
     const string Hint = "Click a modifier to turn it on or off. Hover one to see what it does." +
         "\nIdeas are welcome! Let us know in our DISCORD server!";
@@ -325,7 +325,6 @@ public sealed class ModifiersDescriptionBar : UIElement {
     }
 }
 
-/// <summary>One of the arrows that switch pages of the modifiers window (only shown when there's more than one page).</summary>
 public sealed class ModifiersPageButton : UIElement {
     readonly int _direction;
 
