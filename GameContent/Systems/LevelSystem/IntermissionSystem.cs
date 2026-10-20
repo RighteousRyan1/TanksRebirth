@@ -402,7 +402,8 @@ public static class IntermissionSystem {
             else
                 BlackAlpha -= ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
         }
-        if (BlackAlpha >= 1f && oldBlack < 1f) {
+        // the black fade is also used to start a campaign over, when the menu isn't open
+        if (BlackAlpha >= 1f && oldBlack < 1f && MainMenuUI.IsActive) {
             MainMenuUI.Leave();
         }
         // wait a little bit to do animations so they are clearly visible to the user

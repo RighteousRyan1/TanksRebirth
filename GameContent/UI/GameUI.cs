@@ -56,8 +56,14 @@ public static class GameUI {
     internal static Vector2 QuitButtonSize = new(500, 150);
     internal static Vector2 OptionsButtonSize = new(500, 150);
 
-    internal static Vector2 QuitButtonPos = new(700, 850);
-    internal static Vector2 OptionsButtonPos = new(700, 600);
+    internal const float QUIT_BUTTON_Y = 850;
+    internal const float OPTIONS_BUTTON_Y = 600;
+    // the main menu shows smaller versions of these buttons, moved a little
+    internal const float MENU_QUIT_BUTTON_Y = QUIT_BUTTON_Y - 50;
+    internal const float MENU_OPTIONS_BUTTON_Y = OPTIONS_BUTTON_Y + 75;
+
+    internal static Vector2 QuitButtonPos = new(700, QUIT_BUTTON_Y);
+    internal static Vector2 OptionsButtonPos = new(700, OPTIONS_BUTTON_Y);
 
     internal static void Initialize() {
         if (_initialized) {

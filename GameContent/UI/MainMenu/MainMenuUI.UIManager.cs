@@ -300,8 +300,8 @@ public static partial class MainMenuUI
         // this manipulates the "back" button to be properly shown in the main menu
         // this will obviously be nuked during the UI rework
 
-        GameUI.QuitButtonPos.Y -= 50;
-        GameUI.OptionsButtonPos.Y += 75;
+        GameUI.QuitButtonPos.Y = GameUI.MENU_QUIT_BUTTON_Y;
+        GameUI.OptionsButtonPos.Y = GameUI.MENU_OPTIONS_BUTTON_Y;
 
         SetPrimaryMenuButtonsVisibility(true);
         SetPlayButtonsVisibility(false);
@@ -326,8 +326,8 @@ public static partial class MainMenuUI
         GameUI.InOptions = false;
         GameUI.OptionsButtonSize.Y = 150;
         GameUI.QuitButtonSize.Y = 150;
-        GameUI.QuitButtonPos.Y += 50;
-        GameUI.OptionsButtonPos.Y -= 75;
+        GameUI.QuitButtonPos.Y = GameUI.QUIT_BUTTON_Y;
+        GameUI.OptionsButtonPos.Y = GameUI.OPTIONS_BUTTON_Y;
         HideAll();
 
         // invoked last.
