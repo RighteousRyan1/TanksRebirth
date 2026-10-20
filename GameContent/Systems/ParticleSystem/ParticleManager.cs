@@ -212,32 +212,37 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
             Text = text
         };
     }
+    /// <summary>How long an explosion's flames last in ticks, before the linger multiplier.</summary>
+    public static float ExplosionFlameDuration = 110f;
+    /// <summary>How the flames move through the explosion texture. Below 1 spends less time on the white flash at the start.</summary>
+    public static float ExplosionFlameCurve = 0.6f;
     public Particle MakeExplosionFlameParticle(Vector3 position, out Action<Particle> ourAction, float lingerMultiplier = 1f, float particleScaleMultiplier = 1f) {
         var t = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion");
         var p = MakeParticle(position, t);
 
-        int frame = 0;
         int frameHeight = 66;
+        int frameCount = t.Height / frameHeight;
+        // in ticks. about 1.2 seconds for a regular explosion
+        float duration = ExplosionFlameDuration * lingerMultiplier;
+        float elapsed = 0f;
 
         p.Scale = new(particleScaleMultiplier);
         p.IsIn2DSpace = false;
         p.HasAdditiveBlending = false;
         p.Alpha = 1;
         p.Origin2D = new Vector2(t.Width / 2, frameHeight / 2);
+        p.TextureCrop = new Rectangle(0, 0, t.Width, frameHeight);
         void act(Particle b) {
-            b.TextureCrop = new Rectangle(0, frame * frameHeight, t.Width, frameHeight);
-
-            if (frame < 50) {
-                if (b.LifeTime % 0.8f <= RuntimeData.DeltaTime)
-                    frame++;
-            }
-            else {
-                if (b.LifeTime % (0.8f * lingerMultiplier) <= RuntimeData.DeltaTime)
-                    frame++;
-            }
-
-            if (frame * frameHeight >= t.Height)
+            elapsed += RuntimeData.DeltaTime;
+            var progress = elapsed / duration;
+            if (progress >= 1f) {
                 p.Destroy();
+                return;
+            }
+
+            // the first frames are a white flash. the curve keeps it short and leaves more time for the fire
+            var frame = Math.Min((int)(MathF.Pow(progress, ExplosionFlameCurve) * frameCount), frameCount - 1);
+            b.TextureCrop = new Rectangle(0, frame * frameHeight, t.Width, frameHeight);
         }
         ourAction = act;
         return p;
