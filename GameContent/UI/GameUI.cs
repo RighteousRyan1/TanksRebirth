@@ -15,6 +15,9 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Speedrunning;
+using TanksRebirth.Enums;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -79,6 +82,7 @@ public static class GameUI {
             IsVisible = false,
         };
         RestartButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
+        RestartButton.OnLeftClick = (uiElement) => StartOver();
 
         OptionsButton = new(TankGame.GameLanguage.Menu.Options, font, Color.WhiteSmoke) {
             IsVisible = false
@@ -201,6 +205,65 @@ public static class GameUI {
         }
     }
 
+    // this could probably be in a better place than GameUI.... modders might struggle to find it
+    /// <summary>Starts the campaign over from the mission it was started on, with the starting lives and fresh stats.</summary>
+    /// <param name="netSent">Whether this came from the host over the network.</param>
+    public static void StartOver(bool netSent = false) {
+        if (MainMenuUI.IsActive || CampaignCompleteUI.IsViewingResults)
+            return;
+
+        // if a non-host client tries starting over, deny
+        if (!netSent && Client.IsConnected() && !Client.IsHost()) {
+            ChatSystem.SendMessage("Only the host can start the campaign over!", Color.Red);
+            SoundPlayer.SoundError();
+            return;
+        }
+        if (!netSent) Client.SendStartOver();
+
+        // close the pause menu without resuming the music
+        Paused = false;
+        ResumeButton.IsVisible = false;
+        RestartButton.IsVisible = false;
+        QuitButton.IsVisible = false;
+        OptionsButton.IsVisible = false;
+        TankMusicSystem.StopAll();
+
+        // freeze everything while the intermission fades in
+        IntermissionSystem.IsAwaitingNewMission = true;
+        CampaignGlobals.InMission = false;
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is null) continue;
+            tank.Velocity = Vector2.Zero;
+            tank.Physics.LinearVelocity = Vector2.Zero;
+        }
+
+        // back to how the campaign began
+        for (int i = 0; i < PlayerTank.Lives.Length; i++)
+            PlayerTank.Lives[i] = PlayerTank.StartingLives;
+        for (int i = 0; i < PlayerTank.KillCounts.Length; i++)
+            PlayerTank.KillCounts[i] = 0;
+        PlayerTank.TankKills.Clear();
+        PlayerTank.PlayerStatistics = default;
+        // a new one starts with the first mission
+        Speedrun.CurrentSpeedrun = null;
+
+        // should probably have a MissionEndContext for misc things
+        IntermissionHandler.LastResult = (MissionEndContext)(-1);
+        IntermissionSystem.ShouldDrawBanner = true;
+        IntermissionSystem.ShouldDrawBonusBanner = false;
+        IntermissionSystem.BonusLifeAnimator?.Restart();
+        IntermissionSystem.BonusLifeAnimator?.Stop();
+
+        // a level editor playtest restarts the mission being tested
+        var missionId = CampaignGlobals.ShouldMissionsProgress ? MainMenuUI.MissionCheckpoint : CampaignGlobals.LoadedCampaign.CurrentMissionId;
+        CampaignGlobals.LoadedCampaign.LoadMission(missionId);
+
+        SceneManager.ClearTankTracks();
+
+        // the intermission sets the mission up once the screen is covered
+        IntermissionSystem.InitializeCountdowns();
+        IntermissionSystem.BeginOperation(IntermissionHandler.DEF_INTERMISSION_TIME);
+    }
     static void PostInitialize() {
         Pause.OnPress = () => {
             if (CampaignCompleteUI.IsViewingResults)

@@ -172,6 +172,9 @@ public static class NetPlay {
             case PacketID.QuitLevel:
                 GameUI.QuitOut(true);
                 break;
+            case PacketID.StartOver:
+                GameUI.StartOver(true);
+                break;
             case PacketID.MissionEnd:
                 int endRestartTime = reader.GetInt();
                 var endContext = (MissionEndContext)reader.GetInt();
@@ -271,7 +274,7 @@ public static class NetPlay {
                 Mine.Create(GameHandler.AllTanks[mineOwner], minePos, detTime);
 
                 break;
-            case PacketID.SendCampaignByName:
+            case PacketID.SendCampaign:
                 var campName = reader.GetString();
                 var missionId = reader.GetInt();        // Obtain the mission id from the server itself. Fixes issues when loading missions.
                 Server.SetSessionSeed(reader.GetInt());
@@ -482,6 +485,9 @@ public static class NetPlay {
             case PacketID.QuitLevel:
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
+            case PacketID.StartOver:
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
+                break;
             case PacketID.MissionEnd:
                 int endRestartTime = reader.GetInt();
                 int endContext = reader.GetInt();
@@ -570,7 +576,7 @@ public static class NetPlay {
                 message.Put(mineOwner);
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
-            case PacketID.SendCampaignByName:
+            case PacketID.SendCampaign:
                 var campName = reader.GetString();
                 var missionId = reader.GetInt();
                 var sessionSeed = reader.GetInt();

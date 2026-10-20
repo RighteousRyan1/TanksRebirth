@@ -15,7 +15,6 @@ using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.Tanks.AI;
 
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Net;
 /// <summary>Contains many ways to send information across the nets. Used for vanilla packet handling.</summary>
@@ -108,6 +107,15 @@ public class Client {
         message.Put(PlayerTank.Lives.Length);
         for (int i = 0; i < PlayerTank.Lives.Length; i++)
             message.Put(PlayerTank.Lives[i]);
+
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
+    }
+    public static void SendStartOver() {
+        if (MainMenuUI.IsActive || !IsConnected() || !IsHost())
+            return;
+
+        NetDataWriter message = new();
+        message.Put(PacketID.StartOver);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
@@ -326,11 +334,67 @@ public class Client {
 
         Server.NetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
     }
+    /// <summary>
+    /// Sends a campaign through the connected server.
+    /// 
+    /// <para></para>
+    /// 
+    /// Sends in this order: <para></para>
+    ///     Sends Campaign properties (name, lives, bg color, strip color), Mission Count
+    ///     Then sends each: Block Count, Owner Count, Mission Name, Mission Note <para></para>
+    ///         Then sends each: Mission Block (Position, Type, Stack, TpLink) <para></para>
+    ///             Finally, sends each: Mission TankTemplate (Position, Rotation, IsPlayer, Team)
+    ///             if IsPlayer is true, send PlayerType, otherwise send AIType
+    /// 
+    /// </summary>
+    /// <param name="campaign">The campaign to send.</param>
+    public static void SendCampaignBytes(Campaign campaign) {
+        if (!IsConnected())
+            return;
+        NetDataWriter message = new();
+        message.Put(PacketID.SendCampaign);
+
+        message.Put(campaign.MetaData.Name);
+        message.Put(campaign.MetaData.StartingLives);
+        message.Put(campaign.MetaData.BackgroundColor);
+        message.Put(campaign.MetaData.MissionStripColor);
+
+        message.Put(campaign.CachedMissions.Length);
+
+        foreach (var mission in campaign.CachedMissions) {
+            message.Put(mission.Blocks.Length);
+            message.Put(mission.Tanks.Length);
+
+            message.Put(mission.Name);
+            message.Put(mission.Note);
+
+            foreach (var block in mission.Blocks) {
+                message.Put(block.Position);
+                message.Put(block.Type);
+                message.Put(block.Stack);
+                message.Put(block.TpLink);
+            }
+            foreach (var tank in mission.Tanks) {
+                message.Put(tank.Position);
+                message.Put(tank.Rotation);
+                message.Put(tank.IsPlayer);
+                message.Put(tank.Team);
+
+                if (tank.IsPlayer)
+                    message.Put(tank.PlayerType);
+                else
+                    message.Put(tank.AIType);
+            }
+        }
+
+        NetClient.Send(message, DeliveryMethod.Sequenced);
+    }
     public static void SendCampaignByName(string name, int missionId) {
         if (!IsConnected())
             return;
         NetDataWriter message = new();
-        message.Put(PacketID.SendCampaignByName);
+        message.Put(PacketID.SendCampaign);
+
         message.Put(name);
         message.Put(missionId);
 
@@ -338,10 +402,6 @@ public class Client {
         var seed = Server.NewSessionSeed();
         Server.SetSessionSeed(seed);
         message.Put(seed);
-
-        // essentially checks if two versions are different via checksum. in case two versions of the same campaign differ
-        var sum = BitUtils.ChecksumFNV(File.ReadAllBytes(Path.Combine(TankGame.SaveDirectory, name + ".campaign")));
-        message.Put(sum);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }

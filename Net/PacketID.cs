@@ -3,32 +3,32 @@
 namespace TanksRebirth.Net;
 
 public sealed class PacketID {
-    // First-time networking
+    // first-time networking
     public const int ClientInfo = 0;
     public const int LobbyInfo = 1;
 
-    // Ingame packets: players
+    // players
     public const int SyncPlayer = 2;
     public const int SyncLives = 3;
 
-    // Ingame packets: Owner
+    // owner
     public const int SyncAiTank = 4;
 
-    // Ingame packets: entitites
+    // entitites
     public const int TankDamage = 5;
     public const int ShellDestroy = 6;
     public const int MineDetonate = 7;
 
-    // Ingame packets: tank mechanics
+    // tank mechanics
     public const int MinePlacement = 8;
     public const int ShellFire = 9;
 
-    // Human communication
+    // human communication
 
     public const int ChatMessage = 10;
     public const int MapPing = 11;
 
-    // Debugging packets:
+    // debug
 
     public const int PlayerSpawn = 12;
     public const int AiTankSpawn = 13;
@@ -41,7 +41,8 @@ public sealed class PacketID {
     public const int LeaveGame = 17;
 
     // map sync
-    public const int SendCampaignByName = 18;
+
+    public const int SendCampaign = 18;
     public const int SendMission = 19;
 
     // misc
@@ -63,10 +64,12 @@ public sealed class PacketID {
 
     public const int SyncKills = 27;
     public const int SendAirplane = 28;
-    /// <summary>Sent when the host disconnects.</summary>
+
     public const int HostDisconnect = 29;
     /// <summary>The host's result for a finished mission, so every client ends it the same way.</summary>
     public const int MissionEnd = 30;
+    /// <summary>When the host starts the campaign over from the pause menu.</summary>
+    public const int StartOver = 31;
 
     public static int AddPacketId(string name) => Collection.ForcefullyInsert(name);
 
