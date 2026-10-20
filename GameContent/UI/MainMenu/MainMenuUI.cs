@@ -223,7 +223,7 @@ public static partial class MainMenuUI {
         foreach (var elem in campaignNames)
             elem?.Remove();
 
-        IntermissionSystem.TimeBlack = 280;
+        IntermissionSystem.TimeBlack = IntermissionSystem.DEF_TIMEBLACK;
         CampaignGlobals.ShouldMissionsProgress = true;
         _musicFading = true;
 

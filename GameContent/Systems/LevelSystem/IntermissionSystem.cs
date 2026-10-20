@@ -34,6 +34,7 @@ public static class IntermissionSystem {
 
     public static Animator BonusLifeAnimator;
 
+    public const int DEF_TIMEBLACK = 280;
     public static float TimeBlack; // for black screen when entering this game
     public static float BlackAlpha = 0;
 

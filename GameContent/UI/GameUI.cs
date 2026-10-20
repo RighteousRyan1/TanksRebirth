@@ -262,6 +262,7 @@ public static class GameUI {
 
         // the intermission sets the mission up once the screen is covered
         IntermissionSystem.InitializeCountdowns();
+        IntermissionSystem.TimeBlack =IntermissionSystem.DEF_TIMEBLACK;
         IntermissionSystem.BeginOperation(IntermissionHandler.DEF_INTERMISSION_TIME);
     }
     static void PostInitialize() {
