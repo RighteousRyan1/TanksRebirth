@@ -434,7 +434,9 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         p.Scale = new(0.3f);
 
         p.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
+        // keeps the texture's shading the right way up after the tilt
+        p.Rotation2D = MathHelper.Pi;
+        p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
 
         p.HasAdditiveBlending = false;
         p.Color = Properties.SmokeColor;

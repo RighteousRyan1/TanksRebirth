@@ -182,7 +182,7 @@ internal sealed class SpriteParticleBatcher {
                 }
 
                 Matrix world;
-                if (p.FaceTowardsMe) {
+                if (p.Billboard) {
                     world = Matrix.CreateScale(p.Scale) *
                             Matrix.CreateBillboard(p.Position, camPos, camDown, camForward);
                 }
@@ -192,12 +192,15 @@ internal sealed class SpriteParticleBatcher {
                             Matrix.CreateTranslation(p.Position);
                 }
 
-                Vector3 emissive = p.Color.ToVector3() * brightness;
-                if (p.ApplyGameLight)
-                    emissive *= brightness;
-
-                Vector3 rgb = (emissive + ambient) * p.Alpha;
-                var tint = new Vector4(rgb, p.Alpha);
+                Vector4 tint;
+                if (p.ApplyGameLight) {
+                    Vector3 emissive = p.Color.ToVector3() * brightness * brightness;
+                    Vector3 rgb = (emissive + ambient) * p.Alpha;
+                    tint = new Vector4(rgb, p.Alpha);
+                }
+                // unlit particles keep their exact color (the blend states expect it without alpha multiplied in)
+                else
+                    tint = new Vector4(p.Color.ToVector3(), p.Alpha);
 
                 var origin = p.Origin2D != default ? p.Origin2D : new Vector2(p.Texture.Width / 2, p.Texture.Height / 2);
 

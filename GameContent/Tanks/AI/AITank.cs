@@ -364,7 +364,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             p.Scale = new(0.65f);
             p.Pitch = MathHelper.Pi;
-            p.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
+            p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
             p.Origin2D = FontGlobals.RebirthFont.MeasureString(str) / 2;
             p.Color = Color.Red;
 
@@ -457,7 +457,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         p.Scale = new(0.5f);
         p.Pitch = MathHelper.Pi;
-        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
+        p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
         p.Origin2D = FontGlobals.RebirthFont.MeasureString(str) / 2;
 
         p.UniqueBehavior = (p) => {

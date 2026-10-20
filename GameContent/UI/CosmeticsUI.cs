@@ -209,7 +209,7 @@ public static class CosmeticsUI {
             keyPart.HasAdditiveBlending = false;
             keyPart.Pitch = MathHelper.PiOver2;
             keyPart.Color = Color.White;
-            keyPart.FaceTowardsMe = true;
+            keyPart.Billboard = true;
 
             float t = 0;
 
@@ -229,7 +229,7 @@ public static class CosmeticsUI {
 
                 if (_movingKey == keyPart) {
                     keyPart.Position = _keyAnimation.CurrentPosition;
-                    keyPart.FaceTowardsMe = false;
+                    keyPart.Billboard = false;
 
                     var deconstructed = _keyAnimation.CurrentFloats.ToVector3();
                     keyPart.Roll = deconstructed.X + MathHelper.Pi;

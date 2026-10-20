@@ -398,7 +398,7 @@ public abstract class Tank(bool ignoresRegister) {
 
             lpSmoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-            lpSmoke.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
+            lpSmoke.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
 
             lpSmoke.Scale = new(0.75f);
 
@@ -684,7 +684,7 @@ public abstract class Tank(bool ignoresRegister) {
 
             rock.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
             rock.Scale = new(0.55f);
-            rock.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
+            rock.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
             rock.Color = Properties.DestructionColor;
 
             rock.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
@@ -812,7 +812,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         hit.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
         hit.Scale = new(0.5f);
-        hit.FaceTowardsMe = billboard;
+        hit.Billboard = billboard;
         hit.UniqueBehavior = (part) => {
             part.Color = Color.Orange;
 
@@ -826,7 +826,7 @@ public abstract class Tank(bool ignoresRegister) {
         smoke.Scale = new(0.35f);
         var smokeInitColor = new Color(251, 122, 74, 255);
         smoke.HasAdditiveBlending = false;
-        smoke.FaceTowardsMe = billboard;
+        smoke.Billboard = billboard;
 
         var fullLerpTime = 20f;
 
@@ -849,7 +849,7 @@ public abstract class Tank(bool ignoresRegister) {
         ring.Scale = new(0.4f);
         ring.HasAdditiveBlending = true;
         var ringInitColor = Color.Red; // new(251, 122, 74, 255);
-        ring.FaceTowardsMe = billboard;
+        ring.Billboard = billboard;
 
         var fullLerpTimeRing = 10f;
 

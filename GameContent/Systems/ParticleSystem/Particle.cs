@@ -62,7 +62,7 @@ public class Particle {
     public int Id;
 
     /// <summary>Whether to billboard this <see cref="Particle"/> towards the camera, if in a 3D space.</summary>
-    public bool FaceTowardsMe;
+    public bool Billboard;
 
     /// <summary>Whether or not this <see cref="Particle"/> should exist in a 2D space.</summary>
     public bool IsIn2DSpace;
@@ -143,7 +143,7 @@ public class Particle {
         //TankGame.SpriteRenderer.Begin(blendState: HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: System.Rasterizer);
         Matrix world;
 
-        if (FaceTowardsMe) {
+        if (Billboard) {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateBillboard(Position,
@@ -157,7 +157,7 @@ public class Particle {
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateTranslation(Position);
 
-            /*if (FaceTowardsMe) world *= Matrix.CreateBillboard(Position,
+            /*if (Billboard) world *= Matrix.CreateBillboard(Position,
                                             CameraGlobals.RebirthFreecam.Position,
                                             // up is wrong for some reason
                                             CameraGlobals.RebirthFreecam.World.Down,
@@ -196,7 +196,7 @@ public class Particle {
     internal void DrawText3D(SpriteBatch spriteBatch) {
         Matrix world;
 
-        if (FaceTowardsMe) {
+        if (Billboard) {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateBillboard(Position,
                                             CameraGlobals.RebirthFreecam.Position,
