@@ -117,18 +117,19 @@ public static class DrawUtils {
         Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
         SpriteEffects flip = SpriteEffects.None, float shadowDistScale = 1f, float shadowAlpha = 1f, float rotation = 0f, Rectangle? srcRect = null) {
 
+        var origin = srcRect is Rectangle rect ? anchor.GetAnchor(rect.Size.ToVector2()) : anchor.GetAnchor(texture.Size());
         if (shadowAlpha > 0) {
             spriteBatch.Draw(texture,
                 position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale),
                 srcRect,
                 Color.Black * alpha * shadowAlpha,
                 rotation,
-                anchor.GetAnchor(texture.Size()),
+                origin,
                 scale,
                 flip,
                 default);
         }
-        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, anchor.GetAnchor(texture.Size()), scale, flip, default);
+        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, origin, scale, flip, default);
     }
     public static void DrawStringWithBorderAndShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
         string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 

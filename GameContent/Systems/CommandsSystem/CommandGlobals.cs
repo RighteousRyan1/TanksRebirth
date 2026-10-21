@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -120,7 +121,10 @@ public static class CommandGlobals {
 
         // cmd specific
         [new CommandInput(name: "cmd_scale", description: "Sets the scale of text in the console.")] = new CommandOutput(netSync: false, false, (args) => {
-            if (float.TryParse(args[0], out var newScale)) {
+            // i had this damn issue in my terraria mod. i will need to fix it elsewhere LOL
+            if (float.TryParse(args[0], 
+                NumberStyles.Float | NumberStyles.AllowThousands,
+                CultureInfo.InvariantCulture, out var newScale)) {
                 TankGame.IngameConsole.LogScale = newScale;
             }
         }),

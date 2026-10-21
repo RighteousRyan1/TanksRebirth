@@ -30,6 +30,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Added heaps more graphics settings for regular gameplay, including Anti-Aliasing, FPS limit, and more!
 - New setting which allows the display of team colors on tanks
 	- I'd suggest only using this in non-standard campaigns (e.g: campaigns where it's only players vs ai tanks, 2 teams)
+- Added a rudimentary message depending on the result of the current mission
 
 # Changes
 
@@ -56,6 +57,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Lantern mode will now look entirely different if using the new lighting system, read the description
 - Bindings in the Controls menu can now use mouse buttons!
 - Tweaked a lot of particles to look largely improved
+- A few minor changes to the Campaign Results UI. More changes in a future update!
+- The save file format is now much different but more modular. Backporting save files will no longer be possible to updates before this
+- Made the cursor trail a bit better looking
 
 # Changes Important for Modders
 
@@ -91,6 +95,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Tanks are now drawn with a custom shader instead of `BaiscEffect`, so if you were modifying anything related to that- it will no longer work
 - `PlacementSquare` -> `EditorTile`
 - `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
+- There are probably more changes I'm forgetting lol
 
 # Fixes
 
@@ -109,6 +114,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Massively optimized the level editor, should run much better on all systems
 - Fixed a bug where fast enough bullets could skip all ricochets when colliding with the outer border
 - Fixed a lot of strange graphical bugs relating to christmas mode
+- Many multiplayer bugfixes, including ghost bullets, mines, and improper points crediting
 
 # TODO
 

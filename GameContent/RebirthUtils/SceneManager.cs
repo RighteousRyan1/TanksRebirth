@@ -140,7 +140,7 @@ public static class SceneManager {
         // only adjusts speed for when this is called.
         Task.Run(async () => {
             await Task.Delay(delay).ConfigureAwait(false);
-            CampaignCompleteUI.PerformSequence(context);
+            CampaignCompleteUI.Start(context);
         });
     }
     public static void HandleSceneVisuals() {
