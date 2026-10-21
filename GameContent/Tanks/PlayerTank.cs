@@ -215,7 +215,7 @@ public class PlayerTank : Tank {
             InputUtils.GamePads[padIndex].Current.IsConnected;
 
         // just like the original
-        properties.MaximalTurn = MathHelper.ToRadians(hasGamepad ? TankProperties.MAX_TURN_DPAD_RADS : TankProperties.MAX_TURN_JOYP_RADS);
+        properties.MaximalTurn = hasGamepad ? TankProperties.MAX_TURN_DPAD_RADS : TankProperties.MAX_TURN_JOYP_RADS;
 
         properties.ShootPitch = 0.1f * PlayerType;
         properties.ShellType = ShellID.Player;

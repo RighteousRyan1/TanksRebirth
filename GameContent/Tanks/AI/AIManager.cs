@@ -15,7 +15,7 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent.Tanks.AI;
 
 public static class AIManager {
-    // values from the source
+    // values from the source. thanks 8fv
     const float MPITCH_HIGH    =  1 / 4f;
     const float MPITCH_MEDHIGH =  1 / 12f;
     const float MPITCH_MEDLOW  = -1 / 6f;

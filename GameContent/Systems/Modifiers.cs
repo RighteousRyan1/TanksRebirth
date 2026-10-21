@@ -346,8 +346,6 @@ public record Modifiers {
         var tanksWithPlacements = new Dictionary<TankTemplate, EditorTile>();
         var blocksWithPlacements = new Dictionary<BlockTemplate, EditorTile>();
 
-        EditorTile.InitializeLevelEditorSquares();
-
         for (int i = 0; i < tanks.Length; i++) {
             // bro :sob:
             tanksWithPlacements[tanks[i]] = EditorTile.AllTiles.First(x => Vector2.Distance(x.Position.FlattenZ(), tanks[i].Position) < 5);

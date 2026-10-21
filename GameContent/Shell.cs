@@ -30,7 +30,7 @@ namespace TanksRebirth.GameContent;
 // TODO: fix some shells instantly being destroyed from outer wall ricochets
 public class Shell : IAITankDanger, IHasModContent<ModShell> {
     public const int COLL_RECT_DIM = 3;
-    public const int TOO_SHORT_LIFETIME = 5;
+    public const int TOO_SHORT_LIFETIME = 3;
     public enum DestructionContext {
         WithObstacle,
         WithMine,
