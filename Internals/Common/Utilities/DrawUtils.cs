@@ -83,7 +83,7 @@ public static class DrawUtils {
         // Right
         sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.Right - borderSize, rectangle.Y, borderSize, rectangle.Height), borderCol);
     }
-    public static void DrawStringWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
+    public static void DrawStringWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
 
@@ -98,23 +98,28 @@ public static class DrawUtils {
             spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
                 borderColor, scale, rotation, origin, 0f, characterSpacing: charSpacing);
     }
-    public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor, 
+    public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor,
         Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f) {
+        var origin = GameUtils.GetAnchor(anchor, texture.Size());
+        DrawTextureBorder(spriteBatch, texture, position, null, borderColor, rotation, origin, scale, default, borderThickness);
+        spriteBatch.Draw(texture, position, null, textureColor, rotation, origin, scale, default, 1f);
+    }
+    static void DrawTextureBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Rectangle? srcRect,
+        Color borderColor, float rotation, Vector2 origin, Vector2 scale, SpriteEffects flip, float borderThickness) {
         for (int i = 0; i < 4; i++)
             spriteBatch.Draw(texture, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4),
-                null, borderColor, rotation, GameUtils.GetAnchor(anchor, texture.Size()), scale, default, 0f);
-        spriteBatch.Draw(texture, position, null, textureColor, rotation, GameUtils.GetAnchor(anchor, texture.Size()), scale, default, 1f);
+                srcRect, borderColor, rotation, origin, scale, flip, 0f);
     }
-    public static void DrawStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
-        string text, Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
+    public static void DrawStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,
+        string text, Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
         float shadowDistScale = 1f, float shadowAlpha = 1f, float origMeasureScale = 1f, float charSpacing = 0) {
 
         DrawStringShadowOnly(spriteBatch, font, position, shadowDir, text, scale, alpha, anchor, shadowDistScale, shadowAlpha, origMeasureScale, charSpacing);
 
         spriteBatch.DrawString(font, text, position, color * alpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
     }
-    public static void DrawTextureWithShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir, 
-        Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
+    public static void DrawTextureWithShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir,
+        Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
         SpriteEffects flip = SpriteEffects.None, float shadowDistScale = 1f, float shadowAlpha = 1f, float rotation = 0f, Rectangle? srcRect = null) {
 
         var origin = srcRect is Rectangle rect ? anchor.GetAnchor(rect.Size.ToVector2()) : anchor.GetAnchor(texture.Size());
@@ -131,15 +136,28 @@ public static class DrawUtils {
         }
         spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, origin, scale, flip, default);
     }
-    public static void DrawStringWithBorderAndShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
-        string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
+    public static void DrawTextureWithBorderAndShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir,
+        Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
+        SpriteEffects flip = SpriteEffects.None, float shadowDistScale = 1f, float shadowAlpha = 1f, float borderThickness = 1f,
+        float rotation = 0f, Rectangle? srcRect = null) {
+
+        var origin = srcRect is Rectangle rect ? anchor.GetAnchor(rect.Size.ToVector2()) : anchor.GetAnchor(texture.Size());
+        if (shadowAlpha > 0)
+            spriteBatch.Draw(texture, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale), srcRect,
+                Color.Black * alpha * shadowAlpha, rotation, origin, scale, flip, default);
+
+        DrawTextureBorder(spriteBatch, texture, position, srcRect, borderColor * alpha, rotation, origin, scale, flip, borderThickness);
+        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, origin, scale, flip, default);
+    }
+    public static void DrawStringWithBorderAndShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,
+        string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
         float shadowDistScale = 1f, float shadowAlpha = 1f, float borderThickness = 1f, float charSpacing = 0, float origMeasureScale = 1f) {
 
-        spriteBatch.DrawString(font, text, position + 
-            Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), 
+        spriteBatch.DrawString(font, text, position +
+            Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
             Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
 
-        DrawStringWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale); 
+        DrawStringWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale);
     }
 
     public static void DrawStringBorderOnly(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
@@ -158,7 +176,7 @@ public static class DrawUtils {
     /// <summary>The size of the text as it's drawn, including the spacing between characters. Used to anchor text.</summary>
     static Vector2 MeasureString(SpriteFontBase font, string text, float charSpacing, float origMeasureScale)
         => font.MeasureString(text, characterSpacing: charSpacing) * origMeasureScale;
-    
+
     public static void DrawNineSliced(SpriteBatch spriteBatch, Texture2D texture, int border, Rectangle area, Color color, Vector2 origin) {
         Point useBorder = new Vector2(border, border).ToResolution().ToPoint();
 
