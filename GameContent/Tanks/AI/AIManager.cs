@@ -16,10 +16,10 @@ namespace TanksRebirth.GameContent.Tanks.AI;
 
 public static class AIManager {
     // values from the source
-    const float MPITCH_HIGH    = 1 / 4f;
-    const float MPITCH_MEDHIGH = 1 / 12f;
-    const float MPITCH_MEDLOW  = 1 / 6f;
-    const float MPITCH_LOW     = 1 / 3f;
+    const float MPITCH_HIGH    =  1 / 4f;
+    const float MPITCH_MEDHIGH =  1 / 12f;
+    const float MPITCH_MEDLOW  = -1 / 6f;
+    const float MPITCH_LOW     = -1 / 3f;
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
     public static Dictionary<int, AIParameters> AIParameterDefaults = [];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
@@ -762,7 +762,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Standard;
-                properties.MovePitch = 0.2f;
+                properties.MovePitch = MPITCH_HIGH;
                 properties.MaxSpeed = 1.6f;
                 break;
             case TankID.Sapphire:
@@ -780,7 +780,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Rocket;
-                properties.MovePitch = 0.08f;
+                properties.MovePitch = MPITCH_HIGH;
                 break;
             case TankID.Ruby:
                 properties.Acceleration = 0.4f; // 11
@@ -794,7 +794,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Standard;
-                properties.MovePitch = 0.08f;
+                properties.MovePitch = MPITCH_MEDHIGH;
                 break;
             case TankID.Citrine:
                 properties.MineLimit = 4; // 3
@@ -811,7 +811,7 @@ public static class AIManager {
                 properties.ShootStun = 10; // 42
 
                 properties.ShellType = ShellID.Standard;
-                properties.MovePitch = -0.08f;
+                properties.MovePitch = MPITCH_MEDLOW;
                 break;
             case TankID.Amethyst:
                 properties.MineLimit = 3;
@@ -829,7 +829,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Standard;
-                properties.MovePitch = -0.2f;
+                properties.MovePitch = MPITCH_MEDLOW;
                 break;
             case TankID.Emerald:
                 properties.ShellLimit = 3; // 30
@@ -859,7 +859,7 @@ public static class AIManager {
 
                 properties.CanLayTread = false;
                 properties.ShellType = ShellID.Standard;
-                properties.MovePitch = -0.1f;
+                properties.MovePitch = MPITCH_LOW;
                 properties.Invisible = true;
                 break;
 
@@ -879,7 +879,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Rocket;
-                properties.MovePitch = -0.26f;
+                properties.MovePitch = MPITCH_LOW;
                 break;
 
                 #endregion

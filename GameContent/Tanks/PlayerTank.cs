@@ -208,14 +208,14 @@ public class PlayerTank : Tank {
         properties.Deceleration = 0.6f;
         properties.TurningSpeed = 0.1f;
 
-        // this changes depending on input (or should it?)
-        // normally it's 10 degrees, but we want to make it easier for keyboard players
         int padIndex = GamepadIndex;
         bool hasGamepad =
             padIndex >= 0 &&
             padIndex < InputUtils.GamePads.Length &&
             InputUtils.GamePads[padIndex].Current.IsConnected;
-        properties.MaximalTurn = MathHelper.ToRadians(hasGamepad ? 10 : 46);
+
+        // just like the original
+        properties.MaximalTurn = MathHelper.ToRadians(hasGamepad ? TankProperties.MAX_TURN_DPAD_RADS : TankProperties.MAX_TURN_JOYP_RADS);
 
         properties.ShootPitch = 0.1f * PlayerType;
         properties.ShellType = ShellID.Player;

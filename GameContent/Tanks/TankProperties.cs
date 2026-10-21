@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Tanks;
 
@@ -17,6 +18,8 @@ public enum ResistanceFlags : byte {
 }
 // ref struct?
 public class TankProperties {
+    public const float MAX_TURN_DPAD_RADS = 10f * MathUtils.DEGS_TO_RADS;
+    public const float MAX_TURN_JOYP_RADS = 46f * MathUtils.DEGS_TO_RADS;
     /// <summary>Whether or not the tank should become invisible at mission start. Word 1</summary>
     public bool Invisible { get; set; }
     /// <summary>The maximum amount of mines this <see cref="Tank"/> can place. Word 3.</summary>

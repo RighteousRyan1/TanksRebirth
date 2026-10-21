@@ -13,6 +13,8 @@ using TanksRebirth.Net;
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils {
+    public const float DEGS_TO_RADS = 180f / MathF.PI;
+    public const float RADS_TO_DEGS = MathF.PI / 180f;
 
     /// <summary>Converts texture size fo a pseudo-standard scale in the world.</summary>
     public static Vector3 SizeToScale(Texture2D texture, float width, float height) {

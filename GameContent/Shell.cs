@@ -624,14 +624,15 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         ModdedData?.OnDestroy(context, ref playSound);
         // pattern matching looks so clean
         if (context is not (DestructionContext.WithHostileTank or DestructionContext.WithMine or DestructionContext.WithExplosion)) {
-            if (playSound) {
-                /*var sfx = */SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
-
-                // if (CameraGlobals.IsUsingFirstPersonCamera)
-                    // sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
-            }
-
             if (LifeTime > TOO_SHORT_LIFETIME) {
+                if (playSound) {
+                    /*var sfx = */
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
+
+                    // if (CameraGlobals.IsUsingFirstPersonCamera)
+                    // sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
+                }
+
                 var light = new PointLight(Position3D, Color.Orange, 1f, 50f, true) {
                     Priority = 1
                 };
