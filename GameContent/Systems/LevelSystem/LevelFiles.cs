@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using TanksRebirth.GameContent.ID;
@@ -14,6 +13,7 @@ using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.IO;
 
 namespace TanksRebirth.GameContent.Systems.LevelSystem;
 
@@ -63,7 +63,7 @@ public static class LevelFiles {
         if (kind == FileKind.Binary)
             return Mission.Read(new BinaryReader(stream));
 
-        var file = Deserialize<MissionFile>(stream, kind);
+        var file = Deserialize<MissionFile>(stream);
         return ToMission(file);
     }
 
@@ -81,7 +81,7 @@ public static class LevelFiles {
         if (kind == FileKind.Binary)
             return null;
 
-        var file = Deserialize<CampaignFile>(stream, kind);
+        var file = Deserialize<CampaignFile>(stream);
         var campaign = new Campaign {
             MetaData = new Campaign.CampaignMetaData {
                 Name = file.Name ?? string.Empty,
@@ -228,19 +228,15 @@ public static class LevelFiles {
 
     // all the IO stuff
 
-    static T Deserialize<T>(Stream stream, FileKind kind) {
-        using var source = kind == FileKind.GzipJson ? new GZipStream(stream, CompressionMode.Decompress, leaveOpen: true) : null;
-        return JsonSerializer.Deserialize<T>(source ?? stream, JsonOptions)!; // exclamation mark because it's loud!!!
+    static T Deserialize<T>(Stream stream) {
+        return GzipJson.Read<T>(stream, JsonOptions)!; // exclamation mark because it's loud!!!
     }
     // no JsonHandler because i'm serializing a gzip stream, which JsonHandler doesn't do
     static void Serialize<T>(string path, T value) {
-        using var file = File.Create(path);
-        if (WriteReadable) {
-            JsonSerializer.Serialize(file, value, _readableOptions);
-            return;
-        }
-        using var gzip = new GZipStream(file, CompressionLevel.Optimal);
-        JsonSerializer.Serialize(gzip, value, JsonOptions);
+        if (WriteReadable)
+            GzipJson.Write(path, value, _readableOptions, compress: false);
+        else
+            GzipJson.Write(path, value, JsonOptions);
     }
 
     // file layouts. pretty nice and readable. i really like refactoring old code!

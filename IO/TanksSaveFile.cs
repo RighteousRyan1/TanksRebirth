@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Text.Json;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals;
@@ -8,7 +10,8 @@ using TanksRebirth.Internals;
 namespace TanksRebirth.IO;
 
 public class TanksSaveFile : IFileSerializable {
-    private const byte CURRENT_GAME_DATA_VERSION = 1;
+    // 0 and 1 were the old binary format. 2 and up are gzipped json
+    private const byte CURRENT_GAME_DATA_VERSION = 2;
 
     public bool ReadingOutdatedFile;
     public string Directory { get; } = TankGame.SaveDirectory;
@@ -47,111 +50,167 @@ public class TanksSaveFile : IFileSerializable {
 
     public float ExpLevel; // every whole number is an XP level | 1.000 = XP level 1
 
-    public void Serialize() {
-        using var writer = new BinaryWriter(File.Open(Path.Combine(Directory, Name), FileMode.Create));
-        /* File Serialization Order:
-         * Do note: If you edit the game's data, you are scum
-         * 
-         * 1) Total Tanks Killed (uint)
-         * 2) Total Tanks Killed Per-type (Dictionary<TankTier, uint>)
-         * 3) Missions Completed Total (uint)
-         * 
-         * I've given up on this lol.
-         * 
-         */
+    // kills of tanks from mods that aren't loaded, kept so saving doesn't lose them
+    readonly Dictionary<string, uint> _unknownTankKills = [];
 
-        // writer.Write(_message);
-        writer.Write(CURRENT_GAME_DATA_VERSION);
+    static readonly JsonSerializerOptions _jsonOptions = new() {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
 
-        writer.Write(TotalKills);
-        writer.Write(BulletKills);
-        writer.Write(BounceKills);
-        writer.Write(MineKills);
-        writer.Write(MissionsCompleted);
-        writer.Write(CampaignsCompleted);
-        writer.Write(Deaths);
-        writer.Write(Suicides);
+    string FilePath => Path.Combine(Directory, Name);
 
-        writer.Write(TimePlayed.TotalMilliseconds);
+    public TanksSaveFile() => Reset();
 
-        for (int i = 0; i < TankKills.Count; i++)
-            writer.Write(TankKills[i]);
-
-        //VanillaAchievements.Repository.Save(writer);
-
-        writer.Write(ExpLevel);
-
-        // version 1 and up
-
-        writer.Write((byte)CollectedKeys);
-        int cosLen = UnlockedCosmetics.Count;
-        writer.Write(cosLen);
-        for (int i = 0; i < cosLen; i++) {
-            writer.Write(UnlockedCosmetics[i]);
-        }
-    }
-    public void Deserialize() {
-        // prepare dictionaries + lists
+    // a fresh save
+    void Reset() {
         TankKills.Clear();
         UnlockedCosmetics.Clear();
-        for (int i = 0; i < TankID.Collection.Count; i++) 
+        _unknownTankKills.Clear();
+        for (int i = 0; i < TankID.Collection.Count; i++)
             TankKills.Add(i, 0);
+    }
 
-        using var reader = new BinaryReader(File.Open(Path.Combine(Directory, Name), FileMode.OpenOrCreate));
+    public void Serialize() {
+        // tanks are saved by name for mod support
+        // ...however, not exactly sure if i actually want to save modded tank kill counts
+        // if names are ever changed internally there is just going to be a permanent filesize stain
+        var tankKills = new Dictionary<string, uint>(_unknownTankKills);
+        foreach (var (id, kills) in TankKills)
+            tankKills[TankID.Collection.GetKey(id) ?? id.ToString(CultureInfo.InvariantCulture)] = kills;
 
-        // reader.ReadString();
+        var file = new SaveData {
+            Version = CURRENT_GAME_DATA_VERSION,
+            TotalKills = TotalKills,
+            BulletKills = BulletKills,
+            BounceKills = BounceKills,
+            MineKills = MineKills,
+            MissionsCompleted = MissionsCompleted,
+            CampaignsCompleted = CampaignsCompleted,
+            Deaths = Deaths,
+            Suicides = Suicides,
+            TimePlayed = TimePlayed,
+            TankKills = tankKills,
+            ExpLevel = ExpLevel,
+            CollectedKeys = CollectedKeys,
+            UnlockedCosmetics = UnlockedCosmetics,
+        };
+        GzipJson.Write(FilePath, file, _jsonOptions);
+    }
+    public void Deserialize() {
+        Reset();
 
-        var saveVersion = reader.ReadByte();
+        try {
+            using var stream = File.OpenRead(FilePath);
 
-        if (saveVersion != CURRENT_GAME_DATA_VERSION) {
-            TankGame.ClientLog.Write($"Loading an outdated {Name}! (Save File: {saveVersion}. Game Data Version: {CURRENT_GAME_DATA_VERSION})", RebirthLogLevel.Warn);
+            // the binary format started with its version, which was never above 1
+            var first = stream.ReadByte();
+            stream.Position = 0;
+            if (first is 0 or 1)
+                ReadBinary(stream);
+            else
+                ReadJson(stream);
+        } catch (Exception e) when (e is IOException or JsonException) {
+            TankGame.ReportError(e);
+            Backup("unreadable");
+            TankGame.ClientLog.Write(
+                "Your save file could not be read, so a fresh one is used. The old one was copied to the Backup folder. Sorry!",
+                RebirthLogLevel.Info);
+            Reset();
+        }
+
+        GameHandler.ExpBar = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
+    }
+
+    void ReadJson(Stream stream) {
+        var file = GzipJson.Read<SaveData>(stream, _jsonOptions) ?? new SaveData();
+
+        if (file.Version > CURRENT_GAME_DATA_VERSION) {
+            TankGame.ClientLog.Write($"Loading a {Name} from a newer version of the game! (Save File: {file.Version}. Game Data Version: {CURRENT_GAME_DATA_VERSION})", RebirthLogLevel.Warn);
             ReadingOutdatedFile = true;
         }
 
-        try {
+        TotalKills = file.TotalKills;
+        BulletKills = file.BulletKills;
+        BounceKills = file.BounceKills;
+        MineKills = file.MineKills;
+        MissionsCompleted = file.MissionsCompleted;
+        CampaignsCompleted = file.CampaignsCompleted;
+        Deaths = file.Deaths;
+        Suicides = file.Suicides;
+        TimePlayed = file.TimePlayed;
+        ExpLevel = file.ExpLevel;
+        CollectedKeys = file.CollectedKeys;
+        UnlockedCosmetics = file.UnlockedCosmetics ?? [];
 
-            TotalKills = reader.ReadUInt32();
-            BulletKills = reader.ReadUInt32();
-            BounceKills = reader.ReadUInt32();
-            MineKills = reader.ReadUInt32();
-            MissionsCompleted = reader.ReadUInt32();
-            CampaignsCompleted = reader.ReadUInt32();
-            Deaths = reader.ReadUInt32();
-            Suicides = reader.ReadUInt32();
-
-            TimePlayed = TimeSpan.FromMilliseconds(reader.ReadDouble());
-
-            for (int i = 0; i < TankKills.Count; i++)
-                TankKills[i] = reader.ReadUInt32();
-
-            //VanillaAchievements.Repository.Register(reader);
-
-            ExpLevel = reader.ReadSingle();
-
-            GameHandler.ExpBar = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
-
-            // version 1 and up
-
-            if (saveVersion >= 1) {
-                CollectedKeys = reader.ReadByte();
-                int cosLen = reader.ReadInt32();
-                for (int i = 0; i < cosLen; i++) {
-
-                }
-            } else {
-                CollectedKeys = 0;
-                UnlockedCosmetics = [];
-            }
-        } catch (Exception e) when (ReadingOutdatedFile) {
-            TankGame.ReportError(e);
-            TankGame.ClientLog.Write(
-                "An error occurred, possibly due to your save file being out-of-date. For now, delete it and restart the game. Sorry!",
-                RebirthLogLevel.Info);
-        } catch (IOException e) { // IO Error.
-            TankGame.ReportError(e);
-            TankGame.ClientLog.Write(
-                "An error was thrown while attempting to read your save file. Please try to restart the game. If this error persists please delete your save file and try again. Sorry!",
-                RebirthLogLevel.Info);
+        foreach (var (name, kills) in file.TankKills ?? []) {
+            var id = TankID.Collection.ContainsKey(name) ? TankID.Collection.GetValue(name) : null;
+            if (id.HasValue)
+                TankKills[id.Value] = kills;
+            else
+                _unknownTankKills[name] = kills;
         }
+    }
+
+    void ReadBinary(Stream stream) {
+        using var reader = new BinaryReader(stream);
+
+        var saveVersion = reader.ReadByte();
+        TankGame.ClientLog.Write($"Converting {Name} from the old format. (current={saveVersion}. expected={CURRENT_GAME_DATA_VERSION})", RebirthLogLevel.Info);
+        ReadingOutdatedFile = true;
+
+        // the conversion only goes one way
+        Backup($"binary_v{saveVersion}");
+
+        TotalKills = reader.ReadUInt32();
+        BulletKills = reader.ReadUInt32();
+        BounceKills = reader.ReadUInt32();
+        MineKills = reader.ReadUInt32();
+        MissionsCompleted = reader.ReadUInt32();
+        CampaignsCompleted = reader.ReadUInt32();
+        Deaths = reader.ReadUInt32();
+        Suicides = reader.ReadUInt32();
+
+        TimePlayed = TimeSpan.FromMilliseconds(reader.ReadDouble());
+
+        for (int i = 0; i < TankKills.Count; i++)
+            TankKills[i] = reader.ReadUInt32();
+
+        ExpLevel = reader.ReadSingle();
+
+        // version 1 and up
+        if (saveVersion >= 1) {
+            CollectedKeys = reader.ReadByte();
+            int cosLen = reader.ReadInt32();
+            for (int i = 0; i < cosLen; i++)
+                UnlockedCosmetics.Add(reader.ReadInt32());
+        }
+    }
+
+    void Backup(string reason) {
+        try {
+            var backup = Path.Combine(TankGame.SaveDirectory, "Backup", $"{Path.GetFileNameWithoutExtension(Name)}_{reason}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}{Path.GetExtension(Name)}");
+            File.Copy(FilePath, backup, overwrite: true);
+        } catch (IOException e) {
+            TankGame.ClientLog.Write($"Could not back up {Name}: {e.Message}", RebirthLogLevel.Warn);
+        }
+    }
+
+    // the layout of the file
+    class SaveData {
+        public int Version { get; set; }
+        public uint TotalKills { get; set; }
+        public uint BulletKills { get; set; }
+        public uint BounceKills { get; set; }
+        public uint MineKills { get; set; }
+        public uint MissionsCompleted { get; set; }
+        public uint CampaignsCompleted { get; set; }
+        public uint Deaths { get; set; }
+        public uint Suicides { get; set; }
+        public TimeSpan TimePlayed { get; set; }
+        /// <summary>Kills per tank, by the tank's name.</summary>
+        public Dictionary<string, uint>? TankKills { get; set; }
+        public float ExpLevel { get; set; }
+        public byte CollectedKeys { get; set; }
+        public List<int>? UnlockedCosmetics { get; set; }
     }
 }
