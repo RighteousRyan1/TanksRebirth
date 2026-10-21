@@ -13,6 +13,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better
 - Added slight randomized pitch shifting in many game-related sound effects
 - Added a ton of new options in the settings menu
+- The "Start Over" button now actually works
 - Added a new mods menu!
 	- It appears in the top right of the main menu
 	- It allows you to quickly load/unload/reload mods instead of having to use debug functions or restart the game
@@ -50,10 +51,11 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Pings now grow and shrink quicker
 - Rocket trails are now MUCH better looking
 - Completely overhauled the Settings UI (which will be the standard for future UI updates!)
-	- I caved into using AI to assist me with the design and layout, since UI frontend is not my strong suit in the slightest
+	- I caved into using AI to assist me with the programming (but I did design), since UI frontend is not my strong suit in the slightest
 - Completely overhauled the Modifiers UI!
 - Lantern mode will now look entirely different if using the new lighting system, read the description
 - Bindings in the Controls menu can now use mouse buttons!
+- Tweaked a lot of particles to look largely improved
 
 # Changes Important for Modders
 
