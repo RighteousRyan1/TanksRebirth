@@ -38,8 +38,11 @@ public static class GameSceneUI {
     }
 
     public static void DrawScores() {
-        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : PlayerTank.NumLocalPlayers;
+        var connected = Client.IsConnected();
+        var drawCount = connected ? GameHandler.MAX_PLAYERS : PlayerTank.NumLocalPlayers;
         for (int i = 0; i < drawCount; i++) {
+            // slots can be empty after someone leaves
+            if (connected && !Server.IsOccupied(i)) continue;
 
             float y = WindowUtils.WindowHeight * 0.9f;
             bool flip = i % 2 != 0;

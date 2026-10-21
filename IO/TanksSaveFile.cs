@@ -104,7 +104,7 @@ public class TanksSaveFile : IFileSerializable {
         var saveVersion = reader.ReadByte();
 
         if (saveVersion != CURRENT_GAME_DATA_VERSION) {
-            TankGame.ClientLog.Write($"Loading an outdated {Name}! (Save File: {saveVersion}. Game Data Version: {CURRENT_GAME_DATA_VERSION})", LogType.Warn);
+            TankGame.ClientLog.Write($"Loading an outdated {Name}! (Save File: {saveVersion}. Game Data Version: {CURRENT_GAME_DATA_VERSION})", RebirthLogLevel.Warn);
             ReadingOutdatedFile = true;
         }
 
@@ -146,12 +146,12 @@ public class TanksSaveFile : IFileSerializable {
             TankGame.ReportError(e);
             TankGame.ClientLog.Write(
                 "An error occurred, possibly due to your save file being out-of-date. For now, delete it and restart the game. Sorry!",
-                LogType.Info);
+                RebirthLogLevel.Info);
         } catch (IOException e) { // IO Error.
             TankGame.ReportError(e);
             TankGame.ClientLog.Write(
                 "An error was thrown while attempting to read your save file. Please try to restart the game. If this error persists please delete your save file and try again. Sorry!",
-                LogType.Info);
+                RebirthLogLevel.Info);
         }
     }
 }

@@ -199,7 +199,7 @@ public static class IntermissionHandler {
         StopMission();
 
         if (CampaignGlobals.LoadedCampaign.CurrentMissionId != missionId) {
-            TankGame.ClientLog.Write($"Mission desync: on mission {CampaignGlobals.LoadedCampaign.CurrentMissionId} but the host ended mission {missionId}. Following the host.", LogType.Warn);
+            TankGame.ClientLog.Write($"Mission desync: on mission {CampaignGlobals.LoadedCampaign.CurrentMissionId} but the host ended mission {missionId}. Following the host.", RebirthLogLevel.Warn);
             CampaignGlobals.LoadedCampaign.LoadMission(missionId);
         }
 

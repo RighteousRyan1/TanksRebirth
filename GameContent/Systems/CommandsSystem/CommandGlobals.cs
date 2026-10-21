@@ -67,17 +67,17 @@ public static class CommandGlobals {
                 bool disconnected = WiimoteSystem.TryDisconnect();
 
                 if (disconnected)
-                    TankGame.ClientLog.Write("Wiimote disconnected.", LogType.Info);
+                    TankGame.ClientLog.Write("Wiimote disconnected.", RebirthLogLevel.Info);
                 else
-                    TankGame.ClientLog.Write("Wiimote cannot disconnect.", LogType.Warn);
+                    TankGame.ClientLog.Write("Wiimote cannot disconnect.", RebirthLogLevel.Warn);
             }
             else {
                 bool connected = WiimoteSystem.TryConnect();
 
                 if (connected)
-                    TankGame.ClientLog.Write("Wiimote connected.", LogType.Info);
+                    TankGame.ClientLog.Write("Wiimote connected.", RebirthLogLevel.Info);
                 else
-                    TankGame.ClientLog.Write("Wiimote cannot connect.", LogType.Warn);
+                    TankGame.ClientLog.Write("Wiimote cannot connect.", RebirthLogLevel.Warn);
             }
         }),
 

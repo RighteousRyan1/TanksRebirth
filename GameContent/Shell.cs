@@ -121,6 +121,8 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     /// The top byte is the firing client's ID + 1, the rest a counter, so duplicate IDs are literally impossible.
     /// </summary>
     public int NetId { get; private set; } = -1;
+    /// <summary>Whether <see cref="Destroy"/> was called on this <see cref="Shell"/>.</summary>
+    public bool IsDestroyed { get; private set; }
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
     public ShellProperties Properties = new();
@@ -130,18 +132,6 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     public int VolleyId = -1;
     /// <summary>Gives the shell the ID another client assigned to it (used when a fired shell arrives over the network).</summary>
     public void SetNetId(int netId) => NetId = netId;
-
-    static int _netIdCounter;
-
-
-    /// <summary>A new network ID, unique to this client.</summary>
-    public static int NewNetId() {
-        // increment the actual counter part of the NetId
-        _netIdCounter = (_netIdCounter + 1) & 0xFFFFFF;
-
-        // shift so we can plant the client id in the first 8 bytes, then the counter for the latter 24
-        return ((NetPlay.GetMyClientId() + 1) << 24) | _netIdCounter;
-    }
 
     /// <summary>The live shell with this <see cref="NetId"/>, or null.</summary>
     public static Shell? FindByNetId(int netId) {
@@ -231,7 +221,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         Id = index;
         AllShells[index] = this;
 
-        NetId = NewNetId();
+        NetId = NetParity.NewNetId();
 
         if (owner == null) return;
 
@@ -250,9 +240,12 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     /// <param name="owner">The tank (if any) that owns this <see cref="Shell"/>.</param>
     /// <param name="ricochets">How many ricochets it will have.</param>
     /// <param name="playSpawnSound">If <see langword="true"/>, <see cref="ShootSound"/> will be assigned to, and played.</param>
-    /// <returns>The created <see cref="Shell"/>.</returns>
-    public static Shell Create(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0, bool playSpawnSound = true) {
-        var shell = TankGame.ThreadAgnostic(() => {
+    /// <returns>The created <see cref="Shell"/>, or <see langword="null"/> if there are already <see cref="MAX_SHELLS"/> shells.</returns>
+    public static Shell? Create(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0, bool playSpawnSound = true) {
+        var shell = TankGame.ThreadAgnostic<Shell?>(() => {
+            if (Array.IndexOf(AllShells, null) < 0)
+                return null;
+
             var s = new Shell(position, velocity, type, owner, ricochets);
 
             if (!playSpawnSound) return s;
@@ -525,7 +518,11 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
             Destroy(cxt);
 
-            tank.Damage(new TankHurtContextShell(this), true);
+            // only one client reports each hit, the others get it over the network
+            if (NetPlay.IsReporter(Owner))
+                tank.Damage(new TankHurtContextShell(this), true);
+            // a shell only hits one thing
+            return;
         }
 
         ref var bulletSSpace = ref MemoryMarshal.GetReference((Span<Shell>)AllShells);
@@ -572,17 +569,22 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
             var thisDestructible = Properties.Penetration > -1;
 
             if (otherDestructible) shell.Destroy(DestructionContext.WithShell);
-            if (thisDestructible) Destroy(DestructionContext.WithShell);
+            // this shell is gone, so it can't hit anything else
+            if (thisDestructible) {
+                Destroy(DestructionContext.WithShell);
+                return;
+            }
 
             // if destroy has been called this will be true, so prevent further checking
             if (shell == null) continue;
 
             // if two indestructible bullets come together, destroy them both. too powerful!
-            if (otherDestructible || thisDestructible) continue;
+            if (otherDestructible) continue;
 
             // bullet is sometimes null here? so null safety is key
             shell.Destroy(DestructionContext.WithShell);
             Destroy(DestructionContext.WithShell);
+            return;
         }
     }
     public void Remove() {
@@ -612,10 +614,13 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
     /// <param name="wasSentByAnotherClient">Whether or not the Destroy was sent by another client.</param>
     public void Destroy(DestructionContext context, bool playSound = true, bool wasSentByAnotherClient = false) {
+        if (IsDestroyed) return;
+        IsDestroyed = true;
+
         ShootSound?.Instance?.Stop(true);
         ModdedData?.OnDestroy(context, ref playSound);
         // pattern matching looks so clean
-        if (context is not DestructionContext.WithHostileTank or DestructionContext.WithMine or DestructionContext.WithExplosion) {
+        if (context is not (DestructionContext.WithHostileTank or DestructionContext.WithMine or DestructionContext.WithExplosion)) {
             if (playSound) {
                 /*var sfx = */SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
 
@@ -643,9 +648,9 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         TrailSound = null;
 
         // there's definitely a way to un-hardcode this
+        if (Type == ShellID.Explosive)
+            Explosion.Create(Position, 7f, Owner, 0.25f);
         if (Owner is not null) {
-            if (Owner.Properties.ShellType == ShellID.Explosive)
-                new Explosion(Position, 7f, Owner, 0.25f);
             if (Owner is PlayerTank)
                 // in case the player wants to destroy a mine that may be impeding progress- we don't want to penalize them.
                 if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine ||

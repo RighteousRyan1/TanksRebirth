@@ -56,7 +56,7 @@ public static class LightManager {
             effect = GameResources.GetGameResource<Effect>("Assets/shaders/lighting/lighting");
         }
         catch (Exception e) {
-            TankGame.ClientLog.Write($"[Lighting] lighting.fx could not be loaded, dynamic lighting is off: {e.Message}", LogType.Warn);
+            TankGame.ClientLog.Write($"[Lighting] lighting.fx could not be loaded, dynamic lighting is off: {e.Message}", RebirthLogLevel.Warn);
             return;
         }
         if (!LightingSystem.Initialize(device, effect))
@@ -82,7 +82,7 @@ public static class LightManager {
         LightingPresets.PresetChanged += preset => LightingSettings.Current.TimeOfDay = preset;
         LightingSettings.Current.Apply(force: true);
 
-        TankGame.ClientLog.Write("Lighting system loaded.", LogType.Info);
+        TankGame.ClientLog.Write("Lighting system loaded.", RebirthLogLevel.Info);
     }
 
     public static void Apply(Preset preset) {

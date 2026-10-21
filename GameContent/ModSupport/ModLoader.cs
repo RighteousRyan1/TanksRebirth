@@ -112,7 +112,7 @@ public static class ModLoader {
     public static string LoadType = string.Empty;
     public static bool CheckIfCompilesAreAllowed() {
         if (!RuntimeData.IsWindows) {
-            TankGame.ClientLog.Write("Auto-compilation disallowed. Current OS is not Windows.", LogType.Warn);
+            TankGame.ClientLog.Write("Auto-compilation disallowed. Current OS is not Windows.", RebirthLogLevel.Warn);
             return false;
         }
         try {
@@ -141,18 +141,18 @@ public static class ModLoader {
             process.WaitForExit();
             // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
             if (versionsReal.All(x => x.Major < MIN_NET_VERSION)) {
-                TankGame.ClientLog.Write($"Auto-compilation disallowed. User does not have a .NET {MIN_NET_VERSION}.0 SDK or higher installed.", LogType.Warn);
+                TankGame.ClientLog.Write($"Auto-compilation disallowed. User does not have a .NET {MIN_NET_VERSION}.0 SDK or higher installed.", RebirthLogLevel.Warn);
                 return false;
             }
 
-            TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", LogType.Info);
+            TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", RebirthLogLevel.Info);
             return true;
         } catch (Exception e) {
             var trace = new StackTrace(e, true);
             var frame = trace.GetFrame(0);
             int line = frame?.GetFileLineNumber() ?? -1;
 
-            TankGame.ClientLog.Write($"Auto-compile eligibility failed. (reason={e.Message}, where={line})", LogType.Info);
+            TankGame.ClientLog.Write($"Auto-compile eligibility failed. (reason={e.Message}, where={line})", RebirthLogLevel.Info);
 
             return false;
         }
@@ -206,7 +206,7 @@ public static class ModLoader {
             return;
         }
 
-        TankGame.ClientLog.Write("Unloading mods...", LogType.Info);
+        TankGame.ClientLog.Write("Unloading mods...", RebirthLogLevel.Info);
         Status = LoadStatus.Unloading;
         _loadingActions.Clear();
         LoadedMods.ForEach(mod => {
@@ -254,7 +254,7 @@ public static class ModLoader {
         ModTank.unloadOffset = 0;
         ModBlock.unloadOffset = 0;
         ModShell.unloadOffset = 0;
-        TankGame.ClientLog.Write("Mod unload successful!", LogType.Info);
+        TankGame.ClientLog.Write("Mod unload successful!", RebirthLogLevel.Info);
         Status = LoadStatus.Complete;
     }
     // doesn't work?
@@ -300,7 +300,7 @@ public static class ModLoader {
                         if (handlerAsm == modAssembly) {
                             // For static events the target is null
                             ev.RemoveEventHandler(null, handler);
-                            TankGame.ClientLog.Write($"Mod {mod.InternalName} forgot to unsubscribe from event {ev.DeclaringType.Name}.{ev.Name}. Unsubscribing...", LogType.Info);
+                            TankGame.ClientLog.Write($"Mod {mod.InternalName} forgot to unsubscribe from event {ev.DeclaringType.Name}.{ev.Name}. Unsubscribing...", RebirthLogLevel.Info);
                         }
                     }
                 } catch {
@@ -314,11 +314,11 @@ public static class ModLoader {
     /// <summary>Prepare your garbage collector!</summary>
     internal static void LoadMods() {
         if (Status == LoadStatus.Unloading) {
-            TankGame.ClientLog.Write("Mods are currently unloading! Unable to load mods.", LogType.Warn);
+            TankGame.ClientLog.Write("Mods are currently unloading! Unable to load mods.", RebirthLogLevel.Warn);
             return;
         }
         if (IsLoadingMods) {
-            TankGame.ClientLog.Write("Mods are currently loading! Unable to load mods.", LogType.Warn);
+            TankGame.ClientLog.Write("Mods are currently loading! Unable to load mods.", RebirthLogLevel.Warn);
             return;
         }
 
@@ -326,7 +326,7 @@ public static class ModLoader {
             UnloadAll();
         }
         else {
-            TankGame.ClientLog.Write("No mods to unload. Skipping...", LogType.Warn);
+            TankGame.ClientLog.Write("No mods to unload. Skipping...", RebirthLogLevel.Warn);
         }
 
         LoadType = Debugger.IsAttached ? "Debug" : "Release";
@@ -335,7 +335,7 @@ public static class ModLoader {
         ActionsComplete = 0;
 
         if (!_firstLoad)
-            TankGame.ClientLog.Write("Reloading mods...", LogType.Info);
+            TankGame.ClientLog.Write("Reloading mods...", RebirthLogLevel.Info);
         else
             AreCompilesAllowed = CheckIfCompilesAreAllowed();
 
@@ -384,7 +384,7 @@ public static class ModLoader {
             }
 
             if (!modEnablement[i + dummyLittleIThing]) {
-                TankGame.ClientLog.Write($"Skipping mod {modName}", LogType.Info);
+                TankGame.ClientLog.Write($"Skipping mod {modName}", RebirthLogLevel.Info);
                 continue;
             }
 
@@ -457,7 +457,7 @@ public static class ModLoader {
                         OnPostModLoad?.Invoke(mod);
                     }
                     ActionsComplete++;
-                    TankGame.ClientLog.Write($"Loaded mod '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", LogType.Info);
+                    TankGame.ClientLog.Write($"Loaded mod '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", RebirthLogLevel.Info);
                 } catch (Exception e) {
                     TankGame.ReportError(e, true, true);
                     Error = e.Message;
@@ -472,7 +472,7 @@ public static class ModLoader {
             ModBeingLoaded = string.Empty;
             Status = LoadStatus.Complete;
 
-            TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", LogType.Info);
+            TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", RebirthLogLevel.Info);
             _firstLoad = false;
 
             ModTanks = [.. _modTanks];
@@ -485,7 +485,7 @@ public static class ModLoader {
         /*IsLoadingMods = false;
         ModBeingLoaded = string.Empty;
         Status = LoadStatus.Complete;
-        TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", LogType.Info);
+        TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", RebirthLogLevel.Info);
         _firstLoad = false;
 
         ModTanks = [.. _modTanks];
@@ -500,7 +500,7 @@ public static class ModLoader {
 
         // trycatch is now avoided typically
         if (!File.Exists(modInfoPath)) {
-            TankGame.ClientLog.Write($"mod_info.json missing for '{mod.InternalName}', creating defaults.", LogType.Info);
+            TankGame.ClientLog.Write($"mod_info.json missing for '{mod.InternalName}', creating defaults.", RebirthLogLevel.Info);
             File.WriteAllText(modInfoPath, JsonSerializer.Serialize<ModInfo>(default, _indented));
             mod.ModInfo = new();
             return;
@@ -510,7 +510,7 @@ public static class ModLoader {
             var modInfoJson = File.ReadAllText(modInfoPath);
             mod.ModInfo = JsonSerializer.Deserialize<ModInfo>(modInfoJson);
         } catch (JsonException ex) {
-            TankGame.ClientLog.Write($"Invalid JSON in '{mod.InternalName}': {ex.Message}.", LogType.Warn);
+            TankGame.ClientLog.Write($"Invalid JSON in '{mod.InternalName}': {ex.Message}.", RebirthLogLevel.Warn);
             mod.ModInfo = new();
         }
     }
@@ -560,7 +560,7 @@ public static class ModLoader {
         DifficultyAlgorithm.TankDiffs[modContent.Type] = 0f;
 
         modContent!.Register();
-        TankGame.ClientLog.Write($"Loaded modded tank '{modContent.ContentKey}'", LogType.Info);
+        TankGame.ClientLog.Write($"Loaded modded tank '{modContent.ContentKey}'", RebirthLogLevel.Info);
     }
     public static void LoadModBlock(TanksMod mod, Type type) {
         var modContent = (Activator.CreateInstance(type) as ModBlock)!;
@@ -582,7 +582,7 @@ public static class ModLoader {
 
         modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
         modContent.Register();
-        TankGame.ClientLog.Write($"Loaded modded block '{modContent.ContentKey}'", LogType.Info);
+        TankGame.ClientLog.Write($"Loaded modded block '{modContent.ContentKey}'", RebirthLogLevel.Info);
     }
     public static void LoadModShell(TanksMod mod, Type type) {
         var modContent = (Activator.CreateInstance(type) as ModShell)!;
@@ -604,7 +604,7 @@ public static class ModLoader {
 
         modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
         TankGame.MainThreadTasks.Enqueue(modContent.Register);
-        TankGame.ClientLog.Write($"Loaded modded shell '{modContent.ContentKey}'", LogType.Info);
+        TankGame.ClientLog.Write($"Loaded modded shell '{modContent.ContentKey}'", RebirthLogLevel.Info);
     }
     public static void LoadModModifier(TanksMod mod, Type type) {
         var modModifier = (Activator.CreateInstance(type) as ModModifier)!;
@@ -618,7 +618,7 @@ public static class ModLoader {
 
         // the modifiers menu reads the registry every frame, so register on the main thread
         TankGame.MainThreadTasks.Enqueue(modModifier.Register);
-        TankGame.ClientLog.Write($"Loaded modded modifier '{modModifier.Key}'", LogType.Info);
+        TankGame.ClientLog.Write($"Loaded modded modifier '{modModifier.Key}'", RebirthLogLevel.Info);
     }
     public static int LocateCsprojProperty(string[] contents, string match) {
         return Array.FindIndex(contents, x => {

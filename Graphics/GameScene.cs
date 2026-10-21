@@ -74,7 +74,7 @@ public static class GameScene {
     public static void LoadTexturePack(string folder) {
         if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase)) {
             LoadVanillaTextures(); // why was this before the check?
-            TankGame.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
+            TankGame.ClientLog.Write($"Loaded vanilla textures for Scene.", RebirthLogLevel.Info);
             return;
         }
 
@@ -87,7 +87,7 @@ public static class GameScene {
         Directory.CreateDirectory(rootGameScene);
 
         if (!Directory.Exists(path)) {
-            TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", LogType.Warn);
+            TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", RebirthLogLevel.Warn);
             return;
         }
 
@@ -96,7 +96,7 @@ public static class GameScene {
         foreach (var file in Directory.GetFiles(path)) {
             if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file))) {
                 Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(path, Path.GetFileName(file)));
-                TankGame.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", LogType.Info);
+                TankGame.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", RebirthLogLevel.Info);
             }
         }
     }

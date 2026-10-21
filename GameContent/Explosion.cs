@@ -47,7 +47,21 @@ public class Explosion : IAITankDanger {
 
     public Color ExplosionColor = Color.White;
 
-    public Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
+    /// <summary>
+    /// Creates a new <see cref="Explosion"/>. This method is thread-agnostic.
+    /// </summary>
+    /// <param name="pos">The position of this <see cref="Explosion"/> in the game world.</param>
+    /// <param name="scale">How big this <see cref="Explosion"/> gets. Its damage radius is this times <see cref="MAGIC_EXPLOSION_NUMBER"/>.</param>
+    /// <param name="owner">The <see cref="Tank"/> responsible for this <see cref="Explosion"/>, if any.</param>
+    /// <param name="rotationSpeed">How fast the flames spin around the center.</param>
+    /// <param name="soundPitch">Added to the pitch of the explosion sound.</param>
+    /// <returns>The created <see cref="Explosion"/>, or <see langword="null"/> if there are already <see cref="EXPLOSIONS_MAX"/> explosions.</returns>
+    public static Explosion? Create(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
+        var explosion = TankGame.ThreadAgnostic(() => Array.IndexOf(Explosions, null) < 0 ? null : new Explosion(pos, scale, owner, rotationSpeed, soundPitch));
+        return explosion;
+    }
+
+    Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
         RotationSpeed = rotationSpeed;
         Position = pos;
         MaxScale = scale;
@@ -153,6 +167,9 @@ public class Explosion : IAITankDanger {
                 if (Vector3.DistanceSquared(tank.Position3D, Position3D) > damageRadiusReal) continue;
 
                 HasHit[tank.WorldId] = true;
+
+                // only one client reports each hit, the others get it over the network
+                if (!NetPlay.IsReporter(Owner)) continue;
 
                 // Owner.Damage prevents damage within the method
                 if (Owner == null)

@@ -45,6 +45,9 @@ public static class NetPlay {
 
     public static string? ServerName;
 
+    /// <summary>How many clients were in the lobby as of the last lobby info this client got.</summary>
+    internal static int LobbyClientCount;
+
     //public static ConcurrentQueue<Action> NetworkQueue = [];
     //public static Thread NetworkingThread;
 
@@ -57,14 +60,33 @@ public static class NetPlay {
     public static void MapClientNetworking() {
         Client.ClientListener.NetworkReceiveEvent += OnPacketRecieve_Client;
         Client.ClientListener.PeerConnectedEvent += OnClientJoin;
+        Client.ClientListener.PeerDisconnectedEvent += OnClientLeave;
     }
     public static void UnmapClientNetworking() {
+        if (Client.ClientListener is null) return;
+
         Client.ClientListener.NetworkReceiveEvent -= OnPacketRecieve_Client;
         Client.ClientListener.PeerConnectedEvent -= OnClientJoin;
+        Client.ClientListener.PeerDisconnectedEvent -= OnClientLeave;
+    }
+
+    // the connection to the server ended without this client choosing to leave
+    // will need to
+    static void OnClientLeave(NetPeer peer, DisconnectInfo disconnectInfo) {
+        var reason = disconnectInfo.Reason switch {
+            DisconnectReason.ConnectionRejected => "Wrong password, or lobby may be full.",
+            DisconnectReason.ConnectionFailed => "Could not connect to the server.",
+            DisconnectReason.Timeout => "Lost connection to the server.",
+            DisconnectReason.RemoteConnectionClose or DisconnectReason.DisconnectPeerCalled => "The host has closed the server.",
+            _ => $"Disconnected from the server. ({disconnectInfo.Reason})",
+        };
+        TankGame.ClientLog.Write(reason, Internals.RebirthLogLevel.Info);
+        ChatSystem.SendMessage(reason, Color.Red);
+        Client.Disconnect();
     }
 
     private static void OnClientJoin(NetPeer peer) {
-        TankGame.ClientLog.Write($"Connected to remote server.", Internals.LogType.Debug);
+        TankGame.ClientLog.Write($"Connected to remote server.", Internals.RebirthLogLevel.Debug);
         ChatSystem.SendMessage("Connected to server.", Color.Lime, netSend: true);
 
         Client.SendClientInfo();
@@ -84,6 +106,7 @@ public static class NetPlay {
         if (Server.NetManager is null) return;
 
         Server.SendHostDisconnect();
+        // also tells every client that the connection closed, so they all disconnect
         Server.NetManager.Stop();
 
         Server.NetListener.NetworkReceiveEvent -= OnPacketRecieve_Server;
@@ -94,7 +117,7 @@ public static class NetPlay {
         if (GameLauncher.IsConsoleAllocated) {
             if (DebugManager.DebuggingEnabled) {
                 if (deliveryMethod != DeliveryMethod.Unreliable) {
-                    // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
+                    // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.RebirthLogLevel.Debug);
                     Console.WriteLine($"[DEBUG]: Recieved packet {PacketID.Collection.GetKey(packet)} from peer {peer.Id}", Color.Blue);
                 }
             }
@@ -104,7 +127,7 @@ public static class NetPlay {
         switch (packet) {
             #region Info
             case PacketID.ClientInfo:
-                byte returnedID = reader.GetByte();
+                int returnedID = reader.GetInt();
 
                 CurrentClient.Id = returnedID;
 
@@ -121,28 +144,50 @@ public static class NetPlay {
                 string servName = reader.GetString();
                 ServerName = servName;
 
-                Server.ConnectedClients = new Client[serverMaxClients];
+                // the server keeps its own list
+                if (!Client.IsHost())
+                    Server.ConnectedClients = new Client[serverMaxClients];
 
-                byte clientId = 0;
                 for (int i = 0; i < serverMaxClients; i++) {
                     bool isClientAvailable = reader.GetBool();
 
                     if (isClientAvailable) {
-                        clientId = reader.GetByte();
+                        byte clientId = reader.GetByte();
                         string clientName = reader.GetString();
 
-                        Server.ConnectedClients[i] = new Client(clientId, clientName, isOperatedByPlayer: isClientAvailable);
+                        if (!Client.IsHost())
+                            Server.ConnectedClients![i] = new Client(clientId, clientName, isOperatedByPlayer: isClientAvailable);
                     }
                 }
 
                 Server.CurrentClientCount = reader.GetInt();
+                // also sent when someone leaves, so only a bigger lobby means someone joined
+                if (Server.CurrentClientCount > LobbyClientCount)
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);
+                LobbyClientCount = Server.CurrentClientCount;
+
+                // only the client that just joined says hello, so it isn't repeated by everyone
+                if (!Client.LobbyDataReceived)
+                    ChatSystem.SendMessage($"Welcome {Server.ConnectedClients![CurrentClient.Id]?.Name}!", Color.Lime, netSend: true);
                 Client.LobbyDataReceived = true;
 
-                SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);
-
-                ChatSystem.SendMessage($"Welcome {Server.ConnectedClients[clientId].Name}!", Color.Lime, netSend: true);
-
                 MainMenuUI.ShouldServerButtonsBeVisible = false;
+                break;
+            case PacketID.LeaveGame:
+                int leftSlot = reader.GetInt();
+                var leftName = reader.GetString();
+                var leaveReason = (DisconnectReason)reader.GetInt();
+
+                ChatSystem.SendMessage(leaveReason == DisconnectReason.Timeout ? $"{leftName} lost connection." : $"{leftName} has left.", Color.Red);
+                SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_leave.ogg", SoundContext.Effect, 0.75f);
+
+                // gone without the effects of being destroyed, and not brought back by the next mission
+                GameHandler.AllPlayerTanks[leftSlot]?.Remove(true);
+                PlayerTank.Lives[leftSlot] = 0;
+
+                // the player who left may have been the last one alive
+                if (CampaignGlobals.InMission)
+                    CampaignProgression.CheckMissionCompletion();
                 break;
             case PacketID.HostDisconnect:
                 // forcibly disconnects the user
@@ -237,9 +282,9 @@ public static class NetPlay {
                     Shell.LogDeadShell(destroyedNetId);
                 break;
             case PacketID.MineDetonate:
-                var destroyedMineId = reader.GetInt();
+                var detonatedMineNetId = reader.GetInt();
 
-                Mine.AllMines[destroyedMineId]?.Detonate();
+                Mine.FindByNetId(detonatedMineNetId)?.Detonate(netSend: false);
                 break;
             case PacketID.ShellFire:
                 var shellType = reader.GetInt();
@@ -253,12 +298,13 @@ public static class NetPlay {
                 // already destroyed (the destroy message overtook this one), or already here
                 if (Shell.WasDestroyed(shellNetId) || Shell.FindByNetId(shellNetId) is not null)
                     break;
-                if (Array.IndexOf(Shell.AllShells, null) < 0)
-                    break;
 
                 // before there was some bs that just straight up caused this code to malfunction via lag
                 var shooter = shellOwner >= 0 && shellOwner < GameHandler.AllTanks.Length ? GameHandler.AllTanks[shellOwner] : null;
                 var firedShell = Shell.Create(shellPos, shellVel, shellType, shooter, shellRicochets);
+                // no room for it
+                if (firedShell is null)
+                    break;
                 firedShell.SetNetId(shellNetId);
                 firedShell.VolleyId = shellVolley;
                 if (shooter is not null) {
@@ -270,8 +316,10 @@ public static class NetPlay {
                 var minePos = reader.GetVector2();
                 var detTime = reader.GetFloat();
                 var mineOwner = reader.GetInt();
+                var mineNetId = reader.GetInt();
 
-                Mine.Create(GameHandler.AllTanks[mineOwner], minePos, detTime);
+                var mineLayer = mineOwner >= 0 && mineOwner < GameHandler.AllTanks.Length ? GameHandler.AllTanks[mineOwner] : null;
+                Mine.Create(mineLayer, minePos, detTime)?.SetNetId(mineNetId);
 
                 break;
             case PacketID.SendCampaign:
@@ -390,7 +438,7 @@ public static class NetPlay {
                 }
                 var unknownModifiers = Modifiers.ApplyHostValues(modifierValues);
                 if (unknownModifiers.Count > 0)
-                    TankGame.ClientLog.Write($"The host has modifiers that aren't loaded here (missing a mod?): {string.Join(", ", unknownModifiers)}", Internals.LogType.Warn);
+                    TankGame.ClientLog.Write($"The host has modifiers that aren't loaded here (missing a mod?): {string.Join(", ", unknownModifiers)}", Internals.RebirthLogLevel.Warn);
                 break;
                 #endregion
         }
@@ -403,7 +451,7 @@ public static class NetPlay {
         var packet = reader.GetInt();
         if (DebugManager.DebuggingEnabled) {
             if (deliveryMethod != DeliveryMethod.Unreliable) {
-                // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
+                // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.RebirthLogLevel.Debug);
 
                 ChatSystem.SendMessage($"[DEBUG]: Server recieved packet {PacketID.Collection.GetKey(packet)} from peer {peer.Id}", Color.Blue);
             }
@@ -420,33 +468,19 @@ public static class NetPlay {
             case PacketID.ClientInfo:
                 string name = reader.GetString();
 
-                Server.ConnectedClients[Server.CurrentClientCount] = new Client(Server.CurrentClientCount, name);
-                message.Put(Server.CurrentClientCount);
-                Server.CurrentClientCount++;
+                int slot = Server.AddClient(peer, name);
+                // every slot filled up between accepting the connection and now
+                if (slot < 0) {
+                    peer.Disconnect();
+                    break;
+                }
+                message.Put(slot);
 
                 peer.Send(message, deliveryMethod);
                 Server.SyncSeeds();
                 break;
             case PacketID.LobbyInfo:
-                message.Put(Server.MaxClients);
-
-                message.Put(CurrentServer.Name);
-
-                for (int i = 0; i < Server.MaxClients; i++) {
-                    bool clientExists = Server.ConnectedClients[i] is not null;
-                    message.Put(clientExists);
-                    if (clientExists) {
-                        Client client = Server.ConnectedClients[i];
-                        message.Put((byte)client.Id);
-                        message.Put(client.Name);
-                    }
-                }
-
-                message.Put(Server.CurrentClientCount);
-
-                Server.NetManager.SendToAll(message, deliveryMethod, peer);
-                peer.Send(message, deliveryMethod);
-
+                Server.SendLobbyInfo();
                 break;
             case PacketID.HostDisconnect:
                 // tells all other peers that the host disconnected
@@ -570,10 +604,12 @@ public static class NetPlay {
                 var minePos = reader.GetVector2();
                 var detTime = reader.GetFloat();
                 var mineOwner = reader.GetInt();
+                var mineNetId = reader.GetInt();
 
                 message.Put(minePos);
                 message.Put(detTime);
                 message.Put(mineOwner);
+                message.Put(mineNetId);
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SendCampaign:
@@ -701,7 +737,7 @@ public static class NetPlay {
 
         // peer.Send(message, DeliveryMethod.ReliableOrdered);
 
-        // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from client {peer.Id}. Current clients connected: {Server.CurrentClientCount}", Internals.LogType.Debug);
+        // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from client {peer.Id}. Current clients connected: {Server.CurrentClientCount}", Internals.RebirthLogLevel.Debug);
         reader.Recycle();
     }
     /// <summary>Check whether the current client's ID on the server matches a given integer.</summary>
@@ -710,6 +746,16 @@ public static class NetPlay {
         if (CurrentClient is null && CurrentServer is not null) return false;
         if (CurrentClient.Id != otherId) return false;
         return true;
+    }
+
+    // this stuff is really hard to name. help anyone?
+    /// <summary>Whether this client decides what <paramref name="owner"/>'s shells and explosions hit, so only one client reports each hit.
+    /// Players decide for their own tank. The host decides for AI tanks, players who left, and anything without an owner.</summary>
+    public static bool IsReporter(Tank? owner) {
+        if (!Client.IsConnected()) return true;
+        if (owner is PlayerTank player && Server.IsOccupied(player.PlayerId))
+            return IsClientMatched(player.PlayerId);
+        return Client.IsHost();
     }
     public static int GetMyClientId() {
         if (!Client.IsConnected()) return 0;

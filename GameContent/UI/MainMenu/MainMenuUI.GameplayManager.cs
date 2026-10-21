@@ -66,7 +66,7 @@ public static partial class MainMenuUI {
                     goto tryAgain;
                 }
                 else {
-                    TankGame.ClientLog.Write($"Unable to fetch map data via the internet (at map={attempt}). Status: {status}", LogType.Warn);
+                    TankGame.ClientLog.Write($"Unable to fetch map data via the internet (at map={attempt}). Status: {status}", RebirthLogLevel.Warn);
                     _failedFetch = true;
                     return;
                 }
@@ -84,7 +84,7 @@ public static partial class MainMenuUI {
                 curMenuMission = mission;
         }
         catch {
-            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
+            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", RebirthLogLevel.Warn);
         }
     }
 

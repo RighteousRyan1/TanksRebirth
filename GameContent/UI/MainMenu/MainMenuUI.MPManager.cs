@@ -195,7 +195,7 @@ public static partial class MainMenuUI {
                 Client.CreateClient(UsernameInput.GetRealText());
                 Client.AttemptConnectionTo(IPInput.GetRealText(), port, PasswordInput.GetRealText());
 
-                Server.ConnectedClients[0] = NetPlay.CurrentClient;
+                // the host's client gets slot 0 from the server like everyone else, as it's the first to join
 
                 StartMPGameButton.IsVisible = true;
             }
@@ -236,9 +236,10 @@ public static partial class MainMenuUI {
             }
             return;
         }
-        for (int i = 0; i < Server.CurrentClientCount; i++) {
-            var client = Server.ConnectedClients[i];
-            if (client is null) continue;
+        for (int i = 0; i < GameHandler.MAX_PLAYERS; i++) {
+            // slots can be empty after someone leaves
+            if (!Server.IsOccupied(i)) continue;
+            var client = Server.ConnectedClients![i];
             if (GameHandler.AllPlayerTanks[i] is not null) continue;
 
             var p = new PlayerTank(client.Id);
@@ -316,7 +317,8 @@ public static partial class MainMenuUI {
             // scale rect from center
             var animRect = MathUtils.ScaleRect(slotRect, cardScale);
 
-            bool hasPlayer = i < Server.CurrentClientCount;
+            // the list is filled with placeholders while not connected
+            bool hasPlayer = Client.IsConnected() && Server.IsOccupied(i);
             Client client = hasPlayer ? Server.ConnectedClients[i] : null;
 
             // card/slot bg
@@ -342,7 +344,7 @@ public static partial class MainMenuUI {
 
                 // ping, if host
                 if (Client.IsHost()) {
-                    var ping = Server.NetManager.ConnectedPeerList.Count > i ? Server.NetManager.ConnectedPeerList[NetPlay.ReversePeerMap[i]].Ping : 0;
+                    var ping = Server.PeerOf(i)?.Ping ?? 0;
                     var badPing = 250;
                     var sColor = new StatisticalColor<int>(Color.Lime, Color.Red, 30, ping, badPing);
 

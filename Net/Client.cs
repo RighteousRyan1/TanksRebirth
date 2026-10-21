@@ -13,6 +13,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.GameContent.UI;
 
 using TanksRebirth.GameContent.UI.MainMenu;
 
@@ -51,6 +52,9 @@ public class Client {
     }
 
     public static void CreateClient(string username) {
+        // a client from an earlier session that was never shut down
+        ClientManager?.Stop();
+
         ClientListener = new();
         ClientManager = new(ClientListener) {
             NatPunchEnabled = true,
@@ -61,12 +65,12 @@ public class Client {
 
         Client c = new(0, username);
 
-        TankGame.ClientLog.Write($"Created a new client with name '{username}'.", Internals.LogType.Debug);
+        TankGame.ClientLog.Write($"Created a new client with name '{username}'.", Internals.RebirthLogLevel.Debug);
         NetPlay.CurrentClient = c;
     }
 
     public static void AttemptConnectionTo(string address, int port, string password) {
-        TankGame.ClientLog.Write($"Attempting connection to server...", Internals.LogType.Debug);
+        TankGame.ClientLog.Write($"Attempting connection to server...", Internals.RebirthLogLevel.Debug);
         ClientManager?.Start();
         NetClient = ClientManager!.Connect(address, port, password);
         if (NetClient is not null)
@@ -296,20 +300,21 @@ public class Client {
         NetDataWriter message = new();
         message.Put(PacketID.MineDetonate);
 
-        message.Put(mine.Id);
+        message.Put(mine.NetId);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-    public static void SyncMinePlace(Vector2 position, float detonateTime, int id) {
+    public static void SyncMinePlace(Mine mine) {
         if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
         message.Put(PacketID.MinePlacement);
 
-        message.Put(position);
-        message.Put(detonateTime);
-        message.Put(id);
+        message.Put(mine.Position);
+        message.Put(mine.DetonateTime);
+        message.Put(mine.Owner?.WorldId ?? -1);
+        message.Put(mine.NetId);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
@@ -466,19 +471,32 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
+    /// <summary>Leaves the server and resets everything multiplayer, so a new game can be hosted or joined. If this client is the host, the server is
+    /// stopped and every other client is disconnected. Safe to call more than once.</summary>
     public static void Disconnect() {
         NetPlay.UnmapClientNetworking();
 
         // tells all other clients that the host disconnected.
         NetPlay.TryUnmapServerNetworking();
 
-        Client.NetClient.Disconnect();
+        NetClient?.Disconnect();
+        ClientManager?.Stop();
+        NetClient = null;
 
-        for (int i = PlayerID.Red; i <= PlayerID.Yellow; i++)
-            GameHandler.AllPlayerTanks[i]?.Destroy(new TankHurtContextOther(), false);
+        // leaving mid game goes back to the main menu
+        if (!MainMenuUI.IsActive)
+            GameUI.QuitOut(true);
+
+        // the main menu puts this client's tank back when it isn't connected
+        for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++)
+            GameHandler.AllPlayerTanks[i]?.Remove(true);
 
         NetPlay.CurrentClient = null;
         NetPlay.CurrentServer = null;
+        NetPlay.PeerMap.Clear();
+        NetPlay.ReversePeerMap.Clear();
+        NetPlay.LobbyClientCount = 0;
+        LobbyDataReceived = false;
 
         Server.ConnectedClients = null;
         Server.NetManager = null;

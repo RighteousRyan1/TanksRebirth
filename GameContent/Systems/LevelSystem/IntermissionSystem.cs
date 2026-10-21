@@ -463,12 +463,19 @@ public static class IntermissionSystem {
         var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
         var clientConnected = Client.IsConnected();
         var count = clientConnected ? Server.CurrentClientCount : PlayerTank.NumLocalPlayers;
+        var slots = clientConnected ? GameHandler.MAX_PLAYERS : count;
 
-        for (int i = 0; i < count; i++) {
+        // where the player is drawn, counting only the slots that are taken
+        int place = 0;
+        for (int i = 0; i < slots; i++) {
+            // slots can be empty after someone leaves
+            if (clientConnected && !Server.IsOccupied(i)) continue;
+            place++;
+
             string name = string.Empty;
 
             if (clientConnected)
-                name = Server.ConnectedClients[i].Name;
+                name = Server.ConnectedClients![i].Name;
             else {
                 if (InputUtils.NumConnectedInputs > 1)
                     name = "P" + (i + 1);
@@ -477,7 +484,7 @@ public static class IntermissionSystem {
             var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.85f);
             var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.25f);
 
-            var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
+            var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * place, WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
             var lerpedColor = Color.Lerp(brightPlayerColor, GradientTopColor, brightness);
 

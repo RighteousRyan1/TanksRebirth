@@ -78,7 +78,7 @@ public static class TankMusicSystem {
         IsLoaded = true;
         LoadVanillaAudio();
         if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase)) {
-            TankGame.ClientLog.Write($"Loaded vanilla audio for Sound.", LogType.Info);
+            TankGame.ClientLog.Write($"Loaded vanilla audio for Sound.", RebirthLogLevel.Info);
             return;
         }
 
@@ -89,7 +89,7 @@ public static class TankMusicSystem {
         Directory.CreateDirectory(baseRoot);
 
         if (!Directory.Exists(path)) {
-            TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting sound pack load.", LogType.Warn);
+            TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting sound pack load.", RebirthLogLevel.Warn);
             return;
         }
 
@@ -99,7 +99,7 @@ public static class TankMusicSystem {
                 var name = Path.GetFileNameWithoutExtension(file);
                 var assetPath = Path.Combine(path, Path.GetFileName(file));
                 Audio[name] = new OggMusic(name, assetPath, 0.5f);
-                TankGame.ClientLog.Write($"Sound pack '{folder}' overrided sound '{name}'", LogType.Info);
+                TankGame.ClientLog.Write($"Sound pack '{folder}' overrided sound '{name}'", RebirthLogLevel.Info);
             }
         }
     }

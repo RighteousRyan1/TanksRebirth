@@ -196,9 +196,9 @@ public static class GameUI {
             IntermissionSystem.Alpha = 0f;
 
             IntermissionSystem.BonusLifeAnimator?.Restart();
+            IntermissionSystem.BonusLifeAnimator?.Stop();
             IntermissionSystem.IntermissionAnimator?.Restart();
-            IntermissionSystem.BonusLifeAnimator?.Stop();
-            IntermissionSystem.BonusLifeAnimator?.Stop();
+            IntermissionSystem.IntermissionAnimator?.Stop();
 
             MainMenuUI.Open();
             if (LevelEditorUI.IsActive) {

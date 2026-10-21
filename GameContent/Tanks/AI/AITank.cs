@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
@@ -41,6 +42,23 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     /// and <see cref="Explosion"/>s by default. To make an <see cref="AITank"/> behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
     public static readonly List<IAITankDanger> Dangers = [];
+
+    static IAITankDanger[] _dangerSnapshot = [];
+    /// <summary>A copy of <see cref="Dangers"/> for the AI threads to read, since <see cref="Dangers"/> is changed on the main thread while they run.
+    /// Refreshed every frame by <see cref="AIManager.UpdateAITanks"/>.</summary>
+    public static IAITankDanger[] DangerSnapshot => Volatile.Read(ref _dangerSnapshot); // TIL: Volatile.Read/Write is really nice
+
+    /// <summary>Copies <see cref="Dangers"/> into <see cref="DangerSnapshot"/> if it changed. Must be called on the main thread.</summary>
+    internal static void RefreshDangerSnapshot() {
+        var snapshot = _dangerSnapshot;
+        bool changed = snapshot.Length != Dangers.Count;
+        for (int i = 0; !changed && i < snapshot.Length; i++)
+            changed = !ReferenceEquals(snapshot[i], Dangers[i]);
+
+        // a new array instead of reusing the old one because another thread may still be reading it
+        if (changed)
+            Volatile.Write(ref _dangerSnapshot, [.. Dangers]);
+    }
 
     public delegate void PostExecuteAI(AITank tank);
     public static event PostExecuteAI? OnPostUpdateAI;

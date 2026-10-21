@@ -140,8 +140,8 @@ public record struct Mission {
         var existed = File.Exists(path);
         LevelFiles.WriteMission(path, this);
 
-        TankGame.ClientLog.Write($"{(existed ? "Overwrote" : "Saved")} mission file \"{Name}.mission\".", LogType.Info);
-        TankGame.ClientLog.Write($"Saved mission with {Tanks.Length} tank(s) and {Blocks.Length} block(s).", LogType.Info);
+        TankGame.ClientLog.Write($"{(existed ? "Overwrote" : "Saved")} mission file \"{Name}.mission\".", RebirthLogLevel.Info);
+        TankGame.ClientLog.Write($"Saved mission with {Tanks.Length} tank(s) and {Blocks.Length} block(s).", RebirthLogLevel.Info);
     }
 
     /// <summary>

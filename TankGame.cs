@@ -159,17 +159,17 @@ public class TankGame : Game {
         // logging speaks for itself
         Task.Run(() => {
             try {
-                ClientLog.Write("Obtaining message of the day (MOTD) from GitHub...", LogType.Info);
+                ClientLog.Write("Obtaining message of the day (MOTD) from GitHub...", RebirthLogLevel.Info);
                 var bytes = WebUtils.DownloadWebFile(
                     "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
                     out var name, out var status);
                 MOTD = System.Text.Encoding.Default.GetString(bytes);
             } catch {
                 // in the case that an HTTPRequestException is thrown (no internet access)
-                ClientLog.Write("Failed to obtain MOTD. Falling back to offline MOTDs.", LogType.Warn);
+                ClientLog.Write("Failed to obtain MOTD. Falling back to offline MOTDs.", RebirthLogLevel.Warn);
                 MOTD = LocalizationRandoms.GetRandomMotd();
             }
-            ClientLog.Write("MOTD: " + MOTD, LogType.Info);
+            ClientLog.Write("MOTD: " + MOTD, RebirthLogLevel.Info);
         });
 
         // check if platform is windows, mac, or linux
@@ -183,8 +183,8 @@ public class TankGame : Game {
             RuntimeData.OS = OSPlatform.Linux;
         }
 
-        // ClientLog.Write("pp:" + RuntimeInformation.FrameworkDescription, LogType.Info);
-        ClientLog.Write($"OS: {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}", LogType.Info);
+        // ClientLog.Write("pp:" + RuntimeInformation.FrameworkDescription, RebirthLogLevel.Info);
+        ClientLog.Write($"OS: {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}", RebirthLogLevel.Info);
 
         // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
 
@@ -210,16 +210,16 @@ public class TankGame : Game {
 
         ClientLog.Write(
             $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{RuntimeData.GameVersion}'",
-            LogType.Info);
+            RebirthLogLevel.Info);
     }
 
-    private void WriteToIngameConsole(Assembly assembly, string data, LogType logType) {
+    private void WriteToIngameConsole(Assembly assembly, string data, RebirthLogLevel logType) {
         var color = logType switch {
-            LogType.Info => Color.Orange,
-            LogType.Warn => Color.IndianRed,
-            LogType.ErrorFatal => Color.Red,
-            LogType.ErrorSilent => Color.OrangeRed,
-            LogType.Debug => Color.MediumPurple,
+            RebirthLogLevel.Info => Color.Orange,
+            RebirthLogLevel.Warn => Color.IndianRed,
+            RebirthLogLevel.ErrorFatal => Color.Red,
+            RebirthLogLevel.ErrorSilent => Color.OrangeRed,
+            RebirthLogLevel.Debug => Color.MediumPurple,
             _ => Color.Green
         };
         IngameConsole?.Log($"[{assembly.GetName().Name}] [{logType}] " + data, color);
@@ -230,11 +230,11 @@ public class TankGame : Game {
             if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
                 SaveFile.Deserialize();
 
-            ClientLog.Write("Save file loaded.", LogType.Info);
+            ClientLog.Write("Save file loaded.", RebirthLogLevel.Info);
 
             CameraGlobals.Initialize(GraphicsDevice);
             if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
-                ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
+                ClientLog.Write("Initialising SteamWorks API...", RebirthLogLevel.Debug);
                 SteamworksUtils.Initialize();
 
                 SteamworksUtils.SetSteamStatus("Tanks Rebirth");
@@ -245,10 +245,10 @@ public class TankGame : Game {
             PingMenu.Initialize();
 
             GameHandler.MapEvents();
-            ClientLog.Write($"Mapped events...", LogType.Info);
+            ClientLog.Write($"Mapped events...", RebirthLogLevel.Info);
 
             DiscordRichPresence.Load();
-            ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
+            ClientLog.Write($"Loaded Discord Rich Presence...", RebirthLogLevel.Info);
 
             // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
@@ -257,11 +257,11 @@ public class TankGame : Game {
             Graphics.PreferMultiSampling = true;
             Graphics.ApplyChanges();
 
-            ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
-            ClientLog.Write($"Loaded save data.", LogType.Info);
+            ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", RebirthLogLevel.Info);
+            ClientLog.Write($"Loaded save data.", RebirthLogLevel.Info);
 
             VanillaAchievements.InitializeToRepository();
-            ClientLog.Write("Loaded achievements.", LogType.Info);
+            ClientLog.Write("Loaded achievements.", RebirthLogLevel.Info);
             IntermissionSystem.InitializeAllStartupLogic();
             TextureGlobals.Populate();
 
@@ -269,7 +269,7 @@ public class TankGame : Game {
 
             // AIManager.AITaskInit();
             AIManager.StartThreads();
-            ClientLog.Write("Tank AI Threads started.", LogType.Info);
+            ClientLog.Write("Tank AI Threads started.", RebirthLogLevel.Info);
 
             // add the main player in when loading
             PlayerMice[0] = new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue);
@@ -289,7 +289,7 @@ public class TankGame : Game {
     // unrelated, but check if UpdateMainClientMouse is working as intended
     void InputUtils_OnGamePadDisconnected(int player) {
         var plrReal = player + 1;
-        ClientLog.Write($"Gamepad disconnected from player {plrReal}.", LogType.Info);
+        ClientLog.Write($"Gamepad disconnected from player {plrReal}.", RebirthLogLevel.Info);
         PlayerMice[plrReal] = null;
 
         PlrMiceRenderHandle();
@@ -300,7 +300,7 @@ public class TankGame : Game {
         //var numGps = InputUtils.NumGamepadsConnected;
 
         var plrReal = player + 1;
-        ClientLog.Write($"Gamepad connected, controlling player {player}.", LogType.Info);
+        ClientLog.Write($"Gamepad connected, controlling player {player}.", RebirthLogLevel.Info);
         PlayerMice[plrReal] = new RebirthMouse(PlayerID.PlayerTankColors[plrReal], PlayerID.PlayerTankColorsBright[plrReal], plrReal) {
             Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * plrReal
         };
@@ -318,7 +318,7 @@ public class TankGame : Game {
     }
 
     protected override void OnExiting(object sender, ExitingEventArgs args) {
-        ClientLog.Write($"Handling termination process...", LogType.Info);
+        ClientLog.Write($"Handling termination process...", RebirthLogLevel.Info);
 
         // update game-related numbers
         SaveFile.TimePlayed += CurrentSessionTimer.Elapsed;
@@ -343,11 +343,11 @@ public class TankGame : Game {
         AIManager.RunThreads = false;
 
         // await AIManager.StopAITasksAsync();
-        ClientLog.Write("Tank AI Threads stopped.", LogType.Info);
+        ClientLog.Write("Tank AI Threads stopped.", RebirthLogLevel.Info);
         // write end-life metrics
 
-        ClientLog.Write($"Average overall FPS: {FPSTracker.AverageFPS}", LogType.Info);
-        ClientLog.Write($"Session time: {CurrentSessionTimer.Elapsed.StringFormat()}", LogType.Info);
+        ClientLog.Write($"Average overall FPS: {FPSTracker.AverageFPS}", RebirthLogLevel.Info);
+        ClientLog.Write($"Session time: {CurrentSessionTimer.Elapsed.StringFormat()}", RebirthLogLevel.Info);
 
         ClientLog.Dispose();
     }
@@ -467,12 +467,12 @@ public class TankGame : Game {
                 if (error) {
                     ClientLog.Write(
                         "Unable to load computer specs: Error.",
-                        LogType.Warn);
+                        RebirthLogLevel.Warn);
                 }
                 else {
-                    ClientLog.Write($"CPU: {RuntimeData.CompSpecs.CPU}", LogType.Info);
-                    ClientLog.Write($"GPU: {RuntimeData.CompSpecs.GPU}", LogType.Info);
-                    ClientLog.Write($"Physical Memory (RAM): {RuntimeData.CompSpecs.RAM}", LogType.Info);
+                    ClientLog.Write($"CPU: {RuntimeData.CompSpecs.CPU}", RebirthLogLevel.Info);
+                    ClientLog.Write($"GPU: {RuntimeData.CompSpecs.GPU}", RebirthLogLevel.Info);
+                    ClientLog.Write($"Physical Memory (RAM): {RuntimeData.CompSpecs.RAM}", RebirthLogLevel.Info);
                 }
 
                 if (!RuntimeData.CompSpecs.Equals(default) && !error) {
@@ -486,10 +486,10 @@ public class TankGame : Game {
 
                     // ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
 
-                    ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
+                    ClientLog.Write("Sucessfully analyzed hardware.", RebirthLogLevel.Info);
                 }
                 else {
-                    ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
+                    ClientLog.Write("Failed to analyze hardware.", RebirthLogLevel.Warn);
                 }
             });
 
@@ -530,17 +530,17 @@ public class TankGame : Game {
 
             FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
             FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
-            ClientLog.Write($"Loaded fonts.", LogType.Info);
+            ClientLog.Write($"Loaded fonts.", RebirthLogLevel.Info);
 
             RuntimeData.LaunchTime = DateTime.Now;
             RuntimeData.IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
 
             if (RuntimeData.IsSouthernHemi)
-                ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
+                ClientLog.Write("User is in the southern hemisphere.", RebirthLogLevel.Info);
             else
-                ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
+                ClientLog.Write("User is in the northern hemisphere.", RebirthLogLevel.Info);
 
-            ClientLog.Write($"Loaded user settings.", LogType.Info);
+            ClientLog.Write($"Loaded user settings.", RebirthLogLevel.Info);
 
             #region Config Initialization
 
@@ -562,7 +562,7 @@ public class TankGame : Game {
 
             TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
 
-            ClientLog.Write($"Applied user settings.", LogType.Info);
+            ClientLog.Write($"Applied user settings.", RebirthLogLevel.Info);
 
             Tank.SetAssetNames();
 
@@ -614,13 +614,13 @@ public class TankGame : Game {
                 });
             }
 
-            ClientLog.Write("Running in directory: " + GameDirectory, LogType.Info);
+            ClientLog.Write("Running in directory: " + GameDirectory, RebirthLogLevel.Info);
 
-            ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
-            ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
+            ClientLog.Write($"Content loaded in {s.Elapsed}.", RebirthLogLevel.Debug);
+            ClientLog.Write($"DebugMode: {Debugger.IsAttached}", RebirthLogLevel.Debug);
 
             if (SteamworksUtils.IsInitialized) {
-                ClientLog.Write($"Steam Active, username: {SteamworksUtils.MyUsername} with {SteamworksUtils.FriendsCount} friends.", LogType.Info);
+                ClientLog.Write($"Steam Active, username: {SteamworksUtils.MyUsername} with {SteamworksUtils.FriendsCount} friends.", RebirthLogLevel.Info);
             }
 
             s.Stop();
@@ -629,11 +629,11 @@ public class TankGame : Game {
                 VersionChecker = new("https://github.com/RighteousRyan1/TanksRebirth", RuntimeData.GameVersion);
 
                 if (!VersionChecker.IsOutdated) {
-                    ClientLog.Write("Game is up to date.", LogType.Info);
+                    ClientLog.Write("Game is up to date.", RebirthLogLevel.Info);
                     return;
                 }
 
-                ClientLog.Write($"Game is out of date (current={RuntimeData.GameVersion}, recent={VersionChecker.GetRecentVersion()}).", LogType.Warn);
+                ClientLog.Write($"Game is out of date (current={RuntimeData.GameVersion}, recent={VersionChecker.GetRecentVersion()}).", RebirthLogLevel.Warn);
                 ChatSystem.SendMessage($"Outdated game version detected (current={RuntimeData.GameVersion}, recent={VersionChecker.GetRecentVersion()}).", Color.Red);
                 SoundPlayer.SoundError();
             });
@@ -704,7 +704,9 @@ public class TankGame : Game {
 
             HandleLogic(gameTime);
 
-            if (MainThreadTasks.TryDequeue(out var action))
+            // runs everything queued so far. tasks queued while these run wait for the next frame
+            int queuedTasks = MainThreadTasks.Count;
+            while (queuedTasks-- > 0 && MainThreadTasks.TryDequeue(out var action))
                 action.Invoke();
 
         } catch (Exception e) when (!Debugger.IsAttached) {
@@ -858,12 +860,12 @@ public class TankGame : Game {
     }
     public static void ReportError(Exception? e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
         if (writeToLog && e != null)
-            ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
+            ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", RebirthLogLevel.ErrorFatal);
         if (notifyUser) {
             var str = $"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it.";
             if (openFile)
                 str += $"\nThis file was opened for your sake of helping the developer out.";
-            ClientLog.Write(str, LogType.Info);
+            ClientLog.Write(str, RebirthLogLevel.Info);
         }
         if (openFile)
             Process.Start(new ProcessStartInfo(ClientLog.FileName) {

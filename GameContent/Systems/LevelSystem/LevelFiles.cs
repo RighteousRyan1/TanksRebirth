@@ -168,7 +168,7 @@ public static class LevelFiles {
     static Mission ToMission(MissionFile file) {
         var grid = MapGrid.Current;
         if (file.Width != grid.Width || file.Height != grid.Height)
-            TankGame.ClientLog.Write($"Mission '{file.Name}' was made for a {file.Width}x{file.Height} board but the board is {grid.Width}x{grid.Height}.", LogType.Warn);
+            TankGame.ClientLog.Write($"Mission '{file.Name}' was made for a {file.Width}x{file.Height} board but the board is {grid.Width}x{grid.Height}.", RebirthLogLevel.Warn);
 
         var tanks = new List<TankTemplate>();
         foreach (var entry in file.Tanks ?? []) {
@@ -212,7 +212,7 @@ public static class LevelFiles {
             return number;
         if (collection.ContainsKey(name))
             return collection.GetValue(name)!.Value;
-        TankGame.ClientLog.Write($"Unknown {kind} '{name}' in a level file (is a mod missing?). Using {collection.GetKey(fallback)} instead.", LogType.Warn);
+        TankGame.ClientLog.Write($"Unknown {kind} '{name}' in a level file (is a mod missing?). Using {collection.GetKey(fallback)} instead.", RebirthLogLevel.Warn);
         return fallback;
     }
 

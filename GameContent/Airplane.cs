@@ -268,7 +268,8 @@ public class Airplane {
 
         var plane = new Airplane(pos3d, vel, 400f);
         plane.WhileTrapDoorsOpenedInstance = (t) => {
-            if (RuntimeData.RunTime % 30 <= RuntimeData.DeltaTime) {
+            // changed to be determined by the plane itself... i really need to decouple logic from render
+            if ((int)(t.LifeTime / 30) != (int)((t.LifeTime - RuntimeData.DeltaTime) / 30)) {
                 ParticleGameplay.CreateSmokeGrenade(GameHandler.Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.25f);
             }
         };

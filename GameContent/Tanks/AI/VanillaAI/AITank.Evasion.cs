@@ -24,8 +24,9 @@ public partial struct VanillaAISystem {
     public List<IAITankDanger> GetEvasionData() {
         _evasionDangersBuffer.Clear();
 
-        for (int i = 0; i < AITank.Dangers.Count; i++) {
-            var danger = AITank.Dangers[i];
+        var dangers = AITank.DangerSnapshot;
+        for (int i = 0; i < dangers.Length; i++) {
+            var danger = dangers[i];
             var isHostile = !Owner.IsOnSameTeamAs(danger.Team);
 
             // mines and explosions should be treated differently and specially
@@ -60,11 +61,11 @@ public partial struct VanillaAISystem {
         IAITankDanger? closest = null;
         dangersNear = [];
 
-        Span<IAITankDanger> dangers = AITank.Dangers.ToArray();
+        Span<IAITankDanger> dangers = AITank.DangerSnapshot;
 
         ref var dangersSearchSpace = ref MemoryMarshal.GetReference(dangers);
 
-        for (var i = 0; i < AITank.Dangers.Count; i++) {
+        for (var i = 0; i < dangers.Length; i++) {
             var currentDanger = Unsafe.Add(ref dangersSearchSpace, i);
 
             if (currentDanger is null) continue;

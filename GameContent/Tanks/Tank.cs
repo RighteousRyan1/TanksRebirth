@@ -94,7 +94,7 @@ public abstract class Tank(bool ignoresRegister) {
     public static void LoadTexturePack(string folder) {
         LoadVanillaTextures();
         if (folder.Equals("vanilla", StringComparison.InvariantCultureIgnoreCase)) {
-            TankGame.ClientLog.Write($"Loaded vanilla textures for Tank.", LogType.Info);
+            TankGame.ClientLog.Write($"Loaded vanilla textures for Tank.", RebirthLogLevel.Info);
             return;
         }
 
@@ -108,7 +108,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         if (!Directory.Exists(path)) {
             TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.",
-                LogType.Warn);
+                RebirthLogLevel.Warn);
             return;
         }
 
@@ -120,7 +120,7 @@ public abstract class Tank(bool ignoresRegister) {
                     Path.Combine(path, Path.GetFileName(file)));
                 TankGame.ClientLog.Write(
                     $"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'",
-                    LogType.Info);
+                    RebirthLogLevel.Info);
             }
         }
     }
@@ -277,7 +277,7 @@ public abstract class Tank(bool ignoresRegister) {
         // for some reason Model is null when returning from campaign completion with certain mods.
         if (DrawParamsTank.Model is null) {
             DrawParamsTank.Model = this is PlayerTank ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
-            TankGame.ClientLog.Write("Unexpected pitfall in initializing tank model semantics. Assigning defaults.", LogType.Warn);
+            TankGame.ClientLog.Write("Unexpected pitfall in initializing tank model semantics. Assigning defaults.", RebirthLogLevel.Warn);
         }
 
         cannonMesh = DrawParamsTank.Model.Meshes["Cannon"];
@@ -747,6 +747,9 @@ public abstract class Tank(bool ignoresRegister) {
             var newAngle = flip ? -angle : angle;
 
             var shell = Shell.Create(Position, Vector2.Zero, Properties.ShellType, this);
+            // no room for any more shells
+            if (shell is null)
+                yield break;
             // this could be magical and lead to *super specific* edge cases but otherwise this is a decent way to put it
             shell.VolleyId = volley;
             shell.Properties.Homing = Properties.ShellHoming;
@@ -771,21 +774,24 @@ public abstract class Tank(bool ignoresRegister) {
         if (CurMineCooldown > 0 || OwnedMineCount >= Properties.MineLimit)
             return;
 
+        var mine = Mine.Create(this, Position, 600);
+        // no room for any more mines
+        if (mine is null)
+            return;
+
         CurMineCooldown = Properties.MineCooldown;
         CurMineStun = Properties.MineStun;
         OwnedMineCount++;
 
         TimeSinceLastAction = 0;
 
-        var mine = Mine.Create(this, Position, 600);
-
         // horrendous code
         if (this is PlayerTank pt) {
             if (NetPlay.IsClientMatched(pt.PlayerId))
-                Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
+                Client.SyncMinePlace(mine);
         }
         else
-            Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
+            Client.SyncMinePlace(mine);
 
         OnLayMine?.Invoke(this, mine);
 

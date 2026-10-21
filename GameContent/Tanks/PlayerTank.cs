@@ -420,10 +420,10 @@ public class PlayerTank : Tank {
             }
         }
         else {
+            DesiredDirection = Vector2.Normalize(WiimoteSystem.NunchukAxis);
+
             if (DesiredDirection.Length() > 0.5f)
                 playerControl = true;
-
-            DesiredDirection = Vector2.Normalize(WiimoteSystem.NunchukAxis);
         }
 
         if (state.ButtonState.A && !_prev.A)
@@ -884,7 +884,7 @@ public class PlayerTank : Tank {
             //string pText = "nerd";
             var scale = 0.3f;
 
-            string pText = Client.IsConnected() ?
+            string pText = Client.IsConnected() && Server.IsOccupied(PlayerId) ?
                 Server.ConnectedClients![PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
 
             TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, Anchor.BottomCenter.GetAnchor(tex1.Size()), scale.ToResolution(), default, default);

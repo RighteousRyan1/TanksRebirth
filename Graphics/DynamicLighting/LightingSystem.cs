@@ -394,7 +394,7 @@ public static class LightingSystem {
         }
         catch (Exception e) {
             IsAvailable = false;
-            TankGame.ClientLog.Write($"[Lighting] Initialization failed, lighting disabled: {e.Message}", LogType.ErrorSilent);
+            TankGame.ClientLog.Write($"[Lighting] Initialization failed, lighting disabled: {e.Message}", RebirthLogLevel.ErrorSilent);
             return false;
         }
     }
@@ -646,7 +646,7 @@ public static class LightingSystem {
             CollectLights?.Invoke();
         }
         catch (Exception e) {
-            TankGame.ClientLog.Write($"[Lighting] a light/caster callback threw: {e}", LogType.ErrorSilent);
+            TankGame.ClientLog.Write($"[Lighting] a light/caster callback threw: {e}", RebirthLogLevel.ErrorSilent);
         }
         _capturing = false;
 
@@ -667,7 +667,7 @@ public static class LightingSystem {
         catch (Exception e) {
             // never take the game down because of lighting
             IsAvailable = false;
-            TankGame.ClientLog.Write($"[Lighting] rendering failed, lighting disabled: {e}", LogType.ErrorSilent);
+            TankGame.ClientLog.Write($"[Lighting] rendering failed, lighting disabled: {e}", RebirthLogLevel.ErrorSilent);
         }
         finally {
             _device.SetRenderTarget(target);

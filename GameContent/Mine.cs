@@ -54,6 +54,8 @@ public sealed class Mine : IAITankDanger {
     public Vector3 Position3D => Position.ExpandZ();
 
     public int Id { get; private set; }
+    /// <summary>Identifies this <see cref="Mine"/> over the network. <see cref="Id"/> can be different on every client.</summary>
+    public int NetId { get; private set; } = -1;
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     readonly ModelMesh? _mineMesh;
@@ -122,9 +124,11 @@ public sealed class Mine : IAITankDanger {
 
         MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits;
 
-        int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
+        int index = Array.IndexOf(AllMines, null);
         Id = index;
         AllMines[index] = this;
+
+        NetId = NetParity.NewNetId();
 
         AITank.Dangers.Add(this);
     }
@@ -136,23 +140,41 @@ public sealed class Mine : IAITankDanger {
     /// <param name="position">The position of this <see cref="Mine"/> in the game world.</param>
     /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
     /// <param name="explosionRadius">The radius of this <see cref="Mine"/>'s explosion.</param>
-    public static Mine Create(Tank? owner, Vector2 position, float detonateTime, float explosionRadius = 1f) {
-        var mine = TankGame.ThreadAgnostic(() => new Mine(owner, position, detonateTime, explosionRadius));
+    /// <returns>The created <see cref="Mine"/>, or <see langword="null"/> if there are already <see cref="MAX_MINES"/> mines.</returns>
+    public static Mine? Create(Tank? owner, Vector2 position, float detonateTime, float explosionRadius = 1f) {
+        var mine = TankGame.ThreadAgnostic(() => Array.IndexOf(AllMines, null) < 0 ? null : new Mine(owner, position, detonateTime, explosionRadius));
         return mine;
     }
-    /// <summary>Detonates this <see cref="Mine"/>.</summary>
-    public void Detonate() {
+    /// <summary>Gives the mine the ID another client assigned to it (used when a placed mine arrives over the network).</summary>
+    public void SetNetId(int netId) => NetId = netId;
+
+    /// <summary>The live mine with this <see cref="NetId"/>, or null.</summary>
+    public static Mine? FindByNetId(int netId) {
+        if (netId < 0) return null;
+        for (int i = 0; i < AllMines.Length; i++) {
+            var mine = AllMines[i];
+            if (mine is not null && mine.NetId == netId)
+                return mine;
+        }
+        return null;
+    }
+    /// <summary>Detonates this <see cref="Mine"/>. Does nothing if it already detonated.</summary>
+    /// <param name="netSend">Whether to tell the other clients. Pass <see langword="false"/> when the detonation came from the network.</param>
+    public void Detonate(bool netSend = true) {
+        if (Detonated) return;
         Detonated = true;
         var scale = ExplosionRadiusInUnits * 0.101f * (Modifiers.IsOn(Modifiers.BIG_MINES) ? 2 : 1);
-        var expl = new Explosion(Position, scale, Owner);
+        var expl = Explosion.Create(Position, scale, Owner);
 
-        if (Owner != null)
+        // remote copies of a tank never counted the mine in the first place
+        if (Owner != null && Owner.OwnedMineCount > 0)
             Owner.OwnedMineCount--;
         TickingNoise?.Stop();
 
         OnExplode?.Invoke(this);
 
-        Client.SyncMineDetonate(this);
+        if (netSend)
+            Client.SyncMineDetonate(this);
 
         Remove();
     }
@@ -191,13 +213,16 @@ public sealed class Mine : IAITankDanger {
                 }
             }
 
-            if (DetonateTime <= 0)
+            if (DetonateTime <= 0) {
                 Detonate();
+                return;
+            }
 
             foreach (var shell in Shell.AllShells) {
                 if (shell is not null && shell.Hitbox.Intersects(HitBox)) {
                     shell.Destroy(Shell.DestructionContext.WithMine);
                     Detonate();
+                    return;
                 }
             }
 

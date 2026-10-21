@@ -85,7 +85,7 @@ public class Campaign {
     /// <summary>Loads the next mission in the <see cref="Campaign"/>.</summary>
     public void LoadNextMission() {
         if (CurrentMissionId + 1 >= CachedMissions.Length) {
-            TankGame.ClientLog.Write($"CachedMissions[{CurrentMissionId + 1}] is not existent.", LogType.Warn);
+            TankGame.ClientLog.Write($"CachedMissions[{CurrentMissionId + 1}] is not existent.", RebirthLogLevel.Warn);
             return;
         }
         CurrentMissionId++;
@@ -162,14 +162,14 @@ public class Campaign {
 
         CurrentMission = LoadedMission;
         TankGame.ClientLog.Write($"Loaded mission '{LoadedMission.Name}' with {LoadedMission.Tanks.Length} " +
-            $"({LoadedMission.Tanks.Count(x => x.IsPlayer)} player(s), {LoadedMission.Tanks.Count(x => !x.IsPlayer)} AI(s)) tanks and {LoadedMission.Blocks.Length} obstacles.", LogType.Info);
+            $"({LoadedMission.Tanks.Count(x => x.IsPlayer)} player(s), {LoadedMission.Tanks.Count(x => !x.IsPlayer)} AI(s)) tanks and {LoadedMission.Blocks.Length} obstacles.", RebirthLogLevel.Info);
 
         OnMissionLoad?.Invoke(GameHandler.AllTanks, Block.AllBlocks);
     }
 
     void LoadPlayer(TankTemplate template, float chassisRotation, bool hasSpawnedCompanion) {
         var lives = PlayerTank.Lives[template.PlayerType];
-        var isValidMPPlayer = template.PlayerType < Server.CurrentClientCount;
+        var isValidMPPlayer = Server.IsOccupied(template.PlayerType);
         var isLocalGame = !Client.IsConnected();
 
         if (lives <= 0) return;
@@ -279,7 +279,7 @@ public class Campaign {
         var path = Path.Combine(root, campaignName);
         Directory.CreateDirectory(root);
         if (!Directory.Exists(path)) {
-            TankGame.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", LogType.Warn);
+            TankGame.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", RebirthLogLevel.Warn);
             return default!;
         }
 
@@ -325,7 +325,7 @@ public class Campaign {
         var newFileName = fileName.EndsWith(".campaign") ? fileName : fileName + ".campaign";
         LevelFiles.WriteCampaign(newFileName, campaign);
 
-        TankGame.ClientLog.Write($"Saved campaign with {campaign.CachedMissions.Count(m => m != default)} missions.", LogType.Info);
+        TankGame.ClientLog.Write($"Saved campaign with {campaign.CachedMissions.Count(m => m != default)} missions.", RebirthLogLevel.Info);
     }
 
     public static Campaign Load(string fileName) {

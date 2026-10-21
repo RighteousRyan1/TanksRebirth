@@ -294,7 +294,7 @@ public partial struct VanillaAISystem {
 
         if (Owner.Parameters.SmartRicochets) {
             //if (!seeks)
-            SeekRotation += Owner.Parameters.TurretSpeed * 0.25f;
+            SeekRotation += Owner.Parameters.TurretSpeed * 0.25f * RuntimeData.DeltaTime;
             var canShoot = !(Owner.CurShootCooldown > 0 || Owner.OwnedShellCount >= Owner.Properties.ShellLimit);
             if (canShoot) {
                 var tanks = GetTanksInPath(Vector2.UnitY.RotatedBy(SeekRotation), out var ricP, out var tnkCol, false, default, Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);

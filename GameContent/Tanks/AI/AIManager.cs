@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Tanks.AI;
@@ -977,6 +978,8 @@ public static class AIManager {
         if (!GameScene.UpdateAndRender)
             return;
 
+        AITank.RefreshDangerSnapshot();
+
         Span<AITank> aiTanks = GameHandler.AllAITanks;
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
         for (var i = 0; i < aiTanks.Length; i++) {
@@ -1002,6 +1005,18 @@ public static class AIManager {
             Client.SyncAITank(tank);
         });*/
     }
+
+    static void RunAILoop(AITank tank) {
+        try {
+            tank.AILoop();
+
+            // only does anything if you're in a multiplayer context.
+            Client.SyncAITank(tank);
+        }
+        catch (Exception e) {
+            TankGame.ClientLog.Write($"[AI] Tank {tank.AITankId} ({TankID.Collection.GetKey(tank.AiTankType)}) threw on an AI thread: {e}", RebirthLogLevel.ErrorSilent);
+        }
+    }
     public static void ProcessAISection1() {
         while (RunThreads) {
             int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
@@ -1019,10 +1034,7 @@ public static class AIManager {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
-                tank.AILoop();
-
-                // only does anything if you're in a multiplayer context.
-                Client.SyncAITank(tank);
+                RunAILoop(tank);
             }
         }
     }
@@ -1043,10 +1055,7 @@ public static class AIManager {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
-                tank.AILoop();
-
-                // only does anything if you're in a multiplayer context.
-                Client.SyncAITank(tank);
+                RunAILoop(tank);
             }
         }
     }
@@ -1067,10 +1076,7 @@ public static class AIManager {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
-                tank.AILoop();
-
-                // only does anything if you're in a multiplayer context.
-                Client.SyncAITank(tank);
+                RunAILoop(tank);
             }
         }
     }

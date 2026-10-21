@@ -61,10 +61,10 @@ public static class WiimoteSystem {
             _wm.WiimoteExtensionChanged += WiimoteExtChanged;
 
             IsConnected = true;
-            TankGame.ClientLog.Write("Wiimote connected and mapped successfully.", LogType.Info);
+            TankGame.ClientLog.Write("Wiimote connected and mapped successfully.", RebirthLogLevel.Info);
             return true;
         } catch (Exception e) {
-            TankGame.ClientLog.Write($"Failed to connect Wiimote: {e.Message} (did you setup your wiimote with your OS?)", LogType.Warn);
+            TankGame.ClientLog.Write($"Failed to connect Wiimote: {e.Message} (did you setup your wiimote with your OS?)", RebirthLogLevel.Warn);
             return false;
         }
     }
@@ -81,14 +81,14 @@ public static class WiimoteSystem {
         _hasTarget = false;
         _pointerStarted = false;
 
-        TankGame.ClientLog.Write("Wiimote disconnected successfully.", LogType.Info);
+        TankGame.ClientLog.Write("Wiimote disconnected successfully.", RebirthLogLevel.Info);
 
         return true;
     }
 
     static void WiimoteExtChanged(object? sender, WiimoteExtensionChangedEventArgs e) {
         if (!e.Inserted) {
-            TankGame.ClientLog.Write($"Wiimote Extension '{_wm.WiimoteState.ExtensionType}' disconnected.", LogType.Info);
+            TankGame.ClientLog.Write($"Wiimote Extension '{_wm.WiimoteState.ExtensionType}' disconnected.", RebirthLogLevel.Info);
             return;
         }
         if (e.ExtensionType == ExtensionType.Nunchuk) {

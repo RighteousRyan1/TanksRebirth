@@ -16,8 +16,8 @@ namespace TanksRebirth.GameContent.Systems.PingSystem;
 // TODO: finish images rendering
 // maybe allow pinging ingame objects like shells or mines, etc
 public class IngamePing {
-    // 4 players, 7 pings possible per player. a few buffered spots since pings fade out over time
-    public static IngamePing[] AllIngamePings = new IngamePing[32];
+    // 4 players, 1 ping possible per player. a few buffered spots since pings animate out of existence
+    public static IngamePing[] AllIngamePings = new IngamePing[8];
 
     float _lifeTime;
     float _scaleEase;
@@ -29,27 +29,39 @@ public class IngamePing {
     readonly Model _model;
 
     public Vector3 Position { get; set; }
-    public int PingId { get; set; }
+    public int Type { get; set; }
     public int Id { get; private set; }
+    public int Owner { get; private set; }
     public Color Color { get; set; }
-    public static float MaxLifeTime = 60 * 15; // * seconds
+    public static float MaxLifeTime = 60 * 10; // * seconds. 15 seconds was far too long imo
 
     public Tank? TrackedTank;
 
-    public IngamePing(Vector3 position, int pingId, Color color) {
+    /// <summary>
+    /// Creates a new <see cref="IngamePing"/>. This method is thread-agnostic.
+    /// </summary>
+    /// <returns>The created <see cref="IngamePing"/>, or <see langword="null"/> if every ping slot is in use.</returns>
+    public static IngamePing? Create(Vector3 position, int type, Color color, int owner) {
+        var ping = TankGame.ThreadAgnostic(() => Array.IndexOf(AllIngamePings, null) < 0 ? null : new IngamePing(position, type, color, owner));
+        return ping;
+    }
+
+    IngamePing(Vector3 position, int pingType, Color color, int owner) {
         foreach (var ping in AllIngamePings) {
-            if (ping is not null && ping.PingId == pingId && ping.Color == color) {
+            if (ping == null) continue;
+
+            // tells the ping to fade away if the same owner already has another ping active
+            if (ping.Owner == owner)
                 ping._lifeTime = MaxLifeTime;
-            }
         }
         _model = ModelGlobals.Ping.Asset;
         _pingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/ping/ping_tex");
-        _pingGraphic = PingMenu.PingIdToTexture[pingId];
+        _pingGraphic = PingMenu.PingIdToTexture[pingType];
         Id = Array.IndexOf(AllIngamePings, null); // will be bad if pings despawn at unassigned times.
-        PingId = pingId;
+        Type = pingType;
         Position = position;
         Color = color;
-        SoundPlayer.PlaySoundInstance($"Assets/sounds/ping/tr_ping_{PingMenu.PingIdToName[pingId].Replace(' ', '_').ToLower()}.ogg", SoundContext.Effect);
+        SoundPlayer.PlaySoundInstance($"Assets/sounds/ping/tr_ping_{PingMenu.PingIdToName[pingType].Replace(' ', '_').ToLower()}.ogg", SoundContext.Effect);
         var p = GameHandler.Particles.MakeParticle(Position + new Vector3(0, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
         p.Scale = new(0f);
 
@@ -135,20 +147,12 @@ public class IngamePing {
             matProj, null, Color, 0f, 
             _pingGraphic.Size() / 2, (Vector2.One * 0.75f * fullEase).ToResolution(), default, 0f);
     }
-    public static IngamePing CreateFromTankSender(Vector3 position3d, int pingId, int playerId, bool send = false) {
+    public static IngamePing? CreateFromTankSender(Vector3 position3d, int pingId, int playerId, bool send = false) {
         if (send)
             Client.SendMapPing(position3d, pingId, playerId);
-        return new IngamePing(
+        return Create(
             position3d, 
             pingId, 
-            PlayerID.PlayerTankColors[playerId]);
-    }
-    public static IngamePing CreateFromTankSender(Vector2 position2d, int pingId, int playerId, bool send = false) {
-        if (send)
-            Client.SendMapPing(MatrixUtils.GetWorldPosition(position2d), pingId, playerId);
-        return new IngamePing(
-            MatrixUtils.GetWorldPosition(position2d),
-            pingId,
-            PlayerID.PlayerTankColors[playerId]);
+            PlayerID.PlayerTankColors[playerId], playerId);
     }
 }

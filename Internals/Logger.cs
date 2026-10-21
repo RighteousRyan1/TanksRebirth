@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace TanksRebirth.Internals;
 
-public enum LogType {
+public enum RebirthLogLevel {
     /// <summary>Information about what is happening during runtime to serve as a sequence of events to
     /// any kind of fatal error.</summary>
     Info,
@@ -26,7 +26,7 @@ public enum LogType {
     Debug
 }
 
-public delegate void OnLog(Assembly assembly, string data, LogType logType);
+public delegate void OnLog(Assembly assembly, string data, RebirthLogLevel logType);
 
 /// <summary>Represents a system which reads and writes to a logging file.</summary>
 public sealed class Logger : IDisposable {
@@ -61,7 +61,7 @@ public sealed class Logger : IDisposable {
     /// <param name="writeType">The type of logging being done.</param>
     /// <param name="throwException">Whether or not to throw an exception upon write completion.</param>
     /// <exception cref="Exception">If <paramref name="throwException"/> is set to <see langword="true"/>, this exception will be thrown upon write completion.</exception>
-    public void Write(object contents, LogType writeType, bool throwException = false) {
+    public void Write(object contents, RebirthLogLevel writeType, bool throwException = false) {
         var contentsAsString = contents.ToString()!;
         _stream.Position = _stream.Length;
         lock (_writer) {
@@ -87,13 +87,13 @@ public sealed class Logger : IDisposable {
             throw new Exception(contentsAsString);
     }
 
-    private static string FromLogLevel(LogType type) { // Converts a LogType to a string without the use of Reflection.
+    private static string FromLogLevel(RebirthLogLevel type) { // Converts a RebirthLogLevel to a string without the use of Reflection.
         return type switch {
-            LogType.Info => "Info",
-            LogType.Warn => "Warn",
-            LogType.ErrorFatal => "ErrorFatal",
-            LogType.ErrorSilent => "ErrorSilent",
-            LogType.Debug => "Debug",
+            RebirthLogLevel.Info => "Info",
+            RebirthLogLevel.Warn => "Warn",
+            RebirthLogLevel.ErrorFatal => "ErrorFatal",
+            RebirthLogLevel.ErrorSilent => "ErrorSilent",
+            RebirthLogLevel.Debug => "Debug",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }

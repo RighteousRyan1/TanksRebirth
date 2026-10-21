@@ -242,12 +242,12 @@ public class Language {
             var path = Path.Combine(Path.Combine("Localization", $"{code}.json"));
             JsonHandler<Language> handler = new(lang, path);
 
-            TankGame.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.LogType.Debug);
+            TankGame.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.RebirthLogLevel.Debug);
             lang.ActiveLang = code;
             lang = handler.Deserialize();
         }
         catch {
-            TankGame.ClientLog.Write($"Loading language '{code}'... Could not find localization file or error loading! Using default language '{LangCode.English}' instead.", Internals.LogType.Debug);
+            TankGame.ClientLog.Write($"Loading language '{code}'... Could not find localization file or error loading! Using default language '{LangCode.English}' instead.", Internals.RebirthLogLevel.Debug);
             var path = Path.Combine(Path.Combine("Localization", $"en_US.json"));
             JsonHandler<Language> handler = new(lang, path);
             lang = handler.Deserialize();

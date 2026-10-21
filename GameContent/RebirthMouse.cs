@@ -89,7 +89,7 @@ public class RebirthMouse {
 
                 // any scale doesnt matter?
                 if (GameUtils.TanksDistance(tankPos, Position) >= PATH_TRACE_MIN_DIST.ToResolutionX()) {
-                    // GameHandler.ClientLog.Write("One Loop:", LogType.Info);
+                    // GameHandler.ClientLog.Write("One Loop:", RebirthLogLevel.Info);
                     for (int i = 1; i < DotCount; i++) {
                         var curDrawPos = Vector2.Lerp(tankPos, Position, (float)i / DotCount);
 

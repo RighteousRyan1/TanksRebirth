@@ -271,6 +271,7 @@ public static class DebugManager {
             TankGame.gameUiDraw = !TankGame.gameUiDraw;
         }
 
+        // guh...
         if (InputUtils.KeyJustPressed(Keys.L)) {
             jol?.Remove();
             jol = JackOLantern.Create(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, 0) + new Vector3(0, 35, 0), 0f, 15f);
@@ -311,7 +312,7 @@ public static class DebugManager {
             TankGame.VanillaAchievementPopupHandler.SummonOrQueue(Client.ClientRandom.Next(VanillaAchievements.Repository.GetAchievements().Count));
         }
         if (InputUtils.KeyJustPressed(Keys.OemPipe)) {
-            new Explosion(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 5f);
+            Explosion.Create(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 5f);
         }
 
         if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))

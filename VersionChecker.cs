@@ -30,8 +30,8 @@ public class VersionChecker {
             _versionToCheckAgainst = versionToCheckAgainst;
             IsOutdated = _versionToCheckAgainst < _expectedVersion;
         } catch(Exception e) {
-            TankGame.ClientLog.Write($"{e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
-            TankGame.ClientLog.Write($"An exception was thrown during TanksRebirth Version fetching process. Auto-Update backend and version checking cannot execute.", LogType.ErrorFatal);
+            TankGame.ClientLog.Write($"{e.Message}\n{e.StackTrace}", RebirthLogLevel.ErrorFatal);
+            TankGame.ClientLog.Write($"An exception was thrown during TanksRebirth Version fetching process. Auto-Update backend and version checking cannot execute.", RebirthLogLevel.ErrorFatal);
         }
     }
 
