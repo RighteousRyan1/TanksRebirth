@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using tainicom.Aether.Physics2D.Collision.Shapes;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
@@ -18,6 +19,7 @@ using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Animation;
@@ -56,7 +58,7 @@ public static class DebugManager {
     };
 
     static int mode;
-
+    static bool _collPersist;
     public static bool RenderWireframe = false;
     public static bool IsFreecamEnabled => persistFreecam || DebugLevel == Id.FREECAM;
     public static bool persistFreecam;
@@ -567,23 +569,39 @@ public static class DebugManager {
             DrawDebugString(spriteBatch, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
         }
 
-        foreach (var body in Tank.CollisionsWorld.BodyList) {
-            if (DebugLevel == Id.GENERAL) {
+        if (DebugLevel == Id.GENERAL || _collPersist) {
+            if (InputUtils.AreKeysJustPressed(Keys.R, Keys.B)) GameScene.BoundsRenderer.LoadBounds();
+            if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X)) _collPersist = !_collPersist;
+            foreach (var body in Tank.CollisionsWorld.BodyList) {
                 Color drawColor = Color.Black;
 
                 if (body.Tag is Color c)
                     drawColor = c;
 
-                var position = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(
-                    body.Position.X * Tank.UNITS_PER_METER, 0,
-                    body.Position.Y * Tank.UNITS_PER_METER),
-                    CameraGlobals.GameView, CameraGlobals.GameProjection);
-
-                DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, "BODY", position, drawColor,
-                    Color.White, Vector2.One * 0.5f, 0f, borderThickness: 0.5f);
+                foreach (var fixture in body.FixtureList) {
+                    switch (fixture.Shape) {
+                        case CircleShape circle: {
+                                var center = body.GetWorldPoint(circle.Position) * Tank.UNITS_PER_METER;
+                                var sphere = new BoundingSphere(new Vector3(center.X, 0, center.Y), circle.Radius * Tank.UNITS_PER_METER);
+                                DrawBoundingSphere(sphere, drawColor, CameraGlobals.GameView, CameraGlobals.GameProjection, segments: 12);
+                                break;
+                            }
+                        case PolygonShape polygon: {
+                                var min = new Vector2(float.MaxValue);
+                                var max = new Vector2(float.MinValue);
+                                foreach (var vertex in polygon.Vertices) {
+                                    var point = body.GetWorldPoint(vertex) * Tank.UNITS_PER_METER;
+                                    min = Vector2.Min(min, point);
+                                    max = Vector2.Max(max, point);
+                                }
+                                var box = new BoundingBox(new Vector3(min.X, 0, min.Y), new Vector3(max.X, Block.SIDE_LENGTH, max.Y));
+                                DrawBoundingBox(box, drawColor, CameraGlobals.GameView, CameraGlobals.GameProjection);
+                                break;
+                            }
+                    }
+                }
             }
         }
-
         for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
             var achievement = VanillaAchievements.Repository.GetAchievements()[i];
 

@@ -422,7 +422,10 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         // rockets leave smaller puffs more often
         bool rocket = Properties.Visuals.HasFlag(VisualFlags.Flaming);
-        float interval = rocket ? 2f : 4f;
+
+        // i think this is good enough compared to before
+        var sample = Velocity3D.Length();
+        float interval = 6f / (1f + sample); // rocket ? 1f : 4f;
         var direction = Vector3.Normalize(Velocity.ExpandZ());
         // more than one if the frame took longer than the interval, spaced out along the way the shell came
         int count = TimesElapsed(interval);

@@ -60,7 +60,7 @@ public class TankProperties {
     public float TreadVolume { get; set; }
 
     /// <summary>The pitch of the footprint placement sounds.</summary>
-    public float TreadPitch { get; set; }
+    public float MovePitch { get; set; }
 
     /// <summary>The pitch of the shoot sound.</summary>
     public float ShootPitch { get; set; }

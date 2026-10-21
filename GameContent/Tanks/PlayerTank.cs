@@ -43,7 +43,6 @@ public ref struct PlayerBinds {
     public Keybind ToggleShootPath;
 }
 public class PlayerTank : Tank {
-
     public static int NumLocalPlayers => KbPlayer == -1 ? InputUtils.NumGamepadsConnected : InputUtils.NumConnectedInputs;
     #region The Rest
 

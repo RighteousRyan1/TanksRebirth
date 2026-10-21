@@ -15,6 +15,11 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent.Tanks.AI;
 
 public static class AIManager {
+    // values from the source
+    const float MPITCH_HIGH    = 1 / 4f;
+    const float MPITCH_MEDHIGH = 1 / 12f;
+    const float MPITCH_MEDLOW  = 1 / 6f;
+    const float MPITCH_LOW     = 1 / 3f;
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
     public static Dictionary<int, AIParameters> AIParameterDefaults = [];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
@@ -573,7 +578,7 @@ public static class AIManager {
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-                properties.TreadPitch = 0.085f;
+                properties.MovePitch = MPITCH_HIGH;
                 break;
 
             case TankID.Marine:
@@ -593,7 +598,7 @@ public static class AIManager {
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-                properties.TreadPitch = 0.085f;
+                properties.MovePitch = MPITCH_HIGH;
                 break;
 
             case TankID.Yellow:
@@ -615,7 +620,7 @@ public static class AIManager {
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-                properties.TreadPitch = 0.085f;
+                properties.MovePitch = MPITCH_MEDHIGH;
 
                 if (Modifiers.IsOn(Modifiers.MINE_SPAM)) {
                     properties.Resistance |= ResistanceFlags.Explosions;
@@ -644,7 +649,7 @@ public static class AIManager {
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-                properties.TreadPitch = 0.1f;
+                properties.MovePitch = MPITCH_MEDHIGH;
                 break;
 
             case TankID.Violet:
@@ -664,7 +669,7 @@ public static class AIManager {
 
                 properties.ShellType = ShellID.Standard;
                 properties.ShellHoming = new();
-                properties.TreadPitch = -0.2f;
+                properties.MovePitch = MPITCH_MEDLOW;
                 break;
 
             case TankID.Green:
@@ -701,7 +706,7 @@ public static class AIManager {
                 properties.TrackType = TrackID.Thick;
                 properties.ShellType = ShellID.Standard;
                 properties.ShellHoming = new();
-                properties.TreadPitch = -0.35f;
+                properties.MovePitch = MPITCH_LOW;
                 break;
 
             case TankID.Black:
@@ -712,9 +717,6 @@ public static class AIManager {
                 properties.MaxSpeed = 2.4f;
                 properties.TurningSpeed = 0.06f;
 
-                // note to self and others: this value is normally 5 (from the original game)
-                // but with the current implementation, it's hard to pinpoint why their movement is so jittery.
-                // for now, this is being increased to 8, and is not a permanent change
                 properties.MaximalTurn = MathHelper.ToRadians(5);
                 properties.ShellLimit = 3;
                 properties.ShellCooldown = 60;
@@ -727,8 +729,8 @@ public static class AIManager {
 
                 properties.ShellType = ShellID.Rocket;
                 properties.ShellHoming = new();
-                properties.TreadPitch = -0.26f;
                 properties.ShootPitch = -0.2f;
+                properties.MovePitch = MPITCH_LOW;
                 break;
 
             #endregion
@@ -760,7 +762,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Standard;
-                properties.TreadPitch = 0.2f;
+                properties.MovePitch = 0.2f;
                 properties.MaxSpeed = 1.6f;
                 break;
             case TankID.Sapphire:
@@ -778,7 +780,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Rocket;
-                properties.TreadPitch = 0.08f;
+                properties.MovePitch = 0.08f;
                 break;
             case TankID.Ruby:
                 properties.Acceleration = 0.4f; // 11
@@ -792,7 +794,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Standard;
-                properties.TreadPitch = 0.08f;
+                properties.MovePitch = 0.08f;
                 break;
             case TankID.Citrine:
                 properties.MineLimit = 4; // 3
@@ -809,7 +811,7 @@ public static class AIManager {
                 properties.ShootStun = 10; // 42
 
                 properties.ShellType = ShellID.Standard;
-                properties.TreadPitch = -0.08f;
+                properties.MovePitch = -0.08f;
                 break;
             case TankID.Amethyst:
                 properties.MineLimit = 3;
@@ -827,7 +829,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Standard;
-                properties.TreadPitch = -0.2f;
+                properties.MovePitch = -0.2f;
                 break;
             case TankID.Emerald:
                 properties.ShellLimit = 3; // 30
@@ -857,7 +859,7 @@ public static class AIManager {
 
                 properties.CanLayTread = false;
                 properties.ShellType = ShellID.Standard;
-                properties.TreadPitch = -0.1f;
+                properties.MovePitch = -0.1f;
                 properties.Invisible = true;
                 break;
 
@@ -877,7 +879,7 @@ public static class AIManager {
 
 
                 properties.ShellType = ShellID.Rocket;
-                properties.TreadPitch = -0.26f;
+                properties.MovePitch = -0.26f;
                 break;
 
                 #endregion

@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.Graphics.DynamicLighting;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Tanks;
 public abstract class Tank(bool ignoresRegister) {
@@ -913,6 +914,7 @@ public abstract class Tank(bool ignoresRegister) {
     // this is probably closer to what the original game did, which is a bit
     // more complicated than my old logic but at least it got rid of all of the magic numbers lol
     void UpdateTreads() {
+        if (LevelEditorUI.IsActive && !LevelEditorUI.IsTestingLevel) return;
         if (Properties.Stationary) { _treadInit = false; return; }
 
         Vector2 pos = Position;
@@ -973,8 +975,8 @@ public abstract class Tank(bool ignoresRegister) {
 
                     var sfx = SoundPlayer.PlaySoundInstance(
                         TreadSounds[Client.ClientRandom.Next(TreadSounds.Length)],
-                        SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.TreadPitch);
-                    sfx.Instance.Pitch = Properties.TreadPitch;
+                        SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.MovePitch);
+                    sfx.Instance.Pitch = Properties.MovePitch;
                 }
             }
         }

@@ -8,6 +8,7 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
@@ -52,7 +53,7 @@ public static class GameScene {
 
     public static MapTheme Theme { get; set; } = MapTheme.Vanilla;
 
-    public static Dictionary<string, Texture2D> Assets = new() {
+    public static ModelTextureMap Assets = new() {
         ["block.1"] = null,
         ["block.2"] = null,
         ["block_harf.1"] = null,
@@ -94,7 +95,10 @@ public static class GameScene {
         AssetRoot = path;
 
         foreach (var file in Directory.GetFiles(path)) {
-            if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file))) {
+            foreach (var asset in Assets) {
+                if (asset.Key != Path.GetFileNameWithoutExtension(file)) continue;
+
+                // do replacement
                 Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(path, Path.GetFileName(file)));
                 TankGame.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", RebirthLogLevel.Info);
             }
@@ -183,19 +187,46 @@ public static class GameScene {
         public static Body[] Boundaries = new Body[4];
         public static Model BoundaryModel;
 
+        // this will need to be adjusted if i make map sizes
         public static void LoadBounds() {
-            // 0 -> top, 1 -> right, 2 -> bottom, 3 -> left
-            Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f,
-                new Vector2(MIN_X, MIN_Z - 4) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            // in case i ever reload
+            for (int i = 0; i < Boundaries.Length; i++) {
+                var b = Boundaries[i];
+                if (b == null) continue;
+                if (!Tank.CollisionsWorld.BodyList.Contains(b)) continue;
 
-            Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f,
-                new Vector2(MAX_X + 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+                Tank.CollisionsWorld.Remove(b);
+                Boundaries[i] = null;
+            }
 
-            Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f,
-                new Vector2(MIN_X, MAX_Z + 4) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            const float PAD_X = 7, PAD_Z = 5;
+            // top
+            Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(
+                MapGrid.STD_WIDTH * Block.SIDE_LENGTH / Tank.UNITS_PER_METER, 
+                5 / Tank.UNITS_PER_METER, 
+                1f,
+                new Vector2(0, MIN_Z - PAD_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-            Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f,
-                new Vector2(MIN_X - 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            // right
+            Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(
+                5 / Tank.UNITS_PER_METER, 
+                MapGrid.STD_HEIGHT * Block.SIDE_LENGTH / Tank.UNITS_PER_METER, 
+                1f,
+                new Vector2(MAX_X + PAD_X, 0) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+
+            // bottom
+            Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(
+                MapGrid.STD_WIDTH * Block.SIDE_LENGTH / Tank.UNITS_PER_METER, 
+                5 / Tank.UNITS_PER_METER, 
+                1f,
+                new Vector2(0, MAX_Z + PAD_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+
+            // left
+            Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(
+                5 / Tank.UNITS_PER_METER,
+                MapGrid.STD_HEIGHT * Block.SIDE_LENGTH / Tank.UNITS_PER_METER, 
+                1f,
+                new Vector2(MIN_X - PAD_X, 0) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
             Array.ForEach(Boundaries, x => x.Tag = BOUNDARY_TAG);
 
