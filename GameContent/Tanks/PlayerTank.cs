@@ -420,10 +420,10 @@ public class PlayerTank : Tank {
             }
         }
         else {
-            DesiredDirection = Vector2.Normalize(WiimoteSystem.NunchukAxis);
-
             if (DesiredDirection.Length() > 0.5f)
                 playerControl = true;
+
+            DesiredDirection = Vector2.Normalize(WiimoteSystem.NunchukAxis);
         }
 
         if (state.ButtonState.A && !_prev.A)

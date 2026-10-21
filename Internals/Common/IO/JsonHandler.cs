@@ -4,16 +4,14 @@ using System.Text.Json;
 namespace TanksRebirth.Internals.Common.IO;
 
 public struct JsonHandler<T> {
-    public readonly string JsonPath;
-    public readonly string JsonDir;
-
+    public readonly string JsonPath, JsonDir;
     public T Object;
 
     public JsonHandler(T type, string path) {
         Object = type;
         JsonPath = path;
 
-        JsonDir = JsonPath.Remove(JsonPath.Length - Path.GetFileName(JsonPath).Length);
+        JsonDir = JsonPath[..^Path.GetFileName(JsonPath).Length];
     }
 
     public readonly string Serialize(JsonSerializerOptions options, bool writeToFile = false) {
@@ -27,7 +25,8 @@ public struct JsonHandler<T> {
     }
 
     public T Deserialize() {
-        if (!File.Exists(JsonPath)) File.Create(JsonPath);
+        // how did i never notice that File.Create just happens. with no recourse.... world's best progarmmer!!!
+        if (!File.Exists(JsonPath)) File.WriteAllText(JsonPath, string.Empty);
         var asDeserialized = JsonSerializer.Deserialize<T>(File.ReadAllText(JsonPath))!;
         Object = asDeserialized;
         return asDeserialized;
