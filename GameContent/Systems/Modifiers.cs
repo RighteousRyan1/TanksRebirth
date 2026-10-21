@@ -385,7 +385,7 @@ public record Modifiers {
     public static void ManageAirplanes() {
         if (!Client.IsHost() && Client.IsConnected()) return;
 
-        if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.AirplaneTest) || IsOn(PLANES)) && CampaignGlobals.InMission) {
+        if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.AIRPLANE) || IsOn(PLANES)) && CampaignGlobals.InMission) {
             if (RuntimeData.RunTime % 180 <= RuntimeData.DeltaTime) {
                 // 33% chance every 5 seconds
                 if (Client.ClientRandom.Next(3) == 0) {

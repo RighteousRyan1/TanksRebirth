@@ -150,7 +150,7 @@ public partial struct VanillaAISystem {
         PivotQueue.Clear();
 
         // old = Vector2.UnitY.RotatedBy(-rayNormal.ToRotation() - MathHelper.PiOver2);
-        var movementDirection = Vector2.UnitY.RotatedBy(Owner.ChassisRotation + vecRot);
+        var movementDirection = MathUtils.DirectionOf(Owner.ChassisRotation + vecRot);
 
         PivotQueue.Enqueue(movementDirection);
     }
@@ -163,7 +163,7 @@ public partial struct VanillaAISystem {
             // dirvec to target -> gets that angle
             // difference in angle -> multiplies by aggressiveness
             var toTarget = Vector2.Normalize(Owner.TargetTank.Position - Owner.Position);
-            float targetAngle = toTarget.ToRotation() - MathHelper.PiOver2;
+            float targetAngle = MathUtils.RotationOf(toTarget);
 
             // shortest signed angle difference
             float angleDifference = MathHelper.WrapAngle(targetAngle - Owner.ChassisRotation);
@@ -199,7 +199,7 @@ public partial struct VanillaAISystem {
 
         for (int i = 0; i < desiredCuts; i++) {
             //SubPivotQueue.Add(Vector2.UnitY.RotatedBy(MathHelper.PiOver2 * i));
-            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.RotatedBy(Owner.ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
+            SubPivotQueue.Enqueue(MathUtils.Slerp2D(MathUtils.DirectionOf(Owner.ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
         }
         // drop the first element since this works as a queue under the hood
         // PivotQueue.RemoveAt(0);
@@ -227,7 +227,7 @@ public partial struct VanillaAISystem {
             aggro += angleDifference * Parameters.AggressivenessBias;
         }*/
 
-        Owner.DesiredChassisRotation = SubPivotQueue.Dequeue().ToRotation() - MathHelper.PiOver2;
+        Owner.DesiredChassisRotation = MathUtils.RotationOf(SubPivotQueue.Dequeue());
 
         // drop the first element again, but for the sub-queue
         // SubPivotQueue.RemoveAt(0);

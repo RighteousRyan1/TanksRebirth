@@ -223,9 +223,7 @@ public class Airplane {
             _doorLRotation = _doorRRotation = Easings.ComputeEase(EasingFunction.OutCubic, _openPercent) * MathHelper.PiOver2;
         }
 
-        // why the fuck do i have to do "-rotation + Pi/2"
-        // is this a fucked-up translation fault?
-        if (RotateTowardsVelocity) Rotation = -Velocity.ToRotation() + MathHelper.PiOver2;
+        if (RotateTowardsVelocity) Rotation = MathUtils.RotationOf(Velocity);
 
         var screenPos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
         if (CameraGlobals.IsUsingFirstPersonCamera) {
@@ -276,7 +274,7 @@ public class Airplane {
     }
     public void Render() {
         World = Matrix.CreateScale(0.6f)
-            * Matrix.CreateRotationY(Rotation)
+            * Matrix.CreateRotationY(-Rotation)
             * Matrix.CreateTranslation(Position);
         Projection = CameraGlobals.GameProjection;
         View = CameraGlobals.GameView;

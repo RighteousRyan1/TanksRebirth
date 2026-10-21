@@ -31,34 +31,34 @@ namespace TanksRebirth.GameContent.RebirthUtils;
 #pragma warning disable 
 public static class DebugManager {
     public readonly struct Id {
-        public const int FreeCamTest = -3;
-        public const int AirplaneTest = -2;
-        public const int SceneMetrics = -1;
-        public const int General = 0;
-        public const int EntityData = 1;
-        public const int PlayerData = 2;
-        public const int LevelEditDebug = 3;
-        public const int Powerups = 4;
-        public const int AchievementData = 5;
-        public const int AIData = 6;
+        public const int FREECAM = -3;
+        public const int AIRPLANE = -2;
+        public const int METRICS = -1;
+        public const int GENERAL = 0;
+        public const int ENT_DAT = 1;
+        public const int PL_DAT = 2;
+        public const int LVL_DBG = 3;
+        public const int PWR = 4;
+        public const int ACH_DAT = 5;
+        public const int TankData = 6;
     }
     private static readonly Dictionary<int, string> DebuggingNames = new() {
-        [Id.FreeCamTest] = "freecam",
-        [Id.AirplaneTest] = "planetest",
-        [Id.SceneMetrics] = "metrics",
-        [Id.General] = "gen", // general
-        [Id.EntityData] = "entdat", // entity data
-        [Id.PlayerData] = "plrdat", // plrdat
-        [Id.LevelEditDebug] = "lvlmake", // level editor debug
-        [Id.Powerups] = "pwrup", // powerup
-        [Id.AchievementData] = "achdat", // achievement data
-        [Id.AIData] = "tnknav" // Owner tank navigation
+        [Id.FREECAM] = "freecam",
+        [Id.AIRPLANE] = "planetest",
+        [Id.METRICS] = "metrics",
+        [Id.GENERAL] = "gen", // general
+        [Id.ENT_DAT] = "entdat", // entity data
+        [Id.PL_DAT] = "plrdat", // plrdat
+        [Id.LVL_DBG] = "lvlmake", // level editor debug
+        [Id.PWR] = "pwrup", // powerup
+        [Id.ACH_DAT] = "achdat", // achievement data
+        [Id.TankData] = "tnknav" // Owner tank navigation
     };
 
     static int mode;
 
     public static bool RenderWireframe = false;
-    public static bool IsFreecamEnabled => persistFreecam || DebugLevel == Id.FreeCamTest;
+    public static bool IsFreecamEnabled => persistFreecam || DebugLevel == Id.FREECAM;
     public static bool persistFreecam;
     public static int blockType = 0;
     public static int blockHeight = 1;
@@ -98,7 +98,7 @@ public static class DebugManager {
     static bool _hideUi;
 
     // this method seems like stack hell. i probably should remove it
-    public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
+    public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = Id.GENERAL, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
 
@@ -112,7 +112,7 @@ public static class DebugManager {
         if (beginSb)
             sb.End();
     }
-    public static void DrawDebugString(SpriteFontBase font, SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
+    public static void DrawDebugString(SpriteFontBase font, SpriteBatch sb, object info, Vector2 position, int level = Id.GENERAL, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
 
@@ -126,7 +126,7 @@ public static class DebugManager {
         if (beginSb)
             sb.End();
     }
-    public static void DrawDebugTexture(SpriteBatch sb, Texture2D texture, Vector2 position, int level = Id.General, float scale = 1f, Color color = default, bool centered = false, bool beginSb = false) {
+    public static void DrawDebugTexture(SpriteBatch sb, Texture2D texture, Vector2 position, int level = Id.GENERAL, float scale = 1f, Color color = default, bool centered = false, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
 
@@ -281,14 +281,14 @@ public static class DebugManager {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.IsDestroyed && !x.Properties.Stationary);
             if (tnkGet > -1) {
                 var tnk = GameHandler.AllAITanks[tnkGet];
-                tnk.DesiredChassisRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.DrawParams.World, tnk.DrawParams.View, tnk.DrawParams.Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
+                tnk.DesiredChassisRotation = MathUtils.RotationOf(MouseUtils.MousePosition - MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.DrawParams.World, tnk.DrawParams.View, tnk.DrawParams.Projection));
             }
         }
 
         if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
             RuntimeData.MemoryUsageInBytes = RuntimeData.ProcessMemory;
         }
-        if (DebugLevel == Id.SceneMetrics) {
+        if (DebugLevel == Id.METRICS) {
             RuntimeData.RenderFpsGraph.Update();
             RuntimeData.LogicFpsGraph.Update();
 
@@ -331,7 +331,7 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.J))
             CameraGlobals.OverheadView = !CameraGlobals.OverheadView;
 
-        if (DebugLevel != Id.FreeCamTest) {
+        if (DebugLevel != Id.FREECAM) {
             if (InputUtils.MouseRight)
                 CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
@@ -568,7 +568,7 @@ public static class DebugManager {
         }
 
         foreach (var body in Tank.CollisionsWorld.BodyList) {
-            if (DebugLevel == Id.General) {
+            if (DebugLevel == Id.GENERAL) {
                 Color drawColor = Color.Black;
 
                 if (body.Tag is Color c)
@@ -590,11 +590,11 @@ public static class DebugManager {
             DrawDebugString(spriteBatch,
                 $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
                 new Vector2(8, 24 + (i * 20)),
-                level: Id.AchievementData,
+                level: Id.ACH_DAT,
                 centered: false);
         }
 
-        if (DebugLevel == Id.FreeCamTest) {
+        if (DebugLevel == Id.FREECAM) {
             spriteBatch.DrawString(FontGlobals.RebirthFont,
                $"Position: {CameraGlobals.RebirthFreecam.Position}" +
             $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
@@ -625,7 +625,7 @@ public static class DebugManager {
             AnimDebug.DrawPath(TankGame.Instance.GraphicsDevice, _povAnimatorKeyframeBuilder, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
 
-        if (DebugLevel == Id.SceneMetrics) {
+        if (DebugLevel == Id.METRICS) {
             RuntimeData.RenderFpsGraph.Draw(spriteBatch, new Vector2(100, 400), 2);
             RuntimeData.LogicFpsGraph.Draw(spriteBatch, new Vector2(100, 800), 2);
             RuntimeData.RenderTimeGraph.Draw(spriteBatch, new Vector2(500, 400), 2);

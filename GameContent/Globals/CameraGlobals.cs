@@ -112,7 +112,7 @@ public static class CameraGlobals {
     static CameraMode GetCameraMode() {
         bool isMainMenu = MainMenuUI.IsActive;
         bool isFreecamFlag =
-            DebugManager.DebugLevel == DebugManager.Id.FreeCamTest ||
+            DebugManager.DebugLevel == DebugManager.Id.FREECAM ||
             DebugManager.persistFreecam;
 
         bool isPOV = Modifiers.IsOn(Modifiers.POV) && !isMainMenu;
@@ -269,7 +269,7 @@ public static class CameraGlobals {
         if (!clientTank.IsDestroyed) {
             SpectatorId = NetPlay.GetMyClientId();
             POVCameraPosition = plOffset;
-            POVCameraRotation = -clientTank.TurretRotation;
+            POVCameraRotation = clientTank.TurretRotation;
         }
         else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
             if (InputUtils.KeyJustPressed(Keys.Left))
@@ -284,18 +284,18 @@ public static class CameraGlobals {
             }
             if (spectated is not null) {
                 POVCameraPosition = spectated.Position.ExpandZ() + offsetVector;
-                POVCameraRotation = -spectated.TurretRotation;
+                POVCameraRotation = spectated.TurretRotation;
             }
         }
         var anim = IntermissionHandler.ThirdPersonTransition;
         if (anim is not null && clientTank is not null) {
             // keeps the animation updated
-            anim.ModifyFloat(0, -clientTank.TurretRotation);
+            anim.ModifyFloat(0, clientTank.TurretRotation);
         }
 
         var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
             // the current anim rotation to meet the tank turret rotation
-            -clientTank.TurretRotation : POVCameraRotation;
+            clientTank.TurretRotation : POVCameraRotation;
 
         var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
             anim.CurrentPosition : POVCameraPosition;

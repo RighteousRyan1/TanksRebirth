@@ -102,7 +102,7 @@ public class Campaign {
 
     const int roundingFactor = 5;
 
-    // FIXME: not sure why this is public?
+    // FIXME: not sure why this is public? ...or why this is even here.
     public static (Point Position, bool Alive)[] CurrentTrackedSpawns { get; set; } // position of spawn, alive
 
     /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
@@ -189,7 +189,7 @@ public class Campaign {
             tank.Position = cell!.Position;
             tank.ChassisRotation = chassisRotation;
             tank.DesiredChassisRotation = chassisRotation;
-            tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
+            tank.TurretRotation = chassisRotation;
             tank.IsDestroyed = false;
             tank.Team = template.Team;
 
@@ -213,13 +213,11 @@ public class Campaign {
 
                 var randomTier = TankID.RandomTier(Server.RandomFor(Server.RandomKey.COMPANION_TIER, CurrentMissionId, template.PlayerType));
                 var tnk = new AITank(randomTier) {
-                    // target = rot - pi
-                    // turret =  -rot
                     Position = companionPos,
                     Team = tank.Team,
-                    ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
-                    DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
-                    TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
+                    ChassisRotation = chassisRotation,
+                    DesiredChassisRotation = chassisRotation,
+                    TurretRotation = chassisRotation,
                     IsDestroyed = false,
                 };
 
@@ -240,7 +238,7 @@ public class Campaign {
 
         tank.ChassisRotation = chassisRotation;
         tank.DesiredChassisRotation = chassisRotation;
-        tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
+        tank.TurretRotation = chassisRotation;
         tank.IsDestroyed = false;
         tank.Team = template.Team;
         if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {

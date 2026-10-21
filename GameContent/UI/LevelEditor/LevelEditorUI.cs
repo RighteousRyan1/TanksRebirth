@@ -27,6 +27,7 @@ using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.GameContent.ModSupport;
 using System.Reflection;
 using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
@@ -364,25 +365,19 @@ public static partial class LevelEditorUI {
         AutoOrientTanks.OnLeftClick = (e) => {
             EditorTile.AllTiles.ForEach(p => {
                 // maybe in the original game this was based off the top-left of the blocks?
-                var tnkRot = WiiMap.GetAutoTankRotation(p.Position.FlattenZ());
+                var tnkRot = WiiMap.GetAutoTankRotation(p.Position.FlattenZ()).ToRotation();
 
-                var flashColor = tnkRot switch {
-                    // down
-                    0 => Color.Blue,
-                    // up
-                    MathHelper.Pi => Color.Red,
-                    // left
-                    -MathHelper.PiOver2 => Color.Yellow,
-                    // right
+                var flashColor = tnkRot.ToFacing() switch {
+                    Facing.Down => Color.Blue,
+                    Facing.Up => Color.Red,
+                    Facing.Left => Color.Yellow,
                     _ => Color.Green
                 };
                 p.FlashAsColor(flashColor);
                 if (p.TankId > -1) {
                     var tank = GameHandler.AllTanks[p.TankId];
                     tank.ChassisRotation = tnkRot;
-
-                    // :( negatives why
-                    tank.DesiredChassisRotation = -tnkRot;
+                    tank.DesiredChassisRotation = tnkRot;
                     tank.TurretRotation = tnkRot;
                 }
 
@@ -729,9 +724,9 @@ public static partial class LevelEditorUI {
                     //    tnk.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
 
                     if (InputUtils.Click(rightClick: true)) {
-                        tnk!.ChassisRotation = (tnk.ChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                        tnk!.DesiredChassisRotation = (tnk.DesiredChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                        tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.ChassisRotation = (tnk.ChassisRotation + MathHelper.PiOver2).WrapTauAngle();
+                        tnk!.DesiredChassisRotation = tnk.ChassisRotation;
+                        tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle();
 
                         // why tf was this here???
                         // tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;

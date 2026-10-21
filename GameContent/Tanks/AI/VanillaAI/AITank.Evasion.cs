@@ -17,7 +17,7 @@ public partial struct VanillaAISystem {
         IsSurviving = true;
         if (Owner.CurMineStun <= 0 && Owner.CurShootStun <= 0) {
             var direction = Owner.Position - location;
-            Owner.DesiredChassisRotation = direction.ToRotation() - MathHelper.PiOver2;
+            Owner.DesiredChassisRotation = MathUtils.RotationOf(direction);
         }
     }
     /// <summary>Gets a list of dangerous objects near the <see cref="AITank"/>.</summary>

@@ -115,7 +115,7 @@ public record struct Mission {
 
             tank.ChassisRotation = MathF.Round(tnk.Rotation, 5);
             tank.DesiredChassisRotation = tank.ChassisRotation;
-            tank.TurretRotation = -tank.ChassisRotation;
+            tank.TurretRotation = tank.ChassisRotation;
             if (tank is AITank aiTank)
                 aiTank.TargetTurretRotation = tank.TurretRotation;
         }

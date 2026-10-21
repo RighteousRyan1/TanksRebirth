@@ -129,6 +129,20 @@ public static class MathUtils {
     }
     /// <summary>Converts a direction vector to an angle.</summary>
     public static float ToRotation(this Vector2 vector) => MathF.Atan2(vector.Y, vector.X);
+    /// <summary>The direction a tank, turret, or shell faces at <paramref name="rotation"/>. 0 faces down, π/2 faces left, and π faces up.</summary>
+    public static Vector2 DirectionOf(float rotation) => new(-MathF.Sin(rotation), MathF.Cos(rotation));
+    /// <summary>The rotation between 0 and 2π that faces along <paramref name="direction"/>. This is the inverse of <see cref="DirectionOf"/>.</summary>
+    public static float RotationOf(Vector2 direction) {
+        var rotation = MathF.Atan2(-direction.X, direction.Y);
+        // Abs turns the -0 from facing straight down into 0
+        return rotation < 0 ? rotation + MathHelper.TwoPi : MathF.Abs(rotation);
+    }
+    /// <summary>Turns <paramref name="rotation"/> towards <paramref name="target"/> the short way around, by at most <paramref name="step"/> radians.</summary>
+    /// <returns>The new rotation, between 0 and 2π.</returns>
+    public static float TurnTowards(float rotation, float target, float step) {
+        rotation = target - MathHelper.WrapAngle(target - rotation);
+        return RoughStep(rotation, target, step).WrapTauAngle();
+    }
     public static float AngleBetween(float a, float b) => (a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI;
     public static float AbsoluteAngleBetween(float a, float b) => MathF.Abs((a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI);
     public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);

@@ -279,7 +279,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         Hitbox = new(Position3D, HitSphereSize);
 
-        Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
+        Rotation = MathUtils.RotationOf(Velocity);
         Position += Velocity * MOVE_SCALE * RuntimeData.DeltaTime;
         DrawParams.World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
@@ -435,7 +435,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         // _oldPosition and Position are *not* the same during method call.
 
         _trail ??= ShellTrail.Start(Properties.TrailColor, Client.ClientRandom.NextFloat(0, MathHelper.TwoPi));
-        _trail.Emit(Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedBy(Rotation + MathHelper.Pi).ExpandZ());
+        _trail.Emit(Position3D - MathUtils.DirectionOf(Rotation).ExpandZ() * 5);
     }
     void RenderFlamingParticle() {
         int count = TimesElapsed(1f);
@@ -680,7 +680,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
                 centered: true);
 
-            if (DebugManager.DebugLevel == DebugManager.Id.EntityData)
+            if (DebugManager.DebugLevel == DebugManager.Id.ENT_DAT)
                 DebugManager.DrawBoundingSphere(Hitbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
         DrawShellMesh();

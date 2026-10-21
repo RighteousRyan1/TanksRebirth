@@ -328,7 +328,7 @@ public static class IntermissionSystem {
                 IntermissionHandler.ThirdPersonTransition = Animator.Create()
                     // ported :)
                     .WithFrame(new(floats: [0], position: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0)))
-                    .WithFrame(new(floats: [-PlayerTank.ClientTank.TurretRotation], position: PlayerTank.ClientTank.Position3D + new Vector3(0, 20, 0), duration: TimeSpan.FromSeconds(3), easing: EasingFunction.InOutQuad));
+                    .WithFrame(new(floats: [PlayerTank.ClientTank.TurretRotation], position: PlayerTank.ClientTank.Position3D + new Vector3(0, 20, 0), duration: TimeSpan.FromSeconds(3), easing: EasingFunction.InOutQuad));
                 IntermissionHandler.ThirdPersonTransition?.Restart();
                 IntermissionHandler.ThirdPersonTransition?.Run();
             }

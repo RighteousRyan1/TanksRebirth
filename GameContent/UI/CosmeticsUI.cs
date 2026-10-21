@@ -70,9 +70,7 @@ public static class CosmeticsUI {
         displayTank.Position = Chest.ChestPosition.FlattenZ();
         displayTank.OffsetY = Chest.ChestPosition.Y + 15 + 40;
         displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
-
-        // like why negative... gonna shoot myself mayhaps.
-        displayTank.TurretRotation = -displayTank.ChassisRotation;
+        displayTank.TurretRotation = displayTank.ChassisRotation;
 
         HandleInputs();
         if (_keyAnimation is not null) {

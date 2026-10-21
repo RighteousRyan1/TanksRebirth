@@ -15,7 +15,7 @@ namespace TanksRebirth.GameContent.Tanks.AI.VanillaAI;
 public partial struct VanillaAISystem {
     bool _predicts;
     bool _isSeeking;
-    public float SeekRotation;
+    public float SeekRotation = MathHelper.Pi;
 
     public bool DoAttack = true;
 
@@ -36,15 +36,8 @@ public partial struct VanillaAISystem {
     public void HandleTurret() {
         //TargetTurretRotation %= MathHelper.TwoPi;
         //TurretRotation %= MathHelper.TwoPi;
-        Owner.TargetTurretRotation = MathHelper.WrapAngle(Owner.TargetTurretRotation);
-        Owner.TurretRotation = MathHelper.WrapAngle(Owner.TurretRotation);
-
-        var diff = Owner.TargetTurretRotation - Owner.TurretRotation;
-
-        if (diff > MathHelper.Pi) Owner.TargetTurretRotation -= MathHelper.TwoPi;
-        else if (diff < -MathHelper.Pi) Owner.TargetTurretRotation += MathHelper.TwoPi;
-
-        Owner.TurretRotation = MathUtils.RoughStep(Owner.TurretRotation, Owner.TargetTurretRotation, Owner.Parameters.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
+        Owner.TargetTurretRotation = Owner.TargetTurretRotation.WrapTauAngle();
+        Owner.TurretRotation = MathUtils.TurnTowards(Owner.TurretRotation, Owner.TargetTurretRotation, Owner.Parameters.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
 
         // update things prior to timer check
         if (Owner.TargetTank is null) return;
@@ -62,15 +55,9 @@ public partial struct VanillaAISystem {
         if (!TurretMovement.TimerSatisfies(Owner.Parameters.TurretMovementTimer)) return;
         // if (!Behaviors[1].IsModOf(Parameters.TurretMovementTimer)) return;
 
-        var targTurrRot = (Owner.Position - Owner.AimTarget).ToRotation();
-        Owner.TargetTurretRotation = GetRealAim(targTurrRot) + Client.ClientRandom.NextFloat(-Owner.Parameters.AimOffset, Owner.Parameters.AimOffset);
+        var targTurrRot = MathUtils.RotationOf(Owner.AimTarget - Owner.Position);
+        Owner.TargetTurretRotation = targTurrRot + Client.ClientRandom.NextFloat(-Owner.Parameters.AimOffset, Owner.Parameters.AimOffset);
     }
-    /// <summary>
-    /// Given how the tank's forward vectors are handled (right now), magical mathematics are applied to <paramref name="inputAngle"/>.
-    /// </summary>
-    /// <param name="inputAngle">The input angle</param>
-    /// <returns>The final/output rotation angle.</returns>
-    public static float GetRealAim(float inputAngle) => -inputAngle - MathHelper.PiOver2;
     /// <summary>Attempts to lay a mine based on various conditions and environmental factors.</summary>
     /// <remarks>This method evaluates multiple conditions to determine whether a mine can be laid, including:
     /// <list type="bullet"> <item>Whether the tank is capable of laying mines.</item> <item>Whether the mine limit has
@@ -201,8 +188,7 @@ public partial struct VanillaAISystem {
         for (int i = 0; i < dirs.Length; i++) {
             if (dirs[i].Direction != CollisionDirection.None) {
                 if (skips == 0) {
-                    var rot = dirs[i].Vec.ToRotation();
-                    Owner.DesiredChassisRotation = rot - MathHelper.PiOver2;
+                    Owner.DesiredChassisRotation = MathUtils.RotationOf(dirs[i].Vec);
                     break;
                 }
                 skips--;
@@ -230,7 +216,7 @@ public partial struct VanillaAISystem {
 
         List<Tank> tanksDef;
 
-        var turretDir = Vector2.UnitY.RotatedBy(Owner.TurretRotation - MathHelper.Pi);
+        var turretDir = MathUtils.DirectionOf(Owner.TurretRotation);
         if (Owner.Properties.ShellType == ShellID.Explosive) {
             tanksDef = GetTanksInPath(turretDir, out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
             if (ricP.Length > 0 && GameUtils.TanksDistance(ricP[^1], Owner.Position) < 150f)
@@ -256,17 +242,16 @@ public partial struct VanillaAISystem {
 
                 if (t < 0f) t = 0f;
 
-                float rot = -Owner.TurretPosition.DirectionTo(GeometryUtils.PredictFuturePosition(Owner.TargetTank.Position, Owner.TargetTank.Velocity, t))
-                    .ToRotation() - MathHelper.PiOver2;
+                float rot = MathUtils.RotationOf(Owner.TurretPosition.DirectionTo(GeometryUtils.PredictFuturePosition(Owner.TargetTank.Position, Owner.TargetTank.Velocity, t)));
 
                 tanksDef = GetTanksInPath(
-                Vector2.UnitY.RotatedBy(-Owner.TurretPosition.DirectionTo(Owner.TargetTank.Position).ToRotation() - MathHelper.PiOver2),
+                Vector2.Normalize(Owner.TurretPosition.DirectionTo(Owner.TargetTank.Position)),
                 out var ricP, out var tnkCol, offset: Vector2.Zero,
                 missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
 
                 if (tanksDef.Contains(Owner.TargetTank)) {
                     _predicts = true;
-                    Owner.TargetTurretRotation = rot + MathHelper.Pi;
+                    Owner.TargetTurretRotation = rot;
                 }
             }
         }
@@ -294,10 +279,10 @@ public partial struct VanillaAISystem {
 
         if (Owner.Parameters.SmartRicochets) {
             //if (!seeks)
-            SeekRotation += Owner.Parameters.TurretSpeed * 0.25f * RuntimeData.DeltaTime;
+            SeekRotation = (SeekRotation - Owner.Parameters.TurretSpeed * 0.25f * RuntimeData.DeltaTime).WrapTauAngle();
             var canShoot = !(Owner.CurShootCooldown > 0 || Owner.OwnedShellCount >= Owner.Properties.ShellLimit);
             if (canShoot) {
-                var tanks = GetTanksInPath(Vector2.UnitY.RotatedBy(SeekRotation), out var ricP, out var tnkCol, false, default, Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
+                var tanks = GetTanksInPath(MathUtils.DirectionOf(SeekRotation), out var ricP, out var tnkCol, false, default, Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
 
                 // linq -> loop
                 var findsEnemy2 = false;
@@ -315,7 +300,7 @@ public partial struct VanillaAISystem {
                 if (findsEnemy2/* && !findsFriendly2*/) {
                     _isSeeking = true;
                     TurretRotationMultiplier = 3f;
-                    Owner.TargetTurretRotation = (SeekRotation % MathHelper.TwoPi) - MathHelper.Pi; // minus pi... why?
+                    Owner.TargetTurretRotation = SeekRotation;
                 }
             }
 
@@ -425,7 +410,7 @@ public partial struct VanillaAISystem {
             ? GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, t)
             : shell.Position;
 
-        float rot = -Owner.TurretPosition.DirectionTo(aimTarget).ToRotation() + MathHelper.PiOver2;
+        float rot = MathUtils.RotationOf(Owner.TurretPosition.DirectionTo(aimTarget));
 
         Owner.TargetTurretRotation = rot;
         TurretRotationMultiplier = 4f; // introduce constant?
@@ -463,9 +448,7 @@ public partial struct VanillaAISystem {
 
         var whitePixel = TextureGlobals.Pixels[Color.White];
 
-        // genuine fucking stupidity as to why this is negative in so many calculations
-        Vector2 pathPos = Owner.Position + offset.RotatedBy(-Owner.TurretRotation);
-        pathDir.Y *= -1;
+        Vector2 pathPos = Owner.Position + offset.RotatedBy(Owner.TurretRotation);
         pathDir *= PATH_UNIT_LENGTH;
 
         int ricochetCount = 0;

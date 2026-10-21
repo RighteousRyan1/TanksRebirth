@@ -186,7 +186,7 @@ public readonly struct WiiMap {
 
         // This tile is basically a tank.
 
-        var tnkRot = GetAutoTankRotation(tile.Cell.Coordinates.ToVector2());
+        var tnkRot = GetAutoTankRotation(tile.Cell.Coordinates.ToVector2()).ToRotation();
 
         switch (mapTile.Stack) {
             case PLAYER_TANK_ID: { // Player Owner, That's us!
@@ -231,7 +231,7 @@ public readonly struct WiiMap {
 
     // why is this cancer? what did the original game do bruh
     // i will come back to this later.
-    public static float GetAutoTankRotation(Vector2 p) {
+    public static Facing GetAutoTankRotation(Vector2 p) {
         const float ROWS_PER_COL = (float)MapGrid.STD_HEIGHT / MapGrid.STD_WIDTH;
 
         // adjust to the center of the map.
@@ -239,16 +239,13 @@ public readonly struct WiiMap {
         bool top_left = ROWS_PER_COL * p.X < p.Y;
         bool top_right = -ROWS_PER_COL * p.X < p.Y;
 
-        if (top_left && top_right) {
-            return MathHelper.Pi;
-        }
-        else if (top_left && !top_right) {
-            return MathHelper.PiOver2;
-        }
-        else if (!top_left && top_right) {
-            return -MathHelper.PiOver2;
-        }
-        return 0;
+        if (top_left && top_right)
+            return Facing.Up;
+        if (top_left)
+            return Facing.Right;
+        if (top_right)
+            return Facing.Left;
+        return Facing.Down;
     }
 }
 

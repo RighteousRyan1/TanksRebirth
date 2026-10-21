@@ -621,7 +621,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         var start = new Vector3(Position.X, heightOffset, Position.Y) + offset;
 
-        var forward = Vector2.UnitY.RotatedBy(ChassisRotation + forwardOffset);
+        var forward = MathUtils.DirectionOf(ChassisRotation + forwardOffset);
 
         // not to game units...?
         var gameUnits = GameUtils.TanksUnits(distance + TNK_WIDTH);
@@ -651,7 +651,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         // did j ever make any good programming choices before this past year or so?
         // this code looks like it was written by a 12 year old with a broken arm - GitHub Copilot
         // even Owner hates my code.
-        if (DebugManager.DebugLevel == DebugManager.Id.AIData) {
+        if (DebugManager.DebugLevel == DebugManager.Id.TankData) {
             float calculation = 0f;
 
             var drawInfo = new Dictionary<(string Name, float Value, bool TrackTurret), Color>() {
@@ -692,15 +692,15 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             drawInfo.Clear();
 
-            vais.GetTanksInPath(Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+            vais.GetTanksInPath(MathUtils.DirectionOf(TurretRotation), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
             if (Parameters.PredictsPositions && TargetTank is not null)
                 calculation = Position.DistanceTo(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
 
             if (Parameters.SmartRicochets)
-                vais.GetTanksInPath(Vector2.UnitY.RotatedBy(vais.SeekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+                vais.GetTanksInPath(MathUtils.DirectionOf(vais.SeekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
         }
-        /*if (DebugManager.DebugLevel == DebugManager.Id.AIData && !Properties.Stationary) {
+        /*if (DebugManager.DebugLevel == DebugManager.Id.TankData && !Properties.Stationary) {
             // magical numbers too lazy, look at update method to define
             IsObstacleInWay(AiParams.ObstacleAwarenessMovement / 2, Vector2.UnitY.RotatedBy(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 6, centered: true);
@@ -740,7 +740,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         bool isPathBlocked = false;
 
         // the tank by default faces down, so positive Y.
-        var dir = Vector2.UnitY.RotatedBy(ChassisRotation + offset);
+        var dir = MathUtils.DirectionOf(ChassisRotation + offset);
 
         // switch to using game units if necessary?
         var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);

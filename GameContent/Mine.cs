@@ -264,7 +264,7 @@ public sealed class Mine : IAITankDanger {
         DrawParams.Projection = CameraGlobals.GameProjection;
 
         if (DebugManager.DebuggingEnabled) {
-            if (DebugManager.DebugLevel == DebugManager.Id.EntityData)
+            if (DebugManager.DebugLevel == DebugManager.Id.ENT_DAT)
                 DebugManager.DrawBoundingBox(HitBox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
 

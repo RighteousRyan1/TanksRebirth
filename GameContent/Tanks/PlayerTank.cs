@@ -269,17 +269,6 @@ public class PlayerTank : Tank {
 
         if (LevelEditorUI.IsActive || IsDestroyed) return;
 
-        if (IsTurning) {
-            if (DesiredChassisRotation - ChassisRotation >= MathHelper.PiOver2) {
-                ChassisRotation += MathHelper.Pi;
-                DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
-            }
-            else if (DesiredChassisRotation - ChassisRotation <= -MathHelper.PiOver2) {
-                ChassisRotation -= MathHelper.Pi;
-                DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
-            }
-        }
-
         if (NetPlay.IsClientMatched(PlayerId))
             Client.SyncPlayerTank(this);
 
@@ -315,11 +304,13 @@ public class PlayerTank : Tank {
         }
 
         if (playerControl) {
-            var norm = Vector2.Normalize(DesiredDirection);
-
-            DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
-            ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
-            Velocity = Vector2.UnitY.RotatedBy(ChassisRotation) * Speed;
+            // no input, or a NaN from an idle nunchuk, means the tank coasts to a stop
+            IsBraking = !(DesiredDirection.LengthSquared() > 0f);
+            if (!IsBraking) {
+                DesiredChassisRotation = MathUtils.RotationOf(DesiredDirection);
+                TurnChassis(Properties.TurningSpeed * RuntimeData.DeltaTime);
+            }
+            Velocity = MathUtils.DirectionOf(ChassisRotation) * Speed;
 
             oldPosition = Position;
         }
@@ -358,7 +349,7 @@ public class PlayerTank : Tank {
 
                 // back to where we were but at least we don't have bogus transforms in the tank model files anymore
                 if (!LevelEditorUI.IsActive)
-                    TurretRotation = -(mouseWorld2d - Position).ToRotation() + MathHelper.PiOver2;
+                    TurretRotation = MathUtils.RotationOf(mouseWorld2d - Position);
                 else
                     TurretRotation = ChassisRotation;
             }
@@ -375,7 +366,7 @@ public class PlayerTank : Tank {
 
                 // subtract mouse delta eventually
                 int deltaX = mouseState.X - screenCenter.X;
-                TurretRotation += -deltaX / 312f.ToResolutionX();
+                TurretRotation = (TurretRotation + deltaX / 312f.ToResolutionX()).WrapTauAngle();
                 Mouse.SetPosition(screenCenter.X, screenCenter.Y);
             }
         }
@@ -497,8 +488,6 @@ public class PlayerTank : Tank {
 
         //var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
-        ChassisRotation %= MathHelper.Tau;
-
         if (MoveDown.IsPressed) {
             playerControl = true;
             DesiredDirection.Y = 1;
@@ -517,7 +506,7 @@ public class PlayerTank : Tank {
         }
 
         if (Modifiers.IsOn(Modifiers.POV))
-            DesiredDirection = DesiredDirection.RotatedBy(-TurretRotation + MathHelper.Pi);
+            DesiredDirection = DesiredDirection.RotatedBy(TurretRotation + MathHelper.Pi);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
         /*if (Client.IsConnected()) {
@@ -576,9 +565,8 @@ public class PlayerTank : Tank {
 
         // data
         var whitePixel = TextureGlobals.Pixels[Color.White];
-        var pathPos = Position + new Vector2(0, 18).RotatedBy(-TurretRotation);
-        var pathDir = Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi);
-        pathDir.Y *= -1;
+        var pathDir = MathUtils.DirectionOf(TurretRotation);
+        var pathPos = Position + pathDir * 18;
         pathDir *= Properties.ShellSpeed;
 
         var pathRicochetCount = 0;
@@ -893,7 +881,7 @@ public class PlayerTank : Tank {
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, pText, new(pos.X, pos.Y + (flip ? 90 : -110).ToResolutionY()), playerColor, Color.White, new Vector2(scale * 2).ToResolution(), 0f, Anchor.Center, 2f);
         }
 
-        if (DebugManager.DebugLevel == 1 || _drawShotPath)
+        if (DebugManager.DebugLevel == DebugManager.Id.TankData || _drawShotPath)
             DrawShootPath();
 
         if (Properties.Invisible && CampaignGlobals.InMission)

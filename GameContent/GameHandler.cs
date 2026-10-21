@@ -182,7 +182,7 @@ public class GameHandler {
             foreach (var cube in Block.AllBlocks)
                 cube?.OnUpdate();
 
-            if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
+            if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LVL_DBG && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
                 EditorTile.UpdateAll();
 
             Particles.UpdateParticles();
@@ -259,7 +259,7 @@ public class GameHandler {
 
             Particles.RenderModelParticles();
 
-            if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
+            if ((DebugManager.DebugLevel == DebugManager.Id.LVL_DBG && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
                 EditorTile.RenderAll();
 
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;

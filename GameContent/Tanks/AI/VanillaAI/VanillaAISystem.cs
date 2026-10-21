@@ -116,10 +116,8 @@ public partial struct VanillaAISystem : IAISystem {
 
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
-            var dir = Vector2.UnitY.RotatedBy(Owner.ChassisRotation);
-
-            Owner.Velocity = Vector2.Normalize(dir) * Owner.Speed;
-            Owner.ChassisRotation = MathUtils.RoughStep(Owner.ChassisRotation, Owner.DesiredChassisRotation, Owner.Properties.TurningSpeed * RuntimeData.DeltaTime);
+            Owner.Velocity = MathUtils.DirectionOf(Owner.ChassisRotation) * Owner.Speed;
+            Owner.TurnChassis(Owner.Properties.TurningSpeed * RuntimeData.DeltaTime);
         }
     }
 }

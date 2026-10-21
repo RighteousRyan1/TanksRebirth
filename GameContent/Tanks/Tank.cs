@@ -192,7 +192,7 @@ public abstract class Tank(bool ignoresRegister) {
 
     /// <summary>The rotation of this <see cref="Tank"/>'s chassis.</summary>
     public float ChassisRotation { get; set; }
-    public Vector2 TurretPosition => Position + new Vector2(0, TurretLength).RotatedBy(-TurretRotation);
+    public Vector2 TurretPosition => Position + MathUtils.DirectionOf(TurretRotation) * TurretLength;
     public Vector3 TurretPosition3D => new(TurretPosition.X, OffsetY + TNK_DMG_COLL_Y, TurretPosition.Y);
     // would this better to just be set every frame rather than redundantly perform this calculation every time it's accessed?
     public Vector2 Position {
@@ -220,6 +220,8 @@ public abstract class Tank(bool ignoresRegister) {
 
     /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
     public bool IsTurning { get; internal set; }
+    /// <summary>Whether or not this <see cref="Tank"/> is slowing to a stop because nothing is driving it.</summary>
+    public bool IsBraking { get; set; }
 
     // this feels really stupid to have as a property of the tank itself... oh well
     /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
@@ -518,18 +520,24 @@ public abstract class Tank(bool ignoresRegister) {
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
 
+        WrapDesiredChassisRotation();
+        var turnDiff = MathHelper.WrapAngle(DesiredChassisRotation - ChassisRotation);
+
         // * 2 since it's in both directions
-        IsTurning = !(ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn * 2 && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn * 2);
+        IsTurning = MathF.Abs(turnDiff) >= Properties.MaximalTurn * 2;
 
         if (IsTurning) {
-            if (DesiredChassisRotation - ChassisRotation >= MathHelper.PiOver2) {
+            if (turnDiff >= MathHelper.PiOver2) {
                 ChassisRotation += MathHelper.Pi;
                 DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
-            else if (DesiredChassisRotation - ChassisRotation <= -MathHelper.PiOver2) {
+            else if (turnDiff <= -MathHelper.PiOver2) {
                 ChassisRotation -= MathHelper.Pi;
                 DrawParamsTank.GraphicalFlip = !DrawParamsTank.GraphicalFlip;
             }
+        }
+        ChassisRotation = ChassisRotation.WrapTauAngle();
+        if (IsTurning || IsBraking) {
             // used to be 1f - DeltaTime
             Speed *= (float)Math.Pow(Properties.Deceleration, RuntimeData.DeltaTime);
         }
@@ -732,8 +740,6 @@ public abstract class Tank(bool ignoresRegister) {
         bool flip = false;
         float angle = 0f;
 
-        var rotatedPos = Vector2.UnitY.RotatedBy(TurretRotation);
-
         var volley = (int)RuntimeData.UpdateCount % 10000;
         for (int i = 0; i < Properties.ShellShootCount; i++) {
             // i == 0 : null, 0 rads
@@ -755,9 +761,9 @@ public abstract class Tank(bool ignoresRegister) {
             shell.VolleyId = volley;
             shell.Properties.Homing = Properties.ShellHoming;
 
-            var newPos = Position + new Vector2(0, 20).RotatedBy(-TurretRotation + newAngle);
-            shell.Position = new Vector2(newPos.X, newPos.Y);
-            shell.Velocity = new Vector2(-rotatedPos.X, rotatedPos.Y).RotatedBy(newAngle) * Properties.ShellSpeed;
+            var direction = MathUtils.DirectionOf(TurretRotation + newAngle);
+            shell.Position = Position + direction * 20;
+            shell.Velocity = direction * Properties.ShellSpeed;
             shell.RicochetsRemaining = Properties.RicochetCount;
 
             yield return shell;
@@ -765,9 +771,9 @@ public abstract class Tank(bool ignoresRegister) {
     }
     public void DoShootParticles() {
         // same spot and direction the shells come out of in ShootSpread
-        var direction = Vector2.UnitY.RotatedBy(TurretRotation);
-        var muzzle = Position + new Vector2(0, 20).RotatedBy(-TurretRotation);
-        GameHandler.Particles.MakeMuzzleFlash(new Vector3(muzzle.X, TurretPosition3D.Y, muzzle.Y), new Vector3(-direction.X, 0, direction.Y));
+        var direction = MathUtils.DirectionOf(TurretRotation);
+        var muzzle = Position + direction * 20;
+        GameHandler.Particles.MakeMuzzleFlash(new Vector3(muzzle.X, TurretPosition3D.Y, muzzle.Y), direction.ExpandZ());
     }
 
     /// <summary>Make this <see cref="Tank"/> lay a <see cref="Mine"/>.</summary>
@@ -813,21 +819,21 @@ public abstract class Tank(bool ignoresRegister) {
         if (!DebugManager.DebuggingEnabled) return;
 
         var info = new string[] {
-            $"Tank Rotation/Target: {ChassisRotation}/{DesiredChassisRotation}",
+            $"Tank Rotation/Target: {ChassisRotation:F2}/{DesiredChassisRotation:F2}",
             $"WorldID: {WorldId}",
             this is AITank ai
-                ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}"
-                : $"Turret Rotation: {TurretRotation}",
+                ? $"Turret Rotation/Target: {TurretRotation:F2}/{ai.TargetTurretRotation:F2}"
+                : $"Turret Rotation: {TurretRotation:F2}",
             $"OwnedShells/ShellsLeft: {OwnedShellCount}/{Properties.ShellLimit - OwnedShellCount}",
             $"{TanksSpotted.Length} tank(s) spotted"
         };
 
-        if (DebugManager.DebugLevel == DebugManager.Id.EntityData)
+        if (DebugManager.DebugLevel == DebugManager.Id.ENT_DAT)
             DebugManager.DrawBoundingBox(Hurtbox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
-        if (DebugManager.DebugLevel != DebugManager.Id.EntityData) return;
+        if (DebugManager.DebugLevel != DebugManager.Id.ENT_DAT) return;
         for (int i = 0; i < info.Length; i++) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Projection) -
                 new Vector2(0, i * 20);
@@ -853,11 +859,11 @@ public abstract class Tank(bool ignoresRegister) {
                     continue;
 
                 foreach (BasicEffect effect in mesh.Effects) {
-                    float rotY = TurretRotation;
+                    float rotY = -TurretRotation;
                     if (cosmetic.LockOptions == PropLockOptions.ToTurret)
-                        rotY = cosmetic.Rotation.Y + TurretRotation;
+                        rotY = cosmetic.Rotation.Y - TurretRotation;
                     else if (cosmetic.LockOptions == PropLockOptions.ToTank)
-                        rotY = cosmetic.Rotation.Y + -ChassisRotation;
+                        rotY = cosmetic.Rotation.Y - ChassisRotation;
                     else if (cosmetic.LockOptions == PropLockOptions.AroundTurret)
                         cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
 
@@ -986,10 +992,21 @@ public abstract class Tank(bool ignoresRegister) {
         RemoveCosmetics();
         CampaignGlobals.OnMissionStart -= OnMissionStart;
     }
+    /// <summary>Turns <see cref="ChassisRotation"/> towards <see cref="DesiredChassisRotation"/> the short way around, by at most <paramref name="step"/> radians.</summary>
+    public void TurnChassis(float step) {
+        WrapDesiredChassisRotation();
+        ChassisRotation = MathUtils.TurnTowards(ChassisRotation, DesiredChassisRotation, step);
+    }
+    /// <summary>Keeps <see cref="DesiredChassisRotation"/> between 0 and 2π.</summary>
+    void WrapDesiredChassisRotation() {
+        if (float.IsNaN(DesiredChassisRotation))
+            DesiredChassisRotation = ChassisRotation;
+        DesiredChassisRotation = DesiredChassisRotation.WrapTauAngle();
+    }
     public void SetBoneTransforms() {
         // commented = old
         cannonMesh!.ParentBone.Transform = // Matrix.CreateRotationY(TurretRotation + ChassisRotation + (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0));
-            Matrix.CreateRotationY(TurretRotation + ChassisRotation + (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0));
+            Matrix.CreateRotationY(ChassisRotation - TurretRotation + (DrawParamsTank.GraphicalFlip ? MathHelper.Pi : 0));
         DrawParamsTank.Model!.Root.Transform = DrawParams.World;
 
         DrawParamsTank.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
