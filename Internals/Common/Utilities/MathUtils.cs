@@ -8,10 +8,44 @@ using System.Text;
 using System.Threading.Tasks;
 using tainicom.Aether.Physics2D.Collision;
 using TanksRebirth.Graphics;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils {
+
+    /// <summary>Converts texture size fo a pseudo-standard scale in the world.</summary>
+    public static Vector3 SizeToScale(Texture2D texture, float width, float height) {
+        var s = MathF.Sqrt(MathF.Max(width, 0f) / texture.Width);
+        return new Vector3(s, s > 0f ? height / (texture.Height * s) : 0f, 1f);
+    }
+
+    public static Vector3 SizeToScale(Texture2D texture, float size) => SizeToScale(texture, size, size * texture.Height / texture.Width);
+
+    // gets the outward directional vector of a position
+    public static Vector3 Outward(Vector3 from) {
+        var flat = new Vector3(from.X, 0f, from.Z);
+        return flat.LengthSquared() > float.Epsilon ? Vector3.Normalize(flat) : Vector3.Zero;
+    }
+    // maybe should have a Random parameter
+    public static Vector3 RandomDirection() {
+        var y = Client.ClientRandom.NextFloat(-1f, 1f);
+        var angle = Client.ClientRandom.NextFloat(0f, MathHelper.TwoPi);
+        var r = MathF.Sqrt(1f - y * y);
+        return new Vector3(MathF.Cos(angle) * r, y, MathF.Sin(angle) * r);
+    }
+
+    /// <summary>A random direction at most <paramref name="spread"/> radians away from <paramref name="axis"/>.</summary>
+    public static Vector3 RandomDirection(Vector3 axis, float spread) {
+        var d = RandomDirection();
+        var along = Vector3.Dot(d, axis);
+        var side = d - axis * along;
+        if (side.LengthSquared() < 1e-6f)
+            return axis;
+        side.Normalize();
+        var angle = MathF.Acos(MathHelper.Clamp(along, -1f, 1f)) * spread / MathHelper.Pi;
+        return axis * MathF.Cos(angle) + side * MathF.Sin(angle);
+    }
     /// <summary>Scales from the center of the rectangle provided.</summary>
     public static Rectangle ScaleRect(Rectangle rect, float scale) {
         var center = new Vector2(rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f);

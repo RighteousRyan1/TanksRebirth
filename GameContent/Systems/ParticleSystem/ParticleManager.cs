@@ -11,7 +11,7 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
-public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
+public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
     // Particles live in one flat array. Removal is an O(1) swap-with-last (each particle stores its own index).
     Particle[] _items = new Particle[256];
     int _count;
@@ -190,7 +190,11 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
             particle.DrawModel();
         }
     }
-
+    /// <summary>Creates a particle with no draw data.</summary>
+    /// <remarks>This is particularly useful for temporary elements, such as lights.</remarks>
+    public Particle MakeParticle(Vector3 position) {
+        return new(position, this);
+    }
     /// <summary>Creates a particle.</summary>
     /// <param name="position">The initial position of this particle.</param>
     /// <param name="texture">The texture used for the particle.</param>
@@ -248,173 +252,9 @@ public class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         return p;
     }
     public void MakeSmallExplosion(Vector3 position, int numClouds, int numSparks, float shineScale, int movementFactor) {
-        MakeFireball(position, numClouds, movementFactor);
+        MakeSmokeCloud(position, movementFactor, numClouds);
         MakeSparkEmission(position, numSparks);
-        MakeEmbers(position, numSparks, movementFactor);
         MakeShineSpot(position, Color.Orange, shineScale);
-    }
-
-    // colors by age in ticks. similar to the breff/breft... something like this
-    static readonly (float Age, Color Color)[] _fireRamp = [
-        (0f, new Color(255, 240, 190)),
-        (4f, new Color(255, 200, 80)),
-        (12f, new Color(255, 130, 50)),
-        (20f, new Color(225, 80, 45)),
-        (28f, new Color(145, 105, 95)),
-        (36f, new Color(130, 126, 126)),
-    ];
-    static readonly (float Age, Color Color)[] _fireGlowRamp = [
-        (0f, new Color(255, 250, 220)),
-        (5f, new Color(255, 225, 110)),
-        (14f, new Color(255, 150, 50)),
-        (24f, new Color(120, 40, 10)),
-        (30f, Color.Black),
-    ];
-
-    // lerps between the ramps
-    static Color SampleRamp((float Age, Color Color)[] ramp, float age) {
-        if (age <= ramp[0].Age)
-            return ramp[0].Color;
-        for (int i = 1; i < ramp.Length; i++) {
-            if (age > ramp[i].Age) continue;
-            var (a, ca) = ramp[i - 1];
-            var (b, cb) = ramp[i];
-            return Color.Lerp(ca, cb, (age - a) / (b - a));
-        }
-        return ramp[^1].Color;
-    }
-
-    /// <summary>A puff of smoke that starts orangeish and "cools" over time.</summary>
-    public void MakeFireball(Vector3 position, int numPuffs, float spread) {
-        var puffTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke");
-        var glowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle");
-        var size = spread / 15f;
-        // small fireballs pack their puffs closer together so they still read as one ball
-        var packing = size * size;
-        var puffScale = MathF.Sqrt(size);
-
-        var halo = MakeParticle(position + new Vector3(0f, 0.5f, 0f), glowTexture);
-        halo.HasAdditiveBlending = true;
-        halo.ApplyGameLight = false;
-        halo.Pitch = MathHelper.PiOver2;
-        halo.Color = new Color(255, 220, 120);
-        halo.Alpha = 0.55f;
-        halo.Scale = new(2.2f * size);
-        halo.UniqueBehavior = (p) => {
-            GeometryUtils.Add(ref p.Scale, 0.05f * size * RuntimeData.DeltaTime);
-            p.Alpha -= 0.03f * RuntimeData.DeltaTime;
-            if (p.Alpha <= 0f)
-                p.Destroy();
-        };
-
-        var random = Client.ClientRandom;
-
-        for (int i = 0; i < numPuffs; i++) {
-            var angle = random.NextFloat(0f, MathHelper.TwoPi);
-            var distance = MathF.Sqrt(random.NextFloat(0f, 1f)) * 30f * packing;
-            var start = position + new Vector3(MathF.Cos(angle) * distance, random.NextFloat(10f, 40f) * packing, MathF.Sin(angle) * distance * 0.8f);
-            var velocity = new Vector3(MathF.Cos(angle), 0f, MathF.Sin(angle)) * random.NextFloat(0.4f, 1f) * packing;
-            var life = random.NextFloat(46f, 58f);
-            var puffSize = Client.ClientRandom.NextFloat(0.65f, 0.85f) * puffScale;
-            var rise = random.NextFloat(0.35f, 0.6f);
-            // puffs don't all appear at once
-            var age = -random.NextFloat(0f, 4f);
-
-            var puff = MakeParticle(start, puffTexture);
-            puff.HasAdditiveBlending = false;
-            puff.ApplyGameLight = false;
-            puff.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            // the texture is shaded darker at the bottom, and tilting the quad toward the camera flips it upside down
-            puff.Rotation2D = MathHelper.Pi;
-            puff.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
-            puff.Alpha = 0f;
-
-            // makes the fire glow while it's hot
-            var glow = MakeParticle(start, glowTexture);
-            glow.HasAdditiveBlending = true;
-            glow.ApplyGameLight = false;
-            glow.Pitch = puff.Pitch;
-            glow.Billboard = puff.Billboard;
-            glow.Alpha = 0f;
-
-            puff.UniqueBehavior = (p) => {
-                var dt = RuntimeData.DeltaTime;
-                age += dt;
-                if (age < 0f)
-                    return;
-                if (age >= life) {
-                    p.Destroy();
-                    glow.Destroy();
-                    return;
-                }
-
-                p.Position += velocity * dt;
-                velocity *= MathF.Pow(0.9f, dt);
-                if (age > 14f)
-                    p.Position.Y += rise * dt;
-
-                var scale = puffSize * (0.7f + 0.3f * MathHelper.Clamp(age / 14f, 0f, 1f) + 0.004f * age);
-                p.Scale = new(scale);
-                p.Color = SampleRamp(_fireRamp, age);
-
-                // solid while burning, thinner once it's smoke, then gone
-                var alpha = 0.95f * MathHelper.Clamp(age / 2f, 0f, 1f);
-                alpha *= 1f - 0.45f * MathHelper.Clamp((age - 18f) / 12f, 0f, 1f);
-                alpha *= 1f - MathHelper.Clamp((age - 30f) / (life - 30f), 0f, 1f);
-                p.Alpha = alpha;
-
-                if (age < 30f) {
-                    glow.Position = p.Position;
-                    glow.Scale = new(scale * 1.2f);
-                    glow.Color = SampleRamp(_fireGlowRamp, age);
-                    glow.Alpha = 0.5f;
-                }
-                else
-                    glow.Destroy();
-            };
-        }
-    }
-
-    /// <summary>Small glowing bits that fly out of an explosion and burn out.</summary>
-    /// <param name="spread">How far they fly. A destroyed tank uses 15.</param>
-    public void MakeEmbers(Vector3 position, int count, float spread) {
-        var texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle");
-        var size = spread / 15f;
-
-        for (int i = 0; i < count; i++) {
-            var angle = Client.ClientRandom.NextFloat(0f, MathHelper.TwoPi);
-            var speed = Client.ClientRandom.NextFloat(1f, 2.6f) * size;
-            var velocity = new Vector3(MathF.Cos(angle) * speed, Client.ClientRandom.NextFloat(0.1f, 0.5f), MathF.Sin(angle) * speed * 0.8f);
-            var life = Client.ClientRandom.NextFloat(30f, 60f);
-            var phase = Client.ClientRandom.NextFloat(0f, MathHelper.TwoPi);
-            float age = 0f;
-
-            var ember = MakeParticle(position + new Vector3(0f, Client.ClientRandom.NextFloat(6f, 20f), 0f), texture);
-            ember.HasAdditiveBlending = true;
-            ember.ApplyGameLight = false;
-            ember.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            ember.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
-            ember.Color = Client.ClientRandom.Next(0, 2) == 0 ? new Color(255, 150, 130) : new Color(255, 215, 140);
-            ember.Scale = new(Client.ClientRandom.NextFloat(0.2f, 0.3f));
-
-            ember.UniqueBehavior = (p) => {
-                var dt = RuntimeData.DeltaTime;
-                age += dt;
-                if (age >= life) {
-                    p.Destroy();
-                    return;
-                }
-
-                p.Position += velocity * dt;
-                var damping = MathF.Pow(0.94f, dt);
-                velocity.X *= damping;
-                velocity.Z *= damping;
-                velocity.Y = velocity.Y * damping + 0.01f * dt;
-
-                // twinkles while it burns out
-                p.Alpha = (0.6f + 0.4f * MathF.Sin(age * 0.6f + phase)) * (1f - age / life);
-            };
-        }
     }
     public void MakeSparkEmission(Vector3 position, int numSparks) {
         for (int i = 0; i < numSparks; i++) {

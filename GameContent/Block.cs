@@ -292,30 +292,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         OnDestroy?.Invoke(this);
         Remove();
     }
-    public void DestructParticles() {
-        const int PARTICLE_COUNT = 12;
-
-        for (int i = 0; i < PARTICLE_COUNT; i++) {
-            var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
-
-            var part = GameHandler.Particles.MakeParticle(Position3D, tex);
-            part.HasAdditiveBlending = false;
-
-            var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(4, 6), Client.ClientRandom.NextFloat(-3, 3));
-            part.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            part.Scale = new(0.7f);
-            part.Color = Color.Coral;
-
-            part.UniqueBehavior = (p) => {
-                vel.Y -= 0.2f;
-                part.Position += vel;
-                part.Alpha -= 0.025f;
-
-                if (part.Alpha <= 0f)
-                    part.Destroy();
-            };
-        }
-    }
+    public void DestructParticles() => GameHandler.Particles.MakeBlockBreak(Position3D);
 
     public static float GetOffsetY(int stack, bool canStack) {
         // offset *= scale / BLOCK_DEF_SCALING;

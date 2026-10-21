@@ -23,6 +23,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
+using TanksRebirth.Graphics.DynamicLighting;
 
 namespace TanksRebirth.GameContent;
 
@@ -278,13 +279,15 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         TrailSound?.Instance?.Stop();
         ShootSound?.Instance?.Stop();
     }
+    /// <summary>How much of <see cref="Velocity"/> a shell moves each tick.</summary>
+    const float MOVE_SCALE = 0.62f;
     public void Update() {
         if (!CampaignGlobals.InMission && !MainMenuUI.IsActive) return;
 
         Hitbox = new(Position3D, HitSphereSize);
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
-        Position += Velocity * 0.62f * RuntimeData.DeltaTime;
+        Position += Velocity * MOVE_SCALE * RuntimeData.DeltaTime;
         DrawParams.World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
@@ -403,11 +406,8 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         CheckCollisions();
 
-        var bruh = Properties.Visuals.HasFlag(VisualFlags.Flaming) ? (int)Math.Round(6 / Velocity.Length()) : (int)Math.Round(12 / Velocity.Length());
-        var num = bruh != 0 ? bruh : 5f;
-
         if (Properties.Visuals.HasFlag(VisualFlags.SmokePuff))
-            RenderSmokeParticle(num);
+            RenderSmokeParticle();
 
         if (Properties.Visuals.HasFlag(VisualFlags.SmokeTrail))
             RenderLeaveTrail();
@@ -419,38 +419,22 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         OnPostUpdate?.Invoke(this);
     }
     #region Particles
-    void RenderSmokeParticle(float timer) {
+    
+    // hacky workaround until steps are counted 60 times a second instead of framerate/60 times a second...
+    // just tracks substeps in a given time interval
+    int TimesElapsed(float interval) => (int)(LifeTime / interval) - (int)((LifeTime - RuntimeData.DeltaTime) / interval);
 
-        // TODO: make look accurate
-        if (CameraGlobals.IsUsingFirstPersonCamera) timer /= 2;
-        if (!(LifeTime % timer <= RuntimeData.DeltaTime)) return;
+    void RenderSmokeParticle() {
+        if (Velocity == Vector2.Zero) return;
 
-        Particle p;
-        p = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                        .RotatedBy(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
-                                        .ExpandZ(),
-        GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke"));
-        p.Scale = new(0.3f);
-
-        p.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        // keeps the texture's shading the right way up after the tilt
-        p.Rotation2D = MathHelper.Pi;
-        p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
-
-        p.HasAdditiveBlending = false;
-        p.Color = Properties.SmokeColor;
-        p.Alpha = 0.5f;
-
-        p.UniqueBehavior = (particle) => {
-            if (particle.Alpha <= 0)
-                particle.Destroy();
-
-            if (particle.Alpha > 0)
-                particle.Alpha -= (Properties.Visuals.HasFlag(VisualFlags.Flaming) ? 0.03f : 0.02f) * RuntimeData.DeltaTime;
-
-            GeometryUtils.Add(ref particle.Scale, 0.0075f * RuntimeData.DeltaTime);
-        };
+        // rockets leave smaller puffs more often
+        bool rocket = Properties.Visuals.HasFlag(VisualFlags.Flaming);
+        float interval = rocket ? 2f : 4f;
+        var direction = Vector3.Normalize(Velocity.ExpandZ());
+        // more than one if the frame took longer than the interval, spaced out along the way the shell came
+        int count = TimesElapsed(interval);
+        for (int i = 0; i < count; i++)
+            GameHandler.Particles.MakeShellSmoke(Position3D - direction * 4.2f - Velocity.ExpandZ() * (MOVE_SCALE * i * interval), direction, Properties.SmokeColor, rocket);
     }
 
     ShellTrail? _trail;
@@ -461,44 +445,9 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         _trail.Emit(Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedBy(Rotation + MathHelper.Pi).ExpandZ());
     }
     void RenderFlamingParticle() {
-        var flame = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedBy(Rotation + MathHelper.Pi).ExpandZ(),
-            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
-
-        var scaleRand = Client.ClientRandom.NextFloat(0.5f, 0.75f);
-
-        flame.Layer = 1f;
-        flame.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
-        flame.Color = Properties.FlameColor;
-        flame.HasAdditiveBlending = false;
-
-        flame.Rotation2D = -MathHelper.PiOver2;
-
-        var rotoff = Client.ClientRandom.NextFloat(-0.25f, 0.25f);
-        flame.Position = new Vector3(float.MaxValue);
-        flame.Origin2D = new(flame.Texture.Size().X / 2, flame.Texture.Size().Y);
-
-        var initialScale = flame.Scale;
-
-        flame.UniqueBehavior = (p) => {
-            const float scalingConstant = 0.06f;
-
-            var off = Position + Vector2.Zero.RotatedBy(Rotation);
-
-            flame.Position = off.ExpandZ() + new Vector3(0, 11, 0);
-
-            flame.Roll = Rotation + MathHelper.PiOver2 + rotoff;
-            flame.Pitch = MathHelper.PiOver2;
-
-            //if (TankGame.GameUpdateTime % 2 == 0)
-            //p.Roll = Client.ClientRandom.NextFloat(0, MathHelper.TwoPi);
-
-
-            flame.Scale.X -= scalingConstant * RuntimeData.DeltaTime;
-
-            if (flame.Scale.X <= 0)
-                flame.Destroy();
-        };
+        int count = TimesElapsed(1f);
+        for (int i = 0; i < count; i++)
+            GameHandler.Particles.MakeShellFlame(this);
     }
     #endregion
     void TankGame_OnFocusRegained(object? sender, nint e) {
@@ -664,18 +613,29 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     /// <param name="wasSentByAnotherClient">Whether or not the Destroy was sent by another client.</param>
     public void Destroy(DestructionContext context, bool playSound = true, bool wasSentByAnotherClient = false) {
         ShootSound?.Instance?.Stop(true);
-        // ParticleSystem.MakeSparkEmission(Position, 10);
         ModdedData?.OnDestroy(context, ref playSound);
-        if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine &&
-            context != DestructionContext.WithExplosion) {
+        // pattern matching looks so clean
+        if (context is not DestructionContext.WithHostileTank or DestructionContext.WithMine or DestructionContext.WithExplosion) {
             if (playSound) {
-                var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
+                /*var sfx = */SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
 
-                if (CameraGlobals.IsUsingFirstPersonCamera)
-                    sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
+                // if (CameraGlobals.IsUsingFirstPersonCamera)
+                    // sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
             }
 
-            GameHandler.Particles.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 10);
+            if (LifeTime > TOO_SHORT_LIFETIME) {
+                var light = new PointLight(Position3D, Color.Orange, 1f, 50f, true) {
+                    Priority = 1
+                };
+                float lifetime = 20f;
+                var plight = GameplayLights.CreateTempLight(GameHandler.Particles, Position3D, light, lifetime);
+                // ParticleManager.Animate(plight, lifetime, )
+                plight.UniqueBehavior += (a) => {
+                    light.Intensity -= 0.05f * RuntimeData.DeltaTime;
+                };
+
+                GameHandler.Particles.MakeShellImpact(Position3D);
+            }
         }
 
         TrailSound?.Instance?.Stop();

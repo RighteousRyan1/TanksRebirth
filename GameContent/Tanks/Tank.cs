@@ -669,52 +669,7 @@ public abstract class Tank(bool ignoresRegister) {
         OnDamage?.Invoke(this, true, context);
         Remove(false);
     }
-    public void DoDestructionEffects() {
-        for (int i = 0; i < 12; i++) {
-            var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0
-                ? "Assets/textures/misc/tank_rock"
-                : "Assets/textures/misc/tank_rock_2");
-
-            var rock = GameHandler.Particles.MakeParticle(Position3D, tex);
-
-            rock.HasAdditiveBlending = false;
-
-            var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(3, 6),
-                Client.ClientRandom.NextFloat(-3, 3));
-
-            rock.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            rock.Scale = new(0.55f);
-            rock.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
-            rock.Color = Properties.DestructionColor;
-
-            rock.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
-                rock.Pitch += MathF.Sin(rock.Position.Length() / 10) * RuntimeData.DeltaTime;
-                vel.Y -= 0.2f * RuntimeData.DeltaTime;
-                rock.Position += vel * RuntimeData.DeltaTime;
-                rock.Alpha -= 0.025f * RuntimeData.DeltaTime;
-
-                if (rock.Alpha <= 0f)
-                    rock.Destroy();
-            };
-        }
-        var expl = GameHandler.Particles.MakeParticle(Position3D,
-                GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-
-        expl.Color = Color.Yellow * 0.75f;
-        expl.ToScreenSpace = true;
-        expl.Scale = new(50f);
-        expl.TextureScale = new(4f);
-        expl.HasAdditiveBlending = true;
-        expl.IsIn2DSpace = true;
-
-        expl.UniqueBehavior = (p) => {
-            GeometryUtils.Add(ref p.Scale, -0.3f * RuntimeData.DeltaTime);
-            p.Alpha -= 0.06f * RuntimeData.DeltaTime;
-            if (p.Scale.X <= 0f)
-                p.Destroy();
-        };
-        GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 15);
-    }
+    public void DoDestructionEffects() => GameHandler.Particles.MakeTankExplosion(Position3D, Properties.DestructionColor);
     /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
     public virtual void LayFootprint(bool alt) => LayFootprint(alt, Position, ChassisRotation);
 
@@ -805,67 +760,10 @@ public abstract class Tank(bool ignoresRegister) {
         }
     }
     public void DoShootParticles() {
-        var hit = GameHandler.Particles.MakeParticle(TurretPosition3D,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-
-        var billboard = CameraGlobals.IsUsingFirstPersonCamera;
-
-        hit.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        hit.Scale = new(0.5f);
-        hit.Billboard = billboard;
-        hit.UniqueBehavior = (part) => {
-            part.Color = Color.Orange;
-
-            if (part.LifeTime > 1)
-                part.Alpha -= 0.1f * RuntimeData.DeltaTime;
-            if (part.Alpha <= 0)
-                part.Destroy();
-        };
-        var smoke = GameHandler.Particles.MakeParticle(TurretPosition3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-        smoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        smoke.Scale = new(0.35f);
-        var smokeInitColor = new Color(251, 122, 74, 255);
-        smoke.HasAdditiveBlending = false;
-        smoke.Billboard = billboard;
-
-        var fullLerpTime = 20f;
-
-        smoke.UniqueBehavior = (p) => {
-            var time = MathF.Min(smoke.LifeTime, fullLerpTime);
-            smoke.Color = Color.Lerp(smokeInitColor, new Color(80, 80, 80), time / fullLerpTime);
-
-            smoke.Scale += new Vector3(0.004f) * RuntimeData.DeltaTime;
-
-            if (time == fullLerpTime) {
-                smoke.Alpha -= 0.04f * RuntimeData.DeltaTime;
-
-                if (smoke.Alpha <= 0)
-                    smoke.Destroy();
-            }
-        };
-
-        var ring = GameHandler.Particles.MakeParticle(TurretPosition3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
-        ring.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        ring.Scale = new(0.4f);
-        ring.HasAdditiveBlending = true;
-        var ringInitColor = Color.Red; // new(251, 122, 74, 255);
-        ring.Billboard = billboard;
-
-        var fullLerpTimeRing = 10f;
-
-        ring.UniqueBehavior = (p) => {
-            var time = MathF.Min(ring.LifeTime, fullLerpTimeRing);
-            ring.Color = Color.Lerp(smokeInitColor, new Color(80, 80, 80), time / fullLerpTimeRing);
-
-            ring.Scale += new Vector3(0.008f) * RuntimeData.DeltaTime;
-
-            if (time == fullLerpTimeRing) {
-                ring.Alpha -= 0.1f * RuntimeData.DeltaTime;
-
-                if (ring.Alpha <= 0)
-                    ring.Destroy();
-            }
-        };
+        // same spot and direction the shells come out of in ShootSpread
+        var direction = Vector2.UnitY.RotatedBy(TurretRotation);
+        var muzzle = Position + new Vector2(0, 20).RotatedBy(-TurretRotation);
+        GameHandler.Particles.MakeMuzzleFlash(new Vector3(muzzle.X, TurretPosition3D.Y, muzzle.Y), new Vector3(-direction.X, 0, direction.Y));
     }
 
     /// <summary>Make this <see cref="Tank"/> lay a <see cref="Mine"/>.</summary>

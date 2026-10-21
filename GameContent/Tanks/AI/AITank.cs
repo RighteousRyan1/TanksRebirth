@@ -187,9 +187,9 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     }
 
     public override void ApplyDefaults(ref TankProperties properties) {
-        properties.DestructionColor = TankDestructionColors[AiTankType];
         Parameters = AIManager.GetAIParameters(AiTankType);
         Properties = AIManager.GetAITankProperties(AiTankType);
+        properties.DestructionColor = TankDestructionColors[AiTankType];
 
         // initialize these so we don't divide by zero in modulus operations
 

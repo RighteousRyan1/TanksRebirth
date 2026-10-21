@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
@@ -18,15 +19,29 @@ public static class GameplayLights {
 
     static float Brightness => LightingPresets.DynamicBrightness;
 
-    /// <summary>Call once at the start of collecting a frame's gameplay lights (recycles the pooled lights).</summary>
+    /// <summary>Call once at the start of collecting a frame's gameplay lights.</summary>
     public static void BeginFrame() {
         _pointsUsed = 0;
         _spotsUsed = 0;
     }
+    /// <summary>Creates a temporary light. If you wish to modify the particle, subscribe to <see cref="Particle.UniqueBehavior"/>.</summary>
+    /// <param name="time">The amount of time, in ticks (60 = 1 second).</param>
+    /// <returns>The particle created.</returns>
+    public static Particle CreateTempLight(ParticleManager system, Vector3 position, Light light, float time) {
+        var particle = system.MakeParticle(position);
+        LightingSystem.Lights.Add(light);
+
+        particle.UniqueBehavior += (a) => {
+            if (particle.LifeTime > time) {
+                LightingSystem.Lights.Remove(light);
+                particle.Destroy();
+            }
+        };
+
+        return particle;
+    }
 
     public static void AddHeadlight(Vector3 relativePosition, Vector2 forward, bool isLocalPlayer) {
-        if (forward.LengthSquared() < 1e-6f)
-            forward = new Vector2(0f, 1f);
         forward.Normalize();
         var forward3 = new Vector3(forward.X, 0f, forward.Y);
 
