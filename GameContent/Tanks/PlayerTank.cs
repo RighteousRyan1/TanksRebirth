@@ -193,7 +193,7 @@ public class PlayerTank : Tank {
         base.Initialize();
     }
     public sealed override void ApplyDefaults(ref TankProperties properties) {
-        properties.TreadVolume = 0.2f;
+        properties.TreadVolume = 30f / 127f;
         properties.ShellCooldown = 5; // 5
         properties.ShootStun = 5; // 5
         properties.ShellSpeed = 3f; // 3f
