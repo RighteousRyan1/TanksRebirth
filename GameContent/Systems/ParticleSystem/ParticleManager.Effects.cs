@@ -83,7 +83,7 @@ public partial class ParticleManager {
     static readonly (float, Color)[] _sparkColor = [(0f, Color.White), (0.14f, Color.White), (0.43f, new Color(255, 255, 0)), (0.57f, new Color(220, 0, 0))];
     static readonly (float, float)[] _sparkLength = [(0f, 1f), (0.28f, 1f), (1f, 0.3f)];
 
-    void MakeSparks(Vector3 position, int count, Vector3 axis, float spread, float speed, float outward, float drag, float life) {
+    public void MakeSparks(Vector3 position, int count, Vector3 axis, float spread, float speed, float outward, float drag, float life) {
         var texture = Tex("misc/particle_line");
         for (int i = 0; i < count; i++) {
             var direction = MathUtils.RandomDirection(axis, spread);
@@ -105,7 +105,7 @@ public partial class ParticleManager {
 
     static readonly (float, Color)[] _ringColor = [(0f, new Color(255, 111, 108)), (0.15f, new Color(255, 45, 45))];
 
-    void MakeImpactRing(Vector3 position, float size, float life, float alpha) {
+    public void MakeImpactRing(Vector3 position, float size, float life, float alpha) {
         var texture = Tex("misc/ring");
         var ring = MakeOrthoParticle(position, texture, true);
         Animate(ring, life, (p, t) => {
@@ -117,7 +117,7 @@ public partial class ParticleManager {
 
     static readonly (float, Color)[] _flashColor = [(0f, new Color(255, 255, 183)), (0.8f, new Color(255, 255, 48))];
 
-    void MakeImpactFlash(Vector3 position, float size, float life) {
+    public void MakeImpactFlash(Vector3 position, float size, float life) {
         var texture = Tex("misc/light_star");
         var flash = MakeOrthoParticle(position, texture, true);
         flash.Rotation2D = Rand.NextFloat(0f, MathHelper.TwoPi);
@@ -132,7 +132,7 @@ public partial class ParticleManager {
     static readonly (float, float)[] _fireSize = [(0f, 4f), (0.04f, 7f), (0.18f, 7.7f), (0.41f, 6.8f), (1f, 3f)];
     static readonly (float, float)[] _fireAlpha = [(0f, 1f), (0.65f, 1f), (0.95f, 0f)];
 
-    void MakeFirePuffs(Vector3 center, int count, float radius, float speed, float drag, float rise, float size, float life, Color smokeColor) {
+    public void MakeFirePuffs(Vector3 center, int count, float radius, float speed, float drag, float rise, float size, float life, Color smokeColor) {
         var texture = Tex("misc/tank_smoke_light");
         var smokeTexture = Tex("misc/tank_smoke");
         for (int i = 0; i < count; i++) {

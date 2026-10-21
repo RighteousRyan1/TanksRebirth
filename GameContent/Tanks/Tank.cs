@@ -669,7 +669,8 @@ public abstract class Tank(bool ignoresRegister) {
         OnDamage?.Invoke(this, true, context);
         Remove(false);
     }
-    public void DoDestructionEffects() => GameHandler.Particles.MakeTankExplosion(Position3D, Properties.DestructionColor);
+    // added offset so smoke doesn't just clip into the ground
+    public void DoDestructionEffects() => GameHandler.Particles.MakeTankExplosion(Position3D + new Vector3(0, 5, 0), Properties.DestructionColor);
     /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
     public virtual void LayFootprint(bool alt) => LayFootprint(alt, Position, ChassisRotation);
 

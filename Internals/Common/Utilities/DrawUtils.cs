@@ -87,7 +87,7 @@ public static class DrawUtils {
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
 
-        var origin = GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale);
+        var origin = GameUtils.GetAnchor(anchor, MeasureString(font, text, charSpacing, origMeasureScale));
         DrawBorder(spriteBatch, font, text, position, borderColor, scale, rotation, origin, borderThickness, charSpacing);
 
         spriteBatch.DrawString(font, text, position, textColor, scale, rotation, origin, 1f, characterSpacing: charSpacing);
@@ -111,7 +111,7 @@ public static class DrawUtils {
 
         DrawStringShadowOnly(spriteBatch, font, position, shadowDir, text, scale, alpha, anchor, shadowDistScale, shadowAlpha, origMeasureScale, charSpacing);
 
-        spriteBatch.DrawString(font, text, position, color * alpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+        spriteBatch.DrawString(font, text, position, color * alpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
     }
     public static void DrawTextureWithShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir, 
         Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
@@ -136,7 +136,7 @@ public static class DrawUtils {
 
         spriteBatch.DrawString(font, text, position + 
             Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), 
-            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
 
         DrawStringWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale); 
     }
@@ -144,25 +144,19 @@ public static class DrawUtils {
     public static void DrawStringBorderOnly(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
         Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
-        DrawBorder(spriteBatch, font, text, position, borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), borderThickness, charSpacing);
+        DrawBorder(spriteBatch, font, text, position, borderColor, scale, rotation, GameUtils.GetAnchor(anchor, MeasureString(font, text, charSpacing, origMeasureScale)), borderThickness, charSpacing);
     }
     public static void DrawStringShadowOnly(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,
     string text, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
     float shadowDistScale = 1f, float shadowAlpha = 1f, float origMeasureScale = 1f, float charSpacing = 0) {
 
         spriteBatch.DrawString(font, text, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
-            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
     }
 
-    public static float GetTextXOffsetForSpacing(string text, float spacing) {
-        var multiplicand = text.Length - 2;
-
-        // nothing to do lol
-        if (multiplicand < 0)
-            multiplicand = 0;
-
-        return spacing * multiplicand;
-    }
+    /// <summary>The size of the text as it's drawn, including the spacing between characters. Used to anchor text.</summary>
+    static Vector2 MeasureString(SpriteFontBase font, string text, float charSpacing, float origMeasureScale)
+        => font.MeasureString(text, characterSpacing: charSpacing) * origMeasureScale;
     
     public static void DrawNineSliced(SpriteBatch spriteBatch, Texture2D texture, int border, Rectangle area, Color color, Vector2 origin) {
         Point useBorder = new Vector2(border, border).ToResolution().ToPoint();
