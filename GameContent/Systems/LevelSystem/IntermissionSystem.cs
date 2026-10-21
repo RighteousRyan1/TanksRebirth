@@ -560,14 +560,11 @@ public static class IntermissionSystem {
         string enemyTankDisplay = $"{TankGame.GameLanguage.Misc.EnemyTanks}: {mafs}";
         string missionName = CampaignGlobals.LoadedCampaign.LoadedMission.Name;
 
-        float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.X;
-        float spacingMissionName = DrawUtils.GetTextXOffsetForSpacing(missionName, spacing) / TextAnimatorLarge.CurrentScale.X;
-
         // slight misalignment
 
         // draw mission name, tanks remaining
         DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-            new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName.ToResolutionX(), textOffsetMissionName),
+            new Vector2(WindowUtils.WindowWidth / 2, textOffsetMissionName),
             Vector2.One,
             missionName,
             BackgroundColor,
@@ -575,7 +572,7 @@ public static class IntermissionSystem {
             TextAnimatorLarge.CurrentScale.Flatten().ToResolution(),
             1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
         DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-            new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay.ToResolutionX(), textOffsetTanksLeft),
+            new Vector2(WindowUtils.WindowWidth / 2, textOffsetTanksLeft),
             Vector2.One,
             enemyTankDisplay,
             BackgroundColor,
