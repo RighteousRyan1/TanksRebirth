@@ -78,7 +78,7 @@ public class Crate {
     public static Crate SpawnCrate(Vector3 pos, float gravity) {
         var spawnSfx = "Assets/sounds/crate/CrateSpawn.ogg";
 
-        SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
+        SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f, position: pos);
 
         return new() {
             Position = pos,
@@ -142,7 +142,7 @@ public class Crate {
                 if (Velocity.Y <= -1f) {
                     var spawnSfx = "Assets/sounds/crate/CrateImpact.ogg";
 
-                    SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
+                    SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f, position: Position);
 
                     Velocity.Y = -Velocity.Y * 0.3f;
 

@@ -29,8 +29,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Added a second hand to the clock (thank you BigKitty)
 - Added heaps more graphics settings for regular gameplay, including Anti-Aliasing, FPS limit, and more!
 - New setting which allows the display of team colors on tanks
-	- I'd suggest only using this in non-standard campaigns (e.g: campaigns where it's only players vs ai tanks, 2 teams)
+	- I'd suggest only using this in non-standard campaigns (e.g: campaigns where it's only players vs AI tanks, 2 teams)
 - Added a rudimentary message depending on the result of the current mission
+- Added a new audio spatialization system 
 
 # Changes
 
@@ -99,8 +100,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - `RuntimeData.DeltaTime` -> `RuntimeData.DeltaFrames`
     - Do NOT use the new `DeltaTime`, as it is actually what `DeltaTime` means now.
 - `CameraGlobals.RebirthFreecam` -> `CameraGlobals.PerspectiveCamera`
-
-
+- Sound effects now have optional spatializaiton parameters
 
 - If there is anything unclear or uncertain after reading these notes, please reach out to me
 

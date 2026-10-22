@@ -137,7 +137,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     // int kind for the kind of plane soon?
-    public static void SendAirplaneSpawn(Vector2 spawnPos, Vector2 velocity) {
+    public static void SendAirplaneSpawn(Vector3 spawnPos, Vector3 velocity) {
         if (MainMenuUI.IsActive || !IsConnected())
             return;
 

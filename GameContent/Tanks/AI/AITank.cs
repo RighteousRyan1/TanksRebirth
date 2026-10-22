@@ -294,7 +294,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         OnDestroy?.Invoke();
 
         const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
-        SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f);
+        SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, position: Position3D);
 
         var aiDeathMark = new TankDeathMark(TankDeathMark.CheckColor.White) {
             Position = Position3D + new Vector3(0, 0.1f, 0),

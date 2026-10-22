@@ -363,8 +363,8 @@ public static class NetPlay {
                 IngamePing.CreateFromTankSender(loc, pingId, pid);
                 break;
             case PacketID.SendAirplane:
-                var planePos = reader.GetVector2();
-                var planeVel = reader.GetVector2();
+                var planePos = reader.GetVector3();
+                var planeVel = reader.GetVector3();
 
                 Airplane.SpawnPlaneWithSmokeGrenades(planePos, planeVel, true);
                 break;
@@ -646,8 +646,8 @@ public static class NetPlay {
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SendAirplane:
-                var planePos = reader.GetVector2();
-                var planeVel = reader.GetVector2();
+                var planePos = reader.GetVector3();
+                var planeVel = reader.GetVector3();
 
                 message.Put(planePos);
                 message.Put(planeVel);

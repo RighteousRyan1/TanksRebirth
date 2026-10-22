@@ -802,6 +802,7 @@ public class TankGame : Game {
             CampaignCompleteUI.Update();
 
         SubHandleLogic(gameTime);
+        SoundPlayer.UpdatePositionedSounds();
 
         // AchievementsUI.UpdateBtns();
 

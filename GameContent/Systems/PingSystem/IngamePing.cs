@@ -61,7 +61,7 @@ public class IngamePing {
         Type = pingType;
         Position = position;
         Color = color;
-        SoundPlayer.PlaySoundInstance($"Assets/sounds/ping/tr_ping_{PingMenu.PingIdToName[pingType].Replace(' ', '_').ToLower()}.ogg", SoundContext.Effect);
+        SoundPlayer.PlaySoundInstance($"Assets/sounds/ping/tr_ping_{PingMenu.PingIdToName[pingType].Replace(' ', '_').ToLower()}.ogg", SoundContext.Effect, position: Position);
         var p = GameHandler.Particles.MakeParticle(Position + new Vector3(0, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
         p.Scale = new(0f);
 

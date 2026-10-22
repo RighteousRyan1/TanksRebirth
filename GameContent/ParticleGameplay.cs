@@ -79,15 +79,16 @@ public static class ParticleGameplay {
                 }
             }
 
-            if (p.Position.Y < 7) {
+            const float Y_REST = 3f;
+            if (p.Position.Y < Y_REST) {
                 if (hits > 0) {
                     hits--;
                     velocity.Y = -velocity.Y * hits / maxHits;
-                    p.Position.Y = 7;
+                    p.Position.Y = Y_REST;
                 }
                 else if (hits <= 0) {
                     velocity = Vector3.Zero;
-                    p.Position.Y = 7;
+                    p.Position.Y = Y_REST;
                     startTimer = true;
                 }
             }
@@ -123,7 +124,7 @@ public static class ParticleGameplay {
     }
 
     public static void MakeSmoke(ParticleManager manager, Vector3 position) {
-        SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f);
+        SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, position: position);
         for (int i = 0; i < 8; i++) {
             var c = manager.MakeParticle(position,
                 ModelGlobals.Smoke.Asset,

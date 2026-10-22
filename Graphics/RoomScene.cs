@@ -214,22 +214,21 @@ public static class RoomScene {
         // quarter = 15 minutes * quarter.
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.PerspectiveCamera.Position, 2500);
             switch (quarter) {
                 case 1:
-                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, volume: vol);
+                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
                     break;
                 case 2:
-                    SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, volume: vol);
+                    SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
                     await Task.Delay(timeBetweenSeqs);
-                    SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, volume: vol);
+                    SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
                     break;
                 case 3:
-                    SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, playNew: true, volume: vol);
+                    SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
                     await Task.Delay(timeBetweenSeqs);
-                    SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, volume: vol);
+                    SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
                     await Task.Delay(timeBetweenSeqs);
-                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, volume: vol);
+                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
                     break;
                 default:
                     // do hourly bro.
@@ -241,18 +240,16 @@ public static class RoomScene {
         if (hour == 0) hour += 12;
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.PerspectiveCamera.Position, 2500);
-            SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, volume: vol);
+            SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
             await Task.Delay(timeBetweenSeqs);
-            SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, volume: vol);
+            SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
             await Task.Delay(timeBetweenSeqs);
-            SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, playNew: true, volume: vol);
+            SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
             await Task.Delay(timeBetweenSeqs);
-            SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, volume: vol);
+            SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
             for (int i = 0; i < hour; i++) {
                 await Task.Delay(timeBetweenSeqs);
-                vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.PerspectiveCamera.Position, 2500);
-                SoundPlayer.PlaySoundInstance(ChimeHour, SoundContext.Effect, playNew: true, volume: vol);
+                SoundPlayer.PlaySoundInstance(ChimeHour, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
             }
         });
     }

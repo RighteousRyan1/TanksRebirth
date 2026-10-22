@@ -67,7 +67,7 @@ public static class MatrixUtils {
         // yaw
         float sinp = 2f * (q.W * q.Y - q.Z * q.X);
         if (MathF.Abs(sinp) >= 1f)
-            yaw = MathF.CopySign(MathHelper.PiOver2, sinp); // clamp to 90°
+            yaw = MathF.CopySign(MathHelper.PiOver2, sinp); // clamp to 90 degs
         else
             yaw = MathF.Asin(sinp);
 
@@ -83,13 +83,15 @@ public static class MatrixUtils {
         };
     }
 
+    /// <summary>Whether <paramref name="projection"/> is orthographic.</summary>
+    public static bool IsOrthographic(Matrix projection) => projection.M44 == 1f;
     /// <summary>
     /// Checks if two given matrices are "identical."
     /// </summary>
     /// <param name="m1">The first matrix.</param>
     /// <param name="m2">The second matrix.</param>
     /// <param name="epsilon">The "give" for the equality check. If too low, this check can fail even though the matrices are indeed equal, due to IEEE inaccuracy.</param>
-    /// <returns></returns>
+    /// <returns>Whether the two matrices are within <paramref name="epsilon"/>.</returns>
     public static bool AreMatricesEqual(Matrix m1, Matrix m2, float epsilon = 0.0001f) {
         return Math.Abs(m1.M11 - m2.M11) < epsilon &&
                Math.Abs(m1.M12 - m2.M12) < epsilon &&

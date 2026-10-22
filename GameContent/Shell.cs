@@ -260,7 +260,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                     ShellID.Explosive => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
                     _ => throw new NotImplementedException($"Sound for the shell type {s.Type} is not implemented... yet."),
                 };
-                SoundPlayer.PlaySoundInstance(s.ShootSound, SoundContext.Effect, volume: 1f, pitchOverride: GameUtils.NaturalPitchShift);
+                SoundPlayer.PlaySoundInstance(s.ShootSound, SoundContext.Effect, volume: 1f, pitchOverride: GameUtils.NaturalPitchShift, position: s.Position3D);
             }
 
             return s;
@@ -477,7 +477,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         Velocity = Vector2.Reflect(Velocity, normal);
 
 
-        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
+        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift, position: Position3D);
 
         //bool fp = CameraGlobals.IsUsingFirstPresonCamera;
         //if (fp)
@@ -486,7 +486,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
                 sound.Instance.Pitch = Client.ClientRandom.NextFloat(0.15f, 0.25f);
-                var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f);
+                var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f, position: Position3D);
                 rocketRSound.Pitch -= 0.65f;
                 //if (fp)
                 //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.PerspectiveCamera.Position);
@@ -627,7 +627,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
             if (LifeTime > TOO_SHORT_LIFETIME) {
                 if (playSound) {
                     /*var sfx = */
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift, position: Position3D);
 
                     // if (CameraGlobals.IsUsingFirstPersonCamera)
                     // sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.PerspectiveCamera.Position);

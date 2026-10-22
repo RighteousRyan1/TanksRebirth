@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using tainicom.Aether.Physics2D.Dynamics;
@@ -39,15 +39,13 @@ public class Airplane {
     public readonly int Id;
     public float LifeSpan;
     public float LifeTime;
-    public float Rotation; // previously EulerAngles
+    public EulerAngles Rotation;
     public bool RotateTowardsVelocity = true;
 
     public Vector3 Position;
-    public Vector2 Velocity;
+    public Vector3 Velocity;
 
-    public Matrix World;
-    public Matrix View;
-    public Matrix Projection;
+    public Matrix World, View, Projection;
 
     public Texture2D BodyTexture;
     public Texture2D WingTexture;
@@ -60,8 +58,8 @@ public class Airplane {
 
     public OggAudio PlaneLoop { get; set; }
 
-    private Matrix[] _boneTransforms;
-    public Airplane(Vector3 position, Vector2 velocity, float lifeSpan) {
+    readonly Matrix[] _boneTransforms;
+    public Airplane(Vector3 position, Vector3 velocity, float lifeSpan) {
         Position = position;
         Velocity = velocity;
 
@@ -124,45 +122,44 @@ public class Airplane {
     public void CloseTrapDoors() => _isOpening = false;
     /// <summary>Returns a random position on the outskirts of the playing field. Pass Server.ServerRandom if doing server-sided stuff.
     /// Use Client.ClientRandom if not.</summary>
-    public static Vector2 ChooseRandomXZPosition(Random random) {
+    public static Vector3 ChooseRandomXZPosition(Random random) {
         var spawnZAxis = random.Next(2) == 0;
 
         // if spawnZAxis, spawn on top if false, bottom if true
         // if !spawnZAxis, spawn on left if false, right if true
         var spawnOtherSide = random.Next(2) == 0;
 
-        var randomPos = new Vector2();
+        var randomPos = new Vector3();
 
         if (spawnZAxis) {
-            if (spawnOtherSide) randomPos.Y = GameScene.MAX_Z + 150;
-            else randomPos.Y = GameScene.MIN_Z - 150;
+            if (spawnOtherSide) randomPos.Z = GameScene.MAX_Z + 150;
+            else randomPos.Z = GameScene.MIN_Z - 150;
 
             randomPos.X = random.NextFloat(GameScene.MIN_X, GameScene.MAX_X);
         } else {
             if (spawnOtherSide) randomPos.X = GameScene.MAX_X + 150;
             else randomPos.X = GameScene.MIN_X - 150;
 
-            randomPos.Y = random.NextFloat(GameScene.MIN_Z, GameScene.MAX_Z);
+            randomPos.Z = random.NextFloat(GameScene.MIN_Z, GameScene.MAX_Z);
         }
         return randomPos;
     }
     /// <summary>Returns a random direction for a plane to use, normalized.</summary>
     /// <param name="random">Pass Server.ServerRandom if doing server-sided stuff. Use Client.ClientRandom if not.</param>
-    /// <param name="posXZ">The position of the plane, initially.</param>
+    /// <param name="pos">The position of the plane, initially.</param>
     /// <param name="xPotential">What percent of the map's x-axis, centering from the center of the map, the plane can take flight towards.</param>
     /// <param name="zPotential">What percent of the map's z-axis, centering from the center of the map, the plane can take flight towards.</param>
-    public static Vector2 ChooseRandomFlightTarget(Random random, Vector2 posXZ, float speedMult = 1f, float xPotential = 1f, float zPotential = 1f) {
+    public static Vector3 ChooseRandomFlightTarget(Random random, Vector3 pos, float speedMult = 1f, float xPotential = 1f, float zPotential = 1f) {
         // magic numbers used reduce bias towards negative Z from the origin
-        var zOff = 132;
-        var randomPosition = new Vector2 {
+        // same height as the plane so it flies level
+        var randomPosition = new Vector3 {
             X = random.NextFloat(GameScene.MIN_X * xPotential, GameScene.MAX_X * xPotential),
-            Y = random.NextFloat((GameScene.MIN_Z - zOff) * zPotential, (GameScene.MAX_Z - zOff) * zPotential)
+            Y = pos.Y,
+            Z = random.NextFloat(GameScene.MIN_Z * zPotential, GameScene.MAX_Z * zPotential)
         };
-        randomPosition.Y += zOff;
         
-
         // return normalized so the user can modify its magnitude
-        return Vector2.Normalize(randomPosition - posXZ) * speedMult;
+        return Vector3.Normalize(randomPosition - pos) * speedMult;
     }
     public void Remove() {
         GameUI.Pause.OnPress -= PauseSounds;
@@ -177,8 +174,7 @@ public class Airplane {
     public void Update() {
         LifeTime += RuntimeData.DeltaFrames;
 
-        Position.X += Velocity.X * RuntimeData.DeltaFrames;
-        Position.Z += Velocity.Y * RuntimeData.DeltaFrames;
+        Position += Velocity * RuntimeData.DeltaFrames;
 
         // TODO: unhardcode this.
         if (LifeTime > 60)
@@ -223,15 +219,15 @@ public class Airplane {
             _doorLRotation = _doorRRotation = Easings.ComputeEase(EasingFunction.OutCubic, _openPercent) * MathHelper.PiOver2;
         }
 
-        if (RotateTowardsVelocity) Rotation = MathUtils.RotationOf(Velocity);
+        if (RotateTowardsVelocity) Rotation = MathUtils.GetLookAtEulerAngles(Position, Position + Velocity);
 
         var screenPos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
-        if (CameraGlobals.IsUsingFirstPersonCamera) {
-            PlaneLoop.Volume = SoundUtils.GetVolumeFromCameraPosition(Position, CameraGlobals.PerspectiveCamera.Position);
-        }
-        else PlaneLoop.Volume = SoundUtils.GetVolumeFromScreenPosition(screenPos);
-        //PlaneLoop.Instance.Pan = SoundUtils.GetPanFromScreenPosition(screenPos.X) - 1;// * 0.8f;
-        // TODO: once bk fixes mesh/bone problem, make this work. find mesh via Meshes["Name"] and then transform mesh.ParentBone.Transform
+        PlaneLoop.Position = Position;
+
+        // switch to GetSpatialParams?
+        // perspective cameras fade it by distance through its position, the board view fades it once off screen
+        PlaneLoop.Volume = MatrixUtils.IsOrthographic(CameraGlobals.GameProjection) ? SoundUtils.GetVolumeFromScreenPosition(screenPos) : 1f;
+
         PropellerR.ParentBone.Transform = Matrix.CreateScale(100) * Matrix.CreateRotationY(LifeTime / 5f) * Matrix.CreateRotationX(-MathHelper.PiOver2)
             * Matrix.CreateTranslation(new Vector3(-36.501f, 0, 22.2054f));
         PropellerL.ParentBone.Transform = Matrix.CreateScale(100) * Matrix.CreateRotationY(-LifeTime / 5f) * Matrix.CreateRotationX(-MathHelper.PiOver2)
@@ -251,30 +247,25 @@ public class Airplane {
 
         _wereDoorsFullyOpen = AreDoorsFullyOpen;
     }
-    public static void SpawnPlaneWithSmokeGrenades(Vector2? spawnSet = null, Vector2? flightTarget = null, bool wasSentFromNet = false) {
+    public static void SpawnPlaneWithSmokeGrenades(Vector3? spawnSet = null, Vector3? flightTarget = null, bool wasSentFromNet = false) {
         // TODO: sync the plane over the net... soon!
-        Vector2 pos;
-        Vector2 vel;
-
-        pos = spawnSet != null ? spawnSet.Value : ChooseRandomXZPosition(Client.ClientRandom);
-        vel = flightTarget != null ? flightTarget.Value : ChooseRandomFlightTarget(Client.ClientRandom, pos, 2.5f, 0.5f, 0.5f);
-
-        var pos3d = new Vector3(pos.X, 100, pos.Y);
+        var pos = spawnSet ?? ChooseRandomXZPosition(Client.ClientRandom) + new Vector3(0, 100, 0);
+        var vel = flightTarget ?? ChooseRandomFlightTarget(Client.ClientRandom, pos, 2.5f, 0.5f, 0.5f);
 
         if (!wasSentFromNet)
             Client.SendAirplaneSpawn(pos, vel);
 
-        var plane = new Airplane(pos3d, vel, 400f);
+        var plane = new Airplane(pos, vel, 400f);
         plane.WhileTrapDoorsOpenedInstance = (t) => {
             // changed to be determined by the plane itself... i really need to decouple logic from render
             if ((int)(t.LifeTime / 30) != (int)((t.LifeTime - RuntimeData.DeltaFrames) / 30)) {
-                ParticleGameplay.CreateSmokeGrenade(GameHandler.Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.25f);
+                ParticleGameplay.CreateSmokeGrenade(GameHandler.Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Z) * 0.25f);
             }
         };
     }
     public void Render() {
         World = Matrix.CreateScale(0.6f)
-            * Matrix.CreateRotationY(-Rotation)
+            * Matrix.CreateFromYawPitchRoll(Rotation.Yaw, Rotation.Pitch, Rotation.Roll)
             * Matrix.CreateTranslation(Position);
         Projection = CameraGlobals.GameProjection;
         View = CameraGlobals.GameView;

@@ -344,7 +344,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         if (!Properties.Invisible || IsDestroyed) return;
 
-        SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f);
+        SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f, position: Position3D);
 
         var lp1 = GameHandler.Particles.MakeParticle(Position3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
@@ -597,7 +597,7 @@ public abstract class Tank(bool ignoresRegister) {
         if (hp > 0) {
             Extras.Armor!.HitPoints--;
             var ding = SoundPlayer.PlaySoundInstance(
-                $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect);
+                $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect, position: Position3D);
 
             ding.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
             //if (CameraGlobals.IsUsingFirstPresonCamera)
@@ -665,7 +665,7 @@ public abstract class Tank(bool ignoresRegister) {
         IsDestroyed = true;
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
-        var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f);
+        var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, position: Position3D);
 
         //if (CameraGlobals.IsUsingFirstPresonCamera)
         //    SoundUtils.CreateSpatialSound(destroy, Position3D, CameraGlobals.PerspectiveCamera.Position, 1.25f);
@@ -975,7 +975,7 @@ public abstract class Tank(bool ignoresRegister) {
 
                     var sfx = SoundPlayer.PlaySoundInstance(
                         TreadSounds[Client.ClientRandom.Next(TreadSounds.Length)],
-                        SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.MovePitch);
+                        SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.MovePitch, position: Position3D);
                     sfx.Instance.Pitch = Properties.MovePitch;
                 }
             }
