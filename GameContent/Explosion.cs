@@ -87,9 +87,9 @@ public class Explosion : IAITankDanger {
         ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
 
         ring.UniqueBehavior = (a) => {
-            ring.Alpha -= 0.08f * RuntimeData.DeltaTime;
+            ring.Alpha -= 0.08f * RuntimeData.DeltaFrames;
 
-            GeometryUtils.Add(ref ring.Scale, 0.04f * RuntimeData.DeltaTime);
+            GeometryUtils.Add(ref ring.Scale, 0.04f * RuntimeData.DeltaFrames);
             if (ring.Alpha <= 0)
                 ring.Destroy();
         };
@@ -111,7 +111,7 @@ public class Explosion : IAITankDanger {
                 particle.UniqueBehavior = (a) => {
                     act?.Invoke(particle);
                     particle.Color = ExplosionColor;
-                    rotation += rotationSpeed1 * RuntimeData.DeltaTime;
+                    rotation += rotationSpeed1 * RuntimeData.DeltaFrames;
                     var explScalar = MAGIC_EXPLOSION_NUMBER * DamageRadiusScale;
 
                     // find why the rotation isnt rotating the right way. maybe needs a unit circle offset? piover2?
@@ -137,7 +137,7 @@ public class Explosion : IAITankDanger {
     }
     
     public void Update() {
-        DamageRadiusScale = MathUtils.SoftStep(DamageRadiusScale, MaxScale, 0.2f * RuntimeData.DeltaTime);
+        DamageRadiusScale = MathUtils.SoftStep(DamageRadiusScale, MaxScale, 0.2f * RuntimeData.DeltaFrames);
         var damageRadiusReal = DamageRadiusScale * MAGIC_EXPLOSION_NUMBER;
         damageRadiusReal *= damageRadiusReal;
 
@@ -181,8 +181,8 @@ public class Explosion : IAITankDanger {
         if (LifeTime > LingerDuration)
             Remove();
 
-        Rotation += RotationSpeed * RuntimeData.DeltaTime;
-        LifeTime += RuntimeData.DeltaTime;
+        Rotation += RotationSpeed * RuntimeData.DeltaFrames;
+        LifeTime += RuntimeData.DeltaFrames;
 
         OnPostUpdate?.Invoke(this);
     }

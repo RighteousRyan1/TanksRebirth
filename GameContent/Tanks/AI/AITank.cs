@@ -387,10 +387,10 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             p.Color = Color.Red;
 
             p.UniqueBehavior = (p) => {
-                p.Position.Y += 0.35f * RuntimeData.DeltaTime;
+                p.Position.Y += 0.35f * RuntimeData.DeltaFrames;
 
                 if (p.LifeTime > 30)
-                    p.Alpha -= 0.02f * RuntimeData.DeltaTime;
+                    p.Alpha -= 0.02f * RuntimeData.DeltaFrames;
 
                 if (p.Alpha <= 0)
                     p.Destroy();
@@ -428,11 +428,11 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         float lifeTime = 240;
 
         keyPart.UniqueBehavior = (p) => {
-            p.Position.Y += velY * RuntimeData.DeltaTime;
+            p.Position.Y += velY * RuntimeData.DeltaFrames;
             velY -= gravY;
             if (velY < 0) velY = 0;
 
-            t += 0.01f * RuntimeData.DeltaTime;
+            t += 0.01f * RuntimeData.DeltaFrames;
 
             if (t > 1) t = 1;
 
@@ -441,7 +441,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             p.Roll = ease * MathHelper.TwoPi * 6 + MathHelper.PiOver2;
 
             if (p.LifeTime > lifeTime) {
-                t2 += 0.01f * RuntimeData.DeltaTime;
+                t2 += 0.01f * RuntimeData.DeltaFrames;
 
                 if (t2 > 1) t2 = 1;
 
@@ -479,9 +479,9 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         p.Origin2D = FontGlobals.RebirthFont.MeasureString(str) / 2;
 
         p.UniqueBehavior = (p) => {
-            p.Position.Y += 0.1f * RuntimeData.DeltaTime;
+            p.Position.Y += 0.1f * RuntimeData.DeltaFrames;
 
-            p.Alpha -= 0.01f * RuntimeData.DeltaTime;
+            p.Alpha -= 0.01f * RuntimeData.DeltaFrames;
 
             if (p.Alpha <= 0)
                 p.Destroy();

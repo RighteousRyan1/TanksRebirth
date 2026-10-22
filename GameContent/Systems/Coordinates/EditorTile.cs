@@ -258,7 +258,7 @@ public class EditorTile {
 
         if (!_hovered) {
             if (_flashTime > 0) {
-                _flashTime -= 0.01f * RuntimeData.DeltaTime;
+                _flashTime -= 0.01f * RuntimeData.DeltaFrames;
                 Alpha = _flashTime * 0.5f;
                 if (_flashTime <= 0) {
                     AutoAlphaHandle = true;

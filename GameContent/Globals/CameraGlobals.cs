@@ -94,18 +94,18 @@ public static class CameraGlobals {
     }
     public static void UpdateOverhead() {
         if (_transitionTimer > 0) {
-            _transitionTimer -= RuntimeData.DeltaTime;
+            _transitionTimer -= RuntimeData.DeltaFrames;
             if (OverheadView) {
-                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, LVL_EDIT_ANGLE, 0.08f * RuntimeData.DeltaTime);
-                AddativeZoom = MathUtils.SoftStep(AddativeZoom, LVL_EDIT_ZOOM, 0.08f * RuntimeData.DeltaTime);
-                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, LVL_EDIT_Y_OFF, 2f * RuntimeData.DeltaTime);
+                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, LVL_EDIT_ANGLE, 0.08f * RuntimeData.DeltaFrames);
+                AddativeZoom = MathUtils.SoftStep(AddativeZoom, LVL_EDIT_ZOOM, 0.08f * RuntimeData.DeltaFrames);
+                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, LVL_EDIT_Y_OFF, 2f * RuntimeData.DeltaFrames);
             }
             else {
-                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * RuntimeData.DeltaTime);
+                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * RuntimeData.DeltaFrames);
                 if (!LevelEditorUI.IsActive)
-                    AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaTime);
-                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaTime);
-                // Console.WriteLine(RuntimeData.DeltaTime);
+                    AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaFrames);
+                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaFrames);
+                // Console.WriteLine(RuntimeData.DeltaFrames);
             }
         }
     }
@@ -151,6 +151,7 @@ public static class CameraGlobals {
                 break;
         }
 
+        // if (InputUtils.KeyJustPressed(Keys.N))
         ViewFrustum.Matrix = GameView * GameProjection;
     }
     static void UpdateOverheadCamera() {
@@ -187,7 +188,7 @@ public static class CameraGlobals {
         if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X))
             DebugManager.persistFreecam = !DebugManager.persistFreecam;
 
-        float realMoveSpeed = 5f * RuntimeData.DeltaTime;
+        float realMoveSpeed = 5f * RuntimeData.DeltaFrames;
         const float rotationSpeed = 0.01f;
 
         RebirthFreecam.UseFocus = false;
@@ -233,9 +234,9 @@ public static class CameraGlobals {
         }
 
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
-            RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
+            RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaFrames;
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
-            RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaTime;
+            RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaFrames;
         if (InputUtils.MouseMiddle)
             RebirthFreecam.FieldOfView = 90f;
 

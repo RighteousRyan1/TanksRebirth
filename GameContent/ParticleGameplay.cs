@@ -39,8 +39,8 @@ public static class ParticleGameplay {
             velocity.Y -= gravity;
 
             if (hits > 0) {
-                p.Roll += 0.07f * velocity.Length() * RuntimeData.DeltaTime;
-                p.Pitch += 0.07f * velocity.Length() * RuntimeData.DeltaTime;
+                p.Roll += 0.07f * velocity.Length() * RuntimeData.DeltaFrames;
+                p.Pitch += 0.07f * velocity.Length() * RuntimeData.DeltaFrames;
             }
 
             // bounce off walls
@@ -92,7 +92,7 @@ public static class ParticleGameplay {
                 }
             }
 
-            if (startTimer) timer += RuntimeData.DeltaTime;
+            if (startTimer) timer += RuntimeData.DeltaFrames;
 
             if (timer > 60 && !exploded) {
                 exploded = true;
@@ -134,12 +134,12 @@ public static class ParticleGameplay {
             c.Scale.X = randSize;
             c.Scale.Z = randSize;
             c.UniqueBehavior = (b) => {
-                c.Pitch += 0.005f * RuntimeData.DeltaTime;
+                c.Pitch += 0.005f * RuntimeData.DeltaFrames;
                 if (c.Scale.Y < randSize && c.LifeTime < 600)
-                    c.Scale.Y += 0.1f * RuntimeData.DeltaTime;
+                    c.Scale.Y += 0.1f * RuntimeData.DeltaFrames;
                 if (c.LifeTime >= 600) {
-                    c.Scale.Y -= 0.06f * RuntimeData.DeltaTime;
-                    c.Alpha -= 0.06f / randSize * RuntimeData.DeltaTime;
+                    c.Scale.Y -= 0.06f * RuntimeData.DeltaFrames;
+                    c.Alpha -= 0.06f / randSize * RuntimeData.DeltaFrames;
 
                     if (c.Scale.Y <= 0) {
                         c.Destroy();

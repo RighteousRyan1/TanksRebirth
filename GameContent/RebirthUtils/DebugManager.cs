@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Animation;
@@ -43,6 +44,7 @@ public static class DebugManager {
         public const int PWR = 4;
         public const int ACH_DAT = 5;
         public const int TankData = 6;
+        public const int LIGHTS = 7;
     }
     private static readonly Dictionary<int, string> DebuggingNames = new() {
         [Id.FREECAM] = "freecam",
@@ -54,7 +56,8 @@ public static class DebugManager {
         [Id.LVL_DBG] = "lvlmake", // level editor debug
         [Id.PWR] = "pwrup", // powerup
         [Id.ACH_DAT] = "achdat", // achievement data
-        [Id.TankData] = "tnknav" // Owner tank navigation
+        [Id.TankData] = "tnknav", // Owner tank navigation
+        [Id.LIGHTS] = "lights" // dynamic lighting
     };
 
     static int mode;
@@ -89,7 +92,7 @@ public static class DebugManager {
 
     public static UITextButton LoadCampaign;
 
-    private static readonly PowerupTemplate[] powerups = [Powerup.Speed, Powerup.ShellHome, Powerup.Invisibility];
+    static readonly PowerupTemplate[] powerups = [Powerup.Speed, Powerup.ShellHome, Powerup.Invisibility];
 
     static Animator _povAnimatorTest; // used in debug cam mode to create custom transitions
     static EasingFunction _povAnimatorFunction;
@@ -287,7 +290,7 @@ public static class DebugManager {
             }
         }
 
-        if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
+        if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaFrames) {
             RuntimeData.MemoryUsageInBytes = RuntimeData.ProcessMemory;
         }
         if (DebugLevel == Id.METRICS) {
@@ -344,9 +347,9 @@ public static class DebugManager {
             }
 
             if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
-                CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaTime;
+                CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaFrames;
             if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
-                CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaTime;
+                CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaFrames;
 
             if (InputUtils.MouseMiddle) {
                 var mtx = CameraGlobals.GameView;
@@ -602,6 +605,9 @@ public static class DebugManager {
                 }
             }
         }
+        if (DebuggingEnabled && !_hideUi && DebugLevel == Id.LIGHTS)
+            DrawLights(spriteBatch);
+
         for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
             var achievement = VanillaAchievements.Repository.GetAchievements()[i];
 
@@ -731,5 +737,116 @@ public static class DebugManager {
         if (!DebuggingEnabled || _hideUi) return;
 
         DrawUtils.DrawBoundingSphere(sphere, color, view, projection, world, segments);
+    }
+
+    const float LIGHT_MARKER_SIZE = 4f;
+    const float SPOT_PREVIEW_LENGTH = 40f;
+    const float LIGHT_HOVER_DISTANCE = 60f;
+
+    static void DrawLights(SpriteBatch spriteBatch) {
+        var view = CameraGlobals.GameView;
+        var projection = CameraGlobals.GameProjection;
+        var sun = LightingSystem.Sun;
+        var ambient = LightingSystem.Ambient;
+        var stats = LightingSystem.Stats;
+
+        var panelText = $"Lighting: {(LightingSystem.IsActive ? "on" : "off")} | Preset: {LightingPresets.Current}" +
+            $"\nLights: {LightingSystem.Lights.Count} permanent, {LightingSystem.FrameLights.Count} this frame, {LightingSystem.ActiveLights.Count} drawn (max {LightingSystem.Quality.MaxLocalLights})" +
+            $"\nPoint / Spot: {stats.PointLights} / {stats.SpotLights} | Shadowed: {stats.ShadowedPointLights} / {stats.ShadowedSpotLights}" +
+            $"\nDraws: {stats.ShadowDraws} shadow, {stats.LightBufferDraws} light, {stats.ShaftDraws} shaft" +
+            $"\n\nSun: {(sun.Enabled ? "on" : "off")} | Dir {StringUtils.Format(Vector3.Normalize(sun.Direction))} | Color {StringUtils.Format(sun.Color)} x{sun.Intensity:0.##} | Wrap {sun.Wrap:0.##}" +
+            $"\nSun shadows: {(sun.CastsShadows ? "on" : "off")} | Bias {sun.ShadowBias:0.##} | Room map {(sun.RoomShadows ? "on" : "off")} | Shafts {(sun.Shafts.Enabled ? "on" : "off")}" +
+            $"\nAmbient: Sky {StringUtils.Format(ambient.Sky)} | Ground {StringUtils.Format(ambient.Ground)} x{ambient.Intensity:0.##}" +
+            $"\n\nHover a light for its range and settings";
+        var panelPos = new Vector2(8, WindowUtils.WindowHeight * 0.05f);
+        var panelScale = 0.6f * WindowUtils.WindowWidth / 1920f;
+        var panelSize = FontGlobals.RebirthFont.MeasureString(panelText) * panelScale;
+        var panel = new Rectangle(0, 0, (int)(panelPos.X + panelSize.X), (int)(panelPos.Y + panelSize.Y));
+        DrawDebugString(spriteBatch, panelText, panelPos, Id.LIGHTS);
+
+        if (sun.Enabled) {
+            var direction = Vector3.Normalize(sun.Direction);
+            DrawUtils.DrawArrow(sun.ShadowCenter - direction * 300f, sun.ShadowCenter, sun.Color, view, projection);
+        }
+        if (sun.ShadowBounds is BoundingBox shadowBounds)
+            DrawBoundingBox(shadowBounds, Color.Olive, view, projection);
+        foreach (var blocker in LightingSystem.SunBlockers)
+            DrawBoundingBox(blocker, Color.DimGray, view, projection);
+
+        _debugLights.Clear();
+        for (int i = 0; i < LightingSystem.Lights.Count; i++)
+            _debugLights.Add((LightingSystem.Lights[i], $"#{i}"));
+        for (int i = 0; i < LightingSystem.FrameLights.Count; i++)
+            _debugLights.Add((LightingSystem.FrameLights[i], $"frame #{i}"));
+
+        // only lights close to mouse are fully visible
+        Light? hovered = null;
+        var hoverDistance = LIGHT_HOVER_DISTANCE * WindowUtils.WindowWidth / 1920f;
+        foreach (var (light, _) in _debugLights) {
+            if (!TryGetScreenPosition(light.Position, view, projection, out var screenPos))
+                continue;
+            var distance = Vector2.Distance(screenPos, MouseUtils.MousePosition);
+            if (distance < hoverDistance) {
+                hoverDistance = distance;
+                hovered = light;
+            }
+        }
+
+        foreach (var (light, label) in _debugLights)
+            DrawLight(spriteBatch, light, label, light == hovered, panel, view, projection);
+    }
+    static readonly List<(Light Light, string Label)> _debugLights = [];
+
+    static void DrawLight(SpriteBatch spriteBatch, Light light, string label, bool hovered, Rectangle panel, Matrix view, Matrix projection) {
+        var color = !light.Enabled ? Color.Gray : hovered ? Color.White : light.Color;
+        var dimColor = Color.Lerp(color, Color.Black, 0.5f);
+        var spot = light as SpotLight;
+        var direction = spot is null ? Vector3.Zero : Vector3.Normalize(spot.Direction);
+
+        DrawBoundingSphere(new BoundingSphere(light.Position, LIGHT_MARKER_SIZE), color, view, projection, segments: 6);
+
+        if (spot is not null) {
+            var length = hovered ? spot.Range : SPOT_PREVIEW_LENGTH;
+            DrawUtils.DrawLine(spot.Position, spot.Position + direction * length, color, view, projection);
+            DrawUtils.DrawCone(spot.Position, direction, length, spot.OuterAngle, color, view, projection);
+            if (hovered)
+                DrawUtils.DrawCone(spot.Position, direction, length, spot.InnerAngle, dimColor, view, projection);
+        }
+        if (hovered)
+            DrawUtils.DrawCircle(light.Position, Vector3.Up, light.Range, dimColor, view, projection, 48);
+
+        if (!TryGetScreenPosition(light.Position, view, projection, out var screenPos))
+            return;
+
+        var shadows = !light.CastsShadows ? "off" : LightingSystem.HasShadowMap(light) ? "on" : "no slot";
+        var state = !light.Enabled ? " (disabled)" : !LightingSystem.ActiveLights.Contains(light) ? " (culled)" : "";
+        var name = $"{(spot is null ? "Point" : "Spot")} {label}{state}";
+
+        string text;
+        if (hovered) {
+            text = $"{name}" +
+                $"\nPos {StringUtils.Format(light.Position)}" +
+                $"\nColor {StringUtils.Format(light.Color)} x{light.Intensity:0.##} | Range {light.Range:0} | Wrap {light.Wrap:0.##}" +
+                $"\nShadows {shadows} | Bias {light.ShadowBias:0.##} | Priority {light.Priority}";
+            if (spot is not null)
+                text += $"\nDir {StringUtils.Format(direction)} | Cone {MathHelper.ToDegrees(spot.InnerAngle):0}/{MathHelper.ToDegrees(spot.OuterAngle):0} deg";
+        }
+        else {
+            // labels under the stats panel would be unreadable
+            if (panel.Contains(screenPos))
+                return;
+            text = shadows == "on" ? $"{name} | shadows" : name;
+        }
+
+        var scale = new Vector2(hovered ? 0.45f : 0.3f).ToResolution();
+        DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, text, screenPos + new Vector2(0, 10).ToResolution(), Color.White, Color.Black,
+            scale, 0f, Anchor.TopCenter, 0.5f);
+    }
+    static bool TryGetScreenPosition(Vector3 position, Matrix view, Matrix projection, out Vector2 screenPos) {
+        screenPos = default;
+        if (CameraGlobals.ViewFrustum.Contains(position) == ContainmentType.Disjoint)
+            return false;
+        screenPos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), view, projection);
+        return true;
     }
 }

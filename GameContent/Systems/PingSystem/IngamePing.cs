@@ -75,11 +75,11 @@ public class IngamePing {
 
         //float x = 0f;
         p.UniqueBehavior = (a) => {
-            //x += 0.003f * RuntimeData.DeltaTime;
+            //x += 0.003f * RuntimeData.DeltaFrames;
             //var val = Easings.InOutElastic(x);
             var val = 0.005f;
             GeometryUtils.Add(ref p.Scale, val); //Easings.OutSine()
-            p.Alpha -= val * 1.8f * RuntimeData.DeltaTime;
+            p.Alpha -= val * 1.8f * RuntimeData.DeltaFrames;
             p.Pitch = MathHelper.PiOver2;
 
             p.Color = Color;
@@ -102,7 +102,7 @@ public class IngamePing {
     }
 
     public void Update() {
-        _lifeTime += RuntimeData.DeltaTime;
+        _lifeTime += RuntimeData.DeltaFrames;
 
         var easeSpeed = 0.05f;
 
@@ -110,11 +110,11 @@ public class IngamePing {
             Position = TrackedTank.Position3D;
         
         if (_lifeTime > MaxLifeTime) {
-            _scaleEase -= RuntimeData.DeltaTime * easeSpeed;
+            _scaleEase -= RuntimeData.DeltaFrames * easeSpeed;
             if (_scaleEase <= 0)
                 _delete = true;
         } else
-            _scaleEase += RuntimeData.DeltaTime * easeSpeed;
+            _scaleEase += RuntimeData.DeltaFrames * easeSpeed;
 
         _scaleEase = MathHelper.Clamp(_scaleEase, 0, 1);
     }

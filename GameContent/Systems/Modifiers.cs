@@ -384,7 +384,7 @@ public record Modifiers {
         if (!Client.IsHost() && Client.IsConnected()) return;
 
         if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.AIRPLANE) || IsOn(PLANES)) && CampaignGlobals.InMission) {
-            if (RuntimeData.RunTime % 180 <= RuntimeData.DeltaTime) {
+            if (RuntimeData.RunTime % 180 <= RuntimeData.DeltaFrames) {
                 // 33% chance every 5 seconds
                 if (Client.ClientRandom.Next(3) == 0) {
                     Airplane.SpawnPlaneWithSmokeGrenades();

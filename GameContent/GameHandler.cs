@@ -119,7 +119,7 @@ public class GameHandler {
 
         VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
-        if (RuntimeData.RunTime % 30 < RuntimeData.DeltaTime) {
+        if (RuntimeData.RunTime % 30 < RuntimeData.DeltaFrames) {
             Client.SendLives();
             Client.SendKillCounts();
         }

@@ -80,11 +80,11 @@ public static class PingMenu {
             offY += (PingIdToTexture[i].Height * scale + padding).ToResolutionX();
         }
         if (rect.Contains(MouseUtils.MouseX, MouseUtils.MouseY)) {
-            _uiOpacity += 0.04f * RuntimeData.DeltaTime;
+            _uiOpacity += 0.04f * RuntimeData.DeltaFrames;
             if (_uiOpacity > 0.85f) _uiOpacity = 0.85f;
         }
         else {
-            _uiOpacity -= 0.04f * RuntimeData.DeltaTime;
+            _uiOpacity -= 0.04f * RuntimeData.DeltaFrames;
             if (_uiOpacity < 0.1f) _uiOpacity = 0.1f;
         }
     }

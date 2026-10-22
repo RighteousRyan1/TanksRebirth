@@ -360,7 +360,7 @@ public abstract class Tank(bool ignoresRegister) {
             lp1.TextureScale = new(5);
 
             if (lp1.LifeTime > 75) {
-                lp1.Alpha -= 0.02f * RuntimeData.DeltaTime;
+                lp1.Alpha -= 0.02f * RuntimeData.DeltaFrames;
                 lp1.Scale -= new Vector3(0.02f);
             }
 
@@ -381,7 +381,7 @@ public abstract class Tank(bool ignoresRegister) {
             lp2.TextureScale = new(15);
 
             if (lp2.LifeTime > 40) {
-                lp2.Alpha -= 0.025f * RuntimeData.DeltaTime;
+                lp2.Alpha -= 0.025f * RuntimeData.DeltaFrames;
                 lp1.Scale -= new Vector3(0.02f);
             }
 
@@ -406,12 +406,12 @@ public abstract class Tank(bool ignoresRegister) {
             lpSmoke.Scale = new(0.75f);
 
             lpSmoke.UniqueBehavior = (elp) => {
-                elp.Position.X += velocity.X * RuntimeData.DeltaTime;
-                elp.Position.Z += velocity.Y * RuntimeData.DeltaTime;
+                elp.Position.X += velocity.X * RuntimeData.DeltaFrames;
+                elp.Position.Z += velocity.Y * RuntimeData.DeltaFrames;
 
                 if (elp.LifeTime > 15) {
-                    GeometryUtils.Add(ref elp.Scale, -0.03f * RuntimeData.DeltaTime);
-                    elp.Alpha -= 0.03f * RuntimeData.DeltaTime;
+                    GeometryUtils.Add(ref elp.Scale, -0.03f * RuntimeData.DeltaFrames);
+                    elp.Alpha -= 0.03f * RuntimeData.DeltaFrames;
                 }
 
                 if (elp.Scale.X <= 0f || elp.Alpha <= 0f)
@@ -479,13 +479,13 @@ public abstract class Tank(bool ignoresRegister) {
     }
     void DecrementTimers() {
         if (CurShootStun > 0)
-            CurShootStun -= RuntimeData.DeltaTime;
+            CurShootStun -= RuntimeData.DeltaFrames;
         if (CurShootCooldown > 0)
-            CurShootCooldown -= RuntimeData.DeltaTime;
+            CurShootCooldown -= RuntimeData.DeltaFrames;
         if (CurMineStun > 0)
-            CurMineStun -= RuntimeData.DeltaTime;
+            CurMineStun -= RuntimeData.DeltaFrames;
         if (CurMineCooldown > 0)
-            CurMineCooldown -= RuntimeData.DeltaTime;
+            CurMineCooldown -= RuntimeData.DeltaFrames;
     }
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
@@ -508,8 +508,8 @@ public abstract class Tank(bool ignoresRegister) {
 
         if (IsDestroyed) return;
 
-        KnockbackVelocity.X = MathUtils.RoughStep(KnockbackVelocity.X, 0, 0.1f * RuntimeData.DeltaTime);
-        KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaTime);
+        KnockbackVelocity.X = MathUtils.RoughStep(KnockbackVelocity.X, 0, 0.1f * RuntimeData.DeltaFrames);
+        KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaFrames);
 
         // magical multiplication number to maintain values like 1.8 max speed with the original game
         Physics.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
@@ -539,11 +539,11 @@ public abstract class Tank(bool ignoresRegister) {
         }
         ChassisRotation = ChassisRotation.WrapTauAngle();
         if (IsTurning || IsBraking) {
-            // used to be 1f - DeltaTime
-            Speed *= (float)Math.Pow(Properties.Deceleration, RuntimeData.DeltaTime);
+            // used to be 1f - DeltaFrames
+            Speed *= (float)Math.Pow(Properties.Deceleration, RuntimeData.DeltaFrames);
         }
         else {
-            Speed = Math.Min(Properties.MaxSpeed, Speed + Properties.Acceleration * RuntimeData.DeltaTime);
+            Speed = Math.Min(Properties.MaxSpeed, Speed + Properties.Acceleration * RuntimeData.DeltaFrames);
         }
 
         // bigkitty told me that stuns instantly apply zero-velocity
@@ -569,7 +569,7 @@ public abstract class Tank(bool ignoresRegister) {
         }
 
         _oldRotation = ChassisRotation;
-        TimeSinceLastAction += RuntimeData.DeltaTime;
+        TimeSinceLastAction += RuntimeData.DeltaFrames;
 
         OnPostUpdate?.Invoke(this);
     }
@@ -638,10 +638,10 @@ public abstract class Tank(bool ignoresRegister) {
 
         part.UniqueBehavior = (a) => {
             var sin = MathF.Sin(RuntimeData.RunTime * speed) * height;
-            part.Position.Y = origPos.Y + sin * RuntimeData.DeltaTime;
+            part.Position.Y = origPos.Y + sin * RuntimeData.DeltaFrames;
 
             if (a.LifeTime > 90)
-                GeometryUtils.Add(ref a.Scale, -0.05f * RuntimeData.DeltaTime);
+                GeometryUtils.Add(ref a.Scale, -0.05f * RuntimeData.DeltaFrames);
 
             height -= 0.02f;
 
@@ -969,7 +969,7 @@ public abstract class Tank(bool ignoresRegister) {
             // at most one sound per update, however many prints landed
             // isturning is temporary
             if (travelled > 1e-4f && !Properties.IsSilent && !IsTurning) {
-                _treadSoundTimer -= RuntimeData.DeltaTime;
+                _treadSoundTimer -= RuntimeData.DeltaFrames;
                 if (_treadSoundTimer <= 0f) {
                     _treadSoundTimer = MathF.Max(_treadSoundTimer + TREAD_SOUND_INTERVAL, 0f);
 

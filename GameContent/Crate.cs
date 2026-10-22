@@ -132,11 +132,11 @@ public class Crate {
     }
     public void Update() {
         if (!IsOpening) {
-            Velocity.Y -= Gravity * 0.05f * RuntimeData.DeltaTime;
+            Velocity.Y -= Gravity * 0.05f * RuntimeData.DeltaFrames;
 
             // dropSpeed += dropSpeedAccel;
 
-            Position += Velocity * RuntimeData.DeltaTime;
+            Position += Velocity * RuntimeData.DeltaFrames;
 
             if (Position.Y <= (MAGICAL_BOUNCE_NUMBER * Scale)) {
                 if (Velocity.Y <= -1f) {

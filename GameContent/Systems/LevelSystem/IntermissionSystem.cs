@@ -396,11 +396,11 @@ public static class IntermissionSystem {
         if (TankGame.Instance.IsActive) {
             // System.Diagnostics.Debug.WriteLine(TimeBlack);
             if (TimeBlack > 0) {
-                TimeBlack -= RuntimeData.DeltaTime;
-                BlackAlpha += ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
+                TimeBlack -= RuntimeData.DeltaFrames;
+                BlackAlpha += ALPHA_FADE_CONSTANT * RuntimeData.DeltaFrames;
             }
             else
-                BlackAlpha -= ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
+                BlackAlpha -= ALPHA_FADE_CONSTANT * RuntimeData.DeltaFrames;
         }
         // the black fade is also used to start a campaign over, when the menu isn't open
         if (BlackAlpha >= 1f && oldBlack < 1f && MainMenuUI.IsActive) {
@@ -415,8 +415,8 @@ public static class IntermissionSystem {
 
         if (!GameUI.Paused && TankGame.Instance.IsActive) {
             // moves the background tank graphic
-            _offset.Y -= 1f * RuntimeData.DeltaTime;
-            _offset.X += 1f * RuntimeData.DeltaTime;
+            _offset.Y -= 1f * RuntimeData.DeltaFrames;
+            _offset.X += 1f * RuntimeData.DeltaFrames;
         }
         if (MainMenuUI.IsActive && BlackAlpha <= 0) {
             Alpha = 0f;
@@ -675,7 +675,7 @@ public static class IntermissionSystem {
 
             // manage banner alpha
             if (ShouldDrawBanner) {
-                BannerAlpha += ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
+                BannerAlpha += ALPHA_FADE_CONSTANT * RuntimeData.DeltaFrames;
                 if (BannerAlpha > 1) BannerAlpha = 1;
             }
             else {
@@ -686,7 +686,7 @@ public static class IntermissionSystem {
                 BonusBannerAlpha = 1f;
             }
             else {
-                BonusBannerAlpha -= ALPHA_FADE_CONSTANT * 2 * RuntimeData.DeltaTime;
+                BonusBannerAlpha -= ALPHA_FADE_CONSTANT * 2 * RuntimeData.DeltaFrames;
                 if (BonusBannerAlpha < 0) BonusBannerAlpha = 0;
             }
 
@@ -760,9 +760,9 @@ public static class IntermissionSystem {
         if (GameUI.Paused) return;
 
         if (ShouldFade && ShouldFadeIn)
-            TickAlpha(ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
+            TickAlpha(ALPHA_FADE_CONSTANT * RuntimeData.DeltaFrames);
         if (ShouldFade && !ShouldFadeIn)
-            TickAlpha(-ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
+            TickAlpha(-ALPHA_FADE_CONSTANT * RuntimeData.DeltaFrames);
     }
     public static void PlayOpeningFanfare() {
         var missionStarting = "Assets/music/fanfares/mission_starting.ogg";

@@ -258,6 +258,21 @@ public static class DrawUtils {
         }
     }
     static BasicEffect _debugEff;
+    static readonly VertexPositionColor[] _lineVertices = new VertexPositionColor[2];
+    /// <summary>Draws a 3D line.</summary>
+    public static void DrawLine(Vector3 start, Vector3 end, Color color, Matrix view, Matrix projection) {
+        EnsureDebugEffect();
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        _lineVertices[0] = new VertexPositionColor(start, color);
+        _lineVertices[1] = new VertexPositionColor(end, color);
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            TankGame.Instance.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, _lineVertices, 0, 1);
+        }
+    }
     static readonly VertexPositionColor[] _bboxVertices = new VertexPositionColor[24];
     static void EnsureDebugEffect() {
         _debugEff ??= new BasicEffect(TankGame.Instance.GraphicsDevice) {
@@ -426,6 +441,45 @@ public static class DrawUtils {
             pass.Apply();
             device.DrawUserPrimitives(PrimitiveType.LineList, verts, 0, 12);
         }
+    }
+
+    /// <summary>Draws a circle of <paramref name="radius"/> around <paramref name="axis"/>.</summary>
+    public static void DrawCircle(Vector3 center, Vector3 axis, float radius, Color color, Matrix view, Matrix projection, int segments = 16) {
+        var side = Vector3.Normalize(Vector3.Cross(axis, MathF.Abs(axis.Y) < 0.99f ? Vector3.Up : Vector3.Right));
+        var up = Vector3.Cross(side, axis);
+
+        var previous = center + side * radius;
+        for (int i = 1; i <= segments; i++) {
+            var angle = MathHelper.TwoPi * i / segments;
+            var point = center + (side * MathF.Cos(angle) + up * MathF.Sin(angle)) * radius;
+            DrawUtils.DrawLine(previous, point, color, view, projection);
+            previous = point;
+        }
+    }
+    /// <summary>Draws a cone <paramref name="length"/> long, as a circle at its end plus four lines back to its tip.</summary>
+    public static void DrawCone(Vector3 tip, Vector3 direction, float length, float halfAngle, Color color, Matrix view, Matrix projection) {
+        // the lighting system clamps the cone the same way
+        halfAngle = MathHelper.Clamp(halfAngle, 0.01f, MathHelper.PiOver2 * 0.98f);
+
+        var center = tip + direction * (length * MathF.Cos(halfAngle));
+        var radius = length * MathF.Sin(halfAngle);
+        DrawCircle(center, direction, radius, color, view, projection);
+
+        var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right));
+        var up = Vector3.Cross(side, direction);
+        DrawUtils.DrawLine(tip, center + side * radius, color, view, projection);
+        DrawUtils.DrawLine(tip, center - side * radius, color, view, projection);
+        DrawUtils.DrawLine(tip, center + up * radius, color, view, projection);
+        DrawUtils.DrawLine(tip, center - up * radius, color, view, projection);
+    }
+    public static void DrawArrow(Vector3 start, Vector3 end, Color color, Matrix view, Matrix projection) {
+        DrawUtils.DrawLine(start, end, color, view, projection);
+
+        var direction = Vector3.Normalize(end - start);
+        var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right)) * 15f;
+        DrawUtils.DrawLine(end, end - direction * 30f + side, color, view, projection);
+        DrawUtils.DrawLine(end, end - direction * 30f - side, color, view, projection);
+        DrawBoundingSphere(new BoundingSphere(start, 6f), color, view, projection, segments: 8);
     }
 
     public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {

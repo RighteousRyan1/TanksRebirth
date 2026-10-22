@@ -126,7 +126,7 @@ public class Particle {
 
     public void Update() {
         UniqueBehavior?.Invoke(this);
-        LifeTime += RuntimeData.DeltaTime;
+        LifeTime += RuntimeData.DeltaFrames;
     }
 
     public static BasicEffect EffectHandle = new(TankGame.Instance.GraphicsDevice);

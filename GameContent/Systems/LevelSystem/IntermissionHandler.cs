@@ -237,7 +237,7 @@ public static class IntermissionHandler {
 
     public static void Update() {
         if (TankFunctionWait > 0)
-            TankFunctionWait -= RuntimeData.DeltaTime;
+            TankFunctionWait -= RuntimeData.DeltaFrames;
         if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenuUI.IsActive) {
             // FIXME: maybe causes issues since the mission is 1 tick from starting?
             // TODO: move this to the animator?

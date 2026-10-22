@@ -102,4 +102,7 @@ public static class StringUtils {
         }
         return sb.ToString();
     }
+
+    public static string Format(Vector3 v) => $"({v.X:0.##}, {v.Y:0.##}, {v.Z:0.##})";
+    public static string Format(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
 }

@@ -37,7 +37,7 @@ public partial struct VanillaAISystem {
         //TargetTurretRotation %= MathHelper.TwoPi;
         //TurretRotation %= MathHelper.TwoPi;
         Owner.TargetTurretRotation = Owner.TargetTurretRotation.WrapTauAngle();
-        Owner.TurretRotation = MathUtils.TurnTowards(Owner.TurretRotation, Owner.TargetTurretRotation, Owner.Parameters.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
+        Owner.TurretRotation = MathUtils.TurnTowards(Owner.TurretRotation, Owner.TargetTurretRotation, Owner.Parameters.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaFrames);
 
         // update things prior to timer check
         if (Owner.TargetTank is null) return;
@@ -279,7 +279,7 @@ public partial struct VanillaAISystem {
 
         if (Owner.Parameters.SmartRicochets) {
             //if (!seeks)
-            SeekRotation = (SeekRotation - Owner.Parameters.TurretSpeed * 0.25f * RuntimeData.DeltaTime).WrapTauAngle();
+            SeekRotation = (SeekRotation - Owner.Parameters.TurretSpeed * 0.25f * RuntimeData.DeltaFrames).WrapTauAngle();
             var canShoot = !(Owner.CurShootCooldown > 0 || Owner.OwnedShellCount >= Owner.Properties.ShellLimit);
             if (canShoot) {
                 var tanks = GetTanksInPath(MathUtils.DirectionOf(SeekRotation), out var ricP, out var tnkCol, false, default, Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);

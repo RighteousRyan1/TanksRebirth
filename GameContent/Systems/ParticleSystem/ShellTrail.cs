@@ -18,7 +18,7 @@ namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 /// <see cref="Detach"/> when it's destroyed. The trail then stays where it is and fades out on its own.</para>
 /// <para>All trails are drawn in one draw call by <see cref="RenderAll"/>, before the sprite particles, so a rocket's
 /// flame always draws over its own smoke.</para>
-/// <para>Only depends on MonoGame. Ages are in update frames (the game's <c>DeltaTime</c> units).</para>
+/// <para>Only depends on MonoGame. Ages are in update frames (the game's <c>DeltaFrames</c> units).</para>
 /// </remarks>
 public sealed class ShellTrail {
     // looks

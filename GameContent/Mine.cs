@@ -196,10 +196,10 @@ public sealed class Mine : IAITankDanger {
 
         // only decrements mine timing if the host
         if (Server.NetManager != null || !Client.IsConnected()) {
-            DetonateTime -= RuntimeData.DeltaTime;
+            DetonateTime -= RuntimeData.DeltaFrames;
 
             if (DetonateTime < TICKS_OF_FLASHING) {
-                if (DetonateTime % 3.5f <= RuntimeData.DeltaTime) {
+                if (DetonateTime % 3.5f <= RuntimeData.DeltaFrames) {
                     RedTick = !RedTick;
                 }
                 if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {

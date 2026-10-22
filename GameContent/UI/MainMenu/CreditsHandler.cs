@@ -110,7 +110,7 @@ public static class CreditsHandler {
             currentY += baseSpacing * scale;
             totalHeight += baseSpacing * scale;
         }
-        _yOffset -= 0.8f * RuntimeData.DeltaTime;
+        _yOffset -= 0.8f * RuntimeData.DeltaFrames;
 
         float stopPoint = -totalHeight + (TankGame.Instance.GraphicsDevice.Viewport.Height / 2f);
 

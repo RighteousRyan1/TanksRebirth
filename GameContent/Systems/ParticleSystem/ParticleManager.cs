@@ -71,7 +71,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
 
     public void UpdateParticles() {
         if (DrawsFootprints)
-            ShellTrail.UpdateAll(RuntimeData.DeltaTime);
+            ShellTrail.UpdateAll(RuntimeData.DeltaFrames);
 
         int i = 0;
         while (i < _count) {
@@ -237,7 +237,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         p.Origin2D = new Vector2(t.Width / 2, frameHeight / 2);
         p.TextureCrop = new Rectangle(0, 0, t.Width, frameHeight);
         void act(Particle b) {
-            elapsed += RuntimeData.DeltaTime;
+            elapsed += RuntimeData.DeltaFrames;
             var progress = elapsed / duration;
             if (progress >= 1f) {
                 p.Destroy();
@@ -278,8 +278,8 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
             spark.Color = Color.Yellow;
 
             spark.UniqueBehavior = (part) => {
-                part.Position += vel * RuntimeData.DeltaTime;
-                part.Alpha -= 0.025f * RuntimeData.DeltaTime;
+                part.Position += vel * RuntimeData.DeltaFrames;
+                part.Alpha -= 0.025f * RuntimeData.DeltaFrames;
 
                 if (part.Alpha <= 0f)
                     part.Destroy();
@@ -309,7 +309,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
 
             smoke.UniqueBehavior = (p) => {
                 smoke.Position += velocity;
-                smoke.Scale -= new Vector3(0.01f) * RuntimeData.DeltaTime;
+                smoke.Scale -= new Vector3(0.01f) * RuntimeData.DeltaFrames;
                 var time = MathF.Min(smoke.LifeTime, fullLerpTime);
                 smoke.Color = Color.Lerp(smokeInitColor, new Color(40, 40, 40), time / fullLerpTime);
 
@@ -317,10 +317,10 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
                     smoke.Destroy();
 
                 if (smoke.LifeTime > timeMovingSideways) {
-                    smoke.Alpha -= 0.02f * RuntimeData.DeltaTime;
-                    smoke.Position.Y += Client.ClientRandom.NextFloat(0.1f, 0.25f) * RuntimeData.DeltaTime;
-                    velocity.X *= 0.9f * RuntimeData.DeltaTime;
-                    velocity.Z *= 0.9f * RuntimeData.DeltaTime;
+                    smoke.Alpha -= 0.02f * RuntimeData.DeltaFrames;
+                    smoke.Position.Y += Client.ClientRandom.NextFloat(0.1f, 0.25f) * RuntimeData.DeltaFrames;
+                    velocity.X *= 0.9f * RuntimeData.DeltaFrames;
+                    velocity.Z *= 0.9f * RuntimeData.DeltaFrames;
                 }
             };
         }
@@ -331,9 +331,9 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         p.Color = color;
         p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
         p.UniqueBehavior = (part) => {
-            GeometryUtils.Add(ref p.Scale, -0.0175f * RuntimeData.DeltaTime);
+            GeometryUtils.Add(ref p.Scale, -0.0175f * RuntimeData.DeltaFrames);
 
-            p.Alpha -= 0.025f * RuntimeData.DeltaTime;
+            p.Alpha -= 0.025f * RuntimeData.DeltaFrames;
 
             if (p.Alpha <= 0f || p.Scale.X <= 0f)
                 p.Destroy();

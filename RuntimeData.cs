@@ -31,6 +31,8 @@ public static class RuntimeData {
 
     // ### FLOATING POINT ###
     /// <summary>The amount of ticks elapsed in a second of update time.</summary>
+    public static float DeltaFrames;
+    /// <summary>The amount of seconds elapsed since the last frame.</summary>
     public static float DeltaTime;
     public static float RunTime { get; internal set; }
     public static double LogicFPS { get; internal set; }

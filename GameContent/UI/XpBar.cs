@@ -46,12 +46,12 @@ public class XpBar {
         //if (_popupInterp >= 1) {
 
         //}
-        //else _popupInterp += 0.005f * RuntimeData.DeltaTime;
+        //else _popupInterp += 0.005f * RuntimeData.DeltaFrames;
 
-        _glowTimer += RuntimeData.DeltaTime * 0.1f;
+        _glowTimer += RuntimeData.DeltaFrames * 0.1f;
 
         if (_interp < 1) {
-            _interp += 0.005f * RuntimeData.DeltaTime;
+            _interp += 0.005f * RuntimeData.DeltaFrames;
 
             // later.
             /*var p = GameHandler.Particles.MakeParticle(new Vector3(), TextureGlobals.Pixels[Color.White]);
@@ -61,7 +61,7 @@ public class XpBar {
             // p.Position.X = 
 
             p.UniqueBehavior = (a) => {
-                float velX = Client.ClientRandom.NextFloat(-0.5f, -0.1f) * RuntimeData.DeltaTime;
+                float velX = Client.ClientRandom.NextFloat(-0.5f, -0.1f) * RuntimeData.DeltaFrames;
             };*/
             if (Value >= MaxValue) {
                 // bring back to the beginning of the bar

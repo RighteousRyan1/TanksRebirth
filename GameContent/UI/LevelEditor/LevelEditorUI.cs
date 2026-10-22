@@ -670,7 +670,7 @@ public static partial class LevelEditorUI {
 
             // if selected, the tank rotates a full circle
             float addend = isSelected ? MathHelper.TwoPi : 0;
-            pEntries[i].Yaw = MathHelper.Lerp(pEntries[i].Yaw, ElementRotation + addend, 0.15f * RuntimeData.DeltaTime);
+            pEntries[i].Yaw = MathHelper.Lerp(pEntries[i].Yaw, ElementRotation + addend, 0.15f * RuntimeData.DeltaFrames);
 
             // draw the name of the block
             if (posForText.X > -barWidth && posForText.X < windowWidth + barWidth) {
@@ -684,7 +684,7 @@ public static partial class LevelEditorUI {
             // EditorParticleSystem.MakeShineSpot(posForModel.Expand(), Color.Red, 10f);
 
             var apprScale = isSelected ? maxScale : minScale;
-            pEntries[i].Scale = Vector3.Lerp(pEntries[i].Scale, Vector3.One.ToResolution() * apprScale, 0.1f * RuntimeData.DeltaTime);
+            pEntries[i].Scale = Vector3.Lerp(pEntries[i].Scale, Vector3.One.ToResolution() * apprScale, 0.1f * RuntimeData.DeltaFrames);
 
             // this code hurts me. emotionally
             xOff += barWidth;
@@ -699,7 +699,7 @@ public static partial class LevelEditorUI {
             cachedMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
         if (_openCountdown >= 0) {
-            _openCountdown -= RuntimeData.DeltaTime;
+            _openCountdown -= RuntimeData.DeltaFrames;
         }
         else if (_queueOpen) {
             OpenForce();
@@ -927,7 +927,7 @@ public static partial class LevelEditorUI {
             _waitTime = delay;
         _isWaiting = true;
 
-        _waitTime -= RuntimeData.DeltaTime;
+        _waitTime -= RuntimeData.DeltaFrames;
         if (_waitTime < 0) {
             ReturnToEditor?.OnLeftClick?.Invoke(null);
             _waitTime = 0;

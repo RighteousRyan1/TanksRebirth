@@ -128,7 +128,7 @@ public static class CampaignCompleteUI {
         Vector2 basePos = new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.2f);
 
         if (_curTier < KillsPerType.Count) {
-            if (ForceSkip ? true : _animationTime % _delayPerTank < RuntimeData.DeltaTime) {
+            if (ForceSkip ? true : _animationTime % _delayPerTank < RuntimeData.DeltaFrames) {
                 var killData = KillsPerType.ElementAt(_curTier);
 
                 _tierDisplays[_curTier] = true;
@@ -162,7 +162,7 @@ public static class CampaignCompleteUI {
         }
 
         ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
-        _animationTime += RuntimeData.DeltaTime;
+        _animationTime += RuntimeData.DeltaFrames;
 
         if (InputUtils.KeyJustPressed(Keys.Enter)) {
             SkipOrExit();
@@ -237,8 +237,8 @@ public static class CampaignCompleteUI {
         sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
 
         if (_shouldShowGrade) {
-            _gradeAlpha += _gradeFadeSpeed / 2 * RuntimeData.DeltaTime;
-            _gradeScale -= _gradeFadeSpeed * RuntimeData.DeltaTime;
+            _gradeAlpha += _gradeFadeSpeed / 2 * RuntimeData.DeltaFrames;
+            _gradeScale -= _gradeFadeSpeed * RuntimeData.DeltaFrames;
             if (_gradeAlpha > 1f)
                 _gradeAlpha = 1f;
             if (_gradeScale <= _gradeTargetScale) {
@@ -264,8 +264,8 @@ public static class CampaignCompleteUI {
             if (_tierDisplays[i]) {
                 #region Handle Appearance
 
-                _tierScales[i] -= _appearSpeed * RuntimeData.DeltaTime;
-                _tierAlphas[i] += _appearSpeed * RuntimeData.DeltaTime;
+                _tierScales[i] -= _appearSpeed * RuntimeData.DeltaFrames;
+                _tierAlphas[i] += _appearSpeed * RuntimeData.DeltaFrames;
 
                 if (_tierScales[i] < _tankSize)
                     _tierScales[i] = _tankSize;

@@ -1,11 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
-using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Graphics; 
 public class TankHut {
@@ -13,11 +16,11 @@ public class TankHut {
     public ModelMesh Black;
 
     public Vector3 Position;
-    public float Scale;
-    public EulerAngles Rotation;
+    public float Scale = 1f;
+    public EulerAngles Rotation; // should lowkey convert everything to eulerangles
+    public Matrix World, View, Proj;
 
-    public Matrix View, Proj;
-
+    bool _visible;
     static readonly string roof = PathGlobals.TEXTURES_PATH + "ingame/block_other_c";
 
     static readonly Dictionary<string, string> MeshToTexture = new() {
@@ -35,41 +38,86 @@ public class TankHut {
         ["Window"] = PathGlobals.SCENE_PATH + "hut/frame",
     };
 
+    readonly Matrix[] _boneTransforms;
+    readonly Dictionary<ModelMesh, Texture2D> _textures = [];
+    readonly BoundingSphere _localBounds;
+
     public TankHut() {
         HutScene = ModelGlobals.Hut.Asset;
         Black = HutScene.Meshes["Black"];
+
+        _boneTransforms = new Matrix[HutScene.Bones.Count];
+        HutScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);
+
+        _localBounds = HutScene.Meshes[0].BoundingSphere.Transform(_boneTransforms[HutScene.Meshes[0].ParentBone.Index]);
+        foreach (var mesh in HutScene.Meshes)
+            _localBounds = BoundingSphere.CreateMerged(_localBounds, mesh.BoundingSphere.Transform(_boneTransforms[mesh.ParentBone.Index]));
+
+        LightingSystem.CollectLights += PlaceLights;
         SetTextures();
+    }
+    ~TankHut() {
+        LightingSystem.CollectLights -= PlaceLights;
+    }
+
+    // add sum lights (but remove them when they can't be seen)
+    void PlaceLights() {
+        if (!_visible) return;
+
+        var s1p = Position + new Vector3(0, 85, 0) * Scale;
+        var s1d = -Vector3.UnitY;
+
+        var baseIntensity = 10f;
+        var baseColor = Color.Goldenrod;
+
+        var spot1 = new SpotLight(s1p, s1d, baseColor, baseIntensity, 200f,
+            40f, 60f,
+            true) {
+            ShadowBias = 1f
+        };
+        var t = RuntimeData.RunTime;
+        spot1.Intensity = baseIntensity + MathF.Sin(t * 0.5f) * 0.05f * baseIntensity;
+
+        LightingSystem.AddFrameLight(spot1);
     }
 
     void SetTextures() {
-        // HutScene.
+        foreach (var mesh in HutScene.Meshes)
+            _textures[mesh] = mesh == Black ? TextureGlobals.Pixels[Color.Black] : GameResources.GetGameResource<Texture2D>(GetMeshTexture(mesh));
     }
 
-    public void Draw() {
+    public void Render() {
+        World = Matrix.CreateScale(Scale)
+            * Matrix.CreateFromYawPitchRoll(Rotation.Yaw, Rotation.Pitch, Rotation.Roll)
+            * Matrix.CreateTranslation(Position);
 
+        _visible = CameraGlobals.ViewFrustum.Intersects(_localBounds.Transform(World));
+        if (!_visible) return;
+
+        TankGame.Instance.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+        foreach (var mesh in HutScene.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects)
+                MeshEffectSet(mesh, effect, World);
+
+            if (mesh != Black)
+                mesh.Draw();
+        }
     }
 
     public static string GetMeshTexture(ModelMesh mesh) {
         return MeshToTexture.TryGetValue(mesh.Name, out var textureName)
             ? textureName
-            : "metal"; // fallback default
+            : PathGlobals.SKYBOX_PATH + "textures/metal"; // fallback default
     }
 
     // no!!!
-    void MeshEffectSet(ModelMesh mesh, BasicEffect effect) {
-        effect.World = Matrix.CreateScale(Scale)
-            * Matrix.CreateFromYawPitchRoll(Rotation.Yaw, Rotation.Pitch, Rotation.Roll)
-            * Matrix.CreateTranslation(Position);
+    void MeshEffectSet(ModelMesh mesh, BasicEffect effect, Matrix world) {
+        effect.World = _boneTransforms[mesh.ParentBone.Index] * world;
         effect.View = View;
         effect.Projection = Proj;
 
         effect.TextureEnabled = true;
-        if (!mesh.Name.Equals("Black"))
-            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/scene/skybox/textures/" + GetMeshTexture(mesh));
-        else {
-            // handle opacity here for camera
-            effect.Texture = TextureGlobals.Pixels[Color.Black];
-        }
+        effect.Texture = _textures[mesh];
         effect.SetDefaultGameLighting();
         effect.SpecularPower = 32f;
     }

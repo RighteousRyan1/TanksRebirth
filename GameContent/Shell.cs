@@ -280,7 +280,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         Hitbox = new(Position3D, HitSphereSize);
 
         Rotation = MathUtils.RotationOf(Velocity);
-        Position += Velocity * MOVE_SCALE * RuntimeData.DeltaTime;
+        Position += Velocity * MOVE_SCALE * RuntimeData.DeltaFrames;
         DrawParams.World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
@@ -345,7 +345,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                 break;
         }
 
-        LifeTime += RuntimeData.DeltaTime;
+        LifeTime += RuntimeData.DeltaFrames;
 
         while (LifeTime > Properties.Homing.Cooldown) { // Use loop to reduce nesting smh.
             if (Owner == null)
@@ -415,7 +415,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     
     // hacky workaround until steps are counted 60 times a second instead of framerate/60 times a second...
     // just tracks substeps in a given time interval
-    int TimesElapsed(float interval) => (int)(LifeTime / interval) - (int)((LifeTime - RuntimeData.DeltaTime) / interval);
+    int TimesElapsed(float interval) => (int)(LifeTime / interval) - (int)((LifeTime - RuntimeData.DeltaFrames) / interval);
 
     void RenderSmokeParticle() {
         if (Velocity == Vector2.Zero) return;
@@ -640,7 +640,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                 var plight = GameplayLights.CreateTempLight(GameHandler.Particles, Position3D, light, lifetime);
                 // ParticleManager.Animate(plight, lifetime, )
                 plight.UniqueBehavior += (a) => {
-                    light.Intensity -= 0.05f * RuntimeData.DeltaTime;
+                    light.Intensity -= 0.05f * RuntimeData.DeltaFrames;
                 };
 
                 GameHandler.Particles.MakeShellImpact(Position3D);

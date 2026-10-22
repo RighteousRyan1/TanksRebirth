@@ -67,6 +67,7 @@ public static partial class MainMenuUI {
         [UIState.Modifiers] = new MenuGraphicsState(new Vector3(-1189f, 288f, 2583f), new Vector3(0f, -0.25f, -2.27f), 0.005f), // near books
         [UIState.LoadingMods] = new MenuGraphicsState(new Vector3(-3443f, 2088f, 3183f), new Vector3(0, -0.6307f, -0.91f), 0.01f), // top of the door
         [UIState.Cosmetics] = new MenuGraphicsState(new Vector3(-953f, 1078f, 2753f), new Vector3(0f, -0.226f, -2.56f), 0f), // second-to-top shelf of bookshelf
+        [UIState.Customizing] = new MenuGraphicsState(new Vector3(-946f, 1016f, 3000f), new Vector3(0f, -0.10f, -2f), 0f), // facing towards the hut bookshelves
         [UIState.ModsMenu] = new MenuGraphicsState(new Vector3(1305.43f, 1030.8687f, 340.08344f), new Vector3(0f, -0.6007973f, -0.789088f), DEFAULT_BLUR) // facing towards the clock pendulum
     };
 
@@ -127,8 +128,8 @@ public static partial class MainMenuUI {
 
         // slowly return to normal if the mouse is not on-screen
         if (!MouseUtils.MouseOnScreen) {
-            RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, 0, 0.05f * RuntimeData.DeltaTime);
-            RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, MathHelper.PiOver2, 0.05f * RuntimeData.DeltaTime);
+            RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, 0, 0.05f * RuntimeData.DeltaFrames);
+            RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, MathHelper.PiOver2, 0.05f * RuntimeData.DeltaFrames);
 
             RebirthLogo.Rotation_Tanks = new(MathHelper.PiOver2, 0, 0);
             return;
@@ -138,8 +139,8 @@ public static partial class MainMenuUI {
         var rotX = -(MouseUtils.Test.X - 0.5f) * scalar;
         var rotY = MathHelper.PiOver2 + (MouseUtils.Test.Y - 0.25f) * scalar;
 
-        RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, rotX, 0.1f * RuntimeData.DeltaTime);
-        RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, rotY, 0.1f * RuntimeData.DeltaTime);
+        RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, rotX, 0.1f * RuntimeData.DeltaFrames);
+        RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, rotY, 0.1f * RuntimeData.DeltaFrames);
     }
     public static void RenderModels() {
         UpdateModels();
@@ -248,7 +249,7 @@ public static partial class MainMenuUI {
             UpdateModsMenu();
 
         // intermittent gameplay update, to keep fresh maps on the menu
-        if (RuntimeData.RunTime % 60f < RuntimeData.DeltaTime)
+        if (RuntimeData.RunTime % 60f < RuntimeData.DeltaFrames)
             UpdateGameplay();
     }
     public static void Open() {

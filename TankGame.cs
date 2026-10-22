@@ -743,8 +743,8 @@ public class TankGame : Game {
 
         GraphicsSettings.UpdateFrameTiming(this);
 
-        if (!float.IsInfinity(RuntimeData.DeltaTime))
-            RuntimeData.RunTime += RuntimeData.DeltaTime;
+        if (!float.IsInfinity(RuntimeData.DeltaFrames))
+            RuntimeData.RunTime += RuntimeData.DeltaFrames;
 
         if (!IsCrashInfoVisible) {
             if (SteamworksUtils.IsInitialized)
@@ -781,7 +781,7 @@ public class TankGame : Game {
 
         NetPlay.PollEvents();
 
-        if (RuntimeData.RunTime % 60 < RuntimeData.DeltaTime)
+        if (RuntimeData.RunTime % 60 < RuntimeData.DeltaFrames)
             Task.Run(DiscordRichPresence.Update);
 
         LastGameTime = gameTime;
@@ -817,8 +817,8 @@ public class TankGame : Game {
 
         RuntimeData.LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
 
-        RuntimeData.DeltaTime = RuntimeData.Interp ? (!float.IsInfinity(60 / (float)RuntimeData.LogicFPS) ? 60 / (float)RuntimeData.LogicFPS : 0) : 1;
-
+        RuntimeData.DeltaFrames = RuntimeData.Interp ? (!float.IsInfinity(60 / (float)RuntimeData.LogicFPS) ? 60 / (float)RuntimeData.LogicFPS : 0) : 1;
+        RuntimeData.DeltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _wasActive = IsActive;
         //Console.WriteLine($"{MouseUtils.MousePosition} - {_mOld}");
         _mouseOld = MouseUtils.MousePosition;
@@ -846,8 +846,8 @@ public class TankGame : Game {
 
                 // questionable as to why it causes hella lag on game start
                 // TODO: try and find out why this happens lol.
-                if (float.IsFinite(RuntimeData.DeltaTime))
-                    Tank.CollisionsWorld.Step(RuntimeData.DeltaTime);
+                if (float.IsFinite(RuntimeData.DeltaFrames))
+                    Tank.CollisionsWorld.Step(RuntimeData.DeltaFrames);
             }
         }
         foreach (var bind in Keybind.AllKeybinds)
@@ -967,7 +967,7 @@ public class TankGame : Game {
 
         if (SceneManager.timeLeft > 0) {
             SceneManager.DrawResultsMessage(SpriteRenderer);
-            SceneManager.timeLeft -= RuntimeData.DeltaTime;
+            SceneManager.timeLeft -= RuntimeData.DeltaFrames;
         }
 
         // draw black before intermission graphics because we don't want to reveal the mission as it's loading

@@ -107,9 +107,9 @@ public class RebirthMouse {
 
             CursorTrail?.Update(Position);
             CursorTrail?.Draw();
-            /*if (!float.IsInfinity(RuntimeData.DeltaTime)) {
-                if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
-                    var newVal = (int)(TRAIL_POINTS_BASE / RuntimeData.DeltaTime);
+            /*if (!float.IsInfinity(RuntimeData.DeltaFrames)) {
+                if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaFrames) {
+                    var newVal = (int)(TRAIL_POINTS_BASE / RuntimeData.DeltaFrames);
 
                     Console.WriteLine(newVal);
                     if (newVal > 0) {

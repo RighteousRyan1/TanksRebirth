@@ -116,7 +116,7 @@ public class TankFootprint {
         lifeTime++;
 
         if (ShouldTracksFade) {
-            Alpha -= 0.001f * RuntimeData.DeltaTime;
+            Alpha -= 0.001f * RuntimeData.DeltaFrames;
             _dirty = true;
 
             if (Alpha <= 0)

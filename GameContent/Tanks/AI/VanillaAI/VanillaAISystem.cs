@@ -22,7 +22,7 @@ public unsafe struct AIBehaviorState {
         }
     }
 
-    public readonly bool TimerSatisfies(float rem) => Value % rem < RuntimeData.DeltaTime;
+    public readonly bool TimerSatisfies(float rem) => Value % rem < RuntimeData.DeltaFrames;
 }
 
 // TODO: class vs struct?
@@ -52,14 +52,14 @@ public partial struct VanillaAISystem : IAISystem {
         Owner.Physics.OnCollision += Physics_OnCollision;
     }
     public void AILoop() {
-        ChassisMovement.Value += RuntimeData.DeltaTime;
-        TurretMovement.Value  += RuntimeData.DeltaTime;
-        ShellFire.Value       += RuntimeData.DeltaTime;
-        MinePlace.Value       += RuntimeData.DeltaTime;
+        ChassisMovement.Value += RuntimeData.DeltaFrames;
+        TurretMovement.Value  += RuntimeData.DeltaFrames;
+        ShellFire.Value       += RuntimeData.DeltaFrames;
+        MinePlace.Value       += RuntimeData.DeltaFrames;
 
         TurretRotationMultiplier = 1f;
 
-        // Array.ForEach(Owner.Behaviors, x => x.Value += RuntimeData.DeltaTime);
+        // Array.ForEach(Owner.Behaviors, x => x.Value += RuntimeData.DeltaFrames);
 
         // nearby friendlies checks
         Owner.TanksNearMineAwareness.Clear();
@@ -117,7 +117,7 @@ public partial struct VanillaAISystem : IAISystem {
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
             Owner.Velocity = MathUtils.DirectionOf(Owner.ChassisRotation) * Owner.Speed;
-            Owner.TurnChassis(Owner.Properties.TurningSpeed * RuntimeData.DeltaTime);
+            Owner.TurnChassis(Owner.Properties.TurningSpeed * RuntimeData.DeltaFrames);
         }
     }
 }

@@ -14,7 +14,6 @@ public class JackOLantern {
     static Model? _jol;
     static Texture2D? _tex;
     readonly Particle _p;
-
     public Color BaseColor = Color.Goldenrod;
     public Vector3 Position;
     public float Rotation, Scale;
@@ -52,7 +51,7 @@ public class JackOLantern {
     }
 
     void AddLight() {
-        var dt = (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds; //RuntimeData.DeltaTime * 0.1f;
+        var dt = (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds; //RuntimeData.DeltaFrames * 0.1f;
         // slow uneven sway, about -1 to 1
         var t = RuntimeData.RunTime + _seed;
         var sway = MathF.Sin(t * 1.7f) * 0.5f + MathF.Sin(t * 2.9f + 1.3f) * 0.3f + MathF.Sin(t * 5.3f + 4.1f) * 0.2f;

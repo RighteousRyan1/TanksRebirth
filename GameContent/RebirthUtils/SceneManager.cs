@@ -68,7 +68,7 @@ public static class SceneManager {
         if (string.IsNullOrEmpty(msg)) return;
 
         // extended timer to 2.0 to give the post-impact flash time to complete
-        _animTimer += 0.025f * RuntimeData.DeltaTime;
+        _animTimer += 0.025f * RuntimeData.DeltaFrames;
         if (_animTimer > 2f) _animTimer = 2f;
 
         // slides text
@@ -175,21 +175,21 @@ public static class SceneManager {
 
                 p.UniqueBehavior = (a) => {
                     if (p.Position.Y <= 0) {
-                        GeometryUtils.Add(ref p.Scale, -0.006f * RuntimeData.DeltaTime);
+                        GeometryUtils.Add(ref p.Scale, -0.006f * RuntimeData.DeltaFrames);
                         if (p.Scale.X <= 0)
                             p.Destroy();
 
                     }
                     else {
-                        p.Position.X += wind.X * RuntimeData.DeltaTime;
+                        p.Position.X += wind.X * RuntimeData.DeltaFrames;
                         p.Position.Y -= weight;
-                        p.Position.Z += wind.Y * RuntimeData.DeltaTime;
+                        p.Position.Z += wind.Y * RuntimeData.DeltaFrames;
 
-                        p.Rotation2D += 0.01f * RuntimeData.DeltaTime;
+                        p.Rotation2D += 0.01f * RuntimeData.DeltaFrames;
 
-                        p.Roll += rotFactor * RuntimeData.DeltaTime;
+                        p.Roll += rotFactor * RuntimeData.DeltaFrames;
 
-                        p.Pitch += (rotFactor / 2) * RuntimeData.DeltaTime;
+                        p.Pitch += (rotFactor / 2) * RuntimeData.DeltaFrames;
                     }
                 };
             }
@@ -216,7 +216,7 @@ public static class SceneManager {
 
 
         // TODO: should the chance be scaled by tps?
-        if (Client.ClientRandom.NextFloat(0, 1f) <= 0.003f * RuntimeData.DeltaTime) {
+        if (Client.ClientRandom.NextFloat(0, 1f) <= 0.003f * RuntimeData.DeltaFrames) {
             var rand = new Range<byte>((byte)Thunder.ThunderType.Fast, (byte)Thunder.ThunderType.Instant2);
             var type = (Thunder.ThunderType)Client.ClientRandom.Next(rand.Min, rand.Max);
 

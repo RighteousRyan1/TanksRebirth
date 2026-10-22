@@ -118,7 +118,7 @@ public class Powerup {
             }
         }
         else {
-            Rotation.X += 0.05f * RuntimeData.DeltaTime;
+            Rotation.X += 0.05f * RuntimeData.DeltaFrames;
             if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(Position, tnk.Position3D) <= PickupRadius, out Tank tank))
                 Pickup(tank);
         }

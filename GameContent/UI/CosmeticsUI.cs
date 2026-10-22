@@ -43,23 +43,34 @@ public static class CosmeticsUI {
 
     public static bool IsActive => MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics;
     public static RenderableChest Chest;
+    public static TankHut Hut;
 
     internal static PlayerTank displayTank;
 
     public static void Initialize() {
         Chest = new(new(0, 0, 0), CameraGlobals.GameView, CameraGlobals.GameProjection);
         Chest.Rotation = new Vector3(0, 0, MathHelper.Pi + MathHelper.PiOver4);
+
+        Hut = new() {
+            Scale = 1.5f,
+            Rotation = default
+        };
+
+        Chest.Scale = 0.3f;
+        Chest.ChestPosition = new Vector3(-875f, 993.5f, 2860f);
     }
 
     public static void Update() {
         Chest.DrawParams.View = CameraGlobals.GameView;
         Chest.DrawParams.Projection = CameraGlobals.GameProjection;
 
-        _interp += (_isOpening ? 0.015f : -0.015f) * RuntimeData.DeltaTime;
+        _interp += (_isOpening ? 0.015f : -0.015f) * RuntimeData.DeltaFrames;
         _interp = MathHelper.Clamp(_interp, 0, 1);
 
-        Chest.Scale = 0.3f;
-        Chest.ChestPosition = new Vector3(-875f, 992.81537f, 2860f);
+        // behind the chest as seen from the cosmetics camera, between the books
+        Hut.Position = Chest.ChestPosition + new Vector3(-50f, 0, 175f);
+        Hut.View = CameraGlobals.GameView;
+        Hut.Proj = CameraGlobals.GameProjection;
 
         var basePos = Chest.ChestPosition - new Vector3(15, 23, 15);
         _clickSpot = new BoundingSphere(Chest.KeySlotPos, 6);
@@ -68,7 +79,9 @@ public static class CosmeticsUI {
 
         displayTank ??= new(playerType: PlayerID.Blue, ignoreRegister: true);
         displayTank.Position = Chest.ChestPosition.FlattenZ();
+        displayTank.Position = Hut.Position.FlattenZ();
         displayTank.OffsetY = Chest.ChestPosition.Y + 15 + 40;
+        displayTank.OffsetY = Hut.Position.Y;
         displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
         displayTank.TurretRotation = displayTank.ChassisRotation;
 
@@ -271,10 +284,10 @@ public static class CosmeticsUI {
                 float targetScale = p == _hoveredKey ? hoverScale : baseScale;
 
                 // Smoothly interpolate scale
-                p.Scale = Vector3.Lerp(p.Scale, new Vector3(targetScale), 0.2f * RuntimeData.DeltaTime);
+                p.Scale = Vector3.Lerp(p.Scale, new Vector3(targetScale), 0.2f * RuntimeData.DeltaFrames);
 
                 if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics) {
-                    t += moveSpeed * RuntimeData.DeltaTime;
+                    t += moveSpeed * RuntimeData.DeltaFrames;
 
                     if (t > 1) t = 1;
                 }
@@ -284,7 +297,7 @@ public static class CosmeticsUI {
                         _keys.Remove(keyPart);
                     }
 
-                    t -= moveSpeed * 2.5f * RuntimeData.DeltaTime;
+                    t -= moveSpeed * 2.5f * RuntimeData.DeltaFrames;
 
                     if (t < 0) t = 0;
                 }
@@ -298,7 +311,7 @@ public static class CosmeticsUI {
                 float rand = Client.ClientRandom.NextFloat(0, 40);
 
                 // framerate independence, baby!
-                if (rand < RuntimeData.DeltaTime) {
+                if (rand < RuntimeData.DeltaFrames) {
                     GameHandler.Particles.MakeShineSpot(p.Position + new Vector3(randX, randY, 0),
                         Color.White, Client.ClientRandom.NextFloat(0.3f, 0.5f));
                 }
@@ -317,6 +330,7 @@ public static class CosmeticsUI {
     }
     public static void DrawMenu() {
         // DebugManager.DrawBoundingSphere(_clickSpot, ColorUtils.DiscoPartyColor, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        Hut?.Render();
         Chest?.Render();
 
         displayTank?.Render();

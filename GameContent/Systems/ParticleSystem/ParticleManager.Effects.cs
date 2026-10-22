@@ -95,8 +95,8 @@ public partial class ParticleManager {
             // the bright end of the texture leads
             PointAlong(spark, -velocity);
             Animate(spark, life * Rand.NextFloat(0.75f, 1.25f), (p, t) => {
-                p.Position += velocity * RuntimeData.DeltaTime;
-                velocity *= MathF.Pow(drag, RuntimeData.DeltaTime);
+                p.Position += velocity * RuntimeData.DeltaFrames;
+                velocity *= MathF.Pow(drag, RuntimeData.DeltaFrames);
                 p.Color = Sample(_sparkColor, t);
                 p.Scale = MathUtils.SizeToScale(texture, width, length * Sample(_sparkLength, t));
             });
@@ -147,9 +147,9 @@ public partial class ParticleManager {
             // above the smoke
             fire.Layer = 0.01f;
             Animate(fire, puffLife, (p, t) => {
-                p.Position += velocity * RuntimeData.DeltaTime;
-                velocity *= MathF.Pow(drag, RuntimeData.DeltaTime);
-                velocity.Y += rise * RuntimeData.DeltaTime;
+                p.Position += velocity * RuntimeData.DeltaFrames;
+                velocity *= MathF.Pow(drag, RuntimeData.DeltaFrames);
+                velocity.Y += rise * RuntimeData.DeltaFrames;
                 p.Color = Sample(_fireColor, t);
                 p.Alpha = Sample(_fireAlpha, t);
                 p.Scale = MathUtils.SizeToScale(texture, puffSize * Sample(_fireSize, t));
@@ -213,9 +213,9 @@ public partial class ParticleManager {
             glint.Color = Rand.Next(0, 2) == 0 ? new Color(255, 180, 190) : new Color(255, 180, 255);
             glint.Alpha = 0.8f;
             Animate(glint, 60f * Rand.NextFloat(0.2f, 1f), (p, t) => {
-                p.Position += velocity * RuntimeData.DeltaTime;
-                velocity *= MathF.Pow(0.92f, RuntimeData.DeltaTime);
-                velocity.Y -= 0.042f * RuntimeData.DeltaTime;
+                p.Position += velocity * RuntimeData.DeltaFrames;
+                velocity *= MathF.Pow(0.92f, RuntimeData.DeltaFrames);
+                velocity.Y -= 0.042f * RuntimeData.DeltaFrames;
                 PointAlong(p, velocity);
                 p.Scale = MathUtils.SizeToScale(glintTexture, size * Sample(_glintWidth, t), size * Sample(_glintLength, t));
             });
@@ -234,10 +234,10 @@ public partial class ParticleManager {
             piece.Color = Color.Lerp(debrisColor, debrisColor * 0.82f, Rand.NextFloat()) with { A = 255 };
             piece.Scale = MathUtils.SizeToScale(debrisTexture, Rand.NextFloat(2.5f, 7.5f));
             Animate(piece, 50f * Rand.NextFloat(0.7f, 1f), (p, t) => {
-                p.Position += velocity * RuntimeData.DeltaTime;
-                velocity *= MathF.Pow(0.96f, RuntimeData.DeltaTime);
-                velocity.Y -= 0.28f * RuntimeData.DeltaTime;
-                p.Rotation2D += spin * RuntimeData.DeltaTime;
+                p.Position += velocity * RuntimeData.DeltaFrames;
+                velocity *= MathF.Pow(0.96f, RuntimeData.DeltaFrames);
+                velocity.Y -= 0.28f * RuntimeData.DeltaFrames;
+                p.Rotation2D += spin * RuntimeData.DeltaFrames;
                 p.Alpha = Sample(_debrisAlpha, t);
             });
         }
@@ -248,7 +248,7 @@ public partial class ParticleManager {
         var plight = GameplayLights.CreateTempLight(GameHandler.Particles, position, light, lifetime);
         // ParticleManager.Animate(plight, lifetime, )
         plight.UniqueBehavior += (a) => {
-            light.Intensity -= 0.5f * RuntimeData.DeltaTime;
+            light.Intensity -= 0.5f * RuntimeData.DeltaFrames;
         };
     }
 
@@ -293,8 +293,8 @@ public partial class ParticleManager {
         var smoke = MakeOrthoParticle(muzzle - direction * 4.2f, smokeTexture, additive: false);
         smoke.Rotation2D = MathHelper.Pi;
         Animate(smoke, 45f, (p, t) => {
-            p.Position += velocity * RuntimeData.DeltaTime;
-            velocity *= MathF.Pow(0.9f, RuntimeData.DeltaTime);
+            p.Position += velocity * RuntimeData.DeltaFrames;
+            velocity *= MathF.Pow(0.9f, RuntimeData.DeltaFrames);
             p.Color = Sample(_muzzleSmokeColor, t);
             p.Alpha = Sample(_muzzleSmokeAlpha, t);
             p.Scale = MathUtils.SizeToScale(smokeTexture, size * Sample(_muzzleSmokeSize, t));
@@ -324,8 +324,8 @@ public partial class ParticleManager {
             rock.Color = new Color(235, 177, 136);
             rock.Scale = MathUtils.SizeToScale(texture, size);
             Animate(rock, 60f * Rand.NextFloat(0.75f, 1f), (p, t) => {
-                p.Position += velocity * momentum * RuntimeData.DeltaTime;
-                velocity.Y -= 0.31f * RuntimeData.DeltaTime;
+                p.Position += velocity * momentum * RuntimeData.DeltaFrames;
+                velocity.Y -= 0.31f * RuntimeData.DeltaFrames;
                 p.Rotation2D = 0.35f + spin * MathF.Min(t / 0.86f, 1f) * 1.5f;
                 p.Alpha = Sample(_rockAlpha, t);
             });
@@ -344,7 +344,7 @@ public partial class ParticleManager {
         var smoke = MakeOrthoParticle(position, texture, false);
         smoke.Rotation2D = MathHelper.Pi;
         Animate(smoke, rocket ? 20f : 60f, (p, t) => {
-            p.Position += velocity * RuntimeData.DeltaTime;
+            p.Position += velocity * RuntimeData.DeltaFrames;
             p.Color = new Color(Sample(colors, t).ToVector3() * tint.ToVector3());
             p.Alpha = 1f - t;
             p.Scale = MathUtils.SizeToScale(texture, size * (rocket ? MathHelper.Lerp(1.25f, 3f, t) : MathHelper.Lerp(1f, 3f, t)));

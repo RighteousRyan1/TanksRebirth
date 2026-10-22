@@ -175,10 +175,10 @@ public class Airplane {
         AllPlanes[Id] = null;
     }
     public void Update() {
-        LifeTime += RuntimeData.DeltaTime;
+        LifeTime += RuntimeData.DeltaFrames;
 
-        Position.X += Velocity.X * RuntimeData.DeltaTime;
-        Position.Z += Velocity.Y * RuntimeData.DeltaTime;
+        Position.X += Velocity.X * RuntimeData.DeltaFrames;
+        Position.Z += Velocity.Y * RuntimeData.DeltaFrames;
 
         // TODO: unhardcode this.
         if (LifeTime > 60)
@@ -190,7 +190,7 @@ public class Airplane {
         // opening/closing w/hatch speed
         var openSpeed = 0.03f;
         if (_isOpening) {
-            _openPercent += openSpeed * RuntimeData.DeltaTime;
+            _openPercent += openSpeed * RuntimeData.DeltaFrames;
             if (_openPercent > 1) {
                 AreDoorsFullyOpen = true;
 
@@ -207,7 +207,7 @@ public class Airplane {
             _doorLRotation = _doorRRotation = Easings.ComputeEase(EasingFunction.OutBack, _openPercent) * MathHelper.PiOver2;
         }
         else { 
-            _openPercent -= openSpeed * RuntimeData.DeltaTime;
+            _openPercent -= openSpeed * RuntimeData.DeltaFrames;
             if (_openPercent < 0) { 
                 _openPercent = 0;
 
@@ -267,7 +267,7 @@ public class Airplane {
         var plane = new Airplane(pos3d, vel, 400f);
         plane.WhileTrapDoorsOpenedInstance = (t) => {
             // changed to be determined by the plane itself... i really need to decouple logic from render
-            if ((int)(t.LifeTime / 30) != (int)((t.LifeTime - RuntimeData.DeltaTime) / 30)) {
+            if ((int)(t.LifeTime / 30) != (int)((t.LifeTime - RuntimeData.DeltaFrames) / 30)) {
                 ParticleGameplay.CreateSmokeGrenade(GameHandler.Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.25f);
             }
         };

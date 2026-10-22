@@ -38,6 +38,13 @@ public static class LightingSystem {
     /// <summary>Persistent lights. Add and remove freely.</summary>
     public static readonly List<Light> Lights = [];
 
+    /// <summary>Lights added with <see cref="AddFrameLight"/> since the last <see cref="BeginFrame"/>.</summary>
+    public static IReadOnlyList<Light> FrameLights => _frameLights;
+    /// <summary>Lights that were drawn last frame, after culling and the <see cref="LightingQuality.MaxLocalLights"/> budget.</summary>
+    public static IReadOnlyList<Light> ActiveLights => _activeLights;
+    /// <summary>Whether <paramref name="light"/> got a shadow map last frame.</summary>
+    public static bool HasShadowMap(Light light) => _shadowSlots.ContainsKey(light);
+
     /// <summary>Raised once per frame during <see cref="EndFrame"/>; call <see cref="AddFrameLight"/> from here for lights that follow game objects.</summary>
     public static event Action? CollectLights;
     /// <summary>Raised once per frame during <see cref="EndFrame"/>; call <see cref="SubmitShadowCaster"/> from here for geometry that should cast shadows even when it was culled from the camera.</summary>

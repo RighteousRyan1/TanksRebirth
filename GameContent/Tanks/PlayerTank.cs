@@ -307,7 +307,7 @@ public class PlayerTank : Tank {
             IsBraking = !(DesiredDirection.LengthSquared() > 0f);
             if (!IsBraking) {
                 DesiredChassisRotation = MathUtils.RotationOf(DesiredDirection);
-                TurnChassis(Properties.TurningSpeed * RuntimeData.DeltaTime);
+                TurnChassis(Properties.TurningSpeed * RuntimeData.DeltaFrames);
             }
             Velocity = MathUtils.DirectionOf(ChassisRotation) * Speed;
 
@@ -820,7 +820,7 @@ public class PlayerTank : Tank {
                 float targetState = i < OwnedShellCount ? 0f : 1f;
 
                 // speed of fade in/out
-                float speed = 0.08f * RuntimeData.DeltaTime;
+                float speed = 0.08f * RuntimeData.DeltaFrames;
                 animStates[i] = MathHelper.Lerp(animStates[i], targetState, speed);
 
                 // easings

@@ -38,8 +38,10 @@ public static partial class MainMenuUI
         Campaigns,
         /// <summary>The multiplayer menu.</summary>
         Multiplayer,
-        /// <summary>Where the player unlocks and manages their cosmetic items.</summary>
+        /// <summary>Where the player unlocks their cosmetic items.</summary>
         Cosmetics,
+        /// <summary>Where the player manages their cosmetic items.</summary>
+        Customizing,
         /// <summary>Where the player tweaks their gameplay experiences.</summary>
         Modifiers,
         /// <summary>Where the player changes their audio, graphics, and control settings.</summary>

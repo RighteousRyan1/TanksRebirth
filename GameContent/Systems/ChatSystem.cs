@@ -324,7 +324,7 @@ public sealed record ChatSystem {
         sb.End();
     }
 
-    // i want to slowly start moving from RuntimeData.DeltaTime to just direct elapsed time calculations... soon.
+    // i want to slowly start moving from RuntimeData.DeltaFrames to just direct elapsed time calculations... soon.
     public static void Update(GameTime gameTime) {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 

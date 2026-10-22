@@ -58,7 +58,7 @@ public class AchievementPopupHandler(AchievementRepository repo) {
                 _popupDims = ach.Texture.Size() + biggerFloat + new Vector2(100, 0);
                 float interp = 0f;
                 bool opening = true;
-                var easingDelta = 0.02f * RuntimeData.DeltaTime;
+                var easingDelta = 0.02f * RuntimeData.DeltaFrames;
                 _isCurrentlyActive = true;
                 Task.Run(async () => {
                     while (interp < 1f && opening) {

@@ -371,7 +371,7 @@ public static partial class LevelEditorUI {
             default,
             default);
         DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
-        _alertTime -= RuntimeData.DeltaTime;
+        _alertTime -= RuntimeData.DeltaFrames;
     }    
 
     public static void UpdateParticles() {

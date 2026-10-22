@@ -120,6 +120,7 @@ public static class GameplayLights {
         return light;
     }
 
+    // idek the point of this or nextpoint
     static SpotLight NextSpot() {
         if (_spotsUsed == _spotPool.Count)
             _spotPool.Add(new SpotLight());
