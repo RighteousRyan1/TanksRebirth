@@ -303,13 +303,13 @@ public static class LightManager {
                             LightingPresets.Hour = hour;
                             if (Current != Preset.DayCycle) Apply(Preset.DayCycle);
                         }
-                        ChatSystem.SendMessage($"Lighting: day cycle at {LightingPresets.HourText}", Color.Gold);
+                        TankGame.IngameConsole.Log($"Lighting: day cycle at {LightingPresets.HourText}", Color.Gold);
                         return;
                     case "daylength":
                         if (parts.Length > 1 && float.TryParse(parts[1], System.Globalization.NumberStyles.Float, culture, out var minutes) && minutes > 0f)
                             LightingSettings.Current.DayLengthMinutes = minutes;
                         LightingSettings.Current.Apply();
-                        ChatSystem.SendMessage($"Lighting: a day lasts {LightingPresets.DayLengthSeconds / 60f:0.#} minutes", Color.Gold);
+                        TankGame.IngameConsole.Log($"Lighting: a day lasts {LightingPresets.DayLengthSeconds / 60f:0.#} minutes", Color.Gold);
                         return;
                     case "season":
                         // summer = long day / high sun, winter = short day / low sun, or a declination in degrees
@@ -321,18 +321,18 @@ public static class LightManager {
                                 _ => float.TryParse(parts[1], System.Globalization.NumberStyles.Float, culture, out var d) ? MathHelper.Clamp(d, -23.5f, 23.5f) : LightingPresets.Declination,
                             };
                         }
-                        ChatSystem.SendMessage($"Lighting: sun declination {LightingPresets.Declination:0.#} degrees, noon sun at {LightingPresets.SunElevation(LightingPresets.SolarNoon):0} degrees", Color.Gold);
+                        TankGame.IngameConsole.Log($"Lighting: sun declination {LightingPresets.Declination:0.#} degrees, noon sun at {LightingPresets.SunElevation(LightingPresets.SolarNoon):0} degrees", Color.Gold);
                         return;
                     case "quality":
                         if (parts.Length > 1 && Enum.TryParse<LightingQualityLevel>(parts[1], ignoreCase: true, out var level)) {
                             LightingSettings.Current.SetQualityLevel(level);
                             LightingSettings.Current.Apply();
                         }
-                        ChatSystem.SendMessage($"Lighting: quality {LightingSettings.Current.QualityLevel}", Color.Gold);
+                        TankGame.IngameConsole.Log($"Lighting: quality {LightingSettings.Current.QualityLevel}", Color.Gold);
                         return;
                     case "test":
                         LightingStressTest.Toggle();
-                        ChatSystem.SendMessage(LightingStressTest.IsRunning
+                        TankGame.IngameConsole.Log(LightingStressTest.IsRunning
                             ? $"Lighting test on ({LightingSystem.MAX_SHADOW_SLOTS} point and {LightingSystem.MAX_SHADOW_SLOTS} spot lights, quality {LightingSettings.Current.QualityLevel})"
                             : "Lighting test off", Color.Gold);
                         return;
@@ -340,11 +340,11 @@ public static class LightManager {
                     case "disable":
                         LightingSettings.Current.Enabled = parts[0] == "enable";
                         LightingSettings.Current.Apply();
-                        ChatSystem.SendMessage($"Lighting: dynamic lighting {(LightingSettings.Current.Enabled ? "on" : "off")}", Color.Gold);
+                        TankGame.IngameConsole.Log($"Lighting: dynamic lighting {(LightingSettings.Current.Enabled ? "on" : "off")}", Color.Gold);
                         return;
                     case "pause":
                         LightingPresets.DayCyclePaused = !LightingPresets.DayCyclePaused;
-                        ChatSystem.SendMessage(LightingPresets.DayCyclePaused ? $"Lighting: day cycle paused at {LightingPresets.HourText}" : "Lighting: day cycle running", Color.Gold);
+                        TankGame.IngameConsole.Log(LightingPresets.DayCyclePaused ? $"Lighting: day cycle paused at {LightingPresets.HourText}" : "Lighting: day cycle running", Color.Gold);
                         return;
                 }
 
@@ -362,18 +362,18 @@ public static class LightManager {
                         TankGame.IngameConsole.Log(LightingSystem.Stats.ToString(), Color.Gold);
                         return;
                     case "list":
-                        ChatSystem.SendMessage("Lighting presets: " + string.Join(", ", Enum.GetNames<Preset>()), Color.Gold);
+                        TankGame.IngameConsole.Log("Lighting presets: " + string.Join(", ", Enum.GetNames<Preset>()), Color.Gold);
                         return;
                     default:
                         if (!LightingPresets.TryParse(arg, out var preset)) {
-                            ChatSystem.SendMessage($"Unknown lighting preset '{arg}'. Try /lighting list", Color.Red);
+                            TankGame.IngameConsole.Log($"Unknown lighting preset '{arg}'. Try /lighting list", Color.Red);
                             return;
                         }
                         Apply(preset);
                         break;
                 }
                 var extra = Current == Preset.DayCycle ? $" ({LightingPresets.HourText}, a day lasts {LightingPresets.DayLengthSeconds / 60f:0.#} min)" : string.Empty;
-                ChatSystem.SendMessage($"Lighting: {Current}{extra}" + (LightingSystem.ScreenSplitPercent > 0f ? " (split view)" : string.Empty), Color.Gold);
+                TankGame.IngameConsole.Log($"Lighting: {Current}{extra}" + (LightingSystem.ScreenSplitPercent > 0f ? " (split view)" : string.Empty), Color.Gold);
             });
     }
 }
