@@ -62,6 +62,8 @@ public static class LightingSystem {
 
     /// <summary>Draws with a lower alpha than this are treated as transparent and ignored.</summary>
     public static float AlphaCutoff = 0.95f;
+    /// <summary>Texels with a lower alpha than this let light and shadows through (glass in a window frame, cutouts).</summary>
+    public static float TextureAlphaCutoff = 0.5f;
 
     // invisible solid boxes that block the sun and affect the sun's shadow maps
     public static readonly List<BoundingBox> SunBlockers = [];
@@ -138,6 +140,8 @@ public static class LightingSystem {
         public BoundingSphere Bounds;
         public Vector3 Emissive;
         public DrawFlags Flags;
+        /// <summary>The texture whose alpha is tested in every pass, or null when the part is opaque.</summary>
+        public Texture2D? Mask;
     }
 
     enum DrawMode {
@@ -227,6 +231,8 @@ public static class LightingSystem {
     static readonly Dictionary<ModelMesh, MeshLighting> _meshLighting = [];
     static readonly HashSet<ModelMesh> _noShadowMeshes = [];
     static readonly Dictionary<VertexBuffer, bool> _hasNormals = [];
+    static readonly Dictionary<VertexBuffer, bool> _hasTexCoords = [];
+    static readonly Dictionary<Texture2D, bool> _hasTransparentTexels = [];
     static readonly HashSet<Model> _instrumented = [];
 
     static readonly ShadowSlot[] _pointSlots = new ShadowSlot[MAX_POINT_SHADOW_SLOTS];
@@ -284,6 +290,7 @@ public static class LightingSystem {
     static EffectParameter? _pShaftParams, _pShaftColor, _pShaftMaxGlow;
     static BlendState _screen = null!;
     static EffectParameter? _pSplitPosition, _pNeutralValue, _pSourceTexture;
+    static EffectParameter? _pMaskTexture, _pMaskCutoff;
 
     static EffectTechnique _tShadowLinear = null!, _tShadowOrtho = null!, _tAmbientSun = null!, _tPointLights = null!,
         _tSpotLights = null!, _tPointLightsFast = null!, _tSpotLightsFast = null!, _tUnlit = null!, _tSunShafts = null!,
@@ -355,6 +362,8 @@ public static class LightingSystem {
             _pSplitPosition = p["SplitPosition"];
             _pNeutralValue = p["NeutralValue"];
             _pSourceTexture = p["SourceTexture"];
+            _pMaskTexture = p["MaskTexture"];
+            _pMaskCutoff = p["MaskCutoff"];
 
             _modulate2X = new BlendState {
                 Name = "Lighting.Modulate2X",
@@ -547,14 +556,16 @@ public static class LightingSystem {
             return;
 
         var receives = effect.LightingEnabled && settings.ReceivesLight;
-        AddRecord(mesh, part, effect.World, effect.View * effect.Projection, receives, settings, false);
+        var mask = effect.TextureEnabled ? MaskFor(effect.Texture, part) : null;
+        AddRecord(mesh, part, effect.World, effect.View * effect.Projection, receives, settings, false, mask);
     }
 
     /// <summary>
     /// Records a mesh drawn with a custom effect (one the capture effects can't see). Call it next to the
     /// mesh's own draw call, with the same matrices.
     /// </summary>
-    public static void Submit(ModelMesh mesh, Matrix world, Matrix view, Matrix projection, float alpha = 1f) {
+    /// <param name="texture">The mesh's texture. Its transparent texels let light and shadows through.</param>
+    public static void Submit(ModelMesh mesh, Matrix world, Matrix view, Matrix projection, float alpha = 1f, Texture2D? texture = null) {
         if (!_capturing || alpha < AlphaCutoff)
             return;
         var settings = GetMeshLighting(mesh);
@@ -563,7 +574,7 @@ public static class LightingSystem {
         var viewProjection = view * projection;
         foreach (var part in mesh.MeshParts)
             if (part.PrimitiveCount > 0)
-                AddRecord(mesh, part, world, viewProjection, settings.ReceivesLight, settings, false);
+                AddRecord(mesh, part, world, viewProjection, settings.ReceivesLight, settings, false, MaskFor(texture, part));
     }
 
     /// <summary>
@@ -579,12 +590,12 @@ public static class LightingSystem {
         foreach (var part in mesh.MeshParts) {
             if (part.PrimitiveCount <= 0 || _capturedParts.Contains(part))
                 continue;
-            AddRecord(mesh, part, world, Matrix.Identity, false, settings, true);
+            AddRecord(mesh, part, world, Matrix.Identity, false, settings, true, null);
         }
     }
 
     static void AddRecord(ModelMesh mesh, ModelMeshPart part, Matrix world, Matrix viewProjection, bool lit,
-        MeshLighting settings, bool shadowOnly) {
+        MeshLighting settings, bool shadowOnly, Texture2D? mask) {
         if (part.VertexBuffer is null || part.IndexBuffer is null)
             return;
 
@@ -610,7 +621,52 @@ public static class LightingSystem {
             Bounds = bounds,
             Emissive = lit ? Vector3.One : settings.Emissive,
             Flags = flags,
+            Mask = mask,
         });
+    }
+
+    /// <summary>The texture to alpha test a part with, or null when none of its texels are transparent.</summary>
+    static Texture2D? MaskFor(Texture2D? texture, ModelMeshPart part) {
+        if (texture is null || texture is RenderTarget2D || !HasTexCoords(part.VertexBuffer))
+            return null;
+        if (!_hasTransparentTexels.TryGetValue(texture, out var transparent)) {
+            transparent = HasTransparentTexels(texture);
+            _hasTransparentTexels[texture] = transparent;
+        }
+        return transparent ? texture : null;
+    }
+
+    static bool HasTransparentTexels(Texture2D texture) {
+        if (texture.Format != SurfaceFormat.Color)
+            return false;
+
+        var cutoff = (int)(TextureAlphaCutoff * 255f);
+        // read in bands of rows so big textures don't need one huge array
+        var rows = Math.Max(1, 65536 / texture.Width);
+        var pixels = new Color[rows * texture.Width];
+        for (int y = 0; y < texture.Height; y += rows) {
+            var band = Math.Min(rows, texture.Height - y);
+            var count = band * texture.Width;
+            texture.GetData(0, new Rectangle(0, y, texture.Width, band), pixels, 0, count);
+            for (int i = 0; i < count; i++)
+                if (pixels[i].A < cutoff)
+                    return true;
+        }
+        return false;
+    }
+
+    static bool HasTexCoords(VertexBuffer buffer) {
+        if (_hasTexCoords.TryGetValue(buffer, out var has))
+            return has;
+        has = false;
+        foreach (var element in buffer.VertexDeclaration.GetVertexElements()) {
+            if (element.VertexElementUsage == VertexElementUsage.TextureCoordinate && element.UsageIndex == 0) {
+                has = true;
+                break;
+            }
+        }
+        _hasTexCoords[buffer] = has;
+        return has;
     }
 
     static bool HasNormals(VertexBuffer buffer) {
@@ -686,6 +742,7 @@ public static class LightingSystem {
             _device.Textures[2] = null;
             _device.Textures[3] = null;
             _device.Textures[4] = null;
+            _device.Textures[5] = null;
             _device.SamplerStates[0] = oldSampler0;
             _device.SamplerStates[1] = oldSampler1;
             _device.SamplerStates[2] = oldSampler2;
@@ -695,6 +752,7 @@ public static class LightingSystem {
 
     static void Render(RenderTarget2D target) {
         var stats = new FrameStats();
+        _pMaskCutoff?.SetValue(TextureAlphaCutoff);
         foreach (var d in _draws) {
             if ((d.Flags & DrawFlags.ShadowOnly) != 0) stats.ShadowOnlyDraws++;
             else stats.CapturedDraws++;
@@ -1135,6 +1193,7 @@ public static class LightingSystem {
             b++;
         }
         _pWorld?.SetValue(Matrix.Identity);
+        _pMaskTexture?.SetValue(_white);
         _effect.CurrentTechnique.Passes[0].Apply();
         _device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, _blockerVertices, 0, count * 8, _blockerIndices, 0, count * 12);
         stats.ShadowDraws++;
@@ -1590,6 +1649,7 @@ public static class LightingSystem {
             _lastViewProjection = d.ViewProjection;
         }
         _pWorld?.SetValue(d.World);
+        _pMaskTexture?.SetValue(d.Mask ?? _white);
         _effect.CurrentTechnique.Passes[0].Apply();
 
         var part = d.Part;

@@ -1,68 +1,35 @@
-// ============================================================================================
-//  Tanks Rebirth - dynamic lighting
-// --------------------------------------------------------------------------------------------
-//  Everything in here targets vs_3_0 / ps_3_0. That is the highest model the DesktopGL
-//  (OpenGL / MojoShader) effect compiler accepts in MonoGame 3.8.x, and it also compiles for
-//  WindowsDX (where MonoGame maps it to vs/ps_4_0_level_9_3).
-//
-//  Rules followed so the shader survives MojoShader -> GLSL translation:
-//    * no tex2Dlod / tex2Dgrad in pixel shaders (needs extensions on some GL drivers)
-//    * no texture fetches inside dynamic branches or dynamic loops
-//    * pixel shaders only use plain float/float4 constants: no arrays and no matrices
-//      (MonoGame re-packs array constants differently from MojoShader on OpenGL)
-//    * every register of a multi-register constant is actually read (see the note below)
-//    * pixel shader inputs never include POSITION
-//    * render targets are plain SurfaceFormat.Color, so depth is packed into RGB (24 bits)
-//
-//  Techniques
-//    ShadowLinear    - writes |p - lightPos| / range   (point + spot shadow maps)
-//    ShadowOrtho     - writes ortho clip depth         (sun shadow map)
-//    AmbientSun      - base light buffer: hemisphere ambient + sun (+ PCF shadows, two cascades)
-//    PointLights     - up to 4 point lights per pass, cube shadows from an atlas (3x3 tent filter)
-//    SpotLights      - up to 4 spot lights per pass, perspective shadows from an atlas (3x3 tent filter)
-//    PointLightsFast / SpotLightsFast - the same with a cheaper 2x2 filter (low quality setting)
-//    Unlit           - constant light value (meshes that ignore lighting / emissive meshes)
-//    SunShafts       - volumetric in-scattering of the sun, ray-marched through the room shadow map
-//    Composite       - full screen pass that copies a buffer (used with blend states)
-//    ShadowDilate    - closes 1 texel cracks in the room shadow map (seams between meshes)
-// ============================================================================================
-
-
-// ---------------------------------------------------------------- per draw
-// NOTE: every register of a matrix constant must be used by the code that reads it. MojoShader packs only
-// the used registers, while MonoGame uploads by the declared layout, so a gap shifts every later constant.
+// PER DRAW
 float4x4 World;
 float4x4 ViewProjection;
 
-// ---------------------------------------------------------------- camera
+// CAMERA
 float3 CameraPosition;
 float3 CameraForward;
 float  CameraIsOrtho;
 
-// ---------------------------------------------------------------- output
+// output
 // The light buffer stores light * LightScale so that a value of 1.0 (neutral) fits in 0.5
 // and lights can over-brighten the scene up to 2x.
 float  LightScale;
 float  DitherStrength;
 
-// ---------------------------------------------------------------- ambient + sun
+// ambient, sun
 float3 AmbientSky;
 float3 AmbientGround;
-float3 SunDirection;            // direction the light travels (normalized)
-float3 SunColor;                // color * intensity
-float  SunWrap;                 // 0 = lambert, 1 = fully wrapped
-// sun shadow projection (orthographic), passed as plain vectors: clip.x = dot(float4(p, 1), SunClipX) ...
-// (matrix and array constants in pixel shaders are fragile on MonoGame's OpenGL path, vectors are not)
+float3 SunDirection; // direction the light travels (normalized)
+float3 SunColor; // color * intensity
+float  SunWrap; // 0 = lambert, 1 = fully wrapped
+// orthographic shadow projection for the sun
 float4 SunClipX;
 float4 SunClipY;
 float4 SunClipZ;
-float4 SunShadowParams;         // x = 1/size, y = size, z = depth bias, w = normal offset (world units)
+float4 SunShadowParams; // x = 1/size, y = size, z = depth bias, w = normal offset
 float  SunShadowEnabled;
-// second, wider cascade that covers the whole room (used outside of the sharp board cascade + for the shafts)
+// second, wider cascade that covers the whole room
 float4 RoomClipX;
 float4 RoomClipY;
 float4 RoomClipZ;
-float4 RoomShadowParams;        // same layout as SunShadowParams
+float4 RoomShadowParams; // same layout as SunShadowParams
 float  RoomShadowEnabled;
 
 texture RoomShadowMap;
@@ -87,14 +54,7 @@ sampler SunShadowSampler = sampler_state
     AddressV = Clamp;
 };
 
-// ---------------------------------------------------------------- local lights
-// four slots per pass, one parameter per slot (no arrays, see the note on SunClipX)
-//   Position  xyz position, w = 1 / range
-//   Color     rgb color * intensity, w = wrap
-//   DirCone   spot: xyz direction, w = cos(outer)
-//   Params    x = 1 / (cos(inner) - cos(outer)), y = normal offset, z = depth bias
-//   Rect      xy = atlas origin (uv), z = tile size (uv), w = inset (tile-local uv)
-//   AxisX/Y   spot: shadow camera right/up * projection scale
+// local lights
 #define DECLARE_LIGHT(i) float4 Light##i##Position; float4 Light##i##Color; float4 Light##i##DirCone; \
     float4 Light##i##Params; float4 Light##i##Rect; float4 Light##i##AxisX; float4 Light##i##AxisY;
 DECLARE_LIGHT(0)
@@ -114,18 +74,32 @@ sampler ShadowAtlasSampler = sampler_state
     AddressV = Clamp;
 };
 
-// ---------------------------------------------------------------- shadow pass
+// shadow pass
 float4 ShadowLightPosInvRange;
 
-// ---------------------------------------------------------------- unlit
+// unlit
 float3 UnlitLight;
 
-// ---------------------------------------------------------------- shafts
-float4 ShaftParams;     // x = march length, y = density, z = anisotropy (g), w = jitter offset
+// shafts
+float4 ShaftParams; // x = march length, y = density, z = anisotropy (g), w = jitter offset
 float3 ShaftColor;
-float  ShaftMaxGlow;    // cap for the forward-scattering boost when looking towards the sun
+float  ShaftMaxGlow; // cap for the forward-scattering boost when looking towards the sun
 
-// ---------------------------------------------------------------- composite
+// texture alpha measurement
+float  MaskCutoff;
+
+texture MaskTexture;
+sampler MaskSampler = sampler_state
+{
+    Texture = <MaskTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = None;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
+// composite
 float  SplitPosition;   // 0..1, pixels left of this are shown without lighting
 float4 NeutralValue;    // value written left of the split (0.5 for modulate, 0 for add)
 
@@ -140,9 +114,7 @@ sampler SourceSampler = sampler_state
     AddressV = Clamp;
 };
 
-// ============================================================================================
-//  helpers
-// ============================================================================================
+// helpers
 
 float3 PackDepth(float depth)
 {
@@ -155,6 +127,12 @@ float3 PackDepth(float depth)
 float UnpackDepth(float3 rgb)
 {
     return dot(rgb, float3(1.0, 1.0 / 255.0, 1.0 / 65025.0));
+}
+
+// clip takes all four components because MojoShader rejects a texkill that only masks some of them
+void ClipTransparent(float2 uv)
+{
+    clip((tex2D(MaskSampler, uv).a - MaskCutoff).xxxx);
 }
 
 float Hash(float3 p)
@@ -171,9 +149,7 @@ float3 ViewVector(float3 worldPos)
     return lerp(toCamPersp, -CameraForward, CameraIsOrtho);
 }
 
-// geometry is drawn without culling, so flip normals on faces seen from behind.
-// the side is decided by the triangle's flat normal, because smoothed vertex normals can point
-// away from the viewer on faces that do face it, which darkened whole faces at some camera angles
+// flip normals that are behind the camera to prevent the stupid shadow stuff
 float3 FaceNormal(float3 normal, float3 worldPos, float3 v)
 {
     float3 n = normalize(normal);
@@ -199,8 +175,6 @@ float3 RoomClip(float3 p)
     return float3(dot(h, RoomClipX), dot(h, RoomClipY), dot(h, RoomClipZ));
 }
 
-// 3x3 tent filter built from 16 point taps (equivalent to 9 bilinear PCF lookups).
-// Written as macros so both cascades can use it with their own sampler.
 #define SUN_TAP(SAMP, ox, oy) step(depth, UnpackDepth(tex2D(SAMP, base + float2(ox, oy) * texel).rgb))
 #define SUN_ROW(SAMP, oy) (SUN_TAP(SAMP, -1.0, oy) * (1.0 - f.x) + SUN_TAP(SAMP, 0.0, oy) + SUN_TAP(SAMP, 1.0, oy) + SUN_TAP(SAMP, 2.0, oy) * f.x)
 #define SUN_TENT(SAMP, UV, DEPTH, PARAMS, RESULT) \
@@ -221,8 +195,7 @@ float CascadeWeight(float2 uv, float z, float fadeScale)
     return saturate(edge * fadeScale) * step(0.0, edge) * step(z, 1.0) * step(0.0, z);
 }
 
-// Sun shadow with two cascades: the sharp board map, and a coarser map covering the whole room.
-// The board map wins where it exists (fading out over its border), the room map fills everything else.
+// sun shadow with two cascades
 float SunShadow(float3 worldPos, float3 normal, float ndl)
 {
     float offset = 1.5 - ndl;
@@ -245,8 +218,7 @@ float SunShadow(float3 worldPos, float3 normal, float ndl)
 #define ATLAS_TAP(ox, oy) step(depth, UnpackDepth(tex2D(ShadowAtlasSampler, base + float2(ox, oy) * AtlasSize.y).rgb))
 #define ATLAS_ROW(oy) (ATLAS_TAP(-1.0, oy) * (1.0 - f.x) + ATLAS_TAP(0.0, oy) + ATLAS_TAP(1.0, oy) + ATLAS_TAP(2.0, oy) * f.x)
 
-// 3x3 tent PCF inside a tile of the shadow atlas (16 point taps, same filter as the sun).
-// Tiles are inset by 2.5 texels on the C# side so the taps never reach a neighbouring tile.
+// 3x3 tent PCF
 float AtlasShadow(float2 atlasUV, float depth)
 {
     float2 t = atlasUV * AtlasSize.x - 0.5;
@@ -264,10 +236,7 @@ float AtlasShadowFast(float2 atlasUV, float depth)
     return lerp(lerp(ATLAS_TAP(0.0, 0.0), ATLAS_TAP(1.0, 0.0), f.x), lerp(ATLAS_TAP(0.0, 1.0), ATLAS_TAP(1.0, 1.0), f.x), f.y);
 }
 
-// Cube map face selection without branches. Face order and orientation match the
-// CreateLookAt(position, position + forward, up) calls made in LightingSystem.cs:
-//   0 +X (up +Y)   1 -X (up +Y)   2 +Y (up -Z)   3 -Y (up +Z)   4 +Z (up +Y)   5 -Z (up +Y)
-// faces are laid out in the atlas as a 3x2 block: column = face % 3, row = face / 3
+// cube map face selection for atlasing
 float2 CubeAtlasUV(float3 d, float4 rect)
 {
     float3 a = abs(d);
@@ -292,8 +261,7 @@ float2 CubeAtlasUV(float3 d, float4 rect)
     return rect.xy + (float2(column, row) + tc) * rect.z;
 }
 
-// The light terms return the unshadowed light and where to look it up in the shadow atlas. The pixel shaders
-// apply the shadow filter themselves (AtlasShadow or AtlasShadowFast), which is how the two quality levels share this code.
+// The light terms return the unshadowed light and where to look it up in the shadow atlas
 float3 PointLightTerm(float3 worldPos, float3 n, float4 posInvRange, float4 color, float4 params, float4 rect,
                       out float2 shadowUV, out float shadowDepth)
 {
@@ -342,14 +310,13 @@ float4 EncodeLight(float3 light, float3 worldPos)
     return float4(light * LightScale + noise, 1.0);
 }
 
-// ============================================================================================
-//  vertex shaders
-// ============================================================================================
+// vertex shaders
 
 struct LitVSInput
 {
     float4 Position : POSITION0;
     float3 Normal   : NORMAL0;
+    float2 TexCoord : TEXCOORD0;
 };
 
 struct LitVSOutput
@@ -357,6 +324,7 @@ struct LitVSOutput
     float4 Position : POSITION0;
     float3 WorldPos : TEXCOORD0;
     float3 Normal   : TEXCOORD1;
+    float2 TexCoord : TEXCOORD2;
 };
 
 // pixel shader inputs leave out POSITION (it isn't a valid ps_3_0 input; some compilers alias it onto TEXCOORD0)
@@ -364,6 +332,7 @@ struct LitPSInput
 {
     float3 WorldPos : TEXCOORD0;
     float3 Normal   : TEXCOORD1;
+    float2 TexCoord : TEXCOORD2;
 };
 
 LitVSOutput LitVS(LitVSInput input)
@@ -374,23 +343,27 @@ LitVSOutput LitVS(LitVSInput input)
     output.WorldPos = worldPos.xyz;
     // the game only uses uniform scales, so the world matrix is fine for normals (normalized per pixel)
     output.Normal = mul(input.Normal, (float3x3)World);
+    output.TexCoord = input.TexCoord;
     return output;
 }
 
 struct PositionVSInput
 {
     float4 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
 };
 
 struct ShadowVSOutput
 {
     float4 Position : POSITION0;
     float4 Data     : TEXCOORD0;    // xyz = world position, w = clip depth
+    float2 TexCoord : TEXCOORD1;
 };
 
 struct ShadowPSInput
 {
     float4 Data     : TEXCOORD0;
+    float2 TexCoord : TEXCOORD1;
 };
 
 ShadowVSOutput ShadowVS(PositionVSInput input)
@@ -400,6 +373,7 @@ ShadowVSOutput ShadowVS(PositionVSInput input)
     float4 clip = mul(worldPos, ViewProjection);
     output.Position = clip;
     output.Data = float4(worldPos.xyz, clip.z / clip.w);
+    output.TexCoord = input.TexCoord;
     return output;
 }
 
@@ -428,23 +402,24 @@ ScreenVSOutput ScreenVS(ScreenVSInput input)
     return output;
 }
 
-// ============================================================================================
-//  pixel shaders
-// ============================================================================================
+// pixel shaders
 
 float4 ShadowLinearPS(ShadowPSInput input) : COLOR0
 {
+    ClipTransparent(input.TexCoord);
     float dist = length(input.Data.xyz - ShadowLightPosInvRange.xyz) * ShadowLightPosInvRange.w;
     return float4(PackDepth(dist), 1.0);
 }
 
 float4 ShadowOrthoPS(ShadowPSInput input) : COLOR0
 {
+    ClipTransparent(input.TexCoord);
     return float4(PackDepth(input.Data.w), 1.0);
 }
 
 float4 AmbientSunPS(LitPSInput input) : COLOR0
 {
+    ClipTransparent(input.TexCoord);
     float3 v = ViewVector(input.WorldPos);
     float3 n = FaceNormal(input.Normal, input.WorldPos, v);
 
@@ -473,6 +448,7 @@ float4 AmbientSunPS(LitPSInput input) : COLOR0
 #define LIGHTS_PS(NAME, LIGHT, SHADOW) \
     float4 NAME(LitPSInput input) : COLOR0 \
     { \
+        ClipTransparent(input.TexCoord); \
         float3 v = ViewVector(input.WorldPos); \
         float3 n = FaceNormal(input.Normal, input.WorldPos, v); \
         float3 light = 0.0; \
@@ -487,6 +463,7 @@ LIGHTS_PS(SpotLightsFastPS, SPOT, AtlasShadowFast)
 
 float4 UnlitPS(ShadowPSInput input) : COLOR0
 {
+    ClipTransparent(input.TexCoord);
     return float4(UnlitLight * LightScale, 1.0);
 }
 
@@ -494,17 +471,19 @@ float4 UnlitPS(ShadowPSInput input) : COLOR0
 // one point tap per step: the jitter between pixels and frames plus the soft knee below hide the coarse texels
 #define SHAFT_STEP visible += step(sp.z, UnpackDepth(tex2D(RoomShadowSampler, sp.xy).rgb)); sp += stepS;
 
-// Ray marches from the surface back towards the viewer through the sun's room shadow map
-// (when the room cascade is off, LightingSystem binds the board cascade here instead).
-// The ray is transformed into shadow map space once (the sun projection is orthographic, so
-// this is linear) and clipped against the map's [0,1] cube, so every step is a single tap.
+// ray marching for sun light shafts
 float4 SunShaftsPS(ShadowPSInput input) : COLOR0
 {
+    ClipTransparent(input.TexCoord);
     float3 worldPos = input.Data.xyz;
     float3 v = ViewVector(worldPos);
 
+    // only the air between the surface and the camera can scatter light towards it
+    // (an orthographic camera has no real position, so it keeps the full march length)
+    float rayLength = lerp(min(ShaftParams.x, distance(CameraPosition, worldPos)), ShaftParams.x, CameraIsOrtho);
+
     float3 c0 = RoomClip(worldPos);
-    float3 c1 = RoomClip(worldPos + v * ShaftParams.x);
+    float3 c1 = RoomClip(worldPos + v * rayLength);
     float3 s0 = float3(c0.xy * float2(0.5, -0.5) + 0.5, c0.z - RoomShadowParams.z);
     float3 s1 = float3(c1.xy * float2(0.5, -0.5) + 0.5, c1.z - RoomShadowParams.z);
 
@@ -532,9 +511,10 @@ float4 SunShaftsPS(ShadowPSInput input) : COLOR0
     SHAFT_STEP SHAFT_STEP SHAFT_STEP SHAFT_STEP
 
     // average over the whole ray: the part outside of the map receives no sun
-    visible *= coverage / SHAFT_STEPS;
+    // then scaled by the ray's length, since a shorter stretch of air scatters less
+    visible *= coverage / SHAFT_STEPS * (rayLength / ShaftParams.x);
 
-    // Henyey-Greenstein phase: brighter when looking towards the sun
+    // brighter when looking towards the sun
     float g = ShaftParams.z;
     float cosTheta = dot(-v, SunDirection);
     float phase = (1.0 - g * g) / pow(abs(1.0 + g * g - 2.0 * g * cosTheta), 1.5);
@@ -542,14 +522,13 @@ float4 SunShaftsPS(ShadowPSInput input) : COLOR0
     // HG peaks at (1 + g) / (1 - g)^2 (10x for g = 0.6), which blows out to white when looking into the beams
     phase = min(phase, ShaftMaxGlow);
 
-    // soft knee: thin haze stays linear, thick beams roll off towards 1 instead of clipping
+    // thin haze stays linear, thick beams roll off towards 1 instead of clipping
     float3 shaft = ShaftColor * (visible * ShaftParams.y * phase * SunShadowEnabled);
     shaft = 1.0 - exp(-shaft);
     return float4(shaft, 1.0);
 }
 
-// Min filter over a cross of 5 texels. Seams between separate meshes (wall/ceiling edges) can rasterize as
-// one texel wide gaps in the coarse room map, which would let thin lines of sunlight through.
+// min filter over a cross of 5 texels
 #define DILATE_TAP(ox, oy) UnpackDepth(tex2D(RoomShadowSampler, input.TexCoord + float2(ox, oy) * RoomShadowParams.x).rgb)
 float4 ShadowDilatePS(ScreenPSInput input) : COLOR0
 {
@@ -563,9 +542,7 @@ float4 CompositePS(ScreenPSInput input) : COLOR0
     return lerp(NeutralValue, color, step(SplitPosition, input.TexCoord.x));
 }
 
-// ============================================================================================
-//  techniques
-// ============================================================================================
+// techniques
 
 technique ShadowLinear
 {
