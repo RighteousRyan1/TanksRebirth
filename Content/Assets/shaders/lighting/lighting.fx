@@ -171,11 +171,15 @@ float3 ViewVector(float3 worldPos)
     return lerp(toCamPersp, -CameraForward, CameraIsOrtho);
 }
 
-// geometry is drawn without culling, so flip normals that face away from the viewer
-float3 FaceNormal(float3 normal, float3 v)
+// geometry is drawn without culling, so flip normals on faces seen from behind.
+// the side is decided by the triangle's flat normal, because smoothed vertex normals can point
+// away from the viewer on faces that do face it, which darkened whole faces at some camera angles
+float3 FaceNormal(float3 normal, float3 worldPos, float3 v)
 {
     float3 n = normalize(normal);
-    return n * (step(0.0, dot(n, v)) * 2.0 - 1.0);
+    float3 face = cross(ddx(worldPos), ddy(worldPos));
+    // the cross product's sign depends on the screen orientation, so it is compared against v as well
+    return n * (step(0.0, dot(n, face) * dot(face, v)) * 2.0 - 1.0);
 }
 
 float WrapDiffuse(float ndl, float wrap)
@@ -442,7 +446,7 @@ float4 ShadowOrthoPS(ShadowPSInput input) : COLOR0
 float4 AmbientSunPS(LitPSInput input) : COLOR0
 {
     float3 v = ViewVector(input.WorldPos);
-    float3 n = FaceNormal(input.Normal, v);
+    float3 n = FaceNormal(input.Normal, input.WorldPos, v);
 
     float3 ambient = lerp(AmbientGround, AmbientSky, n.y * 0.5 + 0.5);
 
@@ -470,7 +474,7 @@ float4 AmbientSunPS(LitPSInput input) : COLOR0
     float4 NAME(LitPSInput input) : COLOR0 \
     { \
         float3 v = ViewVector(input.WorldPos); \
-        float3 n = FaceNormal(input.Normal, v); \
+        float3 n = FaceNormal(input.Normal, input.WorldPos, v); \
         float3 light = 0.0; \
         LIGHT(0, SHADOW) LIGHT(1, SHADOW) LIGHT(2, SHADOW) LIGHT(3, SHADOW) \
         return EncodeLight(light, input.WorldPos); \
