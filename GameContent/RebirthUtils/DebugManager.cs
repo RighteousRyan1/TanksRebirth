@@ -250,6 +250,15 @@ public static class DebugManager {
     static JackOLantern jol;
     public static void UpdateDebug() {
         if (!GameLauncher.IsConsoleAllocated) return;
+
+        if (InputUtils.KeyJustPressed(Keys.RightControl)) {
+            // MainMenuUI.MenuGraphicsStates[MainMenuUI.UIState.Customizing] = new()
+            if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics)
+                MainMenuUI.MenuState = MainMenuUI.UIState.Customizing;
+            else if (MainMenuUI.MenuState == MainMenuUI.UIState.Customizing)
+                MainMenuUI.MenuState = MainMenuUI.UIState.Cosmetics;
+        }
+
         if (InputUtils.KeyJustPressed(Keys.F4))
             DebuggingEnabled = !DebuggingEnabled;
 
@@ -367,7 +376,7 @@ public static class DebugManager {
             }
         }
         else {
-            ref var fc = ref CameraGlobals.RebirthFreecam;
+            ref var fc = ref CameraGlobals.PerspectiveCamera;
             if (InputUtils.KeyJustPressed(Keys.Enter)) {
                 List<Vector3> pts = [];
 
@@ -554,7 +563,7 @@ public static class DebugManager {
         }
         DrawDebugString(spriteBatch,
             $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.GetMyClientId() : 0]} / {PlayerTank.StartingLives}" +
-            $"\nKillCount: {PlayerTank.KillCounts}" +
+            $"\nKillCount: {PlayerTank.KillCounts[NetPlay.GetMyClientId()]}" +
             $"\n\nSavable Game Data:" +
             $"\nTotal / Bullet / Mine / Bounce Kills: {TankGame.SaveFile.TotalKills} / {TankGame.SaveFile.BulletKills} / {TankGame.SaveFile.MineKills} / {TankGame.SaveFile.BounceKills}" +
             $"\nTotal Deaths: {TankGame.SaveFile.Deaths}" +
@@ -620,9 +629,9 @@ public static class DebugManager {
 
         if (DebugLevel == Id.FREECAM) {
             spriteBatch.DrawString(FontGlobals.RebirthFont,
-               $"Position: {CameraGlobals.RebirthFreecam.Position}" +
-            $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
-            $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}�" +
+               $"Position: {CameraGlobals.PerspectiveCamera.Position}" +
+            $"\nRotation: {CameraGlobals.PerspectiveCamera.Rotation}" +
+            $"\nFOV: {CameraGlobals.PerspectiveCamera.FieldOfView}�" +
             $"\nForward: {CameraGlobals.GameView.Forward}" +
             $"\nBackward: {CameraGlobals.GameView.Backward}" +
             $"\nLeft: {CameraGlobals.GameView.Left}" +
@@ -657,10 +666,10 @@ public static class DebugManager {
         }
 
         if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {
-            TextCopy.ClipboardService.SetText($"{CameraGlobals.RebirthFreecam.Position.ToCtor()}, {CameraGlobals.RebirthFreecam.Rotation.ToCtor()}");
+            TextCopy.ClipboardService.SetText($"{CameraGlobals.PerspectiveCamera.Position.ToCtor()}, {CameraGlobals.PerspectiveCamera.Rotation.ToCtor()}");
         }
         else if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.X)) {
-            TextCopy.ClipboardService.SetText($"{CameraGlobals.RebirthFreecam.World.Forward.ToCtor()}");
+            TextCopy.ClipboardService.SetText($"{CameraGlobals.PerspectiveCamera.World.Forward.ToCtor()}");
         }
 
         var information = new string[] {

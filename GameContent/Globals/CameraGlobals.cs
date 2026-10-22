@@ -27,7 +27,7 @@ public static class CameraGlobals {
         MainMenu,
         Freecam
     }
-    public static bool IsUsingFirstPersonCamera => MatrixUtils.AreMatricesEqual(GameProjection, RebirthFreecam.Projection, 0.1f);
+    public static bool IsUsingFirstPersonCamera => MatrixUtils.AreMatricesEqual(GameProjection, PerspectiveCamera.Projection, 0.1f);
 
     // screen camera stuff
 
@@ -55,7 +55,7 @@ public static class CameraGlobals {
         }
     }
 
-    public static Freecam RebirthFreecam;
+    public static Freecam PerspectiveCamera;
 
     public static int SpectatorId;
 
@@ -88,7 +88,7 @@ public static class CameraGlobals {
     static Vector3 _locks;
 
     public static void Initialize(GraphicsDevice device) {
-        RebirthFreecam = new(device) {
+        PerspectiveCamera = new(device) {
             Position = MainMenuUI.MenuGraphicsStates[MainMenuUI.UIState.LoadingMods].Position
         };
     }
@@ -174,15 +174,15 @@ public static class CameraGlobals {
     }
     static void UpdateMainMenuCamera() {
         if (MainMenuUI.CameraPositionAnimator.CurrentPosition != Vector3.Zero) {
-            RebirthFreecam.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition;
-            RebirthFreecam.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition;
+            PerspectiveCamera.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition;
+            PerspectiveCamera.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition;
         }
 
-        RebirthFreecam.UseFocus = false;
-        RebirthFreecam.FieldOfView = 100f;
+        PerspectiveCamera.UseFocus = false;
+        PerspectiveCamera.FieldOfView = 100f;
 
-        GameView = RebirthFreecam.View;
-        GameProjection = RebirthFreecam.Projection;
+        GameView = PerspectiveCamera.View;
+        GameProjection = PerspectiveCamera.Projection;
     }
     static void UpdateFreecamCamera() {
         if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X))
@@ -191,10 +191,10 @@ public static class CameraGlobals {
         float realMoveSpeed = 5f * RuntimeData.DeltaFrames;
         const float rotationSpeed = 0.01f;
 
-        RebirthFreecam.UseFocus = false;
-        RebirthFreecam.Far = 75000;
-        RebirthFreecam.MinPitch = -180f;
-        RebirthFreecam.MaxPitch = 180f;
+        PerspectiveCamera.UseFocus = false;
+        PerspectiveCamera.Far = 75000;
+        PerspectiveCamera.MinPitch = -180f;
+        PerspectiveCamera.MaxPitch = 180f;
 
         bool isPlayerActive = PlayerTank.ClientTank is not null;
         bool editorOrNoPlayer = LevelEditorUI.IsActive || !isPlayerActive;
@@ -215,49 +215,49 @@ public static class CameraGlobals {
         Keys keyD = Keys.Q;
 
         // smooths movement based on zoom/low fov
-        var mul = CameraGlobals.RebirthFreecam.FieldOfView / 90;
+        var mul = CameraGlobals.PerspectiveCamera.FieldOfView / 90;
         if (InputUtils.MouseRight) {
             var subPos = new Vector3(
                 0f,
                 MouseUtils.MouseVelocity.Y * rotationSpeed,
                 MouseUtils.MouseVelocity.X * rotationSpeed);
-            RebirthFreecam.Rotation -= subPos * mul;
+            PerspectiveCamera.Rotation -= subPos * mul;
 
             var clamped = new Vector3(
                 0f,
                 MathHelper.Clamp(
-                    RebirthFreecam.Rotation.Y,
+                    PerspectiveCamera.Rotation.Y,
                     -MathHelper.PiOver2,
                     MathHelper.PiOver2),
-                RebirthFreecam.Rotation.Z);
-            RebirthFreecam.Rotation = clamped;
+                PerspectiveCamera.Rotation.Z);
+            PerspectiveCamera.Rotation = clamped;
         }
 
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
-            RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaFrames;
+            PerspectiveCamera.FieldOfView += 0.5f * RuntimeData.DeltaFrames;
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
-            RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaFrames;
+            PerspectiveCamera.FieldOfView -= 0.5f * RuntimeData.DeltaFrames;
         if (InputUtils.MouseMiddle)
-            RebirthFreecam.FieldOfView = 90f;
+            PerspectiveCamera.FieldOfView = 90f;
 
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyF))
-            RebirthFreecam.Move(RebirthFreecam.World.Forward * realMoveSpeed);
+            PerspectiveCamera.Move(PerspectiveCamera.World.Forward * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyB))
-            RebirthFreecam.Move(RebirthFreecam.World.Backward * realMoveSpeed);
+            PerspectiveCamera.Move(PerspectiveCamera.World.Backward * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyL))
-            RebirthFreecam.Move(RebirthFreecam.World.Left * realMoveSpeed);
+            PerspectiveCamera.Move(PerspectiveCamera.World.Left * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyR))
-            RebirthFreecam.Move(RebirthFreecam.World.Right * realMoveSpeed);
+            PerspectiveCamera.Move(PerspectiveCamera.World.Right * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyU))
-            RebirthFreecam.Move(Vector3.UnitY * realMoveSpeed);
+            PerspectiveCamera.Move(Vector3.UnitY * realMoveSpeed);
         if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyD))
-            RebirthFreecam.Move(-Vector3.UnitY * realMoveSpeed);
+            PerspectiveCamera.Move(-Vector3.UnitY * realMoveSpeed);
 
-        GameView = RebirthFreecam.View;
-        GameProjection = RebirthFreecam.Projection;
+        GameView = PerspectiveCamera.View;
+        GameProjection = PerspectiveCamera.Projection;
 
         // ensures rotation doesn't just... go haywire.
-        RebirthFreecam.Rotation = new(RebirthFreecam.Rotation.X, RebirthFreecam.Rotation.Y, RebirthFreecam.Rotation.Z % MathHelper.Tau);
+        PerspectiveCamera.Rotation = new(PerspectiveCamera.Rotation.X, PerspectiveCamera.Rotation.Y, PerspectiveCamera.Rotation.Z % MathHelper.Tau);
     }
 
     public static void ManagePOV() {
@@ -307,10 +307,10 @@ public static class CameraGlobals {
             Vector3.Up
         ) * Matrix.CreateScale(AddativeZoom);
 
-        RebirthFreecam.FieldOfView = 90f;
-        GameProjection = RebirthFreecam.Projection;
+        PerspectiveCamera.FieldOfView = 90f;
+        GameProjection = PerspectiveCamera.Projection;
 
-        RebirthFreecam.Position = povCameraPosCurrent;
+        PerspectiveCamera.Position = povCameraPosCurrent;
     }
 
     public static int SpectateValidTank(int id, bool increase) {

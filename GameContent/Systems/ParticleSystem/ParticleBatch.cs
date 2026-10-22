@@ -164,7 +164,7 @@ internal sealed class SpriteParticleBatcher {
 
         Vector3 ambient = StaticLighting.AmbientDiffuseProduct;
 
-        var cam = CameraGlobals.RebirthFreecam;
+        var cam = CameraGlobals.PerspectiveCamera;
         Vector3 camPos = cam.Position;
         Vector3 camDown = cam.World.Down;
         Vector3 camForward = cam.World.Forward;

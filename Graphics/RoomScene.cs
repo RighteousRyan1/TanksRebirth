@@ -214,7 +214,7 @@ public static class RoomScene {
         // quarter = 15 minutes * quarter.
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.RebirthFreecam.Position, 2500);
+            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.PerspectiveCamera.Position, 2500);
             switch (quarter) {
                 case 1:
                     SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, volume: vol);
@@ -241,7 +241,7 @@ public static class RoomScene {
         if (hour == 0) hour += 12;
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.RebirthFreecam.Position, 2500);
+            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.PerspectiveCamera.Position, 2500);
             SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, volume: vol);
             await Task.Delay(timeBetweenSeqs);
             SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, volume: vol);
@@ -251,7 +251,7 @@ public static class RoomScene {
             SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, volume: vol);
             for (int i = 0; i < hour; i++) {
                 await Task.Delay(timeBetweenSeqs);
-                vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.RebirthFreecam.Position, 2500);
+                vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.PerspectiveCamera.Position, 2500);
                 SoundPlayer.PlaySoundInstance(ChimeHour, SoundContext.Effect, playNew: true, volume: vol);
             }
         });
@@ -336,7 +336,7 @@ public static class RoomScene {
             bs.Radius *= Scale * 100;
             if (!CameraGlobals.ViewFrustum.Intersects(bs))
                 continue;
-            // var inv = 1f - MathUtils.InverseLerp(100, 2000, Vector3.DistanceTo(CameraGlobals.RebirthFreecam.Position, bs.Center), true);
+            // var inv = 1f - MathUtils.InverseLerp(100, 2000, Vector3.DistanceTo(CameraGlobals.PerspectiveCamera.Position, bs.Center), true);
             // DebugManager.DrawBoundingSphere(bs, Color.Red * inv, CameraGlobals.GameView, CameraGlobals.GameProjection);
             foreach (BasicEffect effect in mesh.Effects) {
                 MeshEffectSet(mesh, effect);

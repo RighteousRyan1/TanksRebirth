@@ -558,7 +558,7 @@ public abstract class Tank(bool ignoresRegister) {
         UpdateTreads();
 
         // hides cosmetics (i.e: in first person)
-        var camDist = Vector3.Distance(CameraGlobals.RebirthFreecam.Position, Position3D + new Vector3(0, CameraGlobals.POV_CAM_OFFSET_Y, 0));
+        var camDist = Vector3.Distance(CameraGlobals.PerspectiveCamera.Position, Position3D + new Vector3(0, CameraGlobals.POV_CAM_OFFSET_Y, 0));
         CamTooClose = CameraGlobals.IsUsingFirstPersonCamera && camDist < 10;
 
         // fix 2d peeopled
@@ -601,7 +601,7 @@ public abstract class Tank(bool ignoresRegister) {
 
             ding.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
             //if (CameraGlobals.IsUsingFirstPresonCamera)
-            //    SoundUtils.CreateSpatialSound(ding, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
+            //    SoundUtils.CreateSpatialSound(ding, Position3D, CameraGlobals.PerspectiveCamera.Position, 1.25f);
 
             willDestroy = false;
         }
@@ -668,7 +668,7 @@ public abstract class Tank(bool ignoresRegister) {
         var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f);
 
         //if (CameraGlobals.IsUsingFirstPresonCamera)
-        //    SoundUtils.CreateSpatialSound(destroy, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
+        //    SoundUtils.CreateSpatialSound(destroy, Position3D, CameraGlobals.PerspectiveCamera.Position, 1.25f);
 
         Extras.Armor?.Remove();
 

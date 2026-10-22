@@ -62,20 +62,20 @@ public static partial class MainMenuUI
             if (MenuGraphicsStates.ContainsKey(value)) {
                 _goalBlur = MenuGraphicsStates[value].GaussianBlurFactor;
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position))
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Position))
                     .WithFrame(new(position: MenuGraphicsStates[value].Position, duration: CameraTransitionTime, easing: CameraEasingFunction));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation))
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Rotation))
                     .WithFrame(new(position: MenuGraphicsStates[value].Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
             }
             // if it doesn't have a proper camera position, just go to the regular one.
             else {
                 _goalBlur = DEFAULT_BLUR;
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position))
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Position))
                     .WithFrame(new(position: CamPosMain, duration: CameraTransitionTime, easing: CameraEasingFunction));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation))
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Rotation))
                     .WithFrame(new(position: CamPosMainRotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
             }
             CameraPositionAnimator.Restart();

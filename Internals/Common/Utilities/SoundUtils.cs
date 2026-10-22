@@ -40,9 +40,9 @@ public static class SoundUtils {
         sound.Volume = 1f;
         sound.MaxVolume = 1f;
 
-        var lForward = CameraGlobals.RebirthFreecam.World.Backward;
+        var lForward = CameraGlobals.PerspectiveCamera.World.Backward;
         var lPos = camPos / 15 / maxSoundDist / TankGame.Settings.EffectsVolume;
-        var lUp = CameraGlobals.RebirthFreecam.World.Down;
+        var lUp = CameraGlobals.PerspectiveCamera.World.Down;
 
         var eForward = Vector3.Backward;
         var ePos = sourcePos / 15 / maxSoundDist / TankGame.Settings.EffectsVolume;
@@ -63,7 +63,7 @@ public static class SoundUtils {
             Forward = lForward,
             Position = lPos,
             Up = lUp,
-            //Velocity = CameraGlobals.RebirthFreecam.Velocity
+            //Velocity = CameraGlobals.PerspectiveCamera.Velocity
         }, new AudioEmitter() {
             //DopplerScale = 2f,
             Forward = eForward,

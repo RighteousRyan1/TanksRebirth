@@ -147,10 +147,10 @@ public class Particle {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateBillboard(Position,
-                                            CameraGlobals.RebirthFreecam.Position,
+                                            CameraGlobals.PerspectiveCamera.Position,
                                             // up is wrong for some reason
-                                            CameraGlobals.RebirthFreecam.World.Down,
-                                            CameraGlobals.RebirthFreecam.World.Forward);
+                                            CameraGlobals.PerspectiveCamera.World.Down,
+                                            CameraGlobals.PerspectiveCamera.World.Forward);
         }
         else {
             world = Matrix.CreateScale(Scale) *
@@ -158,10 +158,10 @@ public class Particle {
                     Matrix.CreateTranslation(Position);
 
             /*if (Billboard) world *= Matrix.CreateBillboard(Position,
-                                            CameraGlobals.RebirthFreecam.Position,
+                                            CameraGlobals.PerspectiveCamera.Position,
                                             // up is wrong for some reason
-                                            CameraGlobals.RebirthFreecam.World.Down,
-                                            CameraGlobals.RebirthFreecam.World.Forward);*/
+                                            CameraGlobals.PerspectiveCamera.World.Down,
+                                            CameraGlobals.PerspectiveCamera.World.Forward);*/
         }
         foreach (ModelMesh mesh in Model.Meshes) {
             if (MeshesToIgnore.Contains(mesh.Name)) continue;
@@ -199,9 +199,9 @@ public class Particle {
         if (Billboard) {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateBillboard(Position,
-                                            CameraGlobals.RebirthFreecam.Position,
-                                            CameraGlobals.RebirthFreecam.World.Down,
-                                            CameraGlobals.RebirthFreecam.World.Forward);
+                                            CameraGlobals.PerspectiveCamera.Position,
+                                            CameraGlobals.PerspectiveCamera.World.Down,
+                                            CameraGlobals.PerspectiveCamera.World.Forward);
         }
         else {
             world = Matrix.CreateScale(Scale) *

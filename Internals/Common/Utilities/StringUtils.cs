@@ -20,7 +20,7 @@ public static class StringUtils {
     /// </summary>
     /// <param name="v">The vector to convert.</param>
     /// <returns>A string formatted as "new Vector3(Xf, Yf, Zf)".</returns>
-    public static string ToCtor(this Vector3 v) => $"new Vector3({v.X}f, {v.Y}f, {v.Z}f)";
+    public static string ToCtor(this Vector3 v) => FormattableString.Invariant($"new Vector3({v.X:F2}f, {v.Y:F2}f, {v.Z:F2}f)");
 
     /// <summary>
     /// Formats a version number into a string while stripping trailing zeros and unset components.

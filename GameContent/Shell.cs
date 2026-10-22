@@ -286,7 +286,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         //if (TrailSound != null) {
         //if (CameraGlobals.IsUsingFirstPresonCamera)
-        //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.RebirthFreecam.Position);
+        //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.PerspectiveCamera.Position);
         //}
 
         // hopefully fixes the ricochet issue. a bit longer code but should hopefully do the trick
@@ -481,7 +481,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         //bool fp = CameraGlobals.IsUsingFirstPresonCamera;
         //if (fp)
-        //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.RebirthFreecam.Position);
+        //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.PerspectiveCamera.Position);
 
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
@@ -489,7 +489,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                 var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f);
                 rocketRSound.Pitch -= 0.65f;
                 //if (fp)
-                //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.RebirthFreecam.Position);
+                //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.PerspectiveCamera.Position);
             }
         }
 
@@ -630,7 +630,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
 
                     // if (CameraGlobals.IsUsingFirstPersonCamera)
-                    // sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
+                    // sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.PerspectiveCamera.Position);
                 }
 
                 var light = new PointLight(Position3D, Color.Orange, 1f, 50f, true) {

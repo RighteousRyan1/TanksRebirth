@@ -83,7 +83,7 @@ public static class CosmeticsUI {
         displayTank.OffsetY = Chest.ChestPosition.Y + 15 + 40;
         displayTank.OffsetY = Hut.Position.Y;
         displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
-        displayTank.TurretRotation = displayTank.ChassisRotation;
+        displayTank.TurretRotation = MathUtils.RotationOf((CameraGlobals.PerspectiveCamera.Position - displayTank.Position3D).FlattenZ()); // displayTank.ChassisRotation;
 
         HandleInputs();
         if (_keyAnimation is not null) {

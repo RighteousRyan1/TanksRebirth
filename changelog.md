@@ -94,8 +94,15 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Some `Shell` and `Tank` properties are now bit flags
 - Tanks are now drawn with a custom shader instead of `BaiscEffect`, so if you were modifying anything related to that- it will no longer work
 - `PlacementSquare` -> `EditorTile`
+    - The map now uses a grid system
 - `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
-- There are probably more changes I'm forgetting lol
+- `RuntimeData.DeltaTime` -> `RuntimeData.DeltaFrames`
+    - Do NOT use the new `DeltaTime`, as it is actually what `DeltaTime` means now.
+- `CameraGlobals.RebirthFreecam` -> `CameraGlobals.PerspectiveCamera`
+
+
+
+- If there is anything unclear or uncertain after reading these notes, please reach out to me
 
 # Fixes
 

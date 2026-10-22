@@ -227,7 +227,7 @@ public class Airplane {
 
         var screenPos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
         if (CameraGlobals.IsUsingFirstPersonCamera) {
-            PlaneLoop.Volume = SoundUtils.GetVolumeFromCameraPosition(Position, CameraGlobals.RebirthFreecam.Position);
+            PlaneLoop.Volume = SoundUtils.GetVolumeFromCameraPosition(Position, CameraGlobals.PerspectiveCamera.Position);
         }
         else PlaneLoop.Volume = SoundUtils.GetVolumeFromScreenPosition(screenPos);
         //PlaneLoop.Instance.Pan = SoundUtils.GetPanFromScreenPosition(screenPos.X) - 1;// * 0.8f;

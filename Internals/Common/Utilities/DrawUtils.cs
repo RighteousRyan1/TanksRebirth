@@ -286,7 +286,7 @@ public static class DrawUtils {
     public static void DrawAxes() {
         var gd = TankGame.Instance.GraphicsDevice;
 
-        var cam = CameraGlobals.RebirthFreecam;
+        var cam = CameraGlobals.PerspectiveCamera;
 
         Vector3 origin = Vector3.Zero;
         if (CameraGlobals.IsUsingFirstPersonCamera)
