@@ -7,6 +7,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
@@ -16,9 +17,14 @@ public class TankHut {
     public ModelMesh Black;
 
     public Vector3 Position;
+
+    float _minDist, _maxDist;
+    Vector3 LightPosition => Position + new Vector3(0, 85, 0) * Scale;
     public float Scale = 1f;
     public EulerAngles Rotation; // should lowkey convert everything to eulerangles
     public Matrix World, View, Proj;
+
+    readonly OggAudio _light;
 
     bool _visible;
     static readonly string roof = PathGlobals.TEXTURES_PATH + "ingame/block_other_c";
@@ -49,6 +55,14 @@ public class TankHut {
         _boneTransforms = new Matrix[HutScene.Bones.Count];
         HutScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
+        _light = new OggAudio("Content/Assets/sounds/ambient/light_loop.ogg");
+        _light.Instance.IsLooped = true;
+
+        _light.MaxVolume = 1f;
+        _minDist = _light.MinDistance = 100;
+        _maxDist = _light.MaxDistance = 200f;
+        _light.OrthographicFade = true;
+
         _localBounds = HutScene.Meshes[0].BoundingSphere.Transform(_boneTransforms[HutScene.Meshes[0].ParentBone.Index]);
         foreach (var mesh in HutScene.Meshes)
             _localBounds = BoundingSphere.CreateMerged(_localBounds, mesh.BoundingSphere.Transform(_boneTransforms[mesh.ParentBone.Index]));
@@ -58,19 +72,19 @@ public class TankHut {
     }
     ~TankHut() {
         LightingSystem.CollectLights -= PlaceLights;
+        _light?.Stop();
     }
 
     // add sum lights (but remove them when they can't be seen)
     void PlaceLights() {
         if (!_visible) return;
 
-        var s1p = Position + new Vector3(0, 85, 0) * Scale;
-        var s1d = -Vector3.UnitY;
+        var dir = -Vector3.UnitY;
 
         var baseIntensity = 10f;
         var baseColor = Color.Goldenrod;
 
-        var spot1 = new SpotLight(s1p, s1d, baseColor, baseIntensity, 200f,
+        var spot1 = new SpotLight(LightPosition, dir, baseColor, baseIntensity, 200f,
             40f, 60f,
             true) {
             ShadowBias = 1f
@@ -84,6 +98,21 @@ public class TankHut {
     void SetTextures() {
         foreach (var mesh in HutScene.Meshes)
             _textures[mesh] = mesh == Black ? TextureGlobals.Pixels[Color.Black] : GameResources.GetGameResource<Texture2D>(GetMeshTexture(mesh));
+    }
+
+    public void Update() {
+        _light.Position = LightPosition;
+        _light.Volume = TankGame.Settings.AmbientVolume;
+
+        // only keep a voice playing while the buzz could actually be heard
+        var audible = SoundUtils.GetSpatialParams(LightPosition, _light.MinDistance * Scale, _light.MaxDistance * Scale, true).Volume > 0f;
+        _light.MinDistance = _minDist * Scale;
+        _light.MaxDistance = _maxDist * Scale;
+
+        if (audible && !_light.IsPlaying())
+            _light.Play();
+        else if (!audible && _light.IsPlaying())
+            _light.Stop();
     }
 
     public void Render() {

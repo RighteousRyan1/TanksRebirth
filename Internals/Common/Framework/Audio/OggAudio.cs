@@ -77,7 +77,7 @@ public class OggAudio : IDisposable, IAudio {
     public float MaxDistance = SoundPlayer.DEFAULT_MAX_DISTANCE;
     /// <summary>Pan the positional pan is added to.</summary>
     public float BasePan;
-    /// <summary>Whether this sound also fades by distance in orthographic view, as heard from the board. For sounds far from the board, like the room's clock.</summary>
+    /// <summary>Whether this sound also fades by distance in orthographic view, as heard from the game scene.</summary>
     public bool OrthographicFade;
     float _positionVolume = 1f;
 
@@ -134,7 +134,7 @@ public class OggAudio : IDisposable, IAudio {
         MaxVolume = maxVolume;
     }
 
-    private void Load(string path, bool compressToMono = false) {
+    void Load(string path, bool compressToMono = false) {
         var soundEffect = GameResources.GetGameResource<SoundEffect>(path);
         if (soundEffect != null) {
             _effect = soundEffect;

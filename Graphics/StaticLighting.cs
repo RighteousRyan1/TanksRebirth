@@ -24,7 +24,7 @@ public static class StaticLighting {
             LightPower = applySunPower ? SunPower : 0f;
 
             /*if (StaticLighting.IsNight != IsNight)
-                TankMusicSystem.SnowLoop = new OggMusic("Snow Loop", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);*/
+                TankMusicSystem.SnowLoop = new OggMusic("Snow Loop", IsNight ? "Content/Assets/sounds/ambient/env/forestnight" : "Content/Assets/sounds/ambient/env/forestday", 1f);*/
 
             StaticLighting.IsNight = IsNight;
         }

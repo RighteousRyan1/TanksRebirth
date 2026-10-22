@@ -343,16 +343,8 @@ public record Modifiers {
         var tanks = newMission.Tanks;
         var blocks = newMission.Blocks;
 
-        var tanksWithPlacements = new Dictionary<TankTemplate, EditorTile>();
-        var blocksWithPlacements = new Dictionary<BlockTemplate, EditorTile>();
-
-        for (int i = 0; i < tanks.Length; i++) {
-            // bro :sob:
-            tanksWithPlacements[tanks[i]] = EditorTile.AllTiles.First(x => Vector2.Distance(x.Position.FlattenZ(), tanks[i].Position) < 5);
-        }
-        for (int i = 0; i < blocks.Length; i++) {
-            blocksWithPlacements[blocks[i]] = EditorTile.AllTiles.First(x => Vector2.Distance(x.Position.FlattenZ(), blocks[i].Position) < 5);
-        }
+        // im not gonna do this method until i make tanks save x and y grid positions
+        // tanks[0].Position
 
         // TODO: this
         // MaxX - PosX = FlipX

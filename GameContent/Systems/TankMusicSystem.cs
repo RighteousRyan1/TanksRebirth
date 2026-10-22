@@ -62,7 +62,7 @@ public static class TankMusicSystem {
             var name = Path.GetFileNameWithoutExtension(file);
             Audio[name] = new OggMusic(name, file.Replace("\\", "/"), 0.5f);
         }
-        Audio["Snow Breeze"] = new("Snow Breeze", "Content/Assets/sounds/ambient/snowfall.ogg", 1f);
+        Audio["Snow Breeze"] = new("Snow Breeze", "Content/Assets/sounds/ambient/env/snowfall.ogg", 1f);
         SnowLoop = Audio["Snow Breeze"];
     }
     public static void SetAssetAssociations() {

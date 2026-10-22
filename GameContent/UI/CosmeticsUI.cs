@@ -71,6 +71,7 @@ public static class CosmeticsUI {
         Hut.Position = Chest.ChestPosition + new Vector3(-50f, 0, 175f);
         Hut.View = CameraGlobals.GameView;
         Hut.Proj = CameraGlobals.GameProjection;
+        Hut.Update();
 
         var basePos = Chest.ChestPosition - new Vector3(15, 23, 15);
         _clickSpot = new BoundingSphere(Chest.KeySlotPos, 6);

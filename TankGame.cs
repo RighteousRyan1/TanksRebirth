@@ -500,7 +500,7 @@ public class TankGame : Game {
 
             UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
-            Thunder.SoftRain = new OggAudio("Content/Assets/sounds/ambient/soft_rain.ogg");
+            Thunder.SoftRain = new OggAudio("Content/Assets/sounds/ambient/env/soft_rain.ogg");
             Thunder.SoftRain.Instance.Volume = 0;
             Thunder.SoftRain.Instance.IsLooped = true;
 
