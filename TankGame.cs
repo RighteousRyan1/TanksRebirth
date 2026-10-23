@@ -839,6 +839,7 @@ public class TankGame : Game {
         InputUtils.Watch();
 
         RoomScene.Update();
+        RainyWindows.Update();
 
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {

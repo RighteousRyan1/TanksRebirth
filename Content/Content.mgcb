@@ -783,6 +783,12 @@
 /processorParam:DebugMode=Auto
 /build:Assets/shaders/rainbow_grad_anim.fx
 
+#begin Assets/shaders/rainy_window.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/shaders/rainy_window.fx
+
 #begin Assets/shaders/tank.fx
 /importer:EffectImporter
 /processor:EffectProcessor

@@ -78,6 +78,7 @@ public static class RoomScene {
         ChimeHour = GetClockSfx("chime_hour");
 
         PopulateAlphaDict();
+        RainyWindows.Add(RoomSkyboxScene, "Windows_Glass");
     }
     public static OggAudio GetClockSfx(string asset) => new($"Content/Assets/sounds/roomscene/{asset}.ogg");
     public static void InitializeTextures() {
@@ -343,12 +344,22 @@ public static class RoomScene {
         }
 
         device.BlendState = BlendState.AlphaBlend;
+        var sceneCaptured = false;
         foreach (var mesh in GlassMeshes) {
             var bs = mesh.BoundingSphere;
             bs.Center = Vector3.Transform(bs.Center, _boneTransforms[mesh.ParentBone.Index]);
             bs.Radius *= Scale * 100;
             if (!CameraGlobals.ViewFrustum.Intersects(bs))
                 continue;
+            if (RainyWindows.IsActive && RainyWindows.IsRainy(mesh)) {
+                // everything behind the windows is drawn by now
+                if (!sceneCaptured) {
+                    RainyWindows.CaptureScene();
+                    sceneCaptured = true;
+                }
+                RainyWindows.Draw(mesh, _boneTransforms[mesh.ParentBone.Index], View, Projection);
+                continue;
+            }
             foreach (BasicEffect effect in mesh.Effects) {
                 MeshEffectSet(mesh, effect);
 
