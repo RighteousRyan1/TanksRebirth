@@ -21,7 +21,7 @@ public partial class ParticleManager {
     /// <summary>An unlit sprite facing the camera, like most effect particles.</summary>
     public Particle MakeOrthoParticle(Vector3 position, Texture2D texture, bool additive) {
         var p = MakeParticle(position, texture);
-        p.HasAdditiveBlending = additive;
+        p.Additive = additive;
         p.ApplyGameLight = false;
         p.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
         p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
@@ -43,7 +43,7 @@ public partial class ParticleManager {
     public static void Animate(Particle p, float life, Action<Particle, float> update) {
         // float parameter in the action seems kinda pointless..?
         update(p, 0f);
-        p.UniqueBehavior = particle => {
+        p.UpdateCallback = particle => {
             var t = particle.LifeTime / life;
             if (t >= 1f) {
                 particle.Destroy();
@@ -60,7 +60,7 @@ public partial class ParticleManager {
             if (t > curve[i].At) continue;
             var (a, va) = curve[i - 1];
             var (b, vb) = curve[i];
-            return MathHelper.Lerp(va, vb, (t - a) / (b - a));
+            return MathHelper.Lerp(va, vb, MathUtils.InverseLerp(a, b, t));
         }
         return curve[^1].Value;
     }
@@ -111,7 +111,7 @@ public partial class ParticleManager {
         Animate(ring, life, (p, t) => {
             p.Color = Sample(_ringColor, t);
             p.Alpha = alpha * MathHelper.Clamp((1f - t) * 3f, 0f, 1f);
-            p.Scale = MathUtils.SizeToScale(texture, size * MathHelper.Lerp(0.4f, 1f, MathF.Min(t / 0.85f, 1f)));
+            p.Scale = MathUtils.SizeToScale(texture, size * MathHelper.Lerp(0.4f, 1f, MathUtils.InverseLerp(0f, 0.85f, t, true)));
         });
     }
 
@@ -124,7 +124,7 @@ public partial class ParticleManager {
         Animate(flash, life, (p, t) => {
             p.Color = Sample(_flashColor, t);
             p.Alpha = 1f - t;
-            p.Scale = MathUtils.SizeToScale(texture, size * MathHelper.Lerp(1f, 0.5f, MathF.Min(t / 0.8f, 1f)));
+            p.Scale = MathUtils.SizeToScale(texture, size * MathHelper.Lerp(1f, 0.5f, MathUtils.InverseLerp(0f, 0.8f, t, true)));
         });
     }
 
@@ -200,9 +200,9 @@ public partial class ParticleManager {
         wave.Pitch = MathHelper.PiOver2;
         wave.Billboard = false;
         wave.Color = new Color(255, 255, 92);
-        Animate(wave, 15f, (p, t) => {
+        Animate(wave, 15f, (p, t) => {  
             p.Alpha = 0.6f * (1f - t);
-            p.Scale = MathUtils.SizeToScale(waveTexture, MathHelper.Lerp(17.5f, 140f, MathF.Min(t / 0.5f, 1f)));
+            p.Scale = MathUtils.SizeToScale(waveTexture, MathHelper.Lerp(17.5f, 140f, MathUtils.InverseLerp(0f, 0.5f, t, true)));
         });
 
         var glintTexture = Tex("misc/light_particle");
@@ -247,7 +247,7 @@ public partial class ParticleManager {
         float lifetime = 60f;
         var plight = GameplayLights.CreateTempLight(GameHandler.Particles, position, light, lifetime);
         // ParticleManager.Animate(plight, lifetime, )
-        plight.UniqueBehavior += (a) => {
+        plight.UpdateCallback += (a) => {
             light.Intensity -= 0.5f * RuntimeData.DeltaFrames;
         };
     }
@@ -357,7 +357,7 @@ public partial class ParticleManager {
         var rollOffset = Rand.NextFloat(-0.25f, 0.25f);
 
         var flame = MakeParticle(shell.Position3D, texture);
-        flame.HasAdditiveBlending = false;
+        flame.Additive = false;
         flame.Layer = 1f;
         flame.Color = shell.Properties.FlameColor;
         flame.Pitch = MathHelper.PiOver2;

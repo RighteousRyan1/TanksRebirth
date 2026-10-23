@@ -123,7 +123,7 @@ public static partial class MainMenuUI {
         LeaveUI();
         LeaveGP();
     }
-    private static void UpdateModels() {
+    static void UpdateModels() {
         RebirthLogo.Position = new Vector3(0, 300.ToResolutionY(), 0);
 
         // slowly return to normal if the mouse is not on-screen

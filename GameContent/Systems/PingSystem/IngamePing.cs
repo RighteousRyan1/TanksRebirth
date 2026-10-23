@@ -74,7 +74,7 @@ public class IngamePing {
         }
 
         //float x = 0f;
-        p.UniqueBehavior = (a) => {
+        p.UpdateCallback = (a) => {
             //x += 0.003f * RuntimeData.DeltaFrames;
             //var val = Easings.InOutElastic(x);
             var val = 0.005f;

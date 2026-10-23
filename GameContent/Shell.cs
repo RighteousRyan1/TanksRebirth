@@ -639,7 +639,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                 float lifetime = 20f;
                 var plight = GameplayLights.CreateTempLight(GameHandler.Particles, Position3D, light, lifetime);
                 // ParticleManager.Animate(plight, lifetime, )
-                plight.UniqueBehavior += (a) => {
+                plight.UpdateCallback += (a) => {
                     light.Intensity -= 0.05f * RuntimeData.DeltaFrames;
                 };
 
@@ -669,7 +669,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     }
 
     public void Render() {
-        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.Proj = CameraGlobals.GameProjection;
         DrawParams.View = CameraGlobals.GameView;
 
         // TODO: wtf? DoRaycast failing?
@@ -681,7 +681,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                 $"\nTier: {ShellID.Collection.GetKey(Type)}" +
                 $"\nId: {Id}" +
                 $"\nSgid: {VolleyId}",
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, 20), 1,
                 centered: true);
 
             if (DebugManager.DebugLevel == DebugManager.Id.ENT_DAT)
@@ -699,7 +699,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                 effect.World = DrawParams.World;
 
                 effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
+                effect.Projection = DrawParams.Proj;
                 effect.TextureEnabled = true;
 
                 effect.Texture = DrawParamsShell.ShellTexture;

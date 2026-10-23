@@ -59,8 +59,8 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         for (int i = 0; i < _count; i++) {
             var p = _items[i];
             if (p is null) continue;
-            p.UniqueBehavior = null;
-            p.UniqueDraw = null;
+            p.UpdateCallback = null;
+            p.DrawCallback = null;
             p.Destroyed = true;
             _items[i] = null;
         }
@@ -120,7 +120,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
             var p = _items[i];
             if (p.Model is not null) continue; // RenderModelParticles
 
-            if (p.UniqueDraw is not null)
+            if (p.DrawCallback is not null)
                 _customDraw.Add(p);
 
             if (p.IsIn2DSpace) {
@@ -163,14 +163,14 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
 
         // custom draw hooks run with the same SpriteBatch state they always did
         for (int i = 0; i < _customDraw.Count; i++)
-            _customDraw[i].UniqueDraw?.Invoke(_customDraw[i]);
+            _customDraw[i].DrawCallback?.Invoke(_customDraw[i]);
     }
 
     void DrawScreenSpace(SpriteBatch spriteBatch, bool additive) {
         bool begun = false;
         for (int i = 0; i < _screenSpace.Count; i++) {
             var p = _screenSpace[i];
-            if (p.HasAdditiveBlending != additive) continue;
+            if (p.Additive != additive) continue;
 
             if (!begun) {
                 spriteBatch.Begin(SpriteSortMode.FrontToBack, additive ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
@@ -232,7 +232,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
 
         p.Scale = new(particleScaleMultiplier);
         p.IsIn2DSpace = false;
-        p.HasAdditiveBlending = false;
+        p.Additive = false;
         p.Alpha = 1;
         p.Origin2D = new Vector2(t.Width / 2, frameHeight / 2);
         p.TextureCrop = new Rectangle(0, 0, t.Width, frameHeight);
@@ -277,7 +277,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
 
             spark.Color = Color.Yellow;
 
-            spark.UniqueBehavior = (part) => {
+            spark.UpdateCallback = (part) => {
                 part.Position += vel * RuntimeData.DeltaFrames;
                 part.Alpha -= 0.025f * RuntimeData.DeltaFrames;
 
@@ -292,7 +292,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
 
             var smoke = MakeParticle(position, texture);
 
-            smoke.HasAdditiveBlending = true;
+            smoke.Additive = true;
 
             smoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -307,7 +307,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
             var smokeInitColor = Color.DarkOrange;
             float fullLerpTime = 50f;
 
-            smoke.UniqueBehavior = (p) => {
+            smoke.UpdateCallback = (p) => {
                 smoke.Position += velocity;
                 smoke.Scale -= new Vector3(0.01f) * RuntimeData.DeltaFrames;
                 var time = MathF.Min(smoke.LifeTime, fullLerpTime);
@@ -330,7 +330,7 @@ public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
         p.Scale = new(scale);
         p.Color = color;
         p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
-        p.UniqueBehavior = (part) => {
+        p.UpdateCallback = (part) => {
             GeometryUtils.Add(ref p.Scale, -0.0175f * RuntimeData.DeltaFrames);
 
             p.Alpha -= 0.025f * RuntimeData.DeltaFrames;

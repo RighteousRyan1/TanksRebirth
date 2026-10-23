@@ -134,9 +134,9 @@ internal sealed class SpriteParticleBatcher {
     }
 
     public void Add(Particle p) {
-        var key = (p.Texture, p.HasAdditiveBlending);
+        var key = (p.Texture, p.Additive);
         if (!_map.TryGetValue(key, out var bucket))
-            _map[key] = bucket = new Bucket { Texture = p.Texture, Additive = p.HasAdditiveBlending };
+            _map[key] = bucket = new Bucket { Texture = p.Texture, Additive = p.Additive };
         if (bucket.Count == 0)
             _active.Add(bucket);
         bucket.Add(p);

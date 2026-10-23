@@ -83,10 +83,10 @@ public class Explosion : IAITankDanger {
 
         ring.Scale = new(1.3f);
         ring.Pitch = MathHelper.PiOver2;
-        ring.HasAdditiveBlending = true;
+        ring.Additive = true;
         ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
 
-        ring.UniqueBehavior = (a) => {
+        ring.UpdateCallback = (a) => {
             ring.Alpha -= 0.08f * RuntimeData.DeltaFrames;
 
             GeometryUtils.Add(ref ring.Scale, 0.04f * RuntimeData.DeltaFrames);
@@ -108,7 +108,7 @@ public class Explosion : IAITankDanger {
                 var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);
 
                 // TODO: make particles face center of explosion -- i think this is done?
-                particle.UniqueBehavior = (a) => {
+                particle.UpdateCallback = (a) => {
                     act?.Invoke(particle);
                     particle.Color = ExplosionColor;
                     rotation += rotationSpeed1 * RuntimeData.DeltaFrames;

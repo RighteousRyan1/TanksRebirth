@@ -154,7 +154,7 @@ public static class GameScene {
             foreach (var mesh in FloorModelBase.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+                    effect.Projection = DrawParams.Proj;
                     effect.World = DrawParams.World * Matrix.CreateScale(scale);
 
                     effect.TextureEnabled = true;
@@ -271,7 +271,7 @@ public static class GameScene {
 
                         foreach (BasicEffect effect in mesh.Effects) {
                             effect.View = DrawParams.View;
-                            effect.Projection = DrawParams.Projection;
+                            effect.Projection = DrawParams.Proj;
                             effect.World = DrawParams.World;
 
                             if (UseCustomSceneColor) {
@@ -305,7 +305,7 @@ public static class GameScene {
                     foreach (var mesh in BoundaryModel.Meshes) {
                         foreach (BasicEffect effect in mesh.Effects) {
                             effect.View = DrawParams.View;
-                            effect.Projection = DrawParams.Projection;
+                            effect.Projection = DrawParams.Proj;
                             effect.World = DrawParams.World;
                             effect.TextureEnabled = true;
                             effect.Alpha = 1f;
@@ -386,7 +386,7 @@ public static class GameScene {
 
     public static void RenderWorldModels() {
         DrawParams.View = CameraGlobals.GameView;
-        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.Proj = CameraGlobals.GameProjection;
         DrawParams.World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Center);
 
         if (UpdateAndRender) {

@@ -45,7 +45,7 @@ public class JackOLantern {
         LightingSystem.CollectLights += AddLight;
 
         // handles our update loop
-        _p.UniqueBehavior = (p) => {
+        _p.UpdateCallback = (p) => {
             Update();
         };
     }

@@ -102,7 +102,7 @@ public static partial class LevelEditorUI {
         bp.Color = Color.Black;
         bp.MeshesToIgnore = ["Shadow"];
         _previewType = -1;
-        bp.UniqueBehavior = (p) => {
+        bp.UpdateCallback = (p) => {
             UpdatePlacementInfo(bp);
             // bp.Model = (Block.WouldUseAlternateModel(BlockStack) ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack).Asset;
             bp.Position = DrawUtils.CenteredOrthoToScreen(PlaceInfoStart).Expand();
@@ -119,7 +119,7 @@ public static partial class LevelEditorUI {
         _stackFloor.LightPower = 0.775f;
         _stackFloor.Color = Color.Black;
         _stackFloor.ApplyGameLight = false;
-        _stackFloor.UniqueBehavior = (p) => {
+        _stackFloor.UpdateCallback = (p) => {
             // true cuz there's no need to lower the Y
             var curHeight = Block.GetOffsetY(BlockStack, true) / Block.BLOCK_DEF_SCALING;
             _stackFloor.Position = bp.Position + Vector3.Up * curHeight * bp.Scale;
@@ -134,7 +134,7 @@ public static partial class LevelEditorUI {
             var tnkPart = EditorParticleSystem.MakeParticle(Vector3.Zero, tnkDummy.DrawParamsTank.Model, tnkDummy.DrawParamsTank.TankTexture);
 
             // at some point
-            /*tnkPart.UniqueDraw = (p) => {
+            /*tnkPart.DrawCallback = (p) => {
                 GameShaders.DrawTankMesh(mesh, tnkPart.po, EditorParticleSystem.SystemView, EditorParticleSystem.SystemProjection,
                     tnkDummy.DrawParamsTank.TankTexture, tnkDummy.DrawParamsTank.TankAlpha, true);
             };*/

@@ -70,13 +70,13 @@ public class Particle {
     public bool ToScreenSpace = true;
 
     /// <summary>What this <see cref="Particle"/> should do every given update.</summary>
-    public Action<Particle>? UniqueBehavior;
+    public Action<Particle>? UpdateCallback;
 
     /// <summary>What this <see cref="Particle"/> should do every given draw call.</summary>
-    public Action<Particle>? UniqueDraw;
+    public Action<Particle>? DrawCallback;
 
     /// <summary>Whether or not the color of this <see cref="Particle"/> has addative blending applied.</summary>
-    public bool HasAdditiveBlending = true;
+    public bool Additive = true;
 
     /// <summary>How to crop the texture of this particle.</summary>
     public Rectangle? TextureCrop = null; // for framing a particle's texture
@@ -125,7 +125,7 @@ public class Particle {
     public bool Destroyed { get; internal set; }
 
     public void Update() {
-        UniqueBehavior?.Invoke(this);
+        UpdateCallback?.Invoke(this);
         LifeTime += RuntimeData.DeltaFrames;
     }
 
@@ -218,7 +218,7 @@ public class Particle {
             EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
         }
 
-        spriteBatch.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle);
+        spriteBatch.Begin(SpriteSortMode.FrontToBack, Additive ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle);
         spriteBatch.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
         spriteBatch.End();
     }
@@ -237,8 +237,8 @@ public class Particle {
 
     /// <summary>Removes this particle from its system. Safe to call multiple times; O(1).</summary>
     public void Destroy() {
-        UniqueBehavior = null;
-        UniqueDraw = null;
+        UpdateCallback = null;
+        DrawCallback = null;
 
         if (Destroyed) return;
         Destroyed = true;

@@ -292,11 +292,11 @@ public abstract class Tank(bool ignoresRegister) {
         var particle = GameHandler.Particles.MakeParticle(Position3D + prop.RelativePosition, prop.Texture);
 
         particle.Scale = prop.Scale;
-        particle.HasAdditiveBlending = false;
+        particle.Additive = false;
         particle.Tag = _propParticles.Count; // tag is essentially an index
         // += vs =  ?
         // TODO: this prolly is the culprit of 2d cosmetics not doin nun
-        particle.UniqueBehavior = particle => {
+        particle.UpdateCallback = particle => {
             particle.Position = Position3D + prop.RelativePosition;
             particle.Roll = prop.Rotation.X;
             particle.Pitch = prop.Rotation.Y;
@@ -355,7 +355,7 @@ public abstract class Tank(bool ignoresRegister) {
         lp1.IsIn2DSpace = true;
         lp1.Color = color;
 
-        lp1.UniqueBehavior = (lp) => {
+        lp1.UpdateCallback = (lp) => {
             lp1.Position = Position3D;
             lp1.TextureScale = new(5);
 
@@ -376,7 +376,7 @@ public abstract class Tank(bool ignoresRegister) {
         lp2.Color = color;
         lp2.Alpha = 0.4f;
 
-        lp2.UniqueBehavior = (lp) => {
+        lp2.UpdateCallback = (lp) => {
             lp2.Position = Position3D;
             lp2.TextureScale = new(15);
 
@@ -405,7 +405,7 @@ public abstract class Tank(bool ignoresRegister) {
 
             lpSmoke.Scale = new(0.75f);
 
-            lpSmoke.UniqueBehavior = (elp) => {
+            lpSmoke.UpdateCallback = (elp) => {
                 elp.Position.X += velocity.X * RuntimeData.DeltaFrames;
                 elp.Position.Z += velocity.Y * RuntimeData.DeltaFrames;
 
@@ -624,7 +624,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         part.Color = color;
 
-        part.HasAdditiveBlending = false;
+        part.Additive = false;
         part.Origin2D = FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.Gameplay.Hit) / 2;
         part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
         part.Alpha = 0;
@@ -636,7 +636,7 @@ public abstract class Tank(bool ignoresRegister) {
         var speed = 0.5f;
         float height = 5f;
 
-        part.UniqueBehavior = (a) => {
+        part.UpdateCallback = (a) => {
             var sin = MathF.Sin(RuntimeData.RunTime * speed) * height;
             part.Position.Y = origPos.Y + sin * RuntimeData.DeltaFrames;
 
@@ -650,7 +650,7 @@ public abstract class Tank(bool ignoresRegister) {
             if (a.Scale.X < 0)
                 a.Destroy();
         };
-        part.UniqueDraw = particle => {
+        part.DrawCallback = particle => {
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
                     CameraGlobals.GameView, CameraGlobals.GameProjection),
@@ -810,7 +810,7 @@ public abstract class Tank(bool ignoresRegister) {
     public virtual void Render() {
         if (IsDestroyed) return;
 
-        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.Proj = CameraGlobals.GameProjection;
         DrawParams.View = CameraGlobals.GameView;
 
         if (!CampaignGlobals.InMission || !Properties.Invisible && CampaignGlobals.InMission) {
@@ -836,7 +836,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         if (DebugManager.DebugLevel != DebugManager.Id.ENT_DAT) return;
         for (int i = 0; i < info.Length; i++) {
-            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Projection) -
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Proj) -
                 new Vector2(0, i * 20);
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos, 
                 Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
@@ -871,7 +871,7 @@ public abstract class Tank(bool ignoresRegister) {
                     var baseMatrix = Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition);
                     effect.World = baseMatrix;
                     effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+                    effect.Projection = DrawParams.Proj;
 
                     // hover highlight
                     if (IsHoveredByMouse)

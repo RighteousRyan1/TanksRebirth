@@ -173,7 +173,7 @@ public static class SceneManager {
 
                 float rotFactor = Client.ClientRandom.NextFloat(0.001f, 0.01f);
 
-                p.UniqueBehavior = (a) => {
+                p.UpdateCallback = (a) => {
                     if (p.Position.Y <= 0) {
                         GeometryUtils.Add(ref p.Scale, -0.006f * RuntimeData.DeltaFrames);
                         if (p.Scale.X <= 0)

@@ -61,31 +61,6 @@ public static class CosmeticsUI {
     }
 
     public static void Update() {
-        Chest.DrawParams.View = CameraGlobals.GameView;
-        Chest.DrawParams.Projection = CameraGlobals.GameProjection;
-
-        _interp += (_isOpening ? 0.015f : -0.015f) * RuntimeData.DeltaFrames;
-        _interp = MathHelper.Clamp(_interp, 0, 1);
-
-        // behind the chest as seen from the cosmetics camera, between the books
-        Hut.Position = Chest.ChestPosition + new Vector3(-50f, 0, 175f);
-        Hut.View = CameraGlobals.GameView;
-        Hut.Proj = CameraGlobals.GameProjection;
-        Hut.Update();
-
-        var basePos = Chest.ChestPosition - new Vector3(15, 23, 15);
-        _clickSpot = new BoundingSphere(Chest.KeySlotPos, 6);
-
-        displayTank?.Update();
-
-        displayTank ??= new(playerType: PlayerID.Blue, ignoreRegister: true);
-        displayTank.Position = Chest.ChestPosition.FlattenZ();
-        displayTank.Position = Hut.Position.FlattenZ();
-        displayTank.OffsetY = Chest.ChestPosition.Y + 15 + 40;
-        displayTank.OffsetY = Hut.Position.Y;
-        displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
-        displayTank.TurretRotation = MathUtils.RotationOf((CameraGlobals.PerspectiveCamera.Position - displayTank.Position3D).FlattenZ()); // displayTank.ChassisRotation;
-
         HandleInputs();
         if (_keyAnimation is not null) {
             // start things
@@ -160,20 +135,22 @@ public static class CosmeticsUI {
     public static void EnterMenu() {
         var pos = Chest.ChestPosition;
 
+        var keyCount = 3; // TankGame.SaveFile.CollectedKeys;
+
         _dispPart = GameHandler.Particles.MakeParticle(Vector3.Zero, 
-            string.Format(TankGame.GameLanguage.Misc.KeysCount, TankGame.SaveFile.CollectedKeys));
+            string.Format(TankGame.GameLanguage.Misc.KeysCount, keyCount));
 
         _dispPart.IsIn2DSpace = true;
         _dispPart.ToScreenSpace = true;
 
         _dispPart.Color = Color.White;
 
-        _dispPart.HasAdditiveBlending = false;
+        _dispPart.Additive = false;
         _dispPart.Origin2D = FontGlobals.RebirthFont.MeasureString(_dispPart.Text) / 2;
         _dispPart.Scale = Vector3.One;
         _dispPart.Alpha = 0;
 
-        _dispPart.UniqueDraw = particle => {
+        _dispPart.DrawCallback = particle => {
             particle.Position = Chest.ChestPosition + new Vector3(0, 150, 0);
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
@@ -181,7 +158,7 @@ public static class CosmeticsUI {
                 particle.Color, Color.Black, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
         };
 
-        SpawnKeys();
+        SpawnKeys(keyCount);
     }
 
     public static IProp FuckingGamble(LootBox<IProp> lootPool, out float percent) {
@@ -190,9 +167,8 @@ public static class CosmeticsUI {
         return (IProp)result.Clone();
     }
 
-    static void SpawnKeys() {
+    static void SpawnKeys(int keyCount) {
         _keys.Clear();
-        var numKeys = TankGame.SaveFile.CollectedKeys;
 
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/chest/key");
 
@@ -202,12 +178,12 @@ public static class CosmeticsUI {
         float endRads = MathHelper.PiOver2;      // right of fan
         var origPos = Chest.ChestPosition + new Vector3(0, 20, 0);
 
-        var diff = (endRads - startRads) / (numKeys - 1);
+        // var diff = (endRads - startRads) / (keyCount - 1);
 
-        for (int i = 0; i < numKeys; i++) {
+        for (int i = 0; i < keyCount; i++) {
             Particle keyPart = GameHandler.Particles.MakeParticle(origPos, ModelGlobals.Key.Asset, tex);
 
-            float k = numKeys == 1 ? 0.5f : (float)i / (numKeys - 1);
+            float k = keyCount == 1 ? 0.5f : (float)i / (keyCount - 1);
             // helps calculate the goal position
             float angle = MathHelper.Lerp(startRads, endRads, k);
 
@@ -218,7 +194,7 @@ public static class CosmeticsUI {
             keyPart.Alpha = 1f;
             // maybe this is retarded
             keyPart.Scale = Vector3.One * 40;
-            keyPart.HasAdditiveBlending = false;
+            keyPart.Additive = false;
             keyPart.Pitch = MathHelper.PiOver2;
             keyPart.Color = Color.White;
             keyPart.Billboard = true;
@@ -235,7 +211,7 @@ public static class CosmeticsUI {
             float velX = Client.ClientRandom.NextFloat(0.25f, 0.75f);
             float velZ = Client.ClientRandom.NextFloat(0, -0.5f);
 
-            keyPart.UniqueBehavior = (p) => {
+            keyPart.UpdateCallback = (p) => {
                 // gives time for the camera to transition
                 if (p.LifeTime < 80) return;
 
@@ -331,6 +307,30 @@ public static class CosmeticsUI {
     }
     public static void DrawMenu() {
         // DebugManager.DrawBoundingSphere(_clickSpot, ColorUtils.DiscoPartyColor, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        Chest.DrawParams.View = Hut.View = CameraGlobals.GameView;
+        Chest.DrawParams.Proj = Hut.Proj = CameraGlobals.GameProjection;
+
+        _interp += (_isOpening ? 0.015f : -0.015f) * RuntimeData.DeltaFrames;
+        _interp = MathHelper.Clamp(_interp, 0, 1);
+
+        // behind the chest as seen from the cosmetics camera, between the books
+        Hut.Position = Chest.ChestPosition + new Vector3(-50f, 0, 175f);
+        Hut.Update();
+
+        var basePos = Chest.ChestPosition - new Vector3(15, 23, 15);
+        _clickSpot = new BoundingSphere(Chest.KeySlotPos, 6);
+
+        displayTank?.Update();
+
+        displayTank ??= new(playerType: PlayerID.Blue, ignoreRegister: true);
+        displayTank.Position = Chest.ChestPosition.FlattenZ();
+        displayTank.Position = Hut.Position.FlattenZ();
+        displayTank.OffsetY = Chest.ChestPosition.Y + 15 + 40;
+        displayTank.OffsetY = Hut.Position.Y;
+        displayTank.ChassisRotation = MathHelper.PiOver2 * 3 - MathHelper.PiOver4;
+        displayTank.TurretRotation = MathUtils.RotationOf((CameraGlobals.PerspectiveCamera.Position - displayTank.Position3D).FlattenZ()); // displayTank.ChassisRotation;
+
+
         Hut?.Render();
         Chest?.Render();
 

@@ -295,7 +295,7 @@ public static class DebugManager {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.IsDestroyed && !x.Properties.Stationary);
             if (tnkGet > -1) {
                 var tnk = GameHandler.AllAITanks[tnkGet];
-                tnk.DesiredChassisRotation = MathUtils.RotationOf(MouseUtils.MousePosition - MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.DrawParams.World, tnk.DrawParams.View, tnk.DrawParams.Projection));
+                tnk.DesiredChassisRotation = MathUtils.RotationOf(MouseUtils.MousePosition - MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.DrawParams.World, tnk.DrawParams.View, tnk.DrawParams.Proj));
             }
         }
 
@@ -768,7 +768,7 @@ public static class DebugManager {
             $"\nAmbient: Sky {StringUtils.Format(ambient.Sky)} | Ground {StringUtils.Format(ambient.Ground)} x{ambient.Intensity:0.##}" +
             $"\n\nHover a light for its range and settings";
         var panelPos = new Vector2(8, WindowUtils.WindowHeight * 0.05f);
-        var panelScale = 0.6f * WindowUtils.WindowWidth / 1920f;
+        var panelScale = 0.6f.ToResolutionX();
         var panelSize = FontGlobals.RebirthFont.MeasureString(panelText) * panelScale;
         var panel = new Rectangle(0, 0, (int)(panelPos.X + panelSize.X), (int)(panelPos.Y + panelSize.Y));
         DrawDebugString(spriteBatch, panelText, panelPos, Id.LIGHTS);
@@ -790,7 +790,7 @@ public static class DebugManager {
 
         // only lights close to mouse are fully visible
         Light? hovered = null;
-        var hoverDistance = LIGHT_HOVER_DISTANCE * WindowUtils.WindowWidth / 1920f;
+        var hoverDistance = LIGHT_HOVER_DISTANCE.ToResolutionX();
         foreach (var (light, _) in _debugLights) {
             if (!TryGetScreenPosition(light.Position, view, projection, out var screenPos))
                 continue;

@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems;
@@ -15,17 +16,16 @@ namespace TanksRebirth.Graphics;
 public class TankHut {
     public Model HutScene;
     public ModelMesh Black;
-
     public Vector3 Position;
 
     float _minDist, _maxDist;
-    Vector3 LightPosition => Position + new Vector3(0, 85, 0) * Scale;
+    Vector3 LightOffset => new Vector3(0, 85, 0) * Scale;
+    Vector3 LightPosition => Position + LightOffset;
     public float Scale = 1f;
     public EulerAngles Rotation; // should lowkey convert everything to eulerangles
     public Matrix World, View, Proj;
 
-    readonly OggAudio _light;
-
+    readonly OggAudio _lightAudio;
     bool _visible;
     static readonly string roof = PathGlobals.TEXTURES_PATH + "ingame/block_other_c";
 
@@ -55,13 +55,13 @@ public class TankHut {
         _boneTransforms = new Matrix[HutScene.Bones.Count];
         HutScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
-        _light = new OggAudio("Content/Assets/sounds/ambient/light_loop.ogg");
-        _light.Instance.IsLooped = true;
+        _lightAudio = new OggAudio("Content/Assets/sounds/ambient/light_loop.ogg");
+        _lightAudio.Instance.IsLooped = true;
 
-        _light.MaxVolume = 1f;
-        _minDist = _light.MinDistance = 100;
-        _maxDist = _light.MaxDistance = 200f;
-        _light.OrthographicFade = true;
+        _lightAudio.MaxVolume = 1f;
+        _minDist = _lightAudio.MinDistance = 50;
+        _maxDist = _lightAudio.MaxDistance = 70;
+        _lightAudio.OrthographicFade = true;
 
         _localBounds = HutScene.Meshes[0].BoundingSphere.Transform(_boneTransforms[HutScene.Meshes[0].ParentBone.Index]);
         foreach (var mesh in HutScene.Meshes)
@@ -72,7 +72,7 @@ public class TankHut {
     }
     ~TankHut() {
         LightingSystem.CollectLights -= PlaceLights;
-        _light?.Stop();
+        _lightAudio?.Stop();
     }
 
     // add sum lights (but remove them when they can't be seen)
@@ -87,7 +87,7 @@ public class TankHut {
         var spot1 = new SpotLight(LightPosition, dir, baseColor, baseIntensity, 200f,
             40f, 60f,
             true) {
-            ShadowBias = 1f
+            ShadowBias = 0.75f
         };
         var t = RuntimeData.RunTime;
         spot1.Intensity = baseIntensity + MathF.Sin(t * 0.5f) * 0.05f * baseIntensity;
@@ -101,18 +101,18 @@ public class TankHut {
     }
 
     public void Update() {
-        _light.Position = LightPosition;
-        _light.Volume = TankGame.Settings.AmbientVolume;
+        _lightAudio.Position = Position + LightOffset * 0.25f;
+        _lightAudio.Volume = TankGame.Settings.AmbientVolume;
 
         // only keep a voice playing while the buzz could actually be heard
-        var audible = SoundUtils.GetSpatialParams(LightPosition, _light.MinDistance * Scale, _light.MaxDistance * Scale, true).Volume > 0f;
-        _light.MinDistance = _minDist * Scale;
-        _light.MaxDistance = _maxDist * Scale;
+        var audible = SoundUtils.GetSpatialParams(_lightAudio.Position.Value, _lightAudio.MinDistance * Scale, _lightAudio.MaxDistance * Scale, true).Volume > 0f;
+        _lightAudio.MinDistance = _minDist * Scale;
+        _lightAudio.MaxDistance = _maxDist * Scale;
 
-        if (audible && !_light.IsPlaying())
-            _light.Play();
-        else if (!audible && _light.IsPlaying())
-            _light.Stop();
+        if (audible && !_lightAudio.IsPlaying())
+            _lightAudio.Play();
+        else if (!audible && _lightAudio.IsPlaying())
+            _lightAudio.Stop();
     }
 
     public void Render() {
@@ -122,6 +122,9 @@ public class TankHut {
 
         _visible = CameraGlobals.ViewFrustum.Intersects(_localBounds.Transform(World));
         if (!_visible) return;
+
+        // DrawUtils.DrawBoundingSphere(new(_lightAudio.Position.Value, _lightAudio.MinDistance), Color.Red * 0.25f, View, Proj);
+        // DrawUtils.DrawBoundingSphere(new(_lightAudio.Position.Value, _lightAudio.MaxDistance), Color.Lime * 0.25f, View, Proj);
 
         TankGame.Instance.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         foreach (var mesh in HutScene.Meshes) {

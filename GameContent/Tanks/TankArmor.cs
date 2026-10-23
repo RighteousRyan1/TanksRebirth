@@ -62,7 +62,7 @@ public class TankArmor {
         foreach (ModelMesh mesh in _model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.View = Host.DrawParams.View;
-                effect.Projection = Host.DrawParams.Projection;
+                effect.Projection = Host.DrawParams.Proj;
                 effect.TextureEnabled = true;
                 effect.Texture = _maskingTexture;
                 effect.SetDefaultGameLighting_IngameEntities();
@@ -83,7 +83,7 @@ public class TankArmor {
     public void DrawHealthBar(Color damageColor, Color healthColor) {
         var dims = new Vector2(100, 20).ToResolution();
         var anchor = Anchor.Center;
-        var screenPos = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 30, 0), Host.DrawParams.World, Host.DrawParams.View, Host.DrawParams.Projection);
+        var screenPos = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 30, 0), Host.DrawParams.World, Host.DrawParams.View, Host.DrawParams.Proj);
 
         var tex = TextureGlobals.Pixels[Color.White];
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tex,

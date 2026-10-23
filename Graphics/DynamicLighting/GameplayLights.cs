@@ -24,14 +24,14 @@ public static class GameplayLights {
         _pointsUsed = 0;
         _spotsUsed = 0;
     }
-    /// <summary>Creates a temporary light. If you wish to modify the particle, subscribe to <see cref="Particle.UniqueBehavior"/>.</summary>
+    /// <summary>Creates a temporary light. If you wish to modify the particle, subscribe to <see cref="Particle.UpdateCallback"/>.</summary>
     /// <param name="time">The amount of time, in ticks (60 = 1 second).</param>
     /// <returns>The particle created.</returns>
     public static Particle CreateTempLight(ParticleManager system, Vector3 position, Light light, float time) {
         var particle = system.MakeParticle(position);
         LightingSystem.Lights.Add(light);
 
-        particle.UniqueBehavior += (a) => {
+        particle.UpdateCallback += (a) => {
             if (particle.LifeTime > time) {
                 LightingSystem.Lights.Remove(light);
                 particle.Destroy();

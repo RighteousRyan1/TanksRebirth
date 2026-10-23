@@ -43,7 +43,7 @@ public class RenderableChest
         ChestPosition = position;
         LidPosition = position;
         DrawParams.View = view;
-        DrawParams.Projection = proj;
+        DrawParams.Proj = proj;
     }
 
     public void Render()
@@ -73,7 +73,7 @@ public class RenderableChest
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = _boneTransforms[mesh.ParentBone.Index];
                 effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
+                effect.Projection = DrawParams.Proj;
 
                 effect.TextureEnabled = true;
                 effect.Texture = Texture;

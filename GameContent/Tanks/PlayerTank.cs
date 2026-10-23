@@ -465,7 +465,7 @@ public class PlayerTank : Tank {
         if (rightStick.Length() > 0) {
             // ChatSystem.SendMessage(rightStick);
             var unprojectedPosition = MatrixUtils.ConvertWorldToScreen(
-                new Vector3(0, 11, 0), DrawParams.World, DrawParams.View, DrawParams.Projection);
+                new Vector3(0, 11, 0), DrawParams.World, DrawParams.View, DrawParams.Proj);
 
             var newMousePos = new Vector2(
                 (int)(unprojectedPosition.X + rightStick.X * 400),
@@ -740,7 +740,7 @@ public class PlayerTank : Tank {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = world;
                     effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+                    effect.Projection = DrawParams.Proj;
                     effect.TextureEnabled = true;
                     effect.Alpha = DrawParamsTank.ShadowAlpha;
                     effect.Texture = DrawParamsTank.ShadowTexture;
@@ -753,7 +753,7 @@ public class PlayerTank : Tank {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = world;
                     effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+                    effect.Projection = DrawParams.Proj;
                     effect.TextureEnabled = true;
                     effect.Alpha = DrawParamsTank.TankAlpha;
                     effect.Texture = DrawParamsTank.TankTexture;
@@ -763,7 +763,7 @@ public class PlayerTank : Tank {
                 mesh.Draw();
             }
             else {
-                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Projection,
+                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Proj,
                     DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, _isPlayerModel, TeamColor(mesh));
             }
         }
@@ -852,7 +852,7 @@ public class PlayerTank : Tank {
         //  && PlayerId < Server.CurrentClientCount
         if (needClarification) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];
-            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 50).ToResolution();
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, 50).ToResolution();
 
             bool flip = false;
 

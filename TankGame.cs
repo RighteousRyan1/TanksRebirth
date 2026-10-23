@@ -598,7 +598,7 @@ public class TankGame : Game {
             {
                 World = Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(0, 0.05f, 0),
                 View = GameView,
-                Projection = GameProjection,
+                Proj = GameProjection,
             };*/
             MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
 
@@ -812,7 +812,7 @@ public class TankGame : Game {
         //}
 
         //GameView = GameCamera.View;
-        //GameProjection = GameCamera.Projection;
+        //GameProjection = GameCamera.Proj;
 
         RuntimeData.LogicTime = gameTime.ElapsedGameTime;
 
@@ -1077,8 +1077,8 @@ public class TankGame : Game {
         _ziggy.Pitch = MathHelper.Pi;
         _ziggy.Yaw = -MathHelper.PiOver2;
         _ziggy.Scale = Vector3.One * 0.3f;
-        _ziggy.HasAdditiveBlending = false;
-        _ziggy.UniqueBehavior = (a) => {
+        _ziggy.Additive = false;
+        _ziggy.UpdateCallback = (a) => {
             _ziggy.Roll = RuntimeData.RunTime / 60 % 2 < 1 ? -MathHelper.PiOver4 / 4 : MathHelper.PiOver4 / 4;
         };
 
@@ -1087,13 +1087,13 @@ public class TankGame : Game {
         _ziggyText.Yaw = MathHelper.PiOver2;
         _ziggyText.Roll = MathHelper.Pi;
         _ziggyText.Scale = Vector3.One * 0.3f;
-        _ziggyText.HasAdditiveBlending = false;
+        _ziggyText.Additive = false;
 
         _bkCypher = GameHandler.Particles.MakeParticle(new Vector3(1000, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/bk_cypher"));
         _bkCypher.Yaw = MathHelper.PiOver2 + MathHelper.PiOver4;
         _bkCypher.Roll = MathHelper.Pi;
         _bkCypher.Scale = Vector3.One * 0.65f;
-        _bkCypher.HasAdditiveBlending = false;
+        _bkCypher.Additive = false;
         _bkCypher.Position = new Vector3(1500, 1350, 149.5f);
     }
     private void TankGame_OnFocusRegained(object sender, IntPtr e) {

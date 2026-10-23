@@ -184,8 +184,8 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
             _shadow.Pitch = MathHelper.PiOver2;
             _shadow.Scale = new(1f);
             _shadow.Alpha = 0.65f;
-            _shadow.HasAdditiveBlending = false;
-            _shadow.UniqueBehavior = (a) => {
+            _shadow.Additive = false;
+            _shadow.UpdateCallback = (a) => {
                 // TODO: save for when i make shadows look... proper.
                 //p.TextureCrop = new(0, 0, 32, 32);
 
@@ -353,7 +353,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
     }
 
     public void OnRender() {
-        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.Proj = CameraGlobals.GameProjection;
         DrawParams.View = CameraGlobals.GameView;
         DrawParams.World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
         var bones = GetBoneTransforms(Model);
@@ -362,7 +362,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = bones[mesh.ParentBone.Index] * DrawParams.World;
                 effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
+                effect.Projection = DrawParams.Proj;
 
                 effect.TextureEnabled = true;
                 effect.Texture = TextureMap[mesh.Name];

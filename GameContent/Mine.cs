@@ -261,7 +261,7 @@ public sealed class Mine : IAITankDanger {
 
     internal void Render() {
         DrawParams.View = CameraGlobals.GameView;
-        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.Proj = CameraGlobals.GameProjection;
 
         if (DebugManager.DebuggingEnabled) {
             if (DebugManager.DebugLevel == DebugManager.Id.ENT_DAT)
@@ -269,7 +269,7 @@ public sealed class Mine : IAITankDanger {
         }
 
         DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",
-            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1, centered: true);
+            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, 20), 1, centered: true);
 
         // this is horrendous but it looks better
         // this is fucking horrible - ryan, 11/24/25
@@ -278,7 +278,7 @@ public sealed class Mine : IAITankDanger {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = DrawParams.World;
                 effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
+                effect.Projection = DrawParams.Proj;
 
                 effect.TextureEnabled = true;
 
@@ -300,7 +300,7 @@ public sealed class Mine : IAITankDanger {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = DrawParams.World;
                 effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
+                effect.Projection = DrawParams.Proj;
 
                 effect.TextureEnabled = true;
 
@@ -318,7 +318,7 @@ public sealed class Mine : IAITankDanger {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = DrawParams.World;
                 effect.View = DrawParams.View;
-                effect.Projection = DrawParams.Projection;
+                effect.Projection = DrawParams.Proj;
 
                 effect.TextureEnabled = false;
 

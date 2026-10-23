@@ -101,6 +101,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
     - Do NOT use the new `DeltaTime`, as it is actually what `DeltaTime` means now.
 - `CameraGlobals.RebirthFreecam` -> `CameraGlobals.PerspectiveCamera`
 - Sound effects now have optional spatializaiton parameters
+- `Particle.UniqueBehavior`/`Draw` -> `Particle.Update`/`DrawCallback`
 
 - If there is anything unclear or uncertain after reading these notes, please reach out to me
 

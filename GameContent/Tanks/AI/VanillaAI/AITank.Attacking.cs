@@ -823,7 +823,7 @@ public partial struct VanillaAISystem {
         var effect = TankBasicEffectHandler;
         effect.World = Matrix.Identity;
         effect.View = CameraGlobals.GameView;
-        effect.Projection = CameraGlobals.GameProjection;
+        effect.Proj = CameraGlobals.GameProjection;
         effect.VertexColorEnabled = true;
         effect.TextureEnabled = false;
 

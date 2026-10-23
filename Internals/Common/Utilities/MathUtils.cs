@@ -206,12 +206,7 @@ public static class MathUtils {
         result3d.Y = spinPoint3d.Y;
         return result3d;
     }
-    public static Vector3 Rotate(this Vector3 vector, Vector3 axis, float angleInDegrees) {
-        // Convert degrees to radians
-        float radians = angleInDegrees * (MathF.PI / 180f);
-
-        // Create the rotation quaternion
-        // Note: Axis must be normalized
+    public static Vector3 Rotate(this Vector3 vector, Vector3 axis, float radians) {
         Quaternion rotation = Quaternion.CreateFromAxisAngle(Vector3.Normalize(axis), radians);
 
         // Transform the vector by the rotation

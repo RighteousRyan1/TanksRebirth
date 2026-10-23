@@ -30,7 +30,7 @@ public static class ParticleGameplay {
         Vector3 oldPosition = p.Position;
         float shadowPos = 0f;
 
-        p.UniqueBehavior = (a) => {
+        p.UpdateCallback = (a) => {
             shadowPos = 0.1f;
             p.Scale = new(125);
             p.IsIn2DSpace = false;
@@ -107,11 +107,11 @@ public static class ParticleGameplay {
         var shadow = manager.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
         shadow.Scale = new(0.8f);
         shadow.Color = Color.Black;
-        shadow.HasAdditiveBlending = false;
+        shadow.Additive = false;
         // shadow.Roll = -MathHelper.PiOver2;
         shadow.Pitch = MathHelper.PiOver2;
 
-        shadow.UniqueBehavior = (a) => {
+        shadow.UpdateCallback = (a) => {
             if (isSmokeDestroyed) {
                 shadow.Destroy();
             }
@@ -134,7 +134,7 @@ public static class ParticleGameplay {
             var randSize = Client.ClientRandom.NextFloat(5, 10);
             c.Scale.X = randSize;
             c.Scale.Z = randSize;
-            c.UniqueBehavior = (b) => {
+            c.UpdateCallback = (b) => {
                 c.Pitch += 0.005f * RuntimeData.DeltaFrames;
                 if (c.Scale.Y < randSize && c.LifeTime < 600)
                     c.Scale.Y += 0.1f * RuntimeData.DeltaFrames;

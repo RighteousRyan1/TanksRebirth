@@ -349,7 +349,7 @@ public static class LightingPresets {
         // the moon takes over once the sun is well down (both are dark at the switch, so there is no pop)
         var moonPos = MoonPosition(hour);
         var moonElevation = MathHelper.ToDegrees(MathF.Asin(moonPos.Y));
-        var fade = SmoothStep(-4f, -12f, sunElevation) * SmoothStep(0f, 10f, moonElevation);
+        var fade = MathHelper.SmoothStep(-4f, -12f, sunElevation) * MathHelper.SmoothStep(0f, 10f, moonElevation);
         look.SunDirection = -moonPos;
         look.SunColor = MoonColor;
         look.SunIntensity = MoonIntensity * fade;
@@ -360,12 +360,6 @@ public static class LightingPresets {
         look.ShaftMarch = 1400f;
         look.ShadowRadius = 560f;
         return look;
-    }
-
-    // this could totally go somewhere else
-    static float SmoothStep(float edge0, float edge1, float x) {
-        var t = MathHelper.Clamp((x - edge0) / (edge1 - edge0), 0f, 1f);
-        return t * t * (3f - 2f * t);
     }
 
     /// <summary>Advances the day cycle clock and updates the lighting. Call every update.</summary>

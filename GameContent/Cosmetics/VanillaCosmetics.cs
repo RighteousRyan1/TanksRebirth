@@ -29,7 +29,7 @@ public static class VanillaCosmetics {
     };
     // cosmetics like this block the first person camera. fix it by either changing camera position or changing cosmetic location/rotation anchor
     public static Prop3D KingsCrown = new("King's Crown", ModelGlobals.KingsCrown, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/crown_tex"), new(0, 21, 0), PropLockOptions.ToTurret) {
-        //UniqueBehavior = (cos, tnk) => {
+        //UpdateCallback = (cos, tnk) => {
             // corner follow
             /*cos.LockOptions = CosmeticLockOptions.None;
             cos.Rotation = new(-MathHelper.PiOver2 - 0.3f, 0, -MathHelper.PiOver4 / 2);

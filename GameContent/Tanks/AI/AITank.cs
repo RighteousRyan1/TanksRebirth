@@ -386,7 +386,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             p.Origin2D = FontGlobals.RebirthFont.MeasureString(str) / 2;
             p.Color = Color.Red;
 
-            p.UniqueBehavior = (p) => {
+            p.UpdateCallback = (p) => {
                 p.Position.Y += 0.35f * RuntimeData.DeltaFrames;
 
                 if (p.LifeTime > 30)
@@ -415,7 +415,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         keyPart.Alpha = 1f;
         // maybe this is retarded
         keyPart.Scale = Vector3.One * 40;
-        keyPart.HasAdditiveBlending = false;
+        keyPart.Additive = false;
         keyPart.Pitch = MathHelper.PiOver2;
         keyPart.Color = color;
 
@@ -427,7 +427,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         float lifeTime = 240;
 
-        keyPart.UniqueBehavior = (p) => {
+        keyPart.UpdateCallback = (p) => {
             p.Position.Y += velY * RuntimeData.DeltaFrames;
             velY -= gravY;
             if (velY < 0) velY = 0;
@@ -478,7 +478,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
         p.Origin2D = FontGlobals.RebirthFont.MeasureString(str) / 2;
 
-        p.UniqueBehavior = (p) => {
+        p.UpdateCallback = (p) => {
             p.Position.Y += 0.1f * RuntimeData.DeltaFrames;
 
             p.Alpha -= 0.01f * RuntimeData.DeltaFrames;
@@ -542,7 +542,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = world;
                     effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+                    effect.Projection = DrawParams.Proj;
                     effect.TextureEnabled = true;
                     effect.Texture = DrawParamsTank.ShadowTexture;
                     effect.Alpha = DrawParamsTank.ShadowAlpha;
@@ -566,7 +566,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = world;
                     effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Projection;
+                    effect.Projection = DrawParams.Proj;
                     effect.TextureEnabled = true;
                     effect.Texture = DrawParamsTank.TankTexture;
                     effect.Alpha = DrawParamsTank.TankAlpha;
@@ -576,7 +576,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 }
             }
             else {
-                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Projection,
+                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Proj,
                     DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, teamColor: TeamColor(mesh));
             }
         }
@@ -607,7 +607,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         effect.World = Matrix.Identity;
         effect.View = DrawParams.View;
-        effect.Projection = DrawParams.Projection;
+        effect.Projection = DrawParams.Proj;
 
         effect.VertexColorEnabled = true;
 
@@ -680,7 +680,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
                 realI++;
 
-                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, realI * 20);
+                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, realI * 20);
                 DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                     $"{info.Key.Name}: {info.Key.Value} ({GameUtils.TanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
@@ -703,12 +703,12 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         /*if (DebugManager.DebugLevel == DebugManager.Id.TankData && !Properties.Stationary) {
             // magical numbers too lazy, look at update method to define
             IsObstacleInWay(AiParams.ObstacleAwarenessMovement / 2, Vector2.UnitY.RotatedBy(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 6, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Proj), 6, centered: true);
             foreach (var pt in refPoints)
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.ReflectionPoint.X, 0, pt.ReflectionPoint.Y), View, Projection), 6, centered: true);
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.ReflectionPoint.X, 0, pt.ReflectionPoint.Y), View, Proj), 6, centered: true);
 
 
-            //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Projection), 6, centered: true);
+            //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Proj), 6, centered: true);
         }*/
 
         /*if (Properties.Stationary) return;

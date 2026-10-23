@@ -60,7 +60,7 @@ public class XpBar {
             float initVelY = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
             // p.Position.X = 
 
-            p.UniqueBehavior = (a) => {
+            p.UpdateCallback = (a) => {
                 float velX = Client.ClientRandom.NextFloat(-0.5f, -0.1f) * RuntimeData.DeltaFrames;
             };*/
             if (Value >= MaxValue) {
