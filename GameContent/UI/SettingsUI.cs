@@ -14,8 +14,9 @@ using TanksRebirth.Internals.UI;
 namespace TanksRebirth.GameContent.UI;
 
 /// <summary>
-/// The settings window: one panel with Audio / Video / Controls tabs along the top, a description bar for whatever
-/// the mouse is over, and the pages themselves (<see cref="VolumeUI"/>, <see cref="GraphicsUI"/>, <see cref="ControlsUI"/>).
+/// The settings window: one panel with Audio / Video / Gameplay / Controls tabs along the top, a description bar for whatever
+/// the mouse is over, and the pages themselves (<see cref="VolumeUI"/>, <see cref="GraphicsUI"/>, <see cref="GameplayUI"/>,
+/// <see cref="ControlsUI"/>).
 /// </summary>
 /// <remarks>
 /// <para>Click a tab (or the arrows beside them, or press Q / E) to switch pages. The window remembers the last page.</para>
@@ -28,13 +29,16 @@ public static class SettingsUI {
         "Music, sound effect and ambient volume.",
         "Drag a slider (or scroll over it) to change the volume. Right click puts it back to the default.");
     public static readonly SettingsPage Video = new("Video",
-        "Window mode, resolution, frame rate, anti-aliasing and dynamic lighting.",
+        "Window mode, resolution, frame rate, dynamic lighting and graphics quality.",
+        "Left click an option for the next value, right click for the previous one.");
+    public static readonly SettingsPage Gameplay = new("Gameplay",
+        "Tank tracks and the battle in the main menu.",
         "Left click an option for the next value, right click for the previous one.");
     public static readonly SettingsPage Controls = new("Controls",
         "Keyboard bindings and which player the keyboard and mouse control.",
         "Click a binding, then press the new key. Escape cancels, right click puts back the default.");
 
-    static readonly SettingsPage[] _pages = [Audio, Video, Controls];
+    static readonly SettingsPage[] _pages = [Audio, Video, Gameplay, Controls];
 
     /// <summary>Whether the settings window is showing.</summary>
     public static bool IsOpen { get; private set; }
@@ -45,12 +49,16 @@ public static class SettingsUI {
 
     public const float PanelX = 150, PanelY = 30, PanelW = 1620, PanelH = 800;
     public const float LeftX = 190, RightX = 990, CenterX = 590, ColumnW = 740;
+    /// <summary>Width of a column on a three column page.</summary>
+    public const float ThirdW = 490;
     public const float HeaderY = 115, FirstRowY = 172, RowH = 50, RowStep = 57;
     public const float DescY = 752, DescH = 58;
 
     const float TabY = 44, TabW = 300, TabH = 54, TabGap = 12, ArrowW = 110;
 
     public static float RowY(int index) => FirstRowY + index * RowStep;
+    /// <summary>Left edge of a column on a three column page (0 to 2).</summary>
+    public static float ThirdX(int column) => LeftX + column * (RightX + ColumnW - LeftX - ThirdW) / 2f;
 
     static readonly List<UIElement> _frame = [];
     static UIPanel _panel = null!;
@@ -163,11 +171,12 @@ public static class SettingsUI {
     }
 
     /// <summary>
-    /// Older code closes the settings by clearing <see cref="GraphicsUI.IsVisible"/>, <see cref="VolumeUI.BatchVisible"/> or
-    /// <see cref="ControlsUI.BatchVisible"/> directly (the main menu does when it closes). Follow it.
+    /// Older code closes the settings by clearing <see cref="GraphicsUI.IsVisible"/>, <see cref="VolumeUI.BatchVisible"/>,
+    /// <see cref="GameplayUI.BatchVisible"/> or <see cref="ControlsUI.BatchVisible"/> directly (the main menu does when it closes). Follow it.
     /// </summary>
     static bool Validate() {
-        var stillOpen = Current == Video ? GraphicsUI.IsVisible : Current == Audio ? VolumeUI.BatchVisible : ControlsUI.BatchVisible;
+        var stillOpen = Current == Video ? GraphicsUI.IsVisible : Current == Audio ? VolumeUI.BatchVisible :
+            Current == Gameplay ? GameplayUI.BatchVisible : ControlsUI.BatchVisible;
         if (!stillOpen)
             Close();
         return stillOpen;
@@ -176,6 +185,7 @@ public static class SettingsUI {
     static void SyncLegacyFlags() {
         VolumeUI.BatchVisible = IsOpen && Current == Audio;
         GraphicsUI.IsVisible = IsOpen && Current == Video;
+        GameplayUI.BatchVisible = IsOpen && Current == Gameplay;
         ControlsUI.BatchVisible = IsOpen && Current == Controls;
     }
 

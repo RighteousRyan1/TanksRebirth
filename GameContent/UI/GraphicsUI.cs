@@ -3,9 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Tanks;
-using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals.Common.GameUI;
@@ -15,25 +12,16 @@ using Preset = TanksRebirth.Graphics.DynamicLighting.LightingPresets.Preset;
 namespace TanksRebirth.GameContent.UI;
 
 /// <summary>
-/// The Video page of the settings window (<see cref="SettingsUI.Video"/>): a "Display" column and a "Dynamic StaticLighting"
-/// column of option rows, and Apply / MakeSeekable buttons.
+/// The Video page of the settings window.
 /// </summary>
-/// <remarks>
-/// Every row is a <see cref="SettingRow"/>: left click picks the next value, right click the previous one.
-/// Most options apply immediately. Window mode and resolution only apply when "Apply" is pressed (switching on every
-/// click would make the window jump around), and are discarded when the page is left without applying.
-/// </remarks>
 public static class GraphicsUI {
     // the rows GameUI refers to by name (kept for compatibility)
     public static SettingRow PPLButton = null!;
     public static SettingRow VSyncBtn = null!;
     public static SettingRow WinKindBtn = null!;
     public static SettingRow ResBtn = null!;
-    public static SettingRow FadeTracksBtn = null!;
-    public static SettingRow MenuGameplayBtn = null!;
     public static SettingRow FrameLimitBtn = null!;
     public static SettingRow MSAABtn = null!;
-    public static SettingRow TrackLimitBtn = null!;
 
     public static SettingRow LightingBtn = null!;
     public static SettingRow LightingQualityBtn = null!;
@@ -46,6 +34,12 @@ public static class GraphicsUI {
     public static SettingRow GameplayLightsBtn = null!;
     public static SettingRow RoomShadowsBtn = null!;
 
+    public static SettingRow RainyWindowsBtn = null!;
+    public static SettingRow RainStrengthBtn = null!;
+    public static SettingRow BlobShadowsBtn = null!;
+    public static SettingRow MenuBlurBtn = null!;
+    public static SettingRow FOVBtn = null!;
+
     public static UITextButton ApplyBtn = null!;
     public static UITextButton ResetBtn = null!;
 
@@ -57,7 +51,6 @@ public static class GraphicsUI {
 
     static SettingsPage Page => SettingsUI.Video;
 
-    // window mode and resolution wait for "Apply"
     static WindowKind _pendingKind;
     static Point _pendingRes;
     static bool HasPendingDisplay => _pendingKind != TankGame.Settings.WindowKind ||
@@ -74,14 +67,19 @@ public static class GraphicsUI {
         Preset.GoldenHour, Preset.Evening, Preset.Dusk, Preset.Midnight, Preset.Blackout, Preset.DayCycle,
     ];
     static readonly float[] _dayLengths = [2f, 5f, 8f, 15f, 30f, 60f, 24f * 60f];
+    static readonly string[] _rainStrengthNames = ["Light", "Medium", "Heavy"];
+    // funny ahh way to get every 5 
+    static readonly int[] _fovs = [.. Enumerable.Range(0, (GraphicsSettings.MaxFOV - GraphicsSettings.MinFOV) / 5 + 1).Select(i => GraphicsSettings.MinFOV + i * 5)];
 
-    const float LeftX = SettingsUI.LeftX, RightX = SettingsUI.RightX, ColumnW = SettingsUI.ColumnW;
+    static readonly float DisplayX = SettingsUI.ThirdX(0), LightingX = SettingsUI.ThirdX(1), QualityX = SettingsUI.ThirdX(2);
+    const float ColumnW = SettingsUI.ThirdW;
     static float RowY(int index) => SettingsUI.RowY(index);
 
     static LightingSettings Lighting => LightingSettings.Current;
 
     // setup
 
+    // this ALL needs localization bad
     public static void Initialize() {
         Page.Clear();
         Page.Opened = ResetPendingDisplay;
@@ -90,18 +88,19 @@ public static class GraphicsUI {
         _resolutions = FindResolutions();
         ResetPendingDisplay();
 
-        Page.Header("Display", LeftX);
-        Page.Header("Dynamic Lighting", RightX);
+        Page.Header("Display", DisplayX, width: ColumnW);
+        Page.Header("Dynamic Lighting", LightingX, width: ColumnW);
+        Page.Header("Graphics Quality", QualityX, width: ColumnW);
 
         var lang = TankGame.GameLanguage;
         
         // display
-        WinKindBtn = Row(LeftX, RowY(0), lang.Settings.WindowKind ?? "Window Mode",
+        WinKindBtn = Row(DisplayX, RowY(0), lang.Settings.WindowKind ?? "Window Mode",
             "Windowed, borderless (covers the screen, quick to alt-tab) or exclusive fullscreen. Press Apply to switch.",
             () => WindowKindName(_pendingKind) + (_pendingKind != TankGame.Settings.WindowKind ? " *" : ""),
             dir => _pendingKind = Cycle(_windowKinds, _pendingKind, dir));
 
-        ResBtn = Row(LeftX, RowY(1), lang.Settings.Resolution ?? "Resolution",
+        ResBtn = Row(DisplayX, RowY(1), lang.Settings.Resolution ?? "Resolution",
             "The window size (or the monitor mode in fullscreen). Borderless always uses your desktop resolution. Press Apply to switch.",
             () => _pendingKind == WindowKind.FullscreenBorderless
                 ? $"{DesktopSize.X}x{DesktopSize.Y}"
@@ -109,7 +108,7 @@ public static class GraphicsUI {
             dir => _pendingRes = Cycle(_resolutions, _pendingRes, dir),
             enabled: () => _pendingKind != WindowKind.FullscreenBorderless);
 
-        VSyncBtn = Row(LeftX, RowY(2), lang.Settings.VSync ?? "Vertical Sync",
+        VSyncBtn = Row(DisplayX, RowY(2), lang.Settings.VSync ?? "Vertical Sync",
             lang.Settings.VSyncDesc ?? "Synchronizes the game with your monitor's refresh rate to stop screen tearing.",
             () => OnOff(TankGame.Settings.Vsync),
             _ => {
@@ -123,51 +122,19 @@ public static class GraphicsUI {
                 graphics.ApplyChanges();
             });
 
-        FrameLimitBtn = Row(LeftX, RowY(3), "Frame Rate Limit",
-            "Caps the frame rate while VSync is off (VSync already limits it to your monitor's refresh rate).",
+        FrameLimitBtn = Row(DisplayX, RowY(3), "Frame Rate Limit",
+            "Caps the frame rate while VSync is off.",
             () => TankGame.Settings.TargetFPS <= 0 ? "Unlimited" : $"{TankGame.Settings.TargetFPS} FPS",
             dir => TankGame.Settings.TargetFPS = Cycle(GraphicsSettings.FrameRateOptions, TankGame.Settings.TargetFPS, dir),
             enabled: () => !TankGame.Settings.Vsync);
 
-        MSAABtn = Row(LeftX, RowY(4), "Anti-Aliasing",
-            "Smooths jagged edges on 3D models (multisample anti-aliasing). Higher levels cost more GPU time.",
-            () => TankGame.Settings.MSAASamples <= 0 ? "Off" : $"MSAA {TankGame.Settings.MSAASamples}x",
-            dir => TankGame.Settings.MSAASamples = Cycle(GraphicsSettings.MSAAOptions, TankGame.Settings.MSAASamples, dir));
-
-        PPLButton = Row(LeftX, RowY(5), lang.Settings.PerPxLight ?? "Per-Pixel Lighting",
-            lang.Settings.PerPxLightDesc ?? "Lights every pixel instead of every vertex. Smoother lighting on models.",
-            () => OnOff(TankGame.Settings.PerPixelLighting),
-            _ => TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting);
-
-        FadeTracksBtn = Row(LeftX, RowY(6), lang.Settings.FadeTracks ?? "Fading Tank Tracks",
-            lang.Settings.FadeTracksDesc ?? "Tank tracks slowly fade away. Saves performance in long missions.",
-            () => OnOff(TankGame.Settings.FadeFootprints),
-            _ => TankFootprint.ShouldTracksFade = TankGame.Settings.FadeFootprints = !TankGame.Settings.FadeFootprints);
-
-        TrackLimitBtn = Row(LeftX, RowY(7), "Tank Track Limit",
-            "How many tank tracks can stay on the ground before the oldest disappear.",
-            () => $"{TankGame.Settings.TankFootprintLimit:N0}",
-            dir => GraphicsSettings.SetFootprintLimit(Cycle(GraphicsSettings.FootprintLimitOptions,
-                NearestOf(GraphicsSettings.FootprintLimitOptions, TankGame.Settings.TankFootprintLimit), dir)));
-
-        MenuGameplayBtn = Row(LeftX, RowY(8), lang.Settings.MenuGameplay ?? "Menu Gameplay",
-            lang.Settings.MenuGameplayDesc ?? "Tanks battle in the background of the main menu.",
-            () => OnOff(TankGame.Settings.MenuGameplayEnabled),
-            _ => {
-                TankGame.Settings.MenuGameplayEnabled = !TankGame.Settings.MenuGameplayEnabled;
-                if (!MainMenuUI.IsActive)
-                    return;
-                foreach (var tank in GameHandler.AllTanks)
-                    tank?.Remove(true);
-            });
-
-        ApplyBtn = Page.Button(LeftX, RowY(9), (ColumnW - 20) / 2, "Apply",
+        ApplyBtn = Page.Button(DisplayX, RowY(5), ColumnW, "Apply",
             "Switches to the selected window mode and resolution.", ApplyDisplay, () => HasPendingDisplay, highlight: true);
-        ResetBtn = Page.Button(LeftX + (ColumnW + 20) / 2, RowY(9), (ColumnW - 20) / 2, "Reset to Defaults",
+        ResetBtn = Page.Button(DisplayX, RowY(6), ColumnW, "Reset to Defaults",
             "Puts every option on this page back to its default (the display mode still needs Apply).", ResetToDefaults);
 
         // dynamic lighting
-        LightingBtn = Row(RightX, RowY(0), "Dynamic Lighting",
+        LightingBtn = Row(LightingX, RowY(0), "Dynamic Lighting",
             "Real-time sun, shadows, lamps and light beams. Turn it off for the original look (and the best performance).",
             () => OnOff(Lighting.Enabled) + (LightingSystem.IsAvailable || !Lighting.Enabled ? "" : " (unavailable)"),
             _ => {
@@ -175,7 +142,7 @@ public static class GraphicsUI {
                 ApplyLighting();
             });
 
-        LightingQualityBtn = Row(RightX, RowY(1), "Lighting Quality",
+        LightingQualityBtn = Row(LightingX, RowY(1), "Lighting Quality",
             "Sets all the lighting options below at once. Changing one of them by hand makes this Custom.",
             () => Lighting.QualityLevel.ToString(),
             dir => {
@@ -186,25 +153,25 @@ public static class GraphicsUI {
             },
             enabled: LightingOn);
 
-        SunShadowsBtn = Row(RightX, RowY(2), "Sun Shadows",
+        SunShadowsBtn = Row(LightingX, RowY(2), "Sun Shadows",
             "Shadows from the sun and moon, on the board and across the room. Ultra doubles the resolution (needs a HiDef capable GPU).",
             () => QualityName(Lighting.SunShadows),
             dir => { Lighting.SunShadows = Cycle(Enum.GetValues<ShadowQuality>(), Lighting.SunShadows, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
-        LampShadowsBtn = Row(RightX, RowY(3), "Light Shadows",
+        LampShadowsBtn = Row(LightingX, RowY(3), "Light Shadows",
             "Shadows from lamps, tank headlights and explosions. Higher settings shadow more lights with smoother edges.",
             () => QualityName(Lighting.LampShadows),
             dir => { Lighting.LampShadows = Cycle(Enum.GetValues<ShadowQuality>(), Lighting.LampShadows, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
-        LightShaftsBtn = Row(RightX, RowY(4), "Light Shafts",
+        LightShaftsBtn = Row(LightingX, RowY(4), "Light Shafts",
             "Beams of sunlight through the windows. Higher settings render them at a higher resolution.",
             () => Lighting.LightShafts.ToString(),
             dir => { Lighting.LightShafts = Cycle(Enum.GetValues<EffectQuality>(), Lighting.LightShafts, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
-        LightCountBtn = Row(RightX, RowY(5), "Light Count",
+        LightCountBtn = Row(LightingX, RowY(5), "Light Count",
             "How many lights can shine at once (lamps, headlights, shells, mines, explosions).",
             () => Lighting.LightCount switch {
                 EffectQuality.Off => "Off",
@@ -215,13 +182,13 @@ public static class GraphicsUI {
             dir => { Lighting.LightCount = Cycle(Enum.GetValues<EffectQuality>(), Lighting.LightCount, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
-        RoomShadowsBtn = Row(RightX, RowY(6), "Room Shadows",
+        RoomShadowsBtn = Row(LightingX, RowY(6), "Room Shadows",
             "The room's walls, windows and furniture block the sun, so it only comes in through the windows. Off = the sun shines through the walls.",
             () => OnOff(Lighting.RoomShadows),
             _ => { Lighting.RoomShadows = !Lighting.RoomShadows; ApplyLighting(); },
             enabled: () => LightingOn() && Lighting.SunShadows != ShadowQuality.Off);
 
-        TimeOfDayBtn = Row(RightX, RowY(7), "Time of Day",
+        TimeOfDayBtn = Row(LightingX, RowY(7), "Time of Day",
             "The time of day in the room. Day/Night Cycle runs a clock: the sun moves and the colors change minute by minute.",
             () => Lighting.TimeOfDay == Preset.DayCycle
                 ? $"Day/Night Cycle ({LightingPresets.HourText})"
@@ -229,17 +196,58 @@ public static class GraphicsUI {
             dir => { Lighting.TimeOfDay = Cycle(_timesOfDay, Lighting.TimeOfDay, dir); ApplyLighting(); },
             enabled: LightingOn);
 
-        DayLengthBtn = Row(RightX, RowY(8), "Day Length",
+        DayLengthBtn = Row(LightingX, RowY(8), "Day Length",
             "How long a full day takes in the Day/Night Cycle, in real time.",
             () => Lighting.DayLengthMinutes >= 24f * 60f - 1f ? "Real Time (24 hours)" : $"{Lighting.DayLengthMinutes:0.#} minutes",
             dir => { Lighting.DayLengthMinutes = Cycle(_dayLengths, NearestOf(_dayLengths, Lighting.DayLengthMinutes), dir); ApplyLighting(); },
             enabled: () => LightingOn() && Lighting.TimeOfDay == Preset.DayCycle);
 
-        GameplayLightsBtn = Row(RightX, RowY(9), "Gameplay Lights",
-            "Glows on shells, blinking mines and explosion flashes.",
+        GameplayLightsBtn = Row(LightingX, RowY(9), "Gameplay Lights",
+            "Whether to have lights for gameplay ",
             () => OnOff(Lighting.GameplayLights),
             _ => { Lighting.GameplayLights = !Lighting.GameplayLights; ApplyLighting(); },
             enabled: LightingOn);
+
+        // graphics quality
+        MSAABtn = Row(QualityX, RowY(0), "Anti-Aliasing",
+            "Smoothes jagged edges on 3D models (multisample anti-aliasing). Higher levels cost more GPU time.",
+            () => TankGame.Settings.MSAASamples <= 0 ? "Off" : $"MSAA {TankGame.Settings.MSAASamples}x",
+            dir => TankGame.Settings.MSAASamples = Cycle(GraphicsSettings.MSAAOptions, TankGame.Settings.MSAASamples, dir));
+
+        PPLButton = Row(QualityX, RowY(1), lang.Settings.PerPxLight ?? "Per-Pixel Lighting",
+            lang.Settings.PerPxLightDesc ?? "Lights every pixel instead of every vertex. Smoother lighting on models.",
+            () => OnOff(TankGame.Settings.PerPixelLighting),
+            _ => TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting);
+
+        RainyWindowsBtn = Row(QualityX, RowY(2), "Rainy Windows",
+            "Rain beads, drips and fog on the room's windows during thunderstorms.",
+            () => OnOff(TankGame.Settings.RainyWindows),
+            _ => { TankGame.Settings.RainyWindows = !TankGame.Settings.RainyWindows; GraphicsSettings.ApplyEffects(); });
+
+        RainStrengthBtn = Row(QualityX, RowY(3), "Rain Strength",
+            "How much water gathers on the windows during thunderstorms.",
+            () => _rainStrengthNames[Array.IndexOf(GraphicsSettings.RainStrengthOptions, NearestOf(GraphicsSettings.RainStrengthOptions, TankGame.Settings.RainStrength))],
+            dir => {
+                TankGame.Settings.RainStrength = Cycle(GraphicsSettings.RainStrengthOptions,
+                    NearestOf(GraphicsSettings.RainStrengthOptions, TankGame.Settings.RainStrength), dir);
+                GraphicsSettings.ApplyEffects();
+            },
+            enabled: () => TankGame.Settings.RainyWindows);
+
+        BlobShadowsBtn = Row(QualityX, RowY(4), "Tank Blob Shadows",
+            "The soft round shadows under tanks and mines.",
+            () => OnOff(TankGame.Settings.TankBlobShadows),
+            _ => { TankGame.Settings.TankBlobShadows = !TankGame.Settings.TankBlobShadows; GraphicsSettings.ApplyEffects(); });
+
+        MenuBlurBtn = Row(QualityX, RowY(5), "Menu Blur",
+            "Blurs the battle behind the main menu.",
+            () => OnOff(TankGame.Settings.MenuBlur),
+            _ => TankGame.Settings.MenuBlur = !TankGame.Settings.MenuBlur);
+
+        FOVBtn = Row(QualityX, RowY(6), "First-Person FOV",
+            $"How wide the first-person camera sees, in degrees ({GraphicsSettings.MinFOV} to {GraphicsSettings.MaxFOV}).",
+            () => TankGame.Settings.FirstPersonFOV.ToString(),
+            dir => TankGame.Settings.FirstPersonFOV = Cycle(_fovs, NearestOf(_fovs, TankGame.Settings.FirstPersonFOV), dir));
     }
 
     /// <summary>Opens the settings window on this page, or closes the window.</summary>
@@ -286,10 +294,12 @@ public static class GraphicsUI {
         TankGame.Settings.PerPixelLighting = defaults.PerPixelLighting;
         TankGame.Settings.TargetFPS = defaults.TargetFPS;
         TankGame.Settings.MSAASamples = defaults.MSAASamples;
-        GraphicsSettings.SetFootprintLimit(defaults.TankFootprintLimit);
-        TankFootprint.ShouldTracksFade = TankGame.Settings.FadeFootprints = defaults.FadeFootprints;
-        if (TankGame.Settings.MenuGameplayEnabled != defaults.MenuGameplayEnabled)
-            MenuGameplayBtn.Step(1);
+        TankGame.Settings.RainyWindows = defaults.RainyWindows;
+        TankGame.Settings.RainStrength = defaults.RainStrength;
+        TankGame.Settings.TankBlobShadows = defaults.TankBlobShadows;
+        TankGame.Settings.MenuBlur = defaults.MenuBlur;
+        TankGame.Settings.FirstPersonFOV = defaults.FirstPersonFOV;
+        GraphicsSettings.ApplyEffects();
 
         // keep the same settings object (LightingSettings.Current) and copy the defaults into it
         var d = new LightingSettings();
@@ -305,11 +315,11 @@ public static class GraphicsUI {
     // ------------------------------------------------------------------------------------------ helpers
 
     static SettingRow Row(float x, float y, string label, string description, Func<string> value, Action<int> step, Func<bool>? enabled = null)
-        => Page.Row(x, y, label, description, value, step, enabled);
+        => Page.Row(x, y, label, description, value, step, enabled, ColumnW);
 
     static bool LightingOn() => Lighting.Enabled;
 
-    static string OnOff(bool value) => TankGame.GameLanguage.GetEnablement(value);
+    internal static string OnOff(bool value) => TankGame.GameLanguage.GetEnablement(value);
 
     static string QualityName(ShadowQuality quality) =>
         quality == ShadowQuality.Ultra && TankGame.Instance.GraphicsDevice.GraphicsProfile != GraphicsProfile.HiDef
@@ -348,13 +358,13 @@ public static class GraphicsUI {
     }
 
     /// <summary>The next (dir = 1) or previous (dir = -1) entry, wrapping around. Unknown values start from the first entry.</summary>
-    static T Cycle<T>(T[] values, T current, int dir) {
+    internal static T Cycle<T>(T[] values, T current, int dir) {
         var index = Array.IndexOf(values, current);
         if (index < 0)
             return values[0];
         return values[((index + dir) % values.Length + values.Length) % values.Length];
     }
 
-    static float NearestOf(float[] values, float value) => values.OrderBy(v => MathF.Abs(v - value)).First();
-    static int NearestOf(int[] values, int value) => values.OrderBy(v => Math.Abs(v - value)).First();
+    internal static float NearestOf(float[] values, float value) => values.OrderBy(v => MathF.Abs(v - value)).First();
+    internal static int NearestOf(int[] values, int value) => values.OrderBy(v => Math.Abs(v - value)).First();
 }

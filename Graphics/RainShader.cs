@@ -8,14 +8,13 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics;
 
-// RainShader?
-
-/// <summary>
-/// Draws registered glass meshes as rainy windows, with beads, running drips and condensation that refract the
-/// scene behind the glass. Rain fades in while thunder mode is on, unless <see cref="IntensityOverride"/> is set.
-/// </summary>
-public static class RainyWindows {
-    /// <summary>When set, the rain uses this intensity (0 to 1) instead of following thunder mode.</summary>
+/// <summary>Draws registered meshes as rainy-looking.</summary>
+public static class RainShader {
+    /// <summary>When off, the windows stay dry.</summary>
+    public static bool Enabled = true;
+    /// <summary>The intensity thunder mode brings, from 0 to 1.</summary>
+    public static float Strength = 1f;
+    /// <summary>When set, the rain uses this intensity instead of automatic handling.</summary>
     public static float? IntensityOverride;
     /// <summary>How long the rain takes to fully fade in or out, in seconds.</summary>
     public static float FadeSeconds = 8f;
@@ -60,19 +59,19 @@ public static class RainyWindows {
                 _meshes.Add(mesh);
     }
     public static void Remove(ModelMesh mesh) => _meshes.Remove(mesh);
-    public static bool IsRainy(ModelMesh mesh) => _meshes.Contains(mesh);
+    public static bool IsRegistered(ModelMesh mesh) => _meshes.Contains(mesh);
 
     /// <summary>Advances the rain and follows thunder mode. Called once per update.</summary>
     public static void Update() {
         var dt = RuntimeData.DeltaTime;
         _time += dt;
 
-        var target = Modifiers.IsOn(Modifiers.THUNDER) ? 1f : 0f;
+        var target = Modifiers.IsOn(Modifiers.THUNDER) ? Strength : 0f;
         _stormIntensity = MathUtils.RoughStep(_stormIntensity, target, dt / MathF.Max(FadeSeconds, 0.001f));
 
         // two slow waves multiplied so the gusts don't repeat on an obvious beat
         var gust = 0.5f + 0.5f * MathF.Sin(_time * 0.21f) * MathF.Sin(_time * 0.067f + 1.3f);
-        Intensity = MathHelper.Clamp(IntensityOverride ?? _stormIntensity * (1f - GustStrength * gust), 0f, 1f);
+        Intensity = Enabled ? MathHelper.Clamp(IntensityOverride ?? _stormIntensity * (1f - GustStrength * gust), 0f, 1f) : 0f;
 
         if (Intensity > 0.001f)
             LoadEffect();
@@ -86,7 +85,7 @@ public static class RainyWindows {
         }
         catch (Exception e) {
             _loadFailed = true;
-            TankGame.ClientLog.Write($"rainy_window.fx could not be loaded, windows stay dry: {e.Message}", RebirthLogLevel.Warn);
+            TankGame.ClientLog.Write($"rainy_window.fx failed to load: {e.Message}", RebirthLogLevel.Warn);
         }
     }
 
@@ -116,8 +115,6 @@ public static class RainyWindows {
         device.SamplerStates[0] = sampler;
     }
 
-    /// <summary>Draws <paramref name="mesh"/> as rainy glass.</summary>
-    /// <returns>False without drawing anything when it isn't raining or the mesh isn't rainy.</returns>
     internal static bool Draw(ModelMesh mesh, Matrix world, Matrix view, Matrix projection) {
         if (!IsActive || _scene is null || !_meshes.Contains(mesh))
             return false;
@@ -151,6 +148,7 @@ public static class RainyWindows {
         return true;
     }
 
+    // could make this a utility later
     static void Copy(GraphicsDevice device, Texture2D from, RenderTarget2D to) {
         _copyBatch ??= new SpriteBatch(device);
         device.SetRenderTarget(to);

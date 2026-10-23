@@ -2,13 +2,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
+using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.Graphics;
 
 /// <summary>
 /// Applies the graphics options from <see cref="GameConfig"/> that need engine-side work: anti-aliasing of the
-/// game frame buffer, the frame rate cap and the tank track limit. The settings page and the game loop call these.
+/// game frame buffer, the frame rate cap, the tank track limit and the effect toggles. The settings pages and the game loop call these.
 /// </summary>
 public static class GraphicsSettings {
     /// <summary>The MSAA levels offered in the settings (0 = off).</summary>
@@ -17,6 +18,9 @@ public static class GraphicsSettings {
     public static readonly int[] FrameRateOptions = [30, 60, 75, 120, 144, 165, 240, 360, 0];
     /// <summary>The tank track limits offered in the settings.</summary>
     public static readonly int[] FootprintLimitOptions = [1000, 2500, 5000, 10000, 20000, 50000];
+    /// <summary>The rain strengths offered in the settings (light, medium, heavy).</summary>
+    public static readonly float[] RainStrengthOptions = [0.35f, 0.65f, 1f];
+    public const int MinFOV = 70, MaxFOV = 110;
 
     static int _frameBufferSamples = -1;
 
@@ -53,6 +57,16 @@ public static class GraphicsSettings {
         var target = TimeSpan.FromSeconds(RuntimeData.Interp && settings.TargetFPS > 0 ? 1.0 / settings.TargetFPS : 1.0 / 60.0);
         if (game.TargetElapsedTime != target)
             game.TargetElapsedTime = target;
+    }
+
+    // ------------------------------------------------------------------------------------------ effects
+
+    /// <summary>Applies the rainy window and blob shadow options. Call after changing them.</summary>
+    public static void ApplyEffects() {
+        var settings = TankGame.Settings;
+        RainShader.Enabled = settings.RainyWindows;
+        RainShader.Strength = MathHelper.Clamp(settings.RainStrength, 0f, 1f);
+        CommandGlobals.DrawMeshShadows = settings.TankBlobShadows;
     }
 
     // ------------------------------------------------------------------------------------------ tank tracks

@@ -66,10 +66,18 @@ public sealed class SettingRow : UIElement {
         var centerY = Hitbox.Center.Y;
 
         var labelSize = font.MeasureString(Label);
-        spriteBatch.DrawString(font, Label, new Vector2(Hitbox.X + pad, centerY), textColor, scale, 0f, new Vector2(0f, labelSize.Y / 2f));
-
         var value = _value();
         var valueSize = font.MeasureString(value);
+        var arrowSize = font.MeasureString(">");
+
+        // shrink long label and value pairs so they fit narrow rows
+        var textWidth = labelSize.X + 30f + valueSize.X + (ShowArrows ? 2f * (arrowSize.X + 14f) : 0f);
+        var room = Hitbox.Width - 2f * pad;
+        if (textWidth * scale.X > room)
+            scale *= room / (textWidth * scale.X);
+
+        spriteBatch.DrawString(font, Label, new Vector2(Hitbox.X + pad, centerY), textColor, scale, 0f, new Vector2(0f, labelSize.Y / 2f));
+
         var valueColor = enabled ? new Color(20, 40, 110) : Color.Black * 0.45f;
         var right = Hitbox.Right - pad;
 
@@ -78,7 +86,6 @@ public sealed class SettingRow : UIElement {
             return;
         }
 
-        var arrowSize = font.MeasureString(">");
         var arrowColor = enabled ? (hovered ? Color.White : Color.DimGray) : Color.Black * 0.3f;
         spriteBatch.DrawString(font, ">", new Vector2(right, centerY), arrowColor, scale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
         var valueRight = right - (arrowSize.X + 14f) * scale.X;

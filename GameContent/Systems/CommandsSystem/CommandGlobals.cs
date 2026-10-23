@@ -161,6 +161,7 @@ public static class CommandGlobals {
                 GameUI.Initialize();
                 VolumeUI.Initialize();
                 GraphicsUI.Initialize();
+                GameplayUI.Initialize();
                 LevelEditorUI.Initialize();
                 LevelEditorUI.InitializeSaveMenu();
                 // ControlsUI.Initialize();

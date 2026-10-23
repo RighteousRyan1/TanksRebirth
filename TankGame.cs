@@ -561,6 +561,8 @@ public class TankGame : Game {
             // GameScene.Theme = MapTheme.Christmas;
 
             TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
+            Tank.ShowTeamVisuals = Settings.ShowTeamVisuals;
+            GraphicsSettings.ApplyEffects();
 
             ClientLog.Write($"Applied user settings.", RebirthLogLevel.Info);
 
@@ -839,7 +841,7 @@ public class TankGame : Game {
         InputUtils.Watch();
 
         RoomScene.Update();
-        RainyWindows.Update();
+        RainShader.Update();
 
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {
@@ -1029,7 +1031,7 @@ public class TankGame : Game {
 
         // goofy ahh hardcode
         GaussianBlur.Prepare(GraphicsDevice, SpriteRenderer, GameFrameBuffer,
-            MainMenuUI.IsActive && GameScene.UpdateAndRender ? GameShaders.BlurFactor : 0f);
+            MainMenuUI.IsActive && GameScene.UpdateAndRender && Settings.MenuBlur ? GameShaders.BlurFactor : 0f);
 
         PrepareGameBuffers(SpriteRenderer);
         MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);

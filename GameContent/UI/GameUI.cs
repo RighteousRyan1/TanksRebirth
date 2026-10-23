@@ -163,6 +163,7 @@ public static class GameUI {
         SettingsUI.Initialize();
         VolumeUI.Initialize();
         GraphicsUI.Initialize();
+        GameplayUI.Initialize();
         ControlsUI.Initialize();
         PostInitialize();
     }
@@ -316,8 +317,8 @@ public static class GameUI {
             GraphicsUI.PPLButton,
             GraphicsUI.WinKindBtn,
             GraphicsUI.ResBtn,
-            GraphicsUI.MenuGameplayBtn,
-            GraphicsUI.FadeTracksBtn,
+            GameplayUI.MenuGameplayBtn,
+            GameplayUI.FadeTracksBtn,
             VolumeUI.MusicVolume,
             VolumeUI.EffectsVolume,
             VolumeUI.AmbientVolume

@@ -30,6 +30,15 @@ public class GameConfig
     /// <summary>Frame rate cap while VSync is off. 0 = unlimited.</summary>
     public int TargetFPS { get; set; } = 60;
 
+    public bool RainyWindows { get; set; } = true;
+    /// <summary>How much water gathers on rainy windows, from 0 to 1.</summary>
+    public float RainStrength { get; set; } = 1f;
+    public bool TankBlobShadows { get; set; } = true;
+    /// <summary>Blurs the game scene behind the main menu.</summary>
+    public bool MenuBlur { get; set; } = true;
+    /// <summary>Field of view of the first-person camera in degrees, from 70 to 110.</summary>
+    public int FirstPersonFOV { get; set; } = 90;
+
     /// <summary>Dynamic lighting: on/off, quality, time of day. Edited on the graphics settings page.</summary>
     public LightingSettings Lighting { get; set; } = new();
     #endregion
@@ -70,6 +79,8 @@ public class GameConfig
     public string MusicPack { get; set; } = "Vanilla";
 
     public bool MenuGameplayEnabled { get; set; } = true;
+    /// <summary>Tints each tank's wooden trim with its team color.</summary>
+    public bool ShowTeamVisuals { get; set; } = false;
 
     #endregion
 

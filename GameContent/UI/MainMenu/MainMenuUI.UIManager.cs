@@ -323,6 +323,7 @@ public static partial class MainMenuUI
         SetPrimaryMenuButtonsVisibility(false);
         IsActive = false;
         GraphicsUI.IsVisible = false;
+        GameplayUI.BatchVisible = false;
         ControlsUI.BatchVisible = false;
         VolumeUI.BatchVisible = false;
         GameUI.InOptions = false;

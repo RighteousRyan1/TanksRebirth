@@ -12,6 +12,7 @@ using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Cameras;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
@@ -307,7 +308,7 @@ public static class CameraGlobals {
             Vector3.Up
         ) * Matrix.CreateScale(AddativeZoom);
 
-        PerspectiveCamera.FieldOfView = 90f;
+        PerspectiveCamera.FieldOfView = MathHelper.Clamp(TankGame.Settings.FirstPersonFOV, GraphicsSettings.MinFOV, GraphicsSettings.MaxFOV);
         GameProjection = PerspectiveCamera.Projection;
 
         PerspectiveCamera.Position = povCameraPosCurrent;

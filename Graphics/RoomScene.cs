@@ -78,7 +78,7 @@ public static class RoomScene {
         ChimeHour = GetClockSfx("chime_hour");
 
         PopulateAlphaDict();
-        RainyWindows.Add(RoomSkyboxScene, "Windows_Glass");
+        RainShader.Add(RoomSkyboxScene, "Windows_Glass");
     }
     public static OggAudio GetClockSfx(string asset) => new($"Content/Assets/sounds/roomscene/{asset}.ogg");
     public static void InitializeTextures() {
@@ -351,13 +351,13 @@ public static class RoomScene {
             bs.Radius *= Scale * 100;
             if (!CameraGlobals.ViewFrustum.Intersects(bs))
                 continue;
-            if (RainyWindows.IsActive && RainyWindows.IsRainy(mesh)) {
+            if (RainShader.IsActive && RainShader.IsRegistered(mesh)) {
                 // everything behind the windows is drawn by now
                 if (!sceneCaptured) {
-                    RainyWindows.CaptureScene();
+                    RainShader.CaptureScene();
                     sceneCaptured = true;
                 }
-                RainyWindows.Draw(mesh, _boneTransforms[mesh.ParentBone.Index], View, Projection);
+                RainShader.Draw(mesh, _boneTransforms[mesh.ParentBone.Index], View, Projection);
                 continue;
             }
             foreach (BasicEffect effect in mesh.Effects) {
