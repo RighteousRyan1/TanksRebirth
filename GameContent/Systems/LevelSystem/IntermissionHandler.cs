@@ -111,7 +111,7 @@ public static class IntermissionHandler {
 
         if (CampaignCompleteUI.FanfaresAndDurations.TryGetValue(result, out (OggAudio, TimeSpan) value)) {
             value.Item1.Instance?.Play();
-            value.Item1.Instance!.Volume = TankGame.Settings.MusicVolume;
+            value.Item1.Instance!.Volume = TankGame.Settings.Audio.MusicVolume;
 
 
             SceneManager.InitResults((float)value.Item2.TotalSeconds * 60, result);

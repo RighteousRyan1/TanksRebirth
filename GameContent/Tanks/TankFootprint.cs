@@ -13,7 +13,7 @@ namespace TanksRebirth.GameContent.Tanks;
 public class TankFootprint {
     public static bool ShouldTracksFade;
 
-    public static TankFootprint[] AllFootprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
+    public static TankFootprint[] AllFootprints = new TankFootprint[TankGame.Settings.Gameplay.TankFootprintLimit];
 
     /// <summary>How many footprints currently exist.</summary>
     public static int Count { get; private set; }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
@@ -416,10 +417,12 @@ public class Campaign {
 
             var file = Path.Combine(path, fileName);
 
-            JsonHandler<CampaignMetaData> handler = new(properties, file);
+            var opts = new JsonSerializerOptions() { WriteIndented = true };
+            JsonHandler<CampaignMetaData> handler = new(properties, opts, file);
 
             if (!File.Exists(file)) {
-                handler.Serialize(new() { WriteIndented = true }, true);
+                // fine to change from WriteIndented probably???
+                handler.Serialize(true);
                 return properties;
             }
 

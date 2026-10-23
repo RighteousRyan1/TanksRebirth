@@ -1,23 +1,24 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using TanksRebirth.Internals.Common.GameUI;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.Internals.Common;
 using System;
-using TanksRebirth.Internals.UI;
-using TanksRebirth.Internals.Common.Framework.Input;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Net;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
+using System.Linq;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems.LevelSystem;
-using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
-using TanksRebirth.Enums;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.UI;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -25,6 +26,19 @@ namespace TanksRebirth.GameContent.UI;
 
 #pragma warning disable 
 public static class GameUI {
+    // this will be put somewhere else at some point istg
+    /// <summary>The next (dir = 1) or previous (dir = -1) entry, wrapping around. Unknown values start from the first entry.</summary>
+    internal static T Cycle<T>(T[] values, T current, int dir) {
+        var index = Array.IndexOf(values, current);
+        if (index < 0)
+            return values[0];
+        return values[((index + dir) % values.Length + values.Length) % values.Length];
+    }
+    internal static float NearestOf(float[] values, float value) => values.OrderBy(v => MathF.Abs(v - value)).First();
+    internal static int NearestOf(int[] values, int value) => values.OrderBy(v => Math.Abs(v - value)).First();
+    internal static string OnOff(bool value) => TankGame.GameLanguage.GetEnablement(value);
+    // ^^^ IGNORE!!!!!
+
     public static bool InOptions { get; set; }
 
     public static Keybind Pause = new("Pause", Keys.Escape);

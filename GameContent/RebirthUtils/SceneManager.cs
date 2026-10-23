@@ -212,7 +212,7 @@ public static class SceneManager {
         }
         if (!Thunder.SoftRain.IsPlaying())
             Thunder.SoftRain.Instance.Play();
-        Thunder.SoftRain.Instance.Volume = TankGame.Settings.AmbientVolume;
+        Thunder.SoftRain.Instance.Volume = TankGame.Settings.Audio.AmbientVolume;
 
 
         // TODO: should the chance be scaled by tps?

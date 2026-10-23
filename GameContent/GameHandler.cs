@@ -249,7 +249,7 @@ public class GameHandler {
                 p?.Render();
 
             //foreach (var print in TankFootprint.footprints)
-            //print?.Render();
+            //print?.Draw();
 
             foreach (var crate in Crate.AllCrates)
                 crate?.Render();
@@ -269,6 +269,9 @@ public class GameHandler {
 
         // shadows + lights, multiplied onto the world drawn so far. everything below is UI and stays unlit.
         LightingSystem.EndFrame(TankGame.GameFrameBuffer);
+
+        foreach (var player in AllPlayerTanks)
+            player?.DrawExtras(spriteBatch);
 
         // only render the level editor if it's active
         // change depth stencil...?

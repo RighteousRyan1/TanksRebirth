@@ -76,11 +76,11 @@ public static class LightManager {
 
         // the lighting options live in the game's settings file
         if (TankGame.Settings is not null)
-            LightingSettings.Current = TankGame.Settings.Lighting ??= new LightingSettings();
+            DynLightSettings.Current = TankGame.Settings.Lighting;
 
         // keep the settings in sync when F7 or a command changes the time of day
-        LightingPresets.PresetChanged += preset => LightingSettings.Current.TimeOfDay = preset;
-        LightingSettings.Current.Apply(force: true);
+        LightingPresets.PresetChanged += preset => DynLightSettings.Current.TimeOfDay = preset;
+        DynLightSettings.Current.Apply(force: true);
 
         TankGame.ClientLog.Write("Lighting system loaded.", RebirthLogLevel.Info);
     }
@@ -307,8 +307,8 @@ public static class LightManager {
                         return;
                     case "daylength":
                         if (parts.Length > 1 && float.TryParse(parts[1], System.Globalization.NumberStyles.Float, culture, out var minutes) && minutes > 0f)
-                            LightingSettings.Current.DayLengthMinutes = minutes;
-                        LightingSettings.Current.Apply();
+                            DynLightSettings.Current.DayLengthMinutes = minutes;
+                        DynLightSettings.Current.Apply();
                         TankGame.IngameConsole.Log($"Lighting: a day lasts {LightingPresets.DayLengthSeconds / 60f:0.#} minutes", Color.Gold);
                         return;
                     case "season":
@@ -325,22 +325,22 @@ public static class LightManager {
                         return;
                     case "quality":
                         if (parts.Length > 1 && Enum.TryParse<LightingQualityLevel>(parts[1], ignoreCase: true, out var level)) {
-                            LightingSettings.Current.SetQualityLevel(level);
-                            LightingSettings.Current.Apply();
+                            DynLightSettings.Current.SetQualityLevel(level);
+                            DynLightSettings.Current.Apply();
                         }
-                        TankGame.IngameConsole.Log($"Lighting: quality {LightingSettings.Current.QualityLevel}", Color.Gold);
+                        TankGame.IngameConsole.Log($"Lighting: quality {DynLightSettings.Current.QualityLevel}", Color.Gold);
                         return;
                     case "test":
                         LightingStressTest.Toggle();
                         TankGame.IngameConsole.Log(LightingStressTest.IsRunning
-                            ? $"Lighting test on ({LightingSystem.MAX_SHADOW_SLOTS} point and {LightingSystem.MAX_SHADOW_SLOTS} spot lights, quality {LightingSettings.Current.QualityLevel})"
+                            ? $"Lighting test on ({LightingSystem.MAX_SHADOW_SLOTS} point and {LightingSystem.MAX_SHADOW_SLOTS} spot lights, quality {DynLightSettings.Current.QualityLevel})"
                             : "Lighting test off", Color.Gold);
                         return;
                     case "enable":
                     case "disable":
-                        LightingSettings.Current.Enabled = parts[0] == "enable";
-                        LightingSettings.Current.Apply();
-                        TankGame.IngameConsole.Log($"Lighting: dynamic lighting {(LightingSettings.Current.Enabled ? "on" : "off")}", Color.Gold);
+                        DynLightSettings.Current.Enabled = parts[0] == "enable";
+                        DynLightSettings.Current.Apply();
+                        TankGame.IngameConsole.Log($"Lighting: dynamic lighting {(DynLightSettings.Current.Enabled ? "on" : "off")}", Color.Gold);
                         return;
                     case "pause":
                         LightingPresets.DayCyclePaused = !LightingPresets.DayCyclePaused;

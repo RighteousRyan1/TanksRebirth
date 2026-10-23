@@ -173,7 +173,7 @@ public static class CommandGlobals {
             var path = Path.Combine(TankGame.SaveDirectory, "Resource Packs", "Scene", pack);
             var exists = Directory.Exists(path);
             if (exists) {
-                TankGame.Settings.MapPack = pack;
+                TankGame.Settings.Theme.MapPack = pack;
                 GameScene.LoadTexturePack(pack);
                 GameScene.BoundsRenderer.SetBoundTextureDefaults();
 
@@ -182,7 +182,7 @@ public static class CommandGlobals {
                 TankGame.IngameConsole.Log($"Loaded '{pack}' from resource pack list.", Color.Lime);
             }
             else if (pack.Equals("vanilla", StringComparison.InvariantCultureIgnoreCase)) {
-                TankGame.Settings.MapPack = pack;
+                TankGame.Settings.Theme.MapPack = pack;
                 GameScene.LoadVanillaTextures();
                 GameScene.BoundsRenderer.SetBoundTextureDefaults();
             }
@@ -191,16 +191,16 @@ public static class CommandGlobals {
             }
         }),
         [new CommandInput(name: "snd_mus", description: "Set music volume.")] = new CommandOutput(netSync: false, false, (args) => {
-            TankGame.Settings.MusicVolume = float.Parse(args[0]);
-            VolumeUI.MusicVolume.Value = TankGame.Settings.MusicVolume;
+            TankGame.Settings.Audio.MusicVolume = float.Parse(args[0]);
+            VolumeUI.MusicVolume.Value = TankGame.Settings.Audio.MusicVolume;
         }),
         [new CommandInput(name: "snd_fx", description: "Set sound volume.")] = new CommandOutput(netSync: false, false, (args) => {
-            TankGame.Settings.EffectsVolume = float.Parse(args[0]);
-            VolumeUI.EffectsVolume.Value = TankGame.Settings.EffectsVolume;
+            TankGame.Settings.Audio.EffectsVolume = float.Parse(args[0]);
+            VolumeUI.EffectsVolume.Value = TankGame.Settings.Audio.EffectsVolume;
         }),
         [new CommandInput(name: "snd_amb", description: "Set ambient volume.")] = new CommandOutput(netSync: false, false, (args) => {
-            TankGame.Settings.AmbientVolume = float.Parse(args[0]);
-            VolumeUI.AmbientVolume.Value = TankGame.Settings.AmbientVolume;
+            TankGame.Settings.Audio.AmbientVolume = float.Parse(args[0]);
+            VolumeUI.AmbientVolume.Value = TankGame.Settings.Audio.AmbientVolume;
         }),
 
 

@@ -49,11 +49,11 @@ public static class ControlsUI {
 
     sealed record Binding(Keybind Bind, Func<GameConfig, BindInput> Get, Action<GameConfig, BindInput> Set);
     static readonly List<Binding> _bindings = [
-        new(PlayerTank.MoveUp, c => new(c.UpKeybind, c.UpMouseBind), (c, i) => (c.UpKeybind, c.UpMouseBind) = (i.Key, i.Mouse)),
-        new(PlayerTank.MoveDown, c => new(c.DownKeybind, c.DownMouseBind), (c, i) => (c.DownKeybind, c.DownMouseBind) = (i.Key, i.Mouse)),
-        new(PlayerTank.MoveLeft, c => new(c.LeftKeybind, c.LeftMouseBind), (c, i) => (c.LeftKeybind, c.LeftMouseBind) = (i.Key, i.Mouse)),
-        new(PlayerTank.MoveRight, c => new(c.RightKeybind, c.RightMouseBind), (c, i) => (c.RightKeybind, c.RightMouseBind) = (i.Key, i.Mouse)),
-        new(PlayerTank.PlaceMine, c => new(c.MineKeybind, c.MineMouseBind), (c, i) => (c.MineKeybind, c.MineMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.MoveUp, c => new(c.Control.UpKeybind, c.Control.UpMouseBind), (c, i) => (c.Control.UpKeybind, c.Control.UpMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.MoveDown, c => new(c.Control.DownKeybind, c.Control.DownMouseBind), (c, i) => (c.Control.DownKeybind, c.Control.DownMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.MoveLeft, c => new(c.Control.LeftKeybind, c.Control.LeftMouseBind), (c, i) => (c.Control.LeftKeybind, c.Control.LeftMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.MoveRight, c => new(c.Control.RightKeybind, c.Control.RightMouseBind), (c, i) => (c.Control.RightKeybind, c.Control.RightMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.PlaceMine, c => new(c.Control.MineKeybind, c.Control.MineMouseBind), (c, i) => (c.Control.MineKeybind, c.Control.MineMouseBind) = (i.Key, i.Mouse)),
     ];
 
     static Binding? _rebinding;

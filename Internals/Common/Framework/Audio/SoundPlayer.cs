@@ -31,9 +31,9 @@ public static class SoundPlayer
 
         return duration;
     }
-    private static float MusicVolume => TankGame.Settings.MusicVolume;
-    private static float EffectsVolume => TankGame.Settings.EffectsVolume;
-    private static float AmbientVolume => TankGame.Settings.AmbientVolume;
+    private static float MusicVolume => TankGame.Settings.Audio.MusicVolume;
+    private static float EffectsVolume => TankGame.Settings.Audio.EffectsVolume;
+    private static float AmbientVolume => TankGame.Settings.Audio.AmbientVolume;
     // my spidey senses are telling me this is horribly inefficient.
     /// <param name="position">Where the sound plays from in the world. Null plays it without positional panning or falloff.</param>
     /// <param name="minDist">In perspective view, the distance from the camera before the sound starts fading.</param>
@@ -79,13 +79,13 @@ public static class SoundPlayer
             if (sound.Sound.IsPlaying())
                 sound.Sound.Instance.Stop();
             sound.Sound.Instance.Play();
-            sound.Sound.Instance.Volume = volume;
+            sound.Sound.Instance.AudioSettings = volume;
 
             Sounds[Sounds.FindIndex(p => p.Name == soundDef.Name)] = soundDef;
         }
         else
         {
-            soundDef.Sound.Instance.Volume = volume;
+            soundDef.Sound.Instance.AudioSettings = volume;
             soundDef.Sound.Instance?.Play();
             Sounds.Add(soundDef);
         }*/

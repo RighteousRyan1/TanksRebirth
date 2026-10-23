@@ -25,22 +25,22 @@ public static class VolumeUI {
 
         MusicVolume = Page.Slider(x, SettingsUI.RowY(0), lang.Settings.MusicVolume ?? "Music",
             "Volume of the menu, level editor and mission music.",
-            () => TankGame.Settings.MusicVolume, v => TankGame.Settings.MusicVolume = v, new GameConfig().MusicVolume);
+            () => TankGame.Settings.Audio.MusicVolume, v => TankGame.Settings.Audio.MusicVolume = v, new GameConfig().Audio.MusicVolume);
 
         EffectsVolume = Page.Slider(x, SettingsUI.RowY(1), lang.Settings.EffectsVolume ?? "Sound Effects",
             "Volume of shots, explosions, mines, tanks and menu sounds.",
-            () => TankGame.Settings.EffectsVolume, v => TankGame.Settings.EffectsVolume = v, new GameConfig().EffectsVolume);
+            () => TankGame.Settings.Audio.EffectsVolume, v => TankGame.Settings.Audio.EffectsVolume = v, new GameConfig().Audio.EffectsVolume);
 
         AmbientVolume = Page.Slider(x, SettingsUI.RowY(2), lang.Settings.AmbientVolume ?? "Ambient",
             "Volume of the weather: rain, thunder and the snowy wind.",
-            () => TankGame.Settings.AmbientVolume, v => TankGame.Settings.AmbientVolume = v, new GameConfig().AmbientVolume);
+            () => TankGame.Settings.Audio.AmbientVolume, v => TankGame.Settings.Audio.AmbientVolume = v, new GameConfig().Audio.AmbientVolume);
 
         Page.Button(x, SettingsUI.RowY(4), SettingsUI.ColumnW, "Reset to Defaults",
             "Puts all three volumes back to their defaults.", () => {
                 var defaults = new GameConfig();
-                MusicVolume.Value = defaults.MusicVolume;
-                EffectsVolume.Value = defaults.EffectsVolume;
-                AmbientVolume.Value = defaults.AmbientVolume;
+                MusicVolume.Value = defaults.Audio.MusicVolume;
+                EffectsVolume.Value = defaults.Audio.EffectsVolume;
+                AmbientVolume.Value = defaults.Audio.AmbientVolume;
             });
     }
 

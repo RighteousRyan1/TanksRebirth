@@ -1,4 +1,4 @@
-using FontStashSharp;
+﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -533,7 +533,7 @@ public static class DebugManager {
         DrawDebugString(spriteBatch, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
 
         DrawDebugString(spriteBatch, $"HighestTier: {TankID.Collection.GetKey(AIManager.GetHighestTierActive())}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
-        // DebugUtils.DrawDebugString(spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
+        // DebugUtils.DrawDebugString(spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.AudioSettings == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.AudioSettings == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
 
         for (int i = 0; i < TankID.Collection.Count; i++)
             DrawDebugString(spriteBatch, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);

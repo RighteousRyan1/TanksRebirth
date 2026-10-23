@@ -76,7 +76,7 @@ public class XpBar {
 
     // todo, when xp gained, draw a text particle that shows how much was gained
     // also when leveling up make it go to end and then go to supposed xp value
-    public void Render(SpriteBatch sb) {
+    public void Draw(SpriteBatch sb) {
         var text = $"Level: {Level} | {MathF.Floor(Value / MaxValue * 100)}%";
         Alignment = Anchor.Center;
         // draw empty xp (text)

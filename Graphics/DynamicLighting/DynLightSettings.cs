@@ -3,13 +3,13 @@ using Preset = TanksRebirth.Graphics.DynamicLighting.LightingPresets.Preset;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
-/// <summary>Overall quality preset, like the "Graphics quality" dropdown at the top of most settings pages.</summary>
+/// <summary>Overall quality preset.</summary>
 public enum LightingQualityLevel {
     Low,
     Medium,
     High,
     Ultra,
-    /// <summary>The individual options were changed by hand.</summary>
+
     Custom,
 }
 
@@ -30,15 +30,9 @@ public enum EffectQuality {
     High,
 }
 
-/// <summary>
-/// Lighting options for the graphics settings page. Plain properties, so it saves alongside the rest of the config.
-/// </summary>
-/// <remarks>
-/// Change properties, then call <see cref="Apply"/>.
-/// </remarks>
-public sealed class LightingSettings {
+public struct DynLightSettings() {
     /// <summary>The settings in use. Replace it (e.g. with the loaded config) and call <see cref="Apply"/>.</summary>
-    public static LightingSettings Current { get; set; } = new();
+    public static DynLightSettings Current = new();
 
     // general stuff
 
@@ -55,9 +49,9 @@ public sealed class LightingSettings {
 
     // lighting quality
 
-    /// <summary>The preset these options came from (Custom once one was changed by hand).</summary>
+    /// <summary>The preset these options came from.</summary>
     public LightingQualityLevel QualityLevel { get; set; } = LightingQualityLevel.High;
-    /// <summary>Sun and moon shadows (Ultra doubles the resolution of the board shadows, HiDef only).</summary>
+    /// <summary>Sun and moon shadows.</summary>
     public ShadowQuality SunShadows { get; set; } = ShadowQuality.High;
     /// <summary>Shadows from lamps, headlights and explosions.</summary>
     public ShadowQuality LampShadows { get; set; } = ShadowQuality.High;
@@ -66,7 +60,7 @@ public sealed class LightingSettings {
     /// <summary>How many lights can be on screen at once.</summary>
     public EffectQuality LightCount { get; set; } = EffectQuality.High;
 
-    /// <summary>Sets every quality option from a preset, like picking Low / Medium / High / Ultra in a menu.</summary>
+    /// <summary>Sets every quality option from a preset.</summary>
     public void SetQualityLevel(LightingQualityLevel level) {
         QualityLevel = level;
         switch (level) {
@@ -100,7 +94,7 @@ public sealed class LightingSettings {
     /// <summary>Call after changing an individual option from the menu.</summary>
     public void UpdateQualityLevel() {
         foreach (var level in new[] { LightingQualityLevel.Low, LightingQualityLevel.Medium, LightingQualityLevel.High, LightingQualityLevel.Ultra }) {
-            var preset = new LightingSettings();
+            var preset = new DynLightSettings();
             preset.SetQualityLevel(level);
             if (preset.SunShadows == SunShadows && preset.LampShadows == LampShadows &&
                 preset.LightShafts == LightShafts && preset.LightCount == LightCount) {
@@ -112,7 +106,7 @@ public sealed class LightingSettings {
     }
 
     /// <summary>Turns the menu options into the numbers <see cref="LightingSystem"/> works with.</summary>
-    public LightingQuality ToQuality() {
+    public readonly LightingQuality ToQuality() {
         var q = new LightingQuality {
             // low still looks pretty decent
             SunShadows = SunShadows != ShadowQuality.Off
@@ -157,7 +151,7 @@ public sealed class LightingSettings {
     /// <summary>
     /// Pushes these settings into the lighting system.
     /// </summary>
-    public void Apply(bool force = false) {
+    public readonly void Apply(bool force = false) {
         var wasEnabled = LightingSystem.Enabled;
         LightingSystem.Enabled = Enabled;
         LightingSystem.Quality = ToQuality();
@@ -176,5 +170,5 @@ public sealed class LightingSettings {
     }
 
     /// <summary>A copy, so a menu can edit a candidate and only <see cref="Apply"/> it on "Apply" / "OK".</summary>
-    public LightingSettings Clone() => (LightingSettings)MemberwiseClone();
+    public DynLightSettings Clone() => (DynLightSettings)MemberwiseClone();
 }

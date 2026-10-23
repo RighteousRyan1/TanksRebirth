@@ -58,7 +58,7 @@ public static class StaticLighting {
         const float lightingConstant = 0.9f;
 
         effect.LightingEnabled = true;
-        effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
+        effect.PreferPerPixelLighting = TankGame.Settings.Graphics.PerPixelLighting;
         effect.EnableDefaultLighting();
 
         effect.TextureEnabled = true;
@@ -84,7 +84,7 @@ public static class StaticLighting {
 
     public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect, float powerMultiplier = 1f, float ambientMultiplier = 1f, bool specular = false, Vector3 lightDir = default) {
         effect.LightingEnabled = true;
-        effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
+        effect.PreferPerPixelLighting = TankGame.Settings.Graphics.PerPixelLighting;
         effect.EnableDefaultLighting();
 
         effect.DirectionalLight0.Enabled = true;
@@ -107,7 +107,7 @@ public static class StaticLighting {
         const float lightingConstant = 0.9f;
 
         effect.LightingEnabled = true;
-        effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
+        effect.PreferPerPixelLighting = TankGame.Settings.Graphics.PerPixelLighting;
         effect.EnableDefaultLighting();
         effect.SetDefaultGameLighting();
 

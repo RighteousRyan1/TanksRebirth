@@ -19,7 +19,7 @@ public static partial class MainMenuUI {
                 Theme.Volume -= 0.0075f;
         }
         else if (IsActive)
-            Theme.Volume = TankGame.Settings.MusicVolume * 0.1f * VolumeMultiplier;
+            Theme.Volume = TankGame.Settings.Audio.MusicVolume * 0.1f * VolumeMultiplier;
     }
     public static OggMusic GetAppropriateMusic() {
         OggMusic music = GameScene.Theme switch {

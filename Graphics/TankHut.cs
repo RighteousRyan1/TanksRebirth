@@ -102,7 +102,7 @@ public class TankHut {
 
     public void Update() {
         _lightAudio.Position = Position + LightOffset * 0.25f;
-        _lightAudio.Volume = TankGame.Settings.AmbientVolume;
+        _lightAudio.Volume = TankGame.Settings.Audio.AmbientVolume;
 
         // only keep a voice playing while the buzz could actually be heard
         var audible = SoundUtils.GetSpatialParams(_lightAudio.Position.Value, _lightAudio.MinDistance * Scale, _lightAudio.MaxDistance * Scale, true).Volume > 0f;

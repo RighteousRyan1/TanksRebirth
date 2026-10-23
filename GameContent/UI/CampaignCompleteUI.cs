@@ -119,7 +119,7 @@ public static class CampaignCompleteUI {
 
     public static void Update() {
         if (!ResultsFanfare.IsPlaying()) {
-            ResultsFanfare.SetVolume(TankGame.Settings.MusicVolume);
+            ResultsFanfare.SetVolume(TankGame.Settings.Audio.MusicVolume);
             ResultsFanfare.Play();
         }
         if (_panelAlpha < _panelAlphaMax)
@@ -161,7 +161,7 @@ public static class CampaignCompleteUI {
                 ResetThings();
         }
 
-        ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
+        ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.Audio.MusicVolume : 0f);
         _animationTime += RuntimeData.DeltaFrames;
 
         if (InputUtils.KeyJustPressed(Keys.Enter)) {
@@ -191,7 +191,7 @@ public static class CampaignCompleteUI {
 
     private static void ModifyTracks() {
         try {
-            ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
+            ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.Audio.MusicVolume : 0f);
         } catch { }
     }
 

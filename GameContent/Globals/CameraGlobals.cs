@@ -308,7 +308,7 @@ public static class CameraGlobals {
             Vector3.Up
         ) * Matrix.CreateScale(AddativeZoom);
 
-        PerspectiveCamera.FieldOfView = MathHelper.Clamp(TankGame.Settings.FirstPersonFOV, GraphicsSettings.MinFOV, GraphicsSettings.MaxFOV);
+        PerspectiveCamera.FieldOfView = MathHelper.Clamp(TankGame.Settings.Gameplay.FirstPersonFOV, GraphicsSettings.MinFOV, GraphicsSettings.MaxFOV);
         GameProjection = PerspectiveCamera.Projection;
 
         PerspectiveCamera.Position = povCameraPosCurrent;

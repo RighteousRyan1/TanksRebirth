@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals.Common.IO;
 
@@ -238,9 +239,10 @@ public class Language {
     public static void LoadLang(LangCode code, out Language lang) {
         // for example, it would be sane to have en_US or es_SP or jp_JA
         lang = new();
+        var opts = new JsonSerializerOptions() { WriteIndented = true };
         try { 
             var path = Path.Combine(Path.Combine("Localization", $"{code}.json"));
-            JsonHandler<Language> handler = new(lang, path);
+            JsonHandler<Language> handler = new(lang, opts, path);
 
             TankGame.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.RebirthLogLevel.Debug);
             lang.ActiveLang = code;
@@ -249,7 +251,7 @@ public class Language {
         catch {
             TankGame.ClientLog.Write($"Loading language '{code}'... Could not find localization file or error loading! Using default language '{LangCode.English}' instead.", Internals.RebirthLogLevel.Debug);
             var path = Path.Combine(Path.Combine("Localization", $"en_US.json"));
-            JsonHandler<Language> handler = new(lang, path);
+            JsonHandler<Language> handler = new(lang, opts, path);
             lang = handler.Deserialize();
         }
         lang.ActiveLang = code;
@@ -257,8 +259,8 @@ public class Language {
 
     public static void GenerateLocalizationTemplate(string path) {
         var lang = new Language();
-        JsonHandler<Language> handler = new(lang, path);
-        handler.Serialize(new() { WriteIndented = true }, true);
+        JsonHandler<Language> handler = new(lang, new() { WriteIndented = true }, path);
+        handler.Serialize(true);
     }
 
     public string GetEnablement(bool enabled) => enabled ? Basic.Enabled : Basic.Disabled;

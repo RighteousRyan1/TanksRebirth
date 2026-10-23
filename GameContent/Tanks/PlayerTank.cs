@@ -721,8 +721,6 @@ public class PlayerTank : Tank {
 
         if (IsDestroyed) return;
 
-        // doing this for now. will eventually pass it in via Render(SpriteBatch)
-        DrawExtras(TankGame.SpriteRenderer);
         if (Properties.Invisible && CampaignGlobals.InMission) return;
         foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
             if (!Properties.HasTurret && mesh.Name == "Cannon")
@@ -764,7 +762,7 @@ public class PlayerTank : Tank {
         }
     }
     static readonly Dictionary<int, float[]> _bulletAnimationStates = [];
-    void DrawExtras(SpriteBatch spriteBatch) {
+    internal void DrawExtras(SpriteBatch spriteBatch) {
         if (IsDestroyed || IgnoreRegister) return;
 
         // todo: a good way of making the displays not overlap

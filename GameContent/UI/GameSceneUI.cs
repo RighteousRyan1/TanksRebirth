@@ -30,7 +30,7 @@ public static class GameSceneUI {
             xpBar.FillColor = Color.Green;
             xpBar.EmptyColor = Color.Red;
             xpBar.GainedColor = Color.Lime;
-            xpBar.Render(TankGame.SpriteRenderer);
+            xpBar.Draw(TankGame.SpriteRenderer);
         }
 
         DrawScores();

@@ -119,13 +119,13 @@ public static class TankMusicSystem {
         if (MainMenuUI.IsActive && AIManager.CountAll() == 0 || TierHighest == TankID.None) return;
 
         if (GameScene.Theme == MapTheme.Christmas) {
-            SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
+            SnowLoop.SetVolume(TankGame.Settings.Audio.AmbientVolume);
             return;
         }
 
         // maybe only need to update some of these things in the event of an Owner tank death?
 
-        var musicVolume = TankGame.Settings.MusicVolume * VolumeMultiplier;
+        var musicVolume = TankGame.Settings.Audio.MusicVolume * VolumeMultiplier;
         var tierHighestName = TankID.Collection.GetKey(TierHighest);
 
         // only count the tanks that exist and are below the highest tier.
@@ -211,9 +211,9 @@ public static class TankMusicSystem {
     public static void UpdateVolume() {
         foreach (var song in Audio) {
             if (song.Value.Volume > 0) {
-                song.Value.SetVolume(TankGame.Settings.MusicVolume);
+                song.Value.SetVolume(TankGame.Settings.Audio.MusicVolume);
                 if (GameScene.Theme == MapTheme.Christmas)
-                    SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
+                    SnowLoop.SetVolume(TankGame.Settings.Audio.AmbientVolume);
                 else
                     SnowLoop.SetVolume(0);
             }

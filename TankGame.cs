@@ -68,7 +68,7 @@ public class TankGame : Game {
     // ### STRUCTURES / CLASSES ###
 
     /// <summary>The JSON manager/serializer/deserializer for the game's settings.</summary>
-    public static JsonHandler<GameConfig> SettingsHandler;
+    public static JsonHandler<GameConfig> ConfigLoader;
     public static GameConfig Settings;
 
     Vector2 _mouseOld;
@@ -317,18 +317,20 @@ public class TankGame : Game {
         }
     }
 
+    JsonSerializerOptions _options = new() {
+        WriteIndented = true,
+        IncludeFields = true
+    };
     protected override void OnExiting(object sender, ExitingEventArgs args) {
         ClientLog.Write($"Handling termination process...", RebirthLogLevel.Info);
 
         // update game-related numbers
         SaveFile.TimePlayed += CurrentSessionTimer.Elapsed;
 
-        Settings.PlayerUsingKeyboard = PlayerTank.KbPlayer;
+        Settings.Control.PlayerUsingKeyboard = PlayerTank.KbPlayer;
 
         // save everything related to game-data
-        SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-        JsonSerializerOptions opts = new() { WriteIndented = true };
-        SettingsHandler.Serialize(opts, true);
+        ConfigLoader.Serialize(true);
 
         SaveFile.ExpLevel = GameHandler.ExpBar.Level + GameHandler.ExpBar.Value;
         SaveFile.Serialize();
@@ -509,24 +511,21 @@ public class TankGame : Game {
 
             TextureGlobals.CreateDynamicTexturesAsync(GraphicsDevice);
 
+            ConfigLoader = new(Settings, _options, Path.Combine(SaveDirectory, "settings.json"));
             if (!File.Exists(Path.Combine(SaveDirectory, "settings.json"))) {
                 Settings = new();
-                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-                JsonSerializerOptions opts = new() {
-                    WriteIndented = true
-                };
-                SettingsHandler.Serialize(opts, true);
+
+                ConfigLoader.Serialize(true);
             }
             else {
-                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-                Settings = SettingsHandler.Deserialize();
+                Settings = ConfigLoader.Deserialize();
             }
 
             // english is loaded so fallback characters work.
             FontGlobals.LoadLocalizedFont(LangCode.English);
             FontGlobals.LoadLocalizedFont(Settings.Language);
 
-            PlayerTank.KbPlayer = Settings.PlayerUsingKeyboard;
+            PlayerTank.KbPlayer = Settings.Control.PlayerUsingKeyboard;
 
             FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
             FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
@@ -544,14 +543,14 @@ public class TankGame : Game {
 
             #region Config Initialization
 
-            Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-            WindowUtils.ChangeWindowKind(Settings.WindowKind);
-            PlayerTank.MoveUp.ForceReassign(Settings.UpKeybind);
-            PlayerTank.MoveDown.ForceReassign(Settings.DownKeybind);
-            PlayerTank.MoveLeft.ForceReassign(Settings.LeftKeybind);
-            PlayerTank.MoveRight.ForceReassign(Settings.RightKeybind);
-            PlayerTank.PlaceMine.ForceReassign(Settings.MineKeybind);
-            GameScene.Theme = Settings.GameTheme;
+            Graphics.SynchronizeWithVerticalRetrace = Settings.Display.Vsync;
+            WindowUtils.ChangeWindowKind(Settings.Display.WindowKind);
+            PlayerTank.MoveUp.ForceReassign(Settings.Control.UpKeybind);
+            PlayerTank.MoveDown.ForceReassign(Settings.Control.DownKeybind);
+            PlayerTank.MoveLeft.ForceReassign(Settings.Control.LeftKeybind);
+            PlayerTank.MoveRight.ForceReassign(Settings.Control.RightKeybind);
+            PlayerTank.PlaceMine.ForceReassign(Settings.Control.MineKeybind);
+            GameScene.Theme = Settings.Theme.GameTheme;
 
             /*if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
                 MapRenderer.Theme = Settings.GameTheme;
@@ -560,8 +559,8 @@ public class TankGame : Game {
 
             // GameScene.Theme = MapTheme.Christmas;
 
-            TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
-            Tank.ShowTeamVisuals = Settings.ShowTeamVisuals;
+            TankFootprint.ShouldTracksFade = Settings.Gameplay.FadeFootprints;
+            Tank.ShowTeamVisuals = Settings.Gameplay.ShowTeamVisuals;
             GraphicsSettings.ApplyEffects();
 
             ClientLog.Write($"Applied user settings.", RebirthLogLevel.Info);
@@ -571,9 +570,9 @@ public class TankGame : Game {
             GameHandler.Initialize();
 
             TankMusicSystem.SetAssetAssociations();
-            GameScene.LoadTexturePack(Settings.MapPack);
-            TankMusicSystem.LoadSoundPack(Settings.MusicPack);
-            Tank.LoadTexturePack(Settings.TankPack);
+            GameScene.LoadTexturePack(Settings.Theme.MapPack);
+            TankMusicSystem.LoadSoundPack(Settings.Theme.MusicPack);
+            Tank.LoadTexturePack(Settings.Theme.TankPack);
             Graphics.ApplyChanges();
 
             Language.LoadLang(Settings.Language, out GameLanguage);
@@ -915,19 +914,15 @@ public class TankGame : Game {
     }
     protected override void Draw(GameTime gameTime) {
         PrepareAllRTs();
-
         DrawGameElements();
 
         if (gameUiDraw) {
             DrawNonInteractiveUI(gameTime);
-
             DrawInteractiveUI(gameTime);
         }
 
         IngameConsole.Draw(SpriteRenderer);
-
         DrawCursors();
-
         PreDrawBackBuffer?.Invoke(gameTime);
 
         RuntimeData.RenderTime = gameTime.ElapsedGameTime;
@@ -966,7 +961,7 @@ public class TankGame : Game {
     public static void DrawInteractiveUI(GameTime gameTime) {
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
-        // if (LevelEditorUI.Active) LevelEditorUI.Render();
+        // if (LevelEditorUI.Active) LevelEditorUI.Draw();
         if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render(SpriteRenderer);
 
         if (SceneManager.timeLeft > 0) {
@@ -1004,8 +999,6 @@ public class TankGame : Game {
         SpriteRenderer.Begin();
 
         MainMenuUI.Render(SpriteRenderer, gameTime);
-        // i really wish i didn't have to draw this here.
-        VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
 
         if (Debugger.IsAttached) {
             var font = FontGlobals.RebirthFont;
@@ -1022,6 +1015,9 @@ public class TankGame : Game {
             GameSceneUI.DrawAll();
         }
 
+        // i really wish i didn't have to draw this here.
+        VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
+
         SpriteRenderer.End();
     }
     public void PrepareAllRTs() {
@@ -1031,7 +1027,7 @@ public class TankGame : Game {
 
         // goofy ahh hardcode
         GaussianBlur.Prepare(GraphicsDevice, SpriteRenderer, GameFrameBuffer,
-            MainMenuUI.IsActive && GameScene.UpdateAndRender && Settings.MenuBlur ? GameShaders.BlurFactor : 0f);
+            MainMenuUI.IsActive && GameScene.UpdateAndRender && Settings.Graphics.MenuBlur ? GameShaders.BlurFactor : 0f);
 
         PrepareGameBuffers(SpriteRenderer);
         MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);

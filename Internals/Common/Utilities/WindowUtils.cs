@@ -41,7 +41,7 @@ public static class WindowUtils {
     /// <summary>Converts pixel coordinates (0..WindowWidth, 0..WindowHeight) to cartesian coordinates (0..1, 0..1)</summary>
     public static Vector2 ToCartesianCoordinates(this Vector2 input) => new(input.X / WindowWidth, input.Y / WindowHeight);
     /// <summary>Applies <paramref name="kind"/> with the resolution saved in the settings.</summary>
-    public static void ChangeWindowKind(WindowKind kind) => ApplyDisplayMode(kind, TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
+    public static void ChangeWindowKind(WindowKind kind) => ApplyDisplayMode(kind, TankGame.Settings.Display.ResWidth, TankGame.Settings.Display.ResHeight);
 
     /// <summary>
     /// Switches the window mode and resolution in one go, always starting from a plain window so every switch

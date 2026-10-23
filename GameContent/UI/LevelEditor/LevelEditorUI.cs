@@ -785,7 +785,7 @@ public static partial class LevelEditorUI {
                 if (InputUtils.KeyJustPressed(Keys.T))
                     EditorTile.DrawStacks = !EditorTile.DrawStacks;
 
-            Theme.SetVolume(0.4f * TankGame.Settings.MusicVolume);
+            Theme.SetVolume(0.4f * TankGame.Settings.Audio.MusicVolume);
 
             _curDescription = string.Empty;
             _curHoverRect = new();

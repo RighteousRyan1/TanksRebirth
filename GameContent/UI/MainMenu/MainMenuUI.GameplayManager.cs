@@ -14,7 +14,7 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 public static partial class MainMenuUI {
     static bool _firstTime = true;
     public static void UpdateGameplay() {
-        if (!TankGame.Settings.MenuGameplayEnabled) return;
+        if (!TankGame.Settings.Gameplay.MenuGameplayEnabled) return;
 
         if (IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha > 0) return;
         if (curMenuMission.Blocks is null) {
@@ -32,7 +32,7 @@ public static partial class MainMenuUI {
         SceneManager.CleanupEntities();
         PlayerTank.TankKills.Clear();
 
-        if (!TankGame.Settings.MenuGameplayEnabled) return;
+        if (!TankGame.Settings.Gameplay.MenuGameplayEnabled) return;
 
         LoadTemplateMission();
     }
