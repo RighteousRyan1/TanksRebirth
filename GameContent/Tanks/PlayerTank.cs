@@ -76,13 +76,10 @@ public class PlayerTank : Tank {
 
     bool playerControl;
     bool _isPlayerModel;
-    // where the cursor was left last update while aiming in POV mode (null while the cursor is free)
+    // where the cursor was left last update while in POV mode
     Point? _povMouseAnchor;
 
     public Vector2 oldPosition;
-
-    // 46 if using keyboard, 10 if using a controller
-    //private float _maxTurnInputBased;
     #endregion
 
     public static Vector2[] AimTargets = new Vector2[4];
@@ -363,7 +360,7 @@ public class PlayerTank : Tank {
                 var mouse = Mouse.GetState().Position;
                 var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
 
-                // the first update after the cursor was free (paused, menus, unfocused) only recenters it
+                // recenters after refocus
                 if (_povMouseAnchor is { } anchor && mouse.X != anchor.X)
                     TurretRotation = (TurretRotation + (mouse.X - anchor.X) / 312f.ToResolutionX()).WrapTauAngle();
 

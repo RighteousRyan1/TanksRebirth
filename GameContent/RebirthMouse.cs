@@ -44,8 +44,9 @@ public class RebirthMouse {
     public int Player;
 
     public int DotCount { get; set; } = 10;
+    /// <summary>Used as the primary hider of the cursor. Use <see cref="IsHidden"/> for temporary hides.</summary>
     public bool IsActive { get; set; } = true;
-    /// <summary>Hides the cursor for now without touching <see cref="IsActive"/> (e.g. while aiming in POV mode).</summary>
+    /// <summary>Hides the cursor for now without touching <see cref="IsActive"/>.</summary>
     public bool IsHidden { get; set; }
     public bool HasTrail { get; set; } = true;
 
