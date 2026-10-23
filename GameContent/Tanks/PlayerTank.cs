@@ -76,6 +76,8 @@ public class PlayerTank : Tank {
 
     bool playerControl;
     bool _isPlayerModel;
+    // where the cursor was left last update while aiming in POV mode (null while the cursor is free)
+    Point? _povMouseAnchor;
 
     public Vector2 oldPosition;
 
@@ -330,6 +332,7 @@ public class PlayerTank : Tank {
         // TODO: somehow i broke something here. why
         var denyFpsAiming = !Modifiers.IsOn(Modifiers.POV) || LevelEditorUI.IsActive || MainMenuUI.IsActive;
         if (denyFpsAiming) {
+            _povMouseAnchor = null;
             var mouseIndex = KbPlayer == -2 ? 0 : PlayerId;
             //int padIndex = GamepadIndex;
             //if (padIndex < 0)
@@ -355,20 +358,25 @@ public class PlayerTank : Tank {
         }
         // handle POV mode aiming
         // also pov mode should not be used in local games for now (i do not want to make splitscreen pls)
-        else if (!GameUI.Paused) {
+        else if (!GameUI.Paused && WindowUtils.WindowActive) {
             if (!DebugManager.IsFreecamEnabled && !InputUtils.Click() && !PlaceMine.JustPressed) {
-                var mouseState = Mouse.GetState();
+                var mouse = Mouse.GetState().Position;
                 var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
 
-                if (mouseState.X == screenCenter.X && mouseState.Y == screenCenter.Y)
-                    return;
+                // the first update after the cursor was free (paused, menus, unfocused) only recenters it
+                if (_povMouseAnchor is { } anchor && mouse.X != anchor.X)
+                    TurretRotation = (TurretRotation + (mouse.X - anchor.X) / 312f.ToResolutionX()).WrapTauAngle();
 
-                // subtract mouse delta eventually
-                int deltaX = mouseState.X - screenCenter.X;
-                TurretRotation = (TurretRotation + deltaX / 312f.ToResolutionX()).WrapTauAngle();
-                Mouse.SetPosition(screenCenter.X, screenCenter.Y);
+                if (mouse != screenCenter) {
+                    Mouse.SetPosition(screenCenter.X, screenCenter.Y);
+                    // read back where the cursor really is, since the OS can skip or delay the warp
+                    mouse = Mouse.GetState().Position;
+                }
+                _povMouseAnchor = mouse;
             }
         }
+        else
+            _povMouseAnchor = null;
     }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {

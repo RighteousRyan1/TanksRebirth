@@ -44,7 +44,9 @@ public class RebirthMouse {
     public int Player;
 
     public int DotCount { get; set; } = 10;
-    public bool ShouldRender { get; set; } = true;
+    public bool IsActive { get; set; } = true;
+    /// <summary>Hides the cursor for now without touching <see cref="IsActive"/> (e.g. while aiming in POV mode).</summary>
+    public bool IsHidden { get; set; }
     public bool HasTrail { get; set; } = true;
 
     public RebirthMouse(Color mouseColor, Color trailColor, int player, int dotCount = 10, bool hasTrail = true) {
@@ -68,7 +70,7 @@ public class RebirthMouse {
 
     // drawn within MouseShader
     public void Draw() {
-        if (!ShouldRender)
+        if (!IsActive || IsHidden)
             return;
 
         _mouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);

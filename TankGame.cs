@@ -312,8 +312,8 @@ public class TankGame : Game {
         // here is where the multiplayer mouse bug was. it's fixed. but why are the colors not changing for the trail?
         for (int i = 0; i < PlayerMice.Length; i++) {
             if (PlayerMice[i] is null) continue;
-            PlayerMice[i].ShouldRender = true;
-            if (i >= PlayerTank.NumLocalPlayers) PlayerMice[i].ShouldRender = false;
+            PlayerMice[i].IsActive = true;
+            if (i >= PlayerTank.NumLocalPlayers) PlayerMice[i].IsActive = false;
         }
     }
 
@@ -681,7 +681,7 @@ public class TankGame : Game {
             MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
             MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
 
-            // mouse/cursor ShouldRender logic was here before. place back if it breaks somehow
+            // mouse/cursor IsActive logic was here before. place back if it breaks somehow
 
             // ensures player mouse is controlled properly... could be hacky?
             // if (Client.IsConnected()) PlayerTank.KbPlayer = NetPlay.CurrentClient.Id;
@@ -770,7 +770,7 @@ public class TankGame : Game {
             for (int i = 0; i < PlayerMice.Length; i++) {
                 var elem = PlayerMice[i];
                 if (elem is null) continue;
-                elem.ShouldRender = (!Modifiers.IsOn(Modifiers.POV) || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride && elem.ShouldRender;
+                elem.IsHidden = !((!Modifiers.IsOn(Modifiers.POV) || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive) && miceForceDrawOverride);
             }
 
             UIElement.UpdateElements();
@@ -841,7 +841,7 @@ public class TankGame : Game {
         InputUtils.Watch();
 
         RoomScene.Update();
-        RainShader.Update();
+        RainyWindows.Update();
 
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {

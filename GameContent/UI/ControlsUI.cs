@@ -221,8 +221,8 @@ public static class ControlsUI {
         var mice = TankGame.PlayerMice;
         for (int i = 0; i < mice.Length; i++) {
             if (mice[i] is null) continue;
-            mice[i].ShouldRender = true;
-            if (i >= PlayerTank.NumLocalPlayers) mice[i].ShouldRender = false;
+            mice[i].IsActive = true;
+            if (i >= PlayerTank.NumLocalPlayers) mice[i].IsActive = false;
         }
     }
 
