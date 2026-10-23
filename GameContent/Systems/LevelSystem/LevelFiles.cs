@@ -92,8 +92,8 @@ public static class LevelFiles {
                 ExtraLivesMissions = [],
                 StartingLives = file.StartingLives,
                 HasMajorVictory = file.HasMajorVictory,
-                BackgroundColor = ParseColor(file.BackgroundColor, IntermissionSystem.DefaultBackgroundColor),
-                MissionStripColor = ParseColor(file.MissionStripColor, IntermissionSystem.DefaultStripColor),
+                BackgroundColor = UnpackedColor.ParseColor(file.BackgroundColor, IntermissionSystem.DefaultBackgroundColor),
+                MissionStripColor = UnpackedColor.ParseColor(file.MissionStripColor, IntermissionSystem.DefaultStripColor),
             }
         };
 
@@ -127,7 +127,6 @@ public static class LevelFiles {
     }
 
     // conversions
-
     static MissionFile FromMission(Mission mission) {
         var grid = MapGrid.Current;
         var file = new MissionFile {
@@ -141,10 +140,9 @@ public static class LevelFiles {
         };
 
         foreach (var tank in mission.Tanks ?? []) {
-            var cell = grid.WorldToCell(tank.Position);
             file.Tanks.Add(new TankEntry {
-                X = cell.X,
-                Y = cell.Y,
+                X = tank.Position.X,
+                Y = tank.Position.Y,
                 Facing = tank.Facing,
                 Tier = tank.IsPlayer ? null : NameOf(TankID.Collection, tank.AIType),
                 Player = tank.IsPlayer ? NameOf(PlayerID.Collection, tank.PlayerType) : null,
@@ -175,7 +173,7 @@ public static class LevelFiles {
             var isPlayer = entry.Player is not null;
             tanks.Add(new TankTemplate {
                 IsPlayer = isPlayer,
-                Position = grid.CellToWorld(entry.X, entry.Y),
+                Position = new Point(entry.X, entry.Y),
                 Facing = entry.Facing,
                 AIType = isPlayer ? 0 : IdOf(TankID.Collection, entry.Tier, TankID.Brown, "tank"),
                 PlayerType = isPlayer ? IdOf(PlayerID.Collection, entry.Player, PlayerID.Blue, "player") : 0,
@@ -217,14 +215,6 @@ public static class LevelFiles {
     }
 
     static string FormatColor(UnpackedColor color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-
-    // turns a hex color string into an UnpackedColor. credit to ai for suggesting bit math
-    static UnpackedColor ParseColor(string? text, UnpackedColor fallback) {
-        if (text is null || text.Length != 7 || text[0] != '#'
-            || !int.TryParse(text.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var rgb))
-            return fallback;
-        return new UnpackedColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 255);
-    }
 
     // all the IO stuff
 

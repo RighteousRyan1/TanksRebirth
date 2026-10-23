@@ -52,7 +52,7 @@ public record struct Mission {
             if (tank is not null) {
                 var tmp = new TankTemplate {
                     IsPlayer = tank is PlayerTank,
-                    Position = tank.Position,
+                    Position = MapGrid.Current.WorldToCell(tank.Position),
                     Rotation = MathF.Round(tank.ChassisRotation, roundingFactor),
                     Team = tank.Team,
                 };
@@ -237,6 +237,8 @@ public record struct Mission {
     // this exists solely to port from older versions (< 5) to the version where the center is actually at (0, 0)
     const float ADJUST_FOR_CENTER = 131f;
 
+    // backwards compat
+    static Point OgLoad(float x, float y) => MapGrid.Current.WorldToCell(new Vector2(x, y));
     public static Mission LoadMissionV2(BinaryReader reader) {
         List<TankTemplate> tanks = [];
         List<BlockTemplate> blocks = [];
@@ -261,7 +263,7 @@ public record struct Mission {
 
             tanks.Add(new() {
                 IsPlayer = isPlayer,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 Rotation = rotation,
                 AIType = tier,
                 PlayerType = pType,
@@ -310,7 +312,7 @@ public record struct Mission {
 
             tanks.Add(new() {
                 IsPlayer = isPlayer,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 Rotation = rotation,
                 AIType = tier,
                 PlayerType = pType,
@@ -358,7 +360,7 @@ public record struct Mission {
 
             tanks.Add(new() {
                 IsPlayer = isPlayer,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 Rotation = rotation,
                 AIType = tier,
                 PlayerType = pType,
@@ -408,7 +410,7 @@ public record struct Mission {
 
             tanks.Add(new() {
                 IsPlayer = isPlayer,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 Rotation = rotation,
                 AIType = tier,
                 PlayerType = pType,

@@ -12,6 +12,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
+using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI;
@@ -75,7 +76,7 @@ public class PlayerTank : Tank {
     public static GamepadBind GamePadPlaceMine = new("Place Mine", Buttons.A);
 
     bool playerControl;
-    bool _isPlayerModel;
+    readonly bool _isPlayerModel;
     // where the cursor was left last update while in POV mode
     Point? _povMouseAnchor;
 
@@ -536,18 +537,7 @@ public class PlayerTank : Tank {
                 PlayerID.Yellow => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
                 _ => throw new Exception($"Player Death Mark for colour {PlayerType} is not supported."),
             };
-
-            var playerDeathMark = new TankDeathMark(c) {
-                Position = Position3D + new Vector3(0, 0.1f, 0),
-            };
-
-            playerDeathMark.StoredTank = new TankTemplate {
-                IsPlayer = true,
-                Position = playerDeathMark.Position.FlattenZ(),
-                Rotation = ChassisRotation,
-                Team = Team,
-                PlayerType = PlayerType,
-            };
+            TankDeathMark.Create(this, c);
 
             base.Destroy(context, netSend);
 

@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Tanks;
 
@@ -23,7 +24,7 @@ public class TankDeathMark {
     public Texture2D? texture;
 
     /// <summary>The tank that died here.</summary>
-    public TankTemplate StoredTank;
+    public Tank StoredTank;
 
     public enum CheckColor {
         Blue,
@@ -35,14 +36,14 @@ public class TankDeathMark {
 
     /// <summary>Resurrects <see cref="StoredTank"/>.</summary>
     public void ResurrectTank() {
-        StoredTank.GetTank();
+        // there's probably more to this i'm forgetting (im the dev btw)
+        StoredTank.IsDestroyed = false;
     }
 
-    public TankDeathMark(CheckColor color) {
-        if (total_death_marks + 1 > MAX_DEATH_MARKS)
-            return;
+    TankDeathMark(Tank tank, CheckColor color) {
         total_death_marks++;
 
+        StoredTank = tank;
         texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/deathmark/deathmark_{color.ToString().ToLower()}");
 
         check = GameHandler.Particles.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
@@ -51,6 +52,13 @@ public class TankDeathMark {
         check.Layer = 0;
 
         deathMarks[total_death_marks] = this;
+    }
+
+    public static TankDeathMark Create(Tank tank, CheckColor color) {
+        if (total_death_marks + 1 > MAX_DEATH_MARKS)
+            return null;
+
+        return new(tank, color);
     }
 
     public void Render() {

@@ -16,6 +16,7 @@ using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
+using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Tanks.AI.VanillaAI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -296,17 +297,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
         SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, position: Position3D);
 
-        var aiDeathMark = new TankDeathMark(TankDeathMark.CheckColor.White) {
-            Position = Position3D + new Vector3(0, 0.1f, 0),
-        };
-
-        aiDeathMark.StoredTank = new TankTemplate {
-            AIType = AiTankType,
-            IsPlayer = false,
-            Position = aiDeathMark.Position.FlattenZ(),
-            Rotation = ChassisRotation,
-            Team = Team,
-        };
+        TankDeathMark.Create(this, TankDeathMark.CheckColor.White);
 
         base.Destroy(context, netSend);
 

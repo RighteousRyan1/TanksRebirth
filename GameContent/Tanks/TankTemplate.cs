@@ -27,7 +27,7 @@ public static class FacingExtensions {
         return (Facing)((quarters % 4 + 4) % 4);
     }
 }
-
+// there may be argument to unionize TankTemplate and TankEntry....
 public struct TankTemplate {
     /// <summary>If false, the template will contain data for an AI tank.</summary>
     public bool IsPlayer;
@@ -35,13 +35,16 @@ public struct TankTemplate {
     public int AIType;
     public int PlayerType;
 
-    public Vector2 Position;
+    /// <summary>The cell the tank is placed in, as column and row of <see cref="MapGrid.Current"/>.</summary>
+    public Point Position;
 
-    private float _backingRotationField;
+    /// <summary>World position (X, Z) of the center of <see cref="Position"/>.</summary>
+    public readonly Vector2 WorldPosition => MapGrid.Current.CellToWorld(Position.X, Position.Y);
 
+    float _rotation;
     public float Rotation {
-        readonly get => _backingRotationField;
-        set => _backingRotationField = MathF.Round(value, 5);
+        readonly get => _rotation;
+        set => _rotation = MathF.Round(value, 5);
     }
 
     /// <summary>The facing closest to <see cref="Rotation"/>. Setting it sets the rotation.</summary>
@@ -61,8 +64,9 @@ public struct TankTemplate {
             throw new Exception($"{nameof(IsPlayer)} is true. This method cannot execute.");
 
         var ai = new AITank(AIType);
-        ai.Physics.Position = Position / Tank.UNITS_PER_METER;
-        ai.Position = Position;
+        var world = WorldPosition;
+        ai.Physics.Position = world / Tank.UNITS_PER_METER;
+        ai.Position = world;
         ai.ChassisRotation = Rotation;
         ai.DesiredChassisRotation = Rotation;
         ai.IsDestroyed = false;
@@ -94,8 +98,9 @@ public struct TankTemplate {
             player = new PlayerTank(PlayerType, false, Modifiers.DisguiseValue);
         else
             player = new PlayerTank(PlayerType);
-        player.Physics.Position = Position / Tank.UNITS_PER_METER;
-        player.Position = Position;
+        var world = WorldPosition;
+        player.Physics.Position = world / Tank.UNITS_PER_METER;
+        player.Position = world;
         player.ChassisRotation = Rotation;
         player.TurretRotation = Rotation;
         player.IsDestroyed = false;

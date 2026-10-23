@@ -67,7 +67,7 @@ public class Campaign {
         if (LoadedMission.Tanks != null) {
             CurrentTrackedSpawns = new (Point, bool)[LoadedMission.Tanks.Length];
             for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-                CurrentTrackedSpawns[i].Position = MapGrid.Current.WorldToCell(LoadedMission.Tanks[i].Position);
+                CurrentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
                 CurrentTrackedSpawns[i].Alive = true;
             }
         }
@@ -94,7 +94,7 @@ public class Campaign {
 
         CurrentTrackedSpawns = new (Point, bool)[LoadedMission.Tanks.Length];
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-            CurrentTrackedSpawns[i].Position = MapGrid.Current.WorldToCell(LoadedMission.Tanks[i].Position);
+            CurrentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
             CurrentTrackedSpawns[i].Alive = true;
         }
         // run line 120 and 121 in each when i get back
@@ -120,7 +120,7 @@ public class Campaign {
             var template = LoadedMission.Tanks[i];
 
             if (spawnNewSet) {
-                CurrentTrackedSpawns[i].Position = MapGrid.Current.WorldToCell(LoadedMission.Tanks[i].Position);
+                CurrentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
                 CurrentTrackedSpawns[i].Alive = true;
             }
 
@@ -184,9 +184,7 @@ public class Campaign {
         if (isValidMPPlayer || isLocalGame) {
             var tank = template.GetPlayerTank(Server.RandomFor(Server.RandomKey.PLR_TIER, CurrentMissionId, template.PlayerType));
 
-            var cell = MapGrid.Current.CellAt(template.Position);
-            // typically shouldn't be null. probably safe!
-            tank.Position = cell!.Position;
+            tank.Position = template.WorldPosition;
             tank.ChassisRotation = chassisRotation;
             tank.DesiredChassisRotation = chassisRotation;
             tank.TurretRotation = chassisRotation;
@@ -203,12 +201,12 @@ public class Campaign {
             var placement = EditorTile.GetFromClosest(tank.Position3D);
 
             if (Modifiers.IsOn(Modifiers.AI_COMPANION) && !hasSpawnedCompanion) {
-                var companionPos = template.Position;
+                var companionPos = template.WorldPosition;
 
                 var nextPlayerIdx = Array.FindIndex(LoadedMission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);
 
                 if (nextPlayerIdx > -1) {
-                    companionPos = LoadedMission.Tanks[nextPlayerIdx].Position;
+                    companionPos = LoadedMission.Tanks[nextPlayerIdx].WorldPosition;
                 }
 
                 var randomTier = TankID.RandomTier(Server.RandomFor(Server.RandomKey.COMPANION_TIER, CurrentMissionId, template.PlayerType));
@@ -234,7 +232,7 @@ public class Campaign {
     static void LoadAIControlled(TankTemplate template, float chassisRotation) {
         var tank = template.GetAiTank();
 
-        tank.Position = template.Position;
+        tank.Position = template.WorldPosition;
 
         tank.ChassisRotation = chassisRotation;
         tank.DesiredChassisRotation = chassisRotation;
@@ -243,10 +241,7 @@ public class Campaign {
         tank.Team = template.Team;
         if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {
             tank.OnDestroy += () => {
-                var tankSpawnIndex = Array.IndexOf(CurrentTrackedSpawns, CurrentTrackedSpawns.First(pos => {
-                    var converted = MapGrid.Current.WorldToCell(template.Position);
-                    return pos.Position == converted;
-                }));
+                var tankSpawnIndex = Array.IndexOf(CurrentTrackedSpawns, CurrentTrackedSpawns.First(pos => pos.Position == template.Position));
 
                 if (tankSpawnIndex > -1)
                     CurrentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
