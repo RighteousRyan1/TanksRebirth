@@ -254,7 +254,11 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         if (Modifiers.IsOn(Modifiers.PREDICTIONS))
             Parameters.PredictsPositions = true;
-        properties.TreadVolume = 0.05f;
+        properties.TreadVolume = AiTankType switch {
+            TankID.Ash or TankID.Marine or TankID.Yellow or TankID.Pink => 18f / 127f,
+            TankID.Violet or TankID.White or TankID.Black => 20f / 127f,
+            _ => 0.05f
+        };
 
         TankAI = new VanillaAISystem(this);
 
