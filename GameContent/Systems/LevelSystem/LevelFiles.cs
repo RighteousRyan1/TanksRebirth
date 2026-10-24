@@ -151,12 +151,11 @@ public static class LevelFiles {
         }
 
         foreach (var block in mission.Blocks ?? []) {
-            var cell = grid.WorldToCell(block.Position);
             file.Blocks.Add(new BlockEntry {
                 Type = NameOf(BlockID.Collection, block.Type),
                 Stack = block.Stack,
-                X = cell.X,
-                Y = cell.Y,
+                X = block.Position.X,
+                Y = block.Position.Y,
                 TpLink = block.TpLink,
             });
         }
@@ -186,7 +185,7 @@ public static class LevelFiles {
             blocks.Add(new BlockTemplate {
                 Type = IdOf(BlockID.Collection, entry.Type, BlockID.Wood, "block"),
                 Stack = (byte)entry.Stack,
-                Position = grid.CellToWorld(entry.X, entry.Y),
+                Position = new Point(entry.X, entry.Y),
                 TpLink = (byte)entry.TpLink,
             });
         }

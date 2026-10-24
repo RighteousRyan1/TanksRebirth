@@ -18,8 +18,7 @@ using TanksRebirth.Internals.UI;
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
-public static partial class MainMenuUI
-{
+public static partial class MainMenuUI {
     // ok are rendertargets just a death sentence???
     public static RenderTarget2D TextTarget;
 
@@ -90,7 +89,7 @@ public static partial class MainMenuUI
     public static UITextButton PlayButton_Multiplayer;
     public static UITextButton StartMPGameButton;
     public static UITextButton DifficultiesButton;
-    
+
     static UIElement[] _menuElements;
 
     internal static List<UIElement> campaignNames = [];
@@ -172,7 +171,7 @@ public static partial class MainMenuUI
             IsVisible = false,
             OnLeftClick = (a) => {
                 RequestStats();
-                MenuState = UIState.StatsMenu; 
+                MenuState = UIState.StatsMenu;
             },
             Tooltip = TankGame.GameLanguage.Menu.GameStatsFlavor
         };

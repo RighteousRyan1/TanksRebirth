@@ -235,7 +235,7 @@ public class PlayerTank : Tank {
         base.Update();
         if (IgnoreRegister) return;
         /*if (Input.KeyJustPressed(Keys.P))
-            foreach (var m in TankDeathMark.deathMarks)
+            foreach (var m in TankDeathMark.DeathMarks)
                 m?.ResurrectTank();*/
         // FIXME: reference?
 

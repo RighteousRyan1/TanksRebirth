@@ -116,12 +116,15 @@ public class Campaign {
 
         bool hasSpawnedCompanion = false;
 
-        // do not be confused by there being more tanks than there is visible. Tanks also contains the players that are not spawned
-        for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-            var template = LoadedMission.Tanks[i];
+        var flip = LevelEditorUI.IsActive ? 0 : Modifiers.Get(Modifiers.FLIP);
+        var mission = Modifiers.FlipMission(LoadedMission, x: (flip & 1) != 0, y: (flip & 2) != 0);
 
+        // do not be confused by there being more tanks than there is visible. Tanks also contains the players that are not spawned
+        for (int i = 0; i < mission.Tanks.Length; i++) {
+            var template = mission.Tanks[i];
+
+            CurrentTrackedSpawns[i].Position = mission.Tanks[i].Position;
             if (spawnNewSet) {
-                CurrentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
                 CurrentTrackedSpawns[i].Alive = true;
             }
 
@@ -143,12 +146,12 @@ public class Campaign {
                     LoadAIControlled(template, chassisRotation);
             }
             else {
-                LoadPlayer(template, chassisRotation, hasSpawnedCompanion);
+                LoadPlayer(mission, template, chassisRotation, hasSpawnedCompanion);
             }
         }
 
-        for (int b = 0; b < LoadedMission.Blocks.Length; b++) {
-            var template = LoadedMission.Blocks[b];
+        for (int b = 0; b < mission.Blocks.Length; b++) {
+            var template = mission.Blocks[b];
 
             OnPreLoadBlock?.Invoke(ref template);
 
@@ -168,7 +171,7 @@ public class Campaign {
         OnMissionLoad?.Invoke(GameHandler.AllTanks, Block.AllBlocks);
     }
 
-    void LoadPlayer(TankTemplate template, float chassisRotation, bool hasSpawnedCompanion) {
+    void LoadPlayer(Mission mission, TankTemplate template, float chassisRotation, bool hasSpawnedCompanion) {
         var lives = PlayerTank.Lives[template.PlayerType];
         var isValidMPPlayer = Server.IsOccupied(template.PlayerType);
         var isLocalGame = !Client.IsConnected();
@@ -204,10 +207,10 @@ public class Campaign {
             if (Modifiers.IsOn(Modifiers.AI_COMPANION) && !hasSpawnedCompanion) {
                 var companionPos = template.WorldPosition;
 
-                var nextPlayerIdx = Array.FindIndex(LoadedMission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);
+                var nextPlayerIdx = Array.FindIndex(mission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);
 
                 if (nextPlayerIdx > -1) {
-                    companionPos = LoadedMission.Tanks[nextPlayerIdx].WorldPosition;
+                    companionPos = mission.Tanks[nextPlayerIdx].WorldPosition;
                 }
 
                 var randomTier = TankID.RandomTier(Server.RandomFor(Server.RandomKey.COMPANION_TIER, CurrentMissionId, template.PlayerType));
@@ -257,57 +260,6 @@ public class Campaign {
             // set the position since there doesn't need to be any hassle
             tank.Position = placement.Position.FlattenZ();
         }
-    }
-
-    [Obsolete("This is for the legacy version of TanksRebirth.")]
-    /// <summary>
-    /// Loads missions from inside the <paramref name="campaignName"/> folder to memory.
-    /// </summary>
-    /// <param name="campaignName">The name of the campaign folder to load files from.</param>
-    /// <param name="autoSetLoadedMission">Sets the currently loaded mission to the first mission loaded from this folder.</param>
-    /// <exception cref="FileLoadException"></exception>
-    public static Campaign LoadFromFolder(string campaignName, bool autoSetLoadedMission) {
-        Campaign campaign = new();
-
-        var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
-        var path = Path.Combine(root, campaignName);
-        Directory.CreateDirectory(root);
-        if (!Directory.Exists(path)) {
-            TankGame.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", RebirthLogLevel.Warn);
-            return default!;
-        }
-
-        CampaignMetaData properties = CampaignMetaData.Get(path, "_properties.json");
-
-        var files = Directory.GetFiles(path).Where(file => file.EndsWith(".mission")).ToArray();
-
-        Mission[] missions = new Mission[files.Length];
-
-        Span<Mission> missionSpan = missions;
-        ReadOnlySpan<string> missionFileSpan = files;
-
-        ref var searchSpaceMissions = ref MemoryMarshal.GetReference(missionSpan);
-        ref var searchSpaceFiles = ref MemoryMarshal.GetReference(missionFileSpan);
-        for (var i = 0; i < files.Length; i++) {
-            ref var mission = ref Unsafe.Add(ref searchSpaceMissions, i);
-            var file = Unsafe.Add(ref searchSpaceFiles, i);
-
-            mission = Mission.Load(file, "");
-            // campaignName argument is empty since we are loading from the campaign folder anyway. 
-
-        }
-        campaign.CachedMissions = missions;
-
-        if (autoSetLoadedMission) {
-            campaign.LoadMission(0); // first mission in campaign
-            CurrentTrackedSpawns = new (Point, bool)[campaign.LoadedMission.Tanks.Length];
-            PlayerTank.StartingLives = properties.StartingLives;
-        }
-
-        campaign.MetaData = properties;
-
-
-        return campaign;
     }
 
     /// <summary>

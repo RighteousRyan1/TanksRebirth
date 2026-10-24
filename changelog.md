@@ -32,6 +32,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- I'd suggest only using this in non-standard campaigns (e.g: campaigns where it's only players vs AI tanks, 2 teams)
 - Added a rudimentary message depending on the result of the current mission
 - Added a new audio spatialization system 
+- Added some new stuff to the cosmetics menu (still coming soon!)
+- Added new modifier: Mission Flip!
 
 # Changes
 

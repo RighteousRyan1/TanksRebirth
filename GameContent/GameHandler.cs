@@ -239,7 +239,7 @@ public class GameHandler {
             foreach (var bullet in Shell.AllShells)
                 bullet?.Render();
 
-            foreach (var mark in TankDeathMark.deathMarks)
+            foreach (var mark in TankDeathMark.DeathMarks)
                 mark?.Render();
 
             foreach (var ping in IngamePing.AllIngamePings)

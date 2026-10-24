@@ -306,9 +306,8 @@ public static class SceneManager {
     }
     // something here is making tanks get cleared from the tank array?
     public static void ClearTankDeathmarks() {
-        for (int i = 0; i < TankDeathMark.deathMarks.Length; i++) {
-            TankDeathMark.deathMarks[i]?.check?.Destroy();
-            TankDeathMark.deathMarks[i] = null;
+        for (int i = 0; i < TankDeathMark.DeathMarks.Length; i++) {
+            TankDeathMark.DeathMarks[i]?.Remove();
         }
         for (int i = 0; i < GameHandler.AllTanks.Length; i++) {
             var tank = GameHandler.AllTanks[i];
@@ -316,7 +315,7 @@ public static class SceneManager {
             if (tank.IsDestroyed) tank.Remove(true);
         }
 
-        TankDeathMark.total_death_marks = 0;
+        TankDeathMark.totalDeathMarks = 0;
     }
     public static void CleanupEntities(bool cleanAiOnly = false) {
         for (int a = 0; a < Block.AllBlocks.Length; a++)

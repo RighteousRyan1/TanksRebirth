@@ -292,6 +292,14 @@ public record Modifiers {
             "Play the game in the POV of your tank!" +
             "\nYou can move around inter-directionally with WASD, and aim by dragging the mouse.");
 
+        const string flipDescription = "Choose between flipping each mission along the X axis, Y axis, or both axes.";
+        Register(new ModifierDefinition(FLIP, ModifierKind.Choice) {
+            Category = ModifierCategory.World,
+            Name = () => "Mission Flip",
+            Description = () => flipDescription,
+            Options = ["Off", "X", "Y", "XY"],
+        });
+
         Toggle(MACHINE_GUNS, ModifierCategory.AllTanks, "Machine Guns",
             "Every tank (including the player) now has the ability to fire as fast as they want.");
         Toggle(SHOTGUNS, ModifierCategory.AllTanks, "Shotguns",
@@ -334,36 +342,29 @@ public record Modifiers {
         }
         return tanks;
     }
-    public static Mission Flip(Mission mission, bool x = false, bool y = false) {
-        if (!(x && y))
+    public static Mission FlipMission(Mission mission, bool x = false, bool y = false) {
+        if (!x && !y)
             return mission;
 
-        var newMission = mission;
+        // recopies the arrays cuz managed types are fun
+        var newMission = mission with { Tanks = [.. mission.Tanks], Blocks = [.. mission.Blocks] };
 
+        var grid = MapGrid.Current;
         var tanks = newMission.Tanks;
         var blocks = newMission.Blocks;
 
-        // im not gonna do this method until i make tanks save x and y grid positions
-        // tanks[0].Position
+        for (int i = 0; i < tanks.Length; i++) {
+            ref var tank = ref tanks[i];
 
-        // TODO: this
-        // MaxX - PosX = FlipX
-        // MaxY - PosY = FlipY
-        if (x) {
-            for (int i = 0; i < tanks.Length; i++) {
-
-            }
-            for (int i = 0; i < blocks.Length; i++) {
-
-            }
+            if (x) tank.Position.X = grid.Width - 1 - tank.Position.X;
+            if (y) tank.Position.Y = grid.Height - 1 - tank.Position.Y;
+            tank.Facing = tank.Facing.Mirror(x, y);
         }
-        if (y) {
-            for (int i = 0; i < tanks.Length; i++) {
+        for (int i = 0; i < blocks.Length; i++) {
+            ref var block = ref blocks[i];
 
-            }
-            for (int i = 0; i < blocks.Length; i++) {
-
-            }
+            if (x) block.Position.X = grid.Width - 1 - block.Position.X;
+            if (y) block.Position.Y = grid.Height - 1 - block.Position.Y;
         }
         return newMission;
     }
@@ -423,4 +424,5 @@ public record Modifiers {
     public const string THUNDER               = "thnd";
     public const string POV                   = "pov";
     public const string LANTERN               = "lant";
+    public const string FLIP = "flip";
 }

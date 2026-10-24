@@ -24,11 +24,15 @@ namespace TanksRebirth.GameContent;
 public struct BlockTemplate {
     public byte Stack;
     public int Type;
-    public Vector2 Position;
+    /// <summary>The cell the block is placed in, as column and row of <see cref="MapGrid.Current"/>.</summary>
+    public Point Position;
     public byte TpLink;
 
+    /// <summary>World position (X, Z) of the center of <see cref="Position"/>.</summary>
+    public readonly Vector2 WorldPosition => MapGrid.Current.CellToWorld(Position.X, Position.Y);
+
     public readonly Block GetBlock() {
-        Block c = new(Type, Stack, Position) {
+        Block c = new(Type, Stack, WorldPosition) {
             TpLink = TpLink
         };
 
@@ -282,7 +286,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         if (!IgnoreRegister) AllBlocks[Id] = null;
     }
 
-    /// <summary>Make destruction particle effects and later, <see cref="Remove"/> this <see cref="Block"/>.</summary>
+    /// <summary>Make destruction _particle effects and later, <see cref="Remove"/> this <see cref="Block"/>.</summary>
     public void Destroy() {
         if (!Properties.IsDestructible) return;
 

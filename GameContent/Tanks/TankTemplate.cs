@@ -26,6 +26,13 @@ public static class FacingExtensions {
         var quarters = (int)MathF.Round(rotation / MathHelper.PiOver2);
         return (Facing)((quarters % 4 + 4) % 4);
     }
+    public static Facing Mirror(this Facing facing, bool x, bool y) => facing switch {
+        Facing.Left when x => Facing.Right,
+        Facing.Right when x => Facing.Left,
+        Facing.Up when y => Facing.Down,
+        Facing.Down when y => Facing.Up,
+        _ => facing,
+    };
 }
 // there may be argument to unionize TankTemplate and TankEntry....
 public struct TankTemplate {

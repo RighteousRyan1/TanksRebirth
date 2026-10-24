@@ -68,7 +68,7 @@ public record struct Mission {
         foreach (var block in Block.AllBlocks) {
             if (block is not null) {
                 blocks.Add(new() {
-                    Position = block.Position,
+                    Position = MapGrid.Current.WorldToCell(block.Position),
                     Stack = block.Stack,
                     TpLink = block.TpLink,
                     Type = block.Type,
@@ -102,7 +102,7 @@ public record struct Mission {
             }
 
             // TODO: Find the root cause that causes us to manually have to add Math.PI to 1.57.
-            // Explanation for hack fix: When rotating in the editor, we add Math.Pi / 2 to the rotation.
+            // Explanation for hack fix: When rotating in the editor, we add Math.Pi / 2 to the Rotation.
             // However for some unknown reason, when returning from test play, this value gets automatically increased to Math.Pi. With no reason.
             // This bug does not appear to manifest should Math.Pi + 1.57 be used. Potentially caused by some old, left over code somewhere in the past.
             // However trying to trail it down in this codebase would take much longer than this hack fix.
@@ -206,7 +206,7 @@ public record struct Mission {
     // the binary layout these used to read. only for backwards compatibility. probably at some point these methods will be removed. how many people have truly used the level editor?
     /* File Order / Format
      * 1) File Header (TANK in ASCII) (byte[])
-     * 2) Level Editor version (to check if older levels might cause anomalies!)
+     * 2) Level Editor version (to _particle if older levels might cause anomalies!)
      * 3) Name (string)
      * 4) GrantsBonusLife (bool)
      *
@@ -283,7 +283,7 @@ public record struct Mission {
             blocks.Add(new() {
                 Type = type,
                 Stack = stack,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 TpLink = link
             });
         }
@@ -332,7 +332,7 @@ public record struct Mission {
             blocks.Add(new() {
                 Type = type,
                 Stack = stack,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 TpLink = link
             });
         }
@@ -380,7 +380,7 @@ public record struct Mission {
             blocks.Add(new() {
                 Type = type,
                 Stack = stack,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 TpLink = link
             });
         }
@@ -430,7 +430,7 @@ public record struct Mission {
             blocks.Add(new() {
                 Type = type,
                 Stack = stack,
-                Position = new(x, y),
+                Position = OgLoad(x, y),
                 TpLink = link
             });
         }
