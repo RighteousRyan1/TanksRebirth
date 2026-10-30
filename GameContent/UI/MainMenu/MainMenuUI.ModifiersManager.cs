@@ -40,7 +40,7 @@ public static partial class MainMenuUI {
     static float ModSlotY(int slot) => ModFirstSlotY + slot * ModSlotStep;
     static float ModSpanWidth(int columns) => columns * ModColumnW + (columns - 1) * ModColumnGap;
 
-    static UIPanel _modPanel;
+    static ModifiersFrame _modPanel;
     static readonly List<UIElement> _modFrame = [];
     static readonly List<UIElement> _modPagers = [];
     static readonly List<List<UIElement>> _modPages = [];
@@ -131,10 +131,7 @@ public static partial class MainMenuUI {
         _modPages.Clear();
         _builtRegistryVersion = Modifiers.RegistryVersion;
 
-        _modPanel = new UIPanel((_, _) => { }) {
-            BackgroundColor = Color.Black * 0.55f,
-            IgnoreMouseInteractions = true,
-        };
+        _modPanel = new ModifiersFrame();
         AddModElement(_modFrame, _modPanel, ModPanelX, ModPanelY, ModPanelW, ModPanelH);
 
         var right = ModPanelX + ModPanelW - 40;
@@ -155,15 +152,16 @@ public static partial class MainMenuUI {
             var elements = new List<UIElement>();
             foreach (var placed in page) {
                 var x = ModColumnX(placed.Column);
-                AddModElement(elements, new ModifiersHeader(placed.Section.Title, placed.Section.Rows), x, ModSlotY(placed.Slot),
+                var definitions = placed.Section.Definitions;
+                AddModElement(elements, new ModifiersHeader(placed.Section.Title, definitions, placed.RowsPerColumn), x, ModSlotY(placed.Slot),
                     ModSpanWidth(placed.Span), ModRowH);
 
-                var rows = placed.Section.Rows;
-                for (int i = 0; i < rows.Count; i++) {
+                for (int i = 0; i < definitions.Count; i++) {
+                    var row = new ModifierRow(definitions[i]);
                     var column = placed.Column + i / placed.RowsPerColumn;
                     var slot = placed.Slot + 1 + i % placed.RowsPerColumn;
-                    AddModElement(elements, rows[i], ModColumnX(column), ModSlotY(slot), ModColumnW, ModRowH);
-                    AllModifierRows.Add(rows[i]);
+                    AddModElement(elements, row, ModColumnX(column), ModSlotY(slot), ModColumnW, ModRowH);
+                    AllModifierRows.Add(row);
                 }
             }
             _modPages.Add(elements);
@@ -180,7 +178,7 @@ public static partial class MainMenuUI {
         AllDifficultyButtons.Add(element);
     }
 
-    sealed record ModSection(string Title, List<ModifierRow> Rows);
+    sealed record ModSection(string Title, List<ModifierDefinition> Definitions);
     sealed record PlacedSection(ModSection Section, int Column, int Span, int Slot, int RowsPerColumn);
 
     /// <summary>One section per category, in category order. A section too big for a whole page is split into parts.</summary>
@@ -189,16 +187,16 @@ public static partial class MainMenuUI {
         var sections = new List<ModSection>();
 
         foreach (var category in Modifiers.Categories) {
-            var rows = new List<ModifierRow>();
+            var definitions = new List<ModifierDefinition>();
             foreach (var definition in Modifiers.Definitions)
                 if (definition.Category == category)
-                    rows.Add(new ModifierRow(definition));
-            if (rows.Count == 0)
+                    definitions.Add(definition);
+            if (definitions.Count == 0)
                 continue;
 
-            var parts = (rows.Count + maxRowsPerSection - 1) / maxRowsPerSection;
+            var parts = (definitions.Count + maxRowsPerSection - 1) / maxRowsPerSection;
             for (int part = 0; part < parts; part++) {
-                var slice = rows.GetRange(part * maxRowsPerSection, Math.Min(maxRowsPerSection, rows.Count - part * maxRowsPerSection));
+                var slice = definitions.GetRange(part * maxRowsPerSection, Math.Min(maxRowsPerSection, definitions.Count - part * maxRowsPerSection));
                 sections.Add(new ModSection(parts > 1 ? $"{category} ({part + 1}/{parts})" : category, slice));
             }
         }
@@ -231,7 +229,7 @@ public static partial class MainMenuUI {
     static PlacedSection? TryPlace(ModSection section, int[] fill) {
         PlacedSection? best = null;
         for (int span = 1; span <= ModColumns; span++) {
-            var rowsPerColumn = (section.Rows.Count + span - 1) / span;
+            var rowsPerColumn = (section.Definitions.Count + span - 1) / span;
             var height = 1 + rowsPerColumn;
             if (height > ModSlotsPerColumn)
                 continue;

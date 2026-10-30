@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -14,13 +15,134 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 
 // i will need to make cornflower blue not hardcoded
 static class ModifierColors {
-    public static readonly Color On = Color.LimeGreen;
+    public static readonly Color On = new(63, 191, 63);
+    public static readonly Color OnDark = new(26, 118, 38);
     public static readonly Color OnText = (Color.LimeGreen * 0.75f) with { A = 255 };
-    public static readonly Color RowOn = Color.LightGreen; // new(220, 240, 210);
-    public static readonly Color Value = (Color.LimeGreen * 0.5f) with { A = 255 };
+    public static readonly Color Hover = Color.CornflowerBlue;
+    public static readonly Color HoverDark = new(52, 92, 200);
     public static readonly Color Gold = Color.Gold;
+    public static readonly Color Ink = new(22, 18, 14);
+    public static readonly Color Cream = new(244, 231, 193);
+    public static readonly Color PanelTop = new(142, 142, 142);
+    public static readonly Color PanelBottom = new(114, 114, 114);
 
     public static Vector2 Scale(float scale) => new Vector2(scale).ToResolution();
+}
+
+/// <summary>Drawing helpers shared by the modifiers window widgets.</summary>
+static class ModifierDraw {
+    const string WoodTexture = "Assets/models/scene/skybox/textures/wood_dark";
+
+    static Texture2D? _wood;
+
+    static Texture2D Pixel => TextureGlobals.Pixels[Color.White];
+    static Texture2D Wood => _wood ??= GameResources.GetGameResource<Texture2D>(WoodTexture);
+
+    /// <summary>A length in pixels that follows the window size and never drops below one.</summary>
+    public static int Px(float size) => Math.Max(1, (int)MathF.Round(size.ToResolutionY()));
+
+    /// <summary>Sets the opacity of a color. Multiplying it would darken it instead, since the UI blends without premultiplied alpha.</summary>
+    public static Color Fade(Color color, float alpha) => color with { A = (byte)MathHelper.Clamp(alpha * 255f, 0f, 255f) };
+
+    public static void Fill(SpriteBatch spriteBatch, Rectangle area, Color color) => spriteBatch.Draw(Pixel, area, color);
+
+    public static void Outline(SpriteBatch spriteBatch, Rectangle area, int thickness, Color color) {
+        Fill(spriteBatch, new Rectangle(area.X, area.Y, area.Width, thickness), color);
+        Fill(spriteBatch, new Rectangle(area.X, area.Bottom - thickness, area.Width, thickness), color);
+        Fill(spriteBatch, new Rectangle(area.X, area.Y + thickness, thickness, area.Height - thickness * 2), color);
+        Fill(spriteBatch, new Rectangle(area.Right - thickness, area.Y + thickness, thickness, area.Height - thickness * 2), color);
+    }
+
+    /// <summary>Fills <paramref name="area"/> with a vertical fade from <paramref name="top"/> to <paramref name="bottom"/>.</summary>
+    public static void Gradient(SpriteBatch spriteBatch, Rectangle area, Color top, Color bottom) {
+        var steps = Math.Clamp(area.Height / 4, 1, 32);
+        for (var i = 0; i < steps; i++) {
+            var y0 = area.Y + area.Height * i / steps;
+            var y1 = area.Y + area.Height * (i + 1) / steps;
+            Fill(spriteBatch, new Rectangle(area.X, y0, area.Width, y1 - y0), Color.Lerp(top, bottom, (i + 0.5f) / steps));
+        }
+    }
+
+    public static void Shadow(SpriteBatch spriteBatch, Rectangle area, float offset, float spread, float strength) {
+        const int layers = 5;
+        var shift = Px(offset);
+        for (var i = layers; i >= 1; i--) {
+            var grow = Px(spread * i / layers);
+            Fill(spriteBatch, new Rectangle(area.X - grow + shift, area.Y - grow + shift, area.Width + grow * 2, area.Height + grow * 2),
+                Color.Black * (strength / layers));
+        }
+    }
+
+    /// <summary>Tiles the wood texture across <paramref name="area"/>, mirroring every other tile so the seams line up.</summary>
+    public static void DrawWood(SpriteBatch spriteBatch, Rectangle area, Color tint) {
+        var wood = Wood;
+        var tile = Math.Max(1, area.Height);
+        for (int x = area.X, index = 0; x < area.Right; x += tile, index++) {
+            var width = Math.Min(tile, area.Right - x);
+            var flip = index % 2 == 1;
+            var sourceWidth = Math.Max(1, wood.Width * width / tile);
+            var source = new Rectangle(flip ? wood.Width - sourceWidth : 0, 0, sourceWidth, wood.Height);
+            spriteBatch.Draw(wood, new Rectangle(x, area.Y, width, area.Height), source, tint, 0f, Vector2.Zero,
+                flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
+        }
+    }
+
+    public static void Pill(SpriteBatch spriteBatch, Rectangle area, Color color)
+        => DrawUtils.DrawNineSliced(spriteBatch, UIElement.UIPanelBackground, 12, area, color, Vector2.Zero);
+
+    /// <summary>A white rounded button with a drop shadow, outlined in the hover color when <paramref name="hovered"/>.</summary>
+    public static void PillButton(SpriteBatch spriteBatch, Rectangle area, bool hovered, float alpha) {
+        Pill(spriteBatch, area.GetOffset(Px(2f), Px(4f)), Color.Black * (0.4f * alpha));
+        if (hovered) {
+            var outline = area;
+            outline.Inflate(Px(2f), Px(2f));
+            Pill(spriteBatch, outline, ModifierColors.Hover);
+        }
+        Pill(spriteBatch, area, Fade(Color.White, alpha));
+    }
+
+    public static void Check(SpriteBatch spriteBatch, Rectangle box, Color color) {
+        var thickness = Math.Max(2f, box.Width / 7f);
+        var start = new Vector2(box.X + box.Width * 0.22f, box.Y + box.Height * 0.54f);
+        var bottom = new Vector2(box.X + box.Width * 0.42f, box.Y + box.Height * 0.74f);
+        var end = new Vector2(box.X + box.Width * 0.80f, box.Y + box.Height * 0.28f);
+        Segment(spriteBatch, start, bottom, thickness, color);
+        Segment(spriteBatch, bottom, end, thickness, color);
+    }
+
+    static void Segment(SpriteBatch spriteBatch, Vector2 from, Vector2 to, float thickness, Color color) {
+        var delta = to - from;
+        var length = delta.Length();
+        if (length < 0.5f)
+            return;
+        var begin = from - delta / length * (thickness * 0.5f);
+        spriteBatch.Draw(Pixel, begin, null, color, MathF.Atan2(delta.Y, delta.X), new Vector2(0f, 0.5f),
+            new Vector2(length + thickness, thickness), SpriteEffects.None, 0f);
+    }
+}
+
+/// <summary>The wooden backdrop behind everything in the modifiers window.</summary>
+public sealed class ModifiersFrame : UIElement {
+    public ModifiersFrame() => IgnoreMouseInteractions = true;
+
+    public override void DrawSelf(SpriteBatch spriteBatch) {
+        var area = Hitbox;
+        ModifierDraw.Shadow(spriteBatch, area, 10f, 18f, 0.5f);
+        ModifierDraw.DrawWood(spriteBatch, area, new Color(235, 235, 235));
+
+        const int rings = 6;
+        var ringSize = ModifierDraw.Px(5f);
+        for (var i = 0; i < rings; i++) {
+            var inset = i * ringSize;
+            var ring = new Rectangle(area.X + inset, area.Y + inset, area.Width - inset * 2, area.Height - inset * 2);
+            ModifierDraw.Outline(spriteBatch, ring, ringSize, Color.Black * (0.32f * (1f - i / (float)rings)));
+        }
+
+        var edge = ModifierDraw.Px(3f);
+        ModifierDraw.Outline(spriteBatch, area, edge, Color.Black * 0.85f);
+        ModifierDraw.Fill(spriteBatch, new Rectangle(area.X + edge, area.Y + edge, area.Width - edge * 2, 1), ModifierDraw.Fade(Color.White, 0.16f));
+        ModifierDraw.Fill(spriteBatch, new Rectangle(area.X + edge, area.Y + edge, 1, area.Height - edge * 2), ModifierDraw.Fade(Color.White, 0.1f));
+    }
 }
 
 /// <summary>
@@ -73,150 +195,190 @@ public sealed class ModifierRow : UIElement {
         var editable = MainMenuUI.CanEditModifiers;
         var active = IsActive;
         var hovered = editable && Hitbox.Contains(MouseUtils.MousePosition);
-        var background = !editable ? (active ? ModifierColors.RowOn : Color.WhiteSmoke) * 0.55f
-            : hovered ? Color.CornflowerBlue
-            : active ? ModifierColors.RowOn
-            : Color.WhiteSmoke;
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, background, Vector2.Zero);
+        var dim = editable ? 1f : 0.55f;
 
-        var pixel = TextureGlobals.Pixels[Color.White];
-        var stripeInset = (int)10f.ToResolutionY();
-        var stripe = new Rectangle(Hitbox.X + (int)10f.ToResolutionX(), Hitbox.Y + stripeInset,
-            Math.Max(3, (int)6f.ToResolutionX()), Hitbox.Height - stripeInset * 2);
-        spriteBatch.Draw(pixel, stripe, active ? ModifierColors.On : Color.Black * 0.15f);
-
-        var font = FontGlobals.RebirthFont;
-        var scale = ModifierColors.Scale(0.7f);
-        var textColor = editable ? Color.Black : Color.Black * 0.55f;
-        var pad = 22f.ToResolutionX();
-        var centerY = Hitbox.Center.Y;
-        var labelX = stripe.Right + 14f.ToResolutionX();
-
-        var label = Label;
-        var labelSize = font.MeasureString(label);
-        spriteBatch.DrawString(font, label, new Vector2(labelX, centerY), textColor, scale, 0f, new Vector2(0f, labelSize.Y / 2f));
-        var labelRight = labelX + labelSize.X * scale.X;
-
-        if (IsPicker)
-            DrawPicker(spriteBatch, labelRight, pad, scale, active, hovered, editable);
-        // debating just straight up removing (or replacing) the switches.... they look a little out of place kinda?
-        else
-            DrawSwitch(spriteBatch, pad, active, editable);
-    }
-
-    void DrawSwitch(SpriteBatch spriteBatch, float pad, bool active, bool editable) {
         _switch = MathHelper.Lerp(_switch, active ? 1f : 0f, 0.3f);
         if (MathF.Abs(_switch - (active ? 1f : 0f)) < 0.01f)
             _switch = active ? 1f : 0f;
 
-        // i rly need to use rendertargets instead of doing resolution hacks
-        var width = (int)72f.ToResolutionX();
-        var height = (int)30f.ToResolutionY();
-        var track = new Rectangle((int)(Hitbox.Right - pad) - width, Hitbox.Center.Y - height / 2, width, height);
-        var off = Color.Black * 0.3f;
-        var trackColor = Color.Lerp(off, ModifierColors.On, _switch) * (editable ? 1f : 0.6f);
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, track, trackColor, Vector2.Zero);
+        if (_switch > 0f)
+            ModifierDraw.Fill(spriteBatch, Hitbox, ModifierDraw.Fade(ModifierColors.On, 0.22f * _switch * dim));
+        if (hovered)
+            ModifierDraw.Fill(spriteBatch, Hitbox, ModifierDraw.Fade(ModifierColors.Hover, 0.5f));
 
-        var inset = Math.Max(2, (int)3f.ToResolutionY());
-        var knobSize = height - inset * 2;
-        var knobX = track.X + inset + (int)((track.Width - inset * 2 - knobSize) * _switch);
-        var knob = new Rectangle(knobX, track.Y + inset, knobSize, knobSize);
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, knob, Color.White, Vector2.Zero);
+        var side = ModifierDraw.Px(26f);
+        var swatch = new Rectangle(Hitbox.X + (int)14f.ToResolutionX(), Hitbox.Center.Y - side / 2, side, side);
+        DrawSwatch(spriteBatch, swatch, dim);
 
         var font = FontGlobals.RebirthFont;
-        var text = active ? "ON" : "OFF";
-        var textScale = ModifierColors.Scale(0.42f);
-        var size = font.MeasureString(text);
-        var freeLeft = active ? track.X : knob.Right;
-        var freeRight = active ? knob.X : track.Right;
-        var textPos = new Vector2((freeLeft + freeRight) / 2f, track.Center.Y);
-        spriteBatch.DrawString(font, text, textPos, active ? Color.White : new Color(70, 70, 70), textScale, 0f, size / 2f);
+        var scale = ModifierColors.Scale(0.7f);
+        var label = Label;
+        var labelSize = font.MeasureString(label);
+        var labelX = swatch.Right + 16f.ToResolutionX();
+        DrawUtils.DrawStringWithBorder(spriteBatch, font, label, new Vector2(labelX, Hitbox.Center.Y), ModifierDraw.Fade(Color.White, (active ? 1f : 0.86f) * dim),
+            Color.Black * dim, scale, 0f, Anchor.LeftCenter, 1f);
+
+        if (IsPicker)
+            DrawPicker(spriteBatch, labelX + labelSize.X * scale.X, scale, active, hovered, editable);
     }
 
-    void DrawPicker(SpriteBatch spriteBatch, float labelRight, float pad, Vector2 scale, bool active, bool hovered, bool editable) {
+    void DrawSwatch(SpriteBatch spriteBatch, Rectangle swatch, float dim) {
+        var border = ModifierDraw.Px(2f);
+        ModifierDraw.Fill(spriteBatch, swatch.GetOffset(border, border), Color.Black * (0.35f * dim));
+        ModifierDraw.Fill(spriteBatch, swatch, Color.Black * dim);
+
+        var inner = new Rectangle(swatch.X + border, swatch.Y + border, swatch.Width - border * 2, swatch.Height - border * 2);
+        ModifierDraw.Fill(spriteBatch, inner, ModifierDraw.Fade(Color.Lerp(new Color(34, 34, 34), ModifierColors.On, _switch), dim));
+        ModifierDraw.Fill(spriteBatch, new Rectangle(inner.X, inner.Y, inner.Width, inner.Height / 2), ModifierDraw.Fade(Color.White, (0.08f + 0.14f * _switch) * dim));
+
+        if (_switch > 0f)
+            ModifierDraw.Check(spriteBatch, inner, ModifierDraw.Fade(Color.White, _switch * dim));
+    }
+
+    void DrawPicker(SpriteBatch spriteBatch, float labelRight, Vector2 scale, bool active, bool hovered, bool editable) {
         var font = FontGlobals.RebirthFont;
         var value = ValueText;
         var valueSize = font.MeasureString(value);
         var arrowSize = font.MeasureString(">");
-        var gap = 14f;
+        var edge = 16f.ToResolutionX();
+        var gap = 12f.ToResolutionX();
 
-        var right = Hitbox.Right - pad;
-        var available = right - labelRight - 24f.ToResolutionX();
-        var needed = (valueSize.X + (arrowSize.X + gap) * 2f) * scale.X;
-        var valueScale = needed > available && needed > 0 ? scale * (available / needed) : scale;
+        var right = Hitbox.Right - 14f.ToResolutionX();
+        var available = right - labelRight - 18f.ToResolutionX();
+        var textWidth = (valueSize.X + arrowSize.X * 2f) * scale.X;
+        var width = MathF.Min(MathF.Max(textWidth + (edge + gap) * 2f, 150f.ToResolutionX()), MathF.Max(available, 80f.ToResolutionX()));
+        var room = MathF.Max(width - (edge + gap) * 2f, 10f);
+        var textScale = textWidth > room ? scale * (room / textWidth) : scale;
 
-        var valueColor = !editable ? Color.Black * 0.45f : active ? ModifierColors.Value : Color.DimGray;
-        var arrowColor = !editable ? Color.Black * 0.3f : hovered ? Color.White : Color.DimGray;
-        var centerY = Hitbox.Center.Y;
+        var height = Hitbox.Height - ModifierDraw.Px(12f);
+        var pill = new Rectangle((int)(right - width), Hitbox.Center.Y - height / 2, (int)width, height);
+        ModifierDraw.PillButton(spriteBatch, pill, hovered, editable ? 1f : 0.6f);
 
-        spriteBatch.DrawString(font, ">", new Vector2(right, centerY), arrowColor, valueScale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
-        var valueRight = right - (arrowSize.X + gap) * valueScale.X;
-        spriteBatch.DrawString(font, value, new Vector2(valueRight, centerY), valueColor, valueScale, 0f, new Vector2(valueSize.X, valueSize.Y / 2f));
-        var arrowLeft = valueRight - (valueSize.X + gap) * valueScale.X;
-        spriteBatch.DrawString(font, "<", new Vector2(arrowLeft, centerY), arrowColor, valueScale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
+        var center = pill.Center.ToVector2();
+        var valueColor = !editable ? ModifierDraw.Fade(ModifierColors.Ink, 0.5f) : active ? ModifierColors.OnDark : ModifierColors.Ink;
+        spriteBatch.DrawString(font, value, center, valueColor, textScale, 0f, valueSize / 2f);
+
+        var arrowColor = !editable ? ModifierDraw.Fade(Color.Gray, 0.6f) : hovered ? ModifierColors.HoverDark : new Color(96, 96, 96);
+        var arrowOffset = pill.Width / 2f - edge - arrowSize.X * textScale.X / 2f;
+        spriteBatch.DrawString(font, "<", new Vector2(center.X - arrowOffset, center.Y), arrowColor, textScale, 0f, arrowSize / 2f);
+        spriteBatch.DrawString(font, ">", new Vector2(center.X + arrowOffset, center.Y), arrowColor, textScale, 0f, arrowSize / 2f);
     }
 }
 
 /// <summary>A section title in the modifiers window, with how many of its modifiers are on.</summary>
 public sealed class ModifiersHeader : UIElement {
     readonly string _text;
-    readonly IReadOnlyList<ModifierRow> _rows;
+    readonly IReadOnlyList<ModifierDefinition> _definitions;
+    readonly int _rowsPerColumn;
 
-    public ModifiersHeader(string text, IReadOnlyList<ModifierRow> rows) {
+    public ModifiersHeader(string text, IReadOnlyList<ModifierDefinition> definitions, int rowsPerColumn) {
         _text = text;
-        _rows = rows;
+        _definitions = definitions;
+        _rowsPerColumn = rowsPerColumn;
         IgnoreMouseInteractions = true;
     }
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        var font = FontGlobals.RebirthFont;
-        var centerY = Hitbox.Center.Y;
-        DrawUtils.DrawStringWithBorder(spriteBatch, font, _text, new Vector2(Hitbox.X + 6f.ToResolutionX(), centerY),
-            Color.White, Color.Black, ModifierColors.Scale(0.85f), 0f, Anchor.LeftCenter, 1f);
+        var edge = ModifierDraw.Px(2f);
+        var sectionBottom = Hitbox.Y + (int)(MainMenuUI.ModSlotStep.ToResolutionY() * (_rowsPerColumn + 1)) - ModifierDraw.Px(3f);
+        var section = new Rectangle(Hitbox.X, Hitbox.Y, Hitbox.Width, sectionBottom - Hitbox.Y);
+        var body = new Rectangle(section.X, Hitbox.Bottom, section.Width, section.Bottom - Hitbox.Bottom);
+
+        ModifierDraw.Shadow(spriteBatch, section, 5f, 9f, 0.45f);
+        ModifierDraw.Gradient(spriteBatch, body, ModifierColors.PanelTop, ModifierColors.PanelBottom);
+        ModifierDraw.Gradient(spriteBatch, new Rectangle(body.X, body.Y, body.Width, ModifierDraw.Px(12f)), Color.Black * 0.3f, Color.Transparent);
+        ModifierDraw.Gradient(spriteBatch, Hitbox, Color.White, new Color(218, 218, 218));
+        ModifierDraw.Fill(spriteBatch, new Rectangle(Hitbox.X, Hitbox.Bottom - edge, Hitbox.Width, edge), Color.Black * 0.55f);
+        ModifierDraw.Outline(spriteBatch, section, edge, Color.Black * 0.7f);
 
         int on = 0, total = 0;
-        foreach (var row in _rows) {
-            if (!row.CountsAsModifier)
+        foreach (var definition in _definitions) {
+            if (!definition.CountsTowardTotal)
                 continue;
             total++;
-            if (row.IsActive)
+            if (Modifiers.IsOn(definition.Key))
                 on++;
         }
-        var count = $"{on} / {total}";
-        DrawUtils.DrawStringWithBorder(spriteBatch, font, count, new Vector2(Hitbox.Right - 6f.ToResolutionX(), centerY),
-            on > 0 ? ModifierColors.OnText : Color.LightGray * 0.8f, Color.Black, ModifierColors.Scale(0.6f), 0f, Anchor.RightCenter, 1f);
 
-        var line = new Rectangle(Hitbox.X, Hitbox.Bottom - (int)3f.ToResolutionY(), Hitbox.Width, Math.Max(1, (int)3f.ToResolutionY()));
-        spriteBatch.Draw(TextureGlobals.Pixels[Color.White], line, Color.White * 0.8f);
+        var font = FontGlobals.RebirthFont;
+        var centerY = Hitbox.Center.Y;
+        var titleSize = font.MeasureString(_text);
+        spriteBatch.DrawString(font, _text, new Vector2(Hitbox.X + 16f.ToResolutionX(), centerY), ModifierColors.Ink,
+            ModifierColors.Scale(0.85f), 0f, new Vector2(0f, titleSize.Y / 2f));
+
+        var count = $"{on} / {total}";
+        var countSize = font.MeasureString(count);
+        spriteBatch.DrawString(font, count, new Vector2(Hitbox.Right - 16f.ToResolutionX(), centerY), on > 0 ? ModifierColors.OnDark : new Color(100, 100, 100),
+            ModifierColors.Scale(0.6f), 0f, new Vector2(countSize.X, countSize.Y / 2f));
     }
 }
 
-/// <summary>"Modifiers" and how many are on, across the top of the window.</summary>
+/// <summary>"Modifiers" and which ones are on, across the top of the window.</summary>
 public sealed class ModifiersTitleBar : UIElement {
+    const string HostOnly = "Only the host can change modifiers";
+
+    string _names = string.Empty;
+    int _namesRegistry = -1;
+    int _namesValues = -1;
+    int _namesWidth = -1;
+
     public ModifiersTitleBar() => IgnoreMouseInteractions = true;
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
         var font = FontGlobals.RebirthFont;
         var centerY = Hitbox.Center.Y;
-        var x = Hitbox.X + 6f.ToResolutionX();
 
         var title = "Modifiers";
-        var titleScale = ModifierColors.Scale(1.1f);
-        DrawUtils.DrawStringWithBorder(spriteBatch, font, title, new Vector2(x, centerY), Color.White, Color.Black,
-            titleScale, 0f, Anchor.LeftCenter, 1.5f);
-        x += font.MeasureString(title).X * titleScale.X + 30f.ToResolutionX();
+        var titleScale = ModifierColors.Scale(0.95f);
+        var titleSize = font.MeasureString(title);
+        var pill = new Rectangle(Hitbox.X, Hitbox.Y, (int)(titleSize.X * titleScale.X + 56f.ToResolutionX()), Hitbox.Height);
+        ModifierDraw.PillButton(spriteBatch, pill, false, 1f);
+        spriteBatch.DrawString(font, title, pill.Center.ToVector2(), ModifierColors.Ink, titleScale, 0f, titleSize / 2f);
 
-        var active = Modifiers.ActiveCount();
-        var status = active == 0 ? "None active" : active == 1 ? "1 active" : $"{active} active";
         var statusScale = ModifierColors.Scale(0.7f);
-        DrawUtils.DrawStringWithBorder(spriteBatch, font, status, new Vector2(x, centerY), active > 0 ? ModifierColors.OnText : Color.LightGray,
-            Color.Black, statusScale, 0f, Anchor.LeftCenter, 1f);
+        var left = pill.Right + 26f.ToResolutionX();
+        var right = (float)Hitbox.Right;
 
         if (!MainMenuUI.CanEditModifiers) {
-            x += font.MeasureString(status).X * statusScale.X + 30f.ToResolutionX();
-            DrawUtils.DrawStringWithBorder(spriteBatch, font, "Only the host can change modifiers", new Vector2(x, centerY), ModifierColors.Gold,
+            var hostWidth = font.MeasureString(HostOnly).X * statusScale.X;
+            DrawUtils.DrawStringWithBorder(spriteBatch, font, HostOnly, new Vector2(right - hostWidth, centerY), ModifierColors.Gold,
                 Color.Black, statusScale, 0f, Anchor.LeftCenter, 1f);
+            right -= hostWidth + 30f.ToResolutionX();
         }
+
+        var active = Modifiers.ActiveCount();
+        if (active == 0) {
+            DrawUtils.DrawStringWithBorder(spriteBatch, font, "None active", new Vector2(left, centerY), Color.LightGray,
+                Color.Black, statusScale, 0f, Anchor.LeftCenter, 1f);
+            return;
+        }
+    }
+
+    string ActiveNames(SpriteFontBase font, float scaleX, float room) {
+        var width = (int)room;
+        if (_namesRegistry == Modifiers.RegistryVersion && _namesValues == Modifiers.ValuesVersion && _namesWidth == width)
+            return _names;
+
+        var names = new List<string>();
+        foreach (var definition in Modifiers.Definitions) {
+            var value = Modifiers.Get(definition.Key);
+            if (!definition.CountsTowardTotal || !definition.IsActiveWith(value))
+                continue;
+            names.Add(definition.Kind == ModifierKind.Toggle ? definition.Name() : $"{definition.Name()} {definition.FormatValue(value)}");
+        }
+
+        var shown = names.Count;
+        var text = string.Join(", ", names);
+        while (shown > 1 && font.MeasureString(text).X * scaleX > room) {
+            shown--;
+            text = $"{string.Join(", ", names.GetRange(0, shown))} +{names.Count - shown}";
+        }
+
+        _names = text;
+        _namesRegistry = Modifiers.RegistryVersion;
+        _namesValues = Modifiers.ValuesVersion;
+        _namesWidth = width;
+        return text;
     }
 }
 
@@ -245,10 +407,12 @@ public sealed class ModifiersResetButton : UIElement {
     public override void DrawSelf(SpriteBatch spriteBatch) {
         var usable = Usable;
         var hovered = usable && Hitbox.Contains(MouseUtils.MousePosition);
-        var background = hovered ? Color.CornflowerBlue : Color.Black * (usable ? 0.45f : 0.25f);
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, background, Vector2.Zero);
-        DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, "Reset All", Hitbox.Center.ToVector2(),
-            usable ? Color.White : Color.Gray, Color.Black, ModifierColors.Scale(0.75f), 0f, Anchor.Center, 1f);
+        ModifierDraw.PillButton(spriteBatch, Hitbox, hovered, usable ? 1f : 0.45f);
+
+        var font = FontGlobals.RebirthFont;
+        var size = font.MeasureString("Reset All");
+        spriteBatch.DrawString(font, "Reset All", Hitbox.Center.ToVector2(), usable ? ModifierColors.Ink : Color.Gray,
+            ModifierColors.Scale(0.75f), 0f, size / 2f);
     }
 }
 
@@ -263,7 +427,11 @@ public sealed class ModifiersDescriptionBar : UIElement {
     public ModifiersDescriptionBar() => IgnoreMouseInteractions = true;
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, Color.Black * 0.45f, Vector2.Zero);
+        var edge = ModifierDraw.Px(2f);
+        ModifierDraw.Shadow(spriteBatch, Hitbox, 4f, 8f, 0.4f);
+        ModifierDraw.Gradient(spriteBatch, Hitbox, new Color(76, 76, 76), new Color(46, 46, 46));
+        ModifierDraw.Fill(spriteBatch, new Rectangle(Hitbox.X + edge, Hitbox.Y + edge, Hitbox.Width - edge * 2, 1), ModifierDraw.Fade(Color.White, 0.14f));
+        ModifierDraw.Outline(spriteBatch, Hitbox, edge, Color.Black * 0.7f);
 
         var mouse = MouseUtils.MousePosition;
         ModifierRow? hovered = null;
@@ -340,10 +508,12 @@ public sealed class ModifiersPageButton : UIElement {
     }
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        var hovered = Hitbox.Contains(MouseUtils.MousePosition);
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, hovered ? Color.CornflowerBlue : Color.Black * 0.45f, Vector2.Zero);
-        DrawUtils.DrawStringWithBorder(spriteBatch, FontGlobals.RebirthFont, _direction < 0 ? "< Q" : "E >", Hitbox.Center.ToVector2(),
-            Color.White, Color.Black, ModifierColors.Scale(0.7f), 0f, Anchor.Center, 1f);
+        ModifierDraw.PillButton(spriteBatch, Hitbox, Hitbox.Contains(MouseUtils.MousePosition), 1f);
+
+        var font = FontGlobals.RebirthFont;
+        var text = _direction < 0 ? "< Q" : "E >";
+        var size = font.MeasureString(text);
+        spriteBatch.DrawString(font, text, Hitbox.Center.ToVector2(), ModifierColors.Ink, ModifierColors.Scale(0.7f), 0f, size / 2f);
     }
 }
 
