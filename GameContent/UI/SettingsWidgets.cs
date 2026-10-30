@@ -10,8 +10,10 @@ using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI;
 
-/// <summary>One option: label on the left, "&lt; value &gt;" on the right. Left click = next, right click = previous.</summary>
+// this stuff just needs to be integrated DIRECTLY into the ui system. this is bloat.
 public sealed class SettingRow : UIElement {
+    public static readonly Color InactiveColor = Color.Black * 0.45f;
+    public static readonly Color ActiveColor = Color.DarkBlue;
     public string Label;
     public string Description;
     /// <summary>Overrides <see cref="Description"/> when set (for descriptions that change, e.g. with a count in them).</summary>
@@ -49,9 +51,9 @@ public sealed class SettingRow : UIElement {
         Step(dir);
     }
 
-    /// <summary>Changes the value as if clicked (1 = next, -1 = previous).</summary>
     public void Step(int dir) => _step(dir);
 
+    // each element is drawn via this
     public override void DrawSelf(SpriteBatch spriteBatch) {
         var enabled = Enabled;
         var highlighted = Highlighted?.Invoke() ?? false;
@@ -78,7 +80,7 @@ public sealed class SettingRow : UIElement {
 
         spriteBatch.DrawString(font, Label, new Vector2(Hitbox.X + pad, centerY), textColor, scale, 0f, new Vector2(0f, labelSize.Y / 2f));
 
-        var valueColor = enabled ? new Color(20, 40, 110) : Color.Black * 0.45f;
+        var valueColor = enabled ? ActiveColor : InactiveColor;
         var right = Hitbox.Right - pad;
 
         if (!ShowArrows) {
@@ -86,7 +88,7 @@ public sealed class SettingRow : UIElement {
             return;
         }
 
-        var arrowColor = enabled ? (hovered ? Color.White : Color.DimGray) : Color.Black * 0.3f;
+        var arrowColor = enabled ? ActiveColor * 0.5f : InactiveColor;
         spriteBatch.DrawString(font, ">", new Vector2(right, centerY), arrowColor, scale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
         var valueRight = right - (arrowSize.X + 14f) * scale.X;
         spriteBatch.DrawString(font, value, new Vector2(valueRight, centerY), valueColor, scale, 0f, new Vector2(valueSize.X, valueSize.Y / 2f));
@@ -95,10 +97,6 @@ public sealed class SettingRow : UIElement {
     }
 }
 
-/// <summary>
-/// A 0 - 1 value as a bar: label on the left, percentage and bar on the right. Drag (or click) the bar, scroll over the
-/// row for 5% steps, right click for the default.
-/// </summary>
 public sealed class SliderRow : UIElement {
     public string Label;
     public string Description;
@@ -108,7 +106,7 @@ public sealed class SliderRow : UIElement {
     readonly float _default;
     bool _dragging;
 
-    /// <summary>The value, 0 - 1. Setting it stores it right away (values under 1% become 0).</summary>
+    /// <summary>The value, 0 - 1.</summary>
     public float Value {
         get => _get();
         set {

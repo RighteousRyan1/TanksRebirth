@@ -539,7 +539,7 @@ float4 ShadowDilatePS(ScreenPSInput input) : COLOR0
 float4 CompositePS(ScreenPSInput input) : COLOR0
 {
     float4 color = tex2D(SourceSampler, input.TexCoord);
-    return lerp(NeutralValue, color, step(SplitPosition, input.TexCoord.x));
+    return lerp(NeutralValue, color, step(input.TexCoord.x, SplitPosition));
 }
 
 // techniques

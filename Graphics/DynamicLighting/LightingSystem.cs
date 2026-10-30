@@ -72,9 +72,9 @@ public static class LightingSystem {
     /// <summary>Noise added to the light buffer to hide 8 bit banding in dark scenes.</summary>
     public static float Dither = 1.5f / 255f;
 
-    public static bool ScreenSplitEnabled;
-    /// <summary>Splits the lighting from left to right, 0 to 1.</summary>
-    public static float ScreenSplitPercent;
+    public static bool BeforeAfter;
+    /// <summary>1f = fully lit, 0f = none</summary>
+    public static float BeforeAfterPercent = 1;
 
     /// <summary>Numbers from the last rendered frame.</summary>
     public static FrameStats Stats { get; private set; }
@@ -507,6 +507,8 @@ public static class LightingSystem {
             if (mesh.Name.Contains(nameContains, StringComparison.OrdinalIgnoreCase))
                 _meshLighting[mesh] = settings;
     }
+
+    // if it is visually abhorrent, don't add room to _noShadowMeshes
     /// <summary>
     /// Turns shadow casting on or off for every mesh of a model, whether it's drawn on screen or submitted as a
     /// shadow caster. Independent of <see cref="MeshLighting"/>, so it combines with emissive / ignore settings.
@@ -1621,7 +1623,7 @@ public static class LightingSystem {
         _device.SetRenderTarget(target);
         _device.DepthStencilState = DepthStencilState.None;
         _effect.CurrentTechnique = _tComposite;
-        _pSplitPosition?.SetValue(MathHelper.Clamp(ScreenSplitPercent, 0f, 1f));
+        _pSplitPosition?.SetValue(MathHelper.Clamp(BeforeAfterPercent, 0f, 1f));
 
         _device.BlendState = _modulate2X;
         _pSourceTexture?.SetValue(_lightBuffer);

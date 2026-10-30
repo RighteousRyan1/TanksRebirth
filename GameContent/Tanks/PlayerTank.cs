@@ -287,7 +287,7 @@ public class PlayerTank : Tank {
                             ControlHandle_Gamepad();
                             break;
                         case PlayerInput.KBM:
-                            ControlHandle_Keybinding();
+                            ControlHandle_KBM();
                             break;
                         case PlayerInput.Wiimote:
                             ControlHandle_Wiimote(WiimoteSystem.State);
@@ -432,8 +432,6 @@ public class PlayerTank : Tank {
     // TODO: this is where we are going to handle the heavenly local multiplayer :)
     void ControlHandle_Gamepad() {
         int padIndex = GamepadIndex;
-        if (padIndex < 0)
-            return; // should never happen if InputMethod == Gamepad, but guard anyway
 
         var leftStick = InputUtils.GamePads[padIndex].Current.ThumbSticks.Left;
         var rightStick = InputUtils.GamePads[padIndex].Current.ThumbSticks.Right;
@@ -480,7 +478,7 @@ public class PlayerTank : Tank {
             TankGame.PlayerMice[PlayerId].Position = newMousePos;
         }
     }
-    void ControlHandle_Keybinding() {
+    void ControlHandle_KBM() {
         if (PlayerId != KbPlayer && KbPlayer > -2)
             return;
 

@@ -93,43 +93,6 @@ public static class IntermissionSystem {
         };
 
         IntermissionHandler.Initialize();
-        // should this be where the animator is re-instantiated?
-        /*TextAnimatorSmall = Animator.Create()
-            .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack))
-            .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
-        TextAnimatorLarge = Animator.Create()
-            .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack))
-            .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 1.2f, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack));
-
-        IntermissionAnimator = Animator.Create()
-            .WithFrame(new(duration: TimeSpan.FromSeconds(3), easing: EasingFunction.Linear))
-            // this frame does not affect the timeline but instead what happens for loading
-            .WithFrame(new(duration: TimeSpan.FromSeconds(1), easing: EasingFunction.Linear))
-            .WithFrame(new(duration: TimeSpan.FromSeconds(4), easing: EasingFunction.Linear))
-            // 3.66?... also i just realized this number doesn't even fucking matter
-            .WithFrame(new(duration: TimeSpan.FromSeconds(3.16), easing: EasingFunction.Linear))
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0), easing: EasingFunction.Linear));
-
-        // only use position2d.Y when referencing!!!
-        BonusLifeAnimator = Animator.Create()
-            // time before the banner drops in
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.UnitY * -200, easing: EasingFunction.OutElastic))
-            // elastic animation where the banner drops from the top
-            // after this frame, force drawing to 40% of window height
-            .WithFrame(new(duration: TimeSpan.FromSeconds(1), scale: Vector3.One, position: Vector3.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.Linear))
-            // text gets brighter and slightly scales up
-            // also makes the player life text(s) glow yellow and grow for a second
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.OutBack))
-            // text shrinks back to original size
-            // duration = 0 so it shrinks as soon as the OutBack animation is done
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector3.One * 1.25f, position: Vector3.Zero, easing: EasingFunction.Linear))
-            // time before banner fades out of existence
-            .WithFrame(new(duration: TimeSpan.FromSeconds(2.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
-            // banner actually fades from existence
-            // opacity will be handled in the mid-frame actions
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
-            // dummy frame :(
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));*/
 
         TextAnimatorSmall = Animator.Create()
             // Start State

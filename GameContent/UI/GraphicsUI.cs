@@ -127,7 +127,7 @@ public static class GraphicsUI {
             enabled: () => !TankGame.Settings.Display.Vsync);
 
         ApplyBtn = Page.Button(DisplayX, RowY(5), ColumnW, "Apply",
-            "Switches to the selected window mode and resolution.", ApplyDisplay, () => HasPendingDisplay, highlight: true);
+            "Switches to the selected window mode and resolution.", ApplyDisplay, () => HasPendingDisplay, highlight: false);
         ResetBtn = Page.Button(DisplayX, RowY(6), ColumnW, "Reset to Defaults",
             "Puts every option on this page back to its default (the display mode still needs Apply).", ResetToDefaults);
 

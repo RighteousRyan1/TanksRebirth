@@ -2,12 +2,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
 using TanksRebirth.GameContent;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
-using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -27,7 +24,7 @@ public static class LightManager {
     public static bool ExplosionLights = true;
     public static bool MineLights = true;
 
-    /// <summary>Lets the room (walls, window frames, curtains...) cast sun shadows even when it's off screen.</summary>
+    /// <summary>Lets the room cast sun shadows.</summary>
     public static bool RoomCastsShadows {
         get => _roomCastsShadows;
         set {
@@ -94,6 +91,9 @@ public static class LightManager {
         TankGame.IngameConsole.Log($"Lighting: {Current}", Color.Gold);
     }
 
+    static float temp = 1f;
+    static sbyte sw = 1;
+
     /// <summary>Hotkeys and animation. Call from the game's Update.</summary>
     public static void Update() {
         if (!_initialized)
@@ -103,14 +103,19 @@ public static class LightManager {
         if (InputUtils.KeyJustPressed(Keys.F7))
             Cycle();
 
-        if (LightingSystem.ScreenSplitEnabled) {
-            LightingSystem.ScreenSplitPercent = MathHelper.Clamp(MouseUtils.Test.X, 0, 1);
+        if (LightingSystem.BeforeAfter) {
+            if (InputUtils.KeyJustPressed(Keys.NumPad5)) sw *= -1;
+
+            temp += 1f * RuntimeData.DeltaTime * sw;
+            temp = MathHelper.Clamp(temp, 0, 1);
+
+            LightingSystem.BeforeAfterPercent = Easings.ComputeEase(EasingFunction.InOutCubic, temp);
+            // LightingSystem.BeforeAfterPercent = MathHelper.Clamp(MouseUtils.Test.X, 0, 1);
         }
 
         UpdateModifierLooks();
 
-        // the day cycle preset advances its clock here
-        LightingPresets.UpdateDayCycle((float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds, RoomScene.RoomSkyboxScene);
+        LightingPresets.UpdateDayCycle(RuntimeData.DeltaTime, RoomScene.RoomSkyboxScene);
     }
 
     // modifiers
@@ -288,7 +293,7 @@ public static class LightManager {
     }
 
     static void RegisterCommands() {
-        CommandGlobals.Commands[new CommandInput("lighting", "Dynamic lighting: a time of day (sunrise, late morning, midday, mid afternoon, late afternoon, golden hour, evening, dusk, midnight), blackout, cycle, time [hour], daylength [minutes], season [summer/spring/winter], pause, quality [low/medium/high/ultra], enable, disable, off, split, stats, list.")] =
+        CommandGlobals.Commands[new CommandInput("lighting", "A time of day (sunrise, late morning, midday, mid afternoon, late afternoon, golden hour, evening, dusk, midnight), blackout, cycle, time [hour], daylength [minutes], season [summer/spring/winter], pause, quality [low/medium/high/ultra], enable, disable, off, split, stats, list.")] =
             new CommandOutput(netSync: false, requireCheats: false, args => {
                 var arg = string.Join(' ', args).Trim().ToLowerInvariant();
                 var parts = arg.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -312,7 +317,7 @@ public static class LightManager {
                         TankGame.IngameConsole.Log($"Lighting: a day lasts {LightingPresets.DayLengthSeconds / 60f:0.#} minutes", Color.Gold);
                         return;
                     case "season":
-                        // summer = long day / high sun, winter = short day / low sun, or a declination in degrees
+                        // this is doing too much...
                         if (parts.Length > 1) {
                             LightingPresets.Declination = parts[1] switch {
                                 "summer" => 23f,
@@ -353,10 +358,10 @@ public static class LightManager {
                         Cycle();
                         return;
                     case "split":
-                        LightingSystem.ScreenSplitEnabled = !LightingSystem.ScreenSplitEnabled;
-                        if (!LightingSystem.ScreenSplitEnabled)
-                            LightingSystem.ScreenSplitPercent = 0;
-                        TankGame.PlayerMice[0].IsActive = !LightingSystem.ScreenSplitEnabled;
+                        LightingSystem.BeforeAfter = !LightingSystem.BeforeAfter;
+                        if (!LightingSystem.BeforeAfter)
+                            LightingSystem.BeforeAfterPercent = 0;
+                        // TankGame.PlayerMice[0].IsActive = !LightingSystem.BeforeAfter;
                         break;
                     case "stats":
                         TankGame.IngameConsole.Log(LightingSystem.Stats.ToString(), Color.Gold);
@@ -373,7 +378,7 @@ public static class LightManager {
                         break;
                 }
                 var extra = Current == Preset.DayCycle ? $" ({LightingPresets.HourText}, a day lasts {LightingPresets.DayLengthSeconds / 60f:0.#} min)" : string.Empty;
-                TankGame.IngameConsole.Log($"Lighting: {Current}{extra}" + (LightingSystem.ScreenSplitPercent > 0f ? " (split view)" : string.Empty), Color.Gold);
+                TankGame.IngameConsole.Log($"Lighting: {Current}{extra}" + (LightingSystem.BeforeAfterPercent > 0f ? " (split view)" : string.Empty), Color.Gold);
             });
     }
 }

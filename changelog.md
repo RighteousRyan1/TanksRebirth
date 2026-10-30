@@ -34,6 +34,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Added a new audio spatialization system 
 - Added some new stuff to the cosmetics menu (still coming soon!)
 - Added new modifier: Mission Flip!
+- Added specular lighting to the player tank from the original game
 
 # Changes
 

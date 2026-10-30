@@ -479,7 +479,7 @@ public static class DrawUtils {
         var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right)) * 15f;
         DrawUtils.DrawLine(end, end - direction * 30f + side, color, view, projection);
         DrawUtils.DrawLine(end, end - direction * 30f - side, color, view, projection);
-        DrawBoundingSphere(new BoundingSphere(start, 6f), color, view, projection, segments: 8);
+        DrawBoundingSphere(new BoundingSphere(start, 6f), color, view, projection, segments: 16);
     }
 
     public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {

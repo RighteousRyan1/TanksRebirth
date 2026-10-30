@@ -317,7 +317,7 @@ public class TankGame : Game {
         }
     }
 
-    JsonSerializerOptions _options = new() {
+    readonly JsonSerializerOptions _options = new() {
         WriteIndented = true,
         IncludeFields = true
     };
@@ -353,7 +353,7 @@ public class TankGame : Game {
 
         ClientLog.Dispose();
     }
-    private static void PreloadContent() {
+    static void PreloadContent() {
         // TODO: is it emportant that these paths are all hardcoded? i'm doubtful.
         // do more dynamically..?
 
@@ -655,6 +655,7 @@ public class TankGame : Game {
 
             if (GameUI.Paused) MouseUIHover = true;
             IngameConsole.Update(gameTime);
+
             /*if (Debugger.IsAttached) {
                 SteamworksUtils.SetSteamStatus("balls", "inspector");
                 SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);

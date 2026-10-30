@@ -98,20 +98,8 @@ public record struct Mission {
             if (placement is not null) {
                 placement.TankId = tank.WorldId;
                 placement.HasBlock = false;
-                tank.Position = placement.Position.FlattenZ(); // BlockMapPosition.Convert2D(placement.RelativePosition);
+                tank.Position = placement.Position.FlattenZ();
             }
-
-            // TODO: Find the root cause that causes us to manually have to add Math.PI to 1.57.
-            // Explanation for hack fix: When rotating in the editor, we add Math.Pi / 2 to the Rotation.
-            // However for some unknown reason, when returning from test play, this value gets automatically increased to Math.Pi. With no reason.
-            // This bug does not appear to manifest should Math.Pi + 1.57 be used. Potentially caused by some old, left over code somewhere in the past.
-            // However trying to trail it down in this codebase would take much longer than this hack fix.
-            // Ignore the warning posted by the code, it should probably work fine (tested it).
-            // - Dottik
-
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            //if (float.Round(tnk.Rotation) == float.Round(1.57f))
-            //tnk.Rotation += MathF.PI * 2;
 
             tank.ChassisRotation = MathF.Round(tnk.Rotation, 5);
             tank.DesiredChassisRotation = tank.ChassisRotation;

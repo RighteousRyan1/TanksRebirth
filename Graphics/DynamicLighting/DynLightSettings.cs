@@ -31,7 +31,7 @@ public enum EffectQuality {
 }
 
 public struct DynLightSettings() {
-    /// <summary>The settings in use. Replace it (e.g. with the loaded config) and call <see cref="Apply"/>.</summary>
+    /// <summary>The settings in use.</summary>
     public static DynLightSettings Current = new();
 
     // general stuff

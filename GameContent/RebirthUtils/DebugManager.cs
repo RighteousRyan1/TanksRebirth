@@ -788,6 +788,13 @@ public static class DebugManager {
         for (int i = 0; i < LightingSystem.FrameLights.Count; i++)
             _debugLights.Add((LightingSystem.FrameLights[i], $"frame #{i}"));
 
+        /*foreach (var light in LightingSystem.FrameLights) {
+            light.CastsShadows = false;
+        }
+        foreach (var light in LightingSystem.Lights) {
+            light.CastsShadows = false;
+        }*/
+
         // only lights close to mouse are fully visible
         Light? hovered = null;
         var hoverDistance = LIGHT_HOVER_DISTANCE.ToResolutionX();
@@ -812,7 +819,7 @@ public static class DebugManager {
         var spot = light as SpotLight;
         var direction = spot is null ? Vector3.Zero : Vector3.Normalize(spot.Direction);
 
-        DrawBoundingSphere(new BoundingSphere(light.Position, LIGHT_MARKER_SIZE), color, view, projection, segments: 6);
+        DrawBoundingSphere(new BoundingSphere(light.Position, LIGHT_MARKER_SIZE), color, view, projection, segments: 12);
 
         if (spot is not null) {
             var length = hovered ? spot.Range : SPOT_PREVIEW_LENGTH;
