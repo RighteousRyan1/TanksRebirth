@@ -5,6 +5,7 @@ using FontStashSharp;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
 
@@ -12,8 +13,6 @@ namespace TanksRebirth.GameContent.UI;
 
 // this stuff just needs to be integrated DIRECTLY into the ui system. this is bloat.
 public sealed class SettingRow : UIElement {
-    public static readonly Color InactiveColor = Color.Black * 0.45f;
-    public static readonly Color ActiveColor = Color.DarkBlue;
     public string Label;
     public string Description;
     /// <summary>Overrides <see cref="Description"/> when set (for descriptions that change, e.g. with a count in them).</summary>
@@ -58,13 +57,17 @@ public sealed class SettingRow : UIElement {
         var enabled = Enabled;
         var highlighted = Highlighted?.Invoke() ?? false;
         var hovered = enabled && Hitbox.Contains(MouseUtils.MousePosition);
-        var background = highlighted ? Color.Gold : !enabled ? Color.Gray * 0.55f : hovered ? Color.CornflowerBlue : Color.WhiteSmoke;
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, background, Vector2.Zero);
+        var dim = enabled ? 1f : 0.55f;
+
+        if (hovered)
+            UIStyle.Fill(spriteBatch, SettingsText.Plate(Hitbox), UIStyle.Fade(UIStyle.Hover, 0.5f));
 
         var font = FontGlobals.RebirthFont;
         var scale = SettingsText.Scale(0.72f);
-        var textColor = enabled ? Color.Black : Color.Black * 0.5f;
         var pad = 22f.ToResolutionX();
+        var edge = 16f.ToResolutionX();
+        var gap = 12f.ToResolutionX();
+        var labelGap = 24f.ToResolutionX();
         var centerY = Hitbox.Center.Y;
 
         var labelSize = font.MeasureString(Label);
@@ -73,27 +76,35 @@ public sealed class SettingRow : UIElement {
         var arrowSize = font.MeasureString(">");
 
         // shrink long label and value pairs so they fit narrow rows
-        var textWidth = labelSize.X + 30f + valueSize.X + (ShowArrows ? 2f * (arrowSize.X + 14f) : 0f);
-        var room = Hitbox.Width - 2f * pad;
-        if (textWidth * scale.X > room)
-            scale *= room / (textWidth * scale.X);
+        var padding = ShowArrows ? (edge + gap) * 2f : edge * 2f;
+        var arrowWidth = ShowArrows ? arrowSize.X * 2f : 0f;
+        var textWidth = (labelSize.X + valueSize.X + arrowWidth) * scale.X;
+        var room = MathF.Max(Hitbox.Width - pad * 2f - labelGap - padding, 40f);
+        if (textWidth > room)
+            scale *= room / textWidth;
 
-        spriteBatch.DrawString(font, Label, new Vector2(Hitbox.X + pad, centerY), textColor, scale, 0f, new Vector2(0f, labelSize.Y / 2f));
+        DrawUtils.DrawStringWithBorder(spriteBatch, font, Label, new Vector2(Hitbox.X + pad, centerY), UIStyle.Fade(Color.White, dim),
+            UIStyle.Fade(Color.Black, dim), scale, 0f, Anchor.LeftCenter, 1f);
 
-        var valueColor = enabled ? ActiveColor : InactiveColor;
+        var valueWidth = (valueSize.X + arrowWidth) * scale.X + padding;
+        var available = Hitbox.Width - pad * 2f - labelGap - labelSize.X * scale.X;
+        var pillWidth = MathF.Max(valueWidth, MathF.Min(130f.ToResolutionX(), available));
+        var height = Hitbox.Height - UIStyle.Px(10f);
         var right = Hitbox.Right - pad;
+        var pill = new Rectangle((int)(right - pillWidth), Hitbox.Center.Y - height / 2, (int)pillWidth, height);
+        UIStyle.PillButton(spriteBatch, pill, hovered, enabled ? 1f : 0.6f, highlighted ? UIStyle.Gold : Color.White);
 
-        if (!ShowArrows) {
-            spriteBatch.DrawString(font, value, new Vector2(right, centerY), valueColor, scale, 0f, new Vector2(valueSize.X, valueSize.Y / 2f));
+        var center = pill.Center.ToVector2();
+        var valueColor = !enabled ? UIStyle.Fade(UIStyle.Ink, 0.5f) : value == GameUI.OnOff(true) ? UIStyle.OnDark : UIStyle.Ink;
+        spriteBatch.DrawString(font, value, center, valueColor, scale, 0f, valueSize / 2f);
+
+        if (!ShowArrows)
             return;
-        }
 
-        var arrowColor = enabled ? ActiveColor * 0.5f : InactiveColor;
-        spriteBatch.DrawString(font, ">", new Vector2(right, centerY), arrowColor, scale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
-        var valueRight = right - (arrowSize.X + 14f) * scale.X;
-        spriteBatch.DrawString(font, value, new Vector2(valueRight, centerY), valueColor, scale, 0f, new Vector2(valueSize.X, valueSize.Y / 2f));
-        var arrowLeft = valueRight - (valueSize.X + 14f) * scale.X;
-        spriteBatch.DrawString(font, "<", new Vector2(arrowLeft, centerY), arrowColor, scale, 0f, new Vector2(arrowSize.X, arrowSize.Y / 2f));
+        var arrowColor = !enabled ? UIStyle.Fade(Color.Gray, 0.6f) : hovered ? UIStyle.HoverDark : new Color(96, 96, 96);
+        var arrowOffset = pill.Width / 2f - edge - arrowSize.X * scale.X / 2f;
+        spriteBatch.DrawString(font, "<", new Vector2(center.X - arrowOffset, center.Y), arrowColor, scale, 0f, arrowSize / 2f);
+        spriteBatch.DrawString(font, ">", new Vector2(center.X + arrowOffset, center.Y), arrowColor, scale, 0f, arrowSize / 2f);
     }
 }
 
@@ -168,52 +179,101 @@ public sealed class SliderRow : UIElement {
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
         var active = _dragging || Hitbox.Contains(MouseUtils.MousePosition);
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, active ? Color.CornflowerBlue : Color.WhiteSmoke, Vector2.Zero);
+        if (active)
+            UIStyle.Fill(spriteBatch, SettingsText.Plate(Hitbox), UIStyle.Fade(UIStyle.Hover, 0.5f));
 
         var font = FontGlobals.RebirthFont;
         var scale = SettingsText.Scale(0.72f);
         var pad = 22f.ToResolutionX();
         var centerY = Hitbox.Center.Y;
 
-        var labelSize = font.MeasureString(Label);
-        spriteBatch.DrawString(font, Label, new Vector2(Hitbox.X + pad, centerY), Color.Black, scale, 0f, new Vector2(0f, labelSize.Y / 2f));
+        DrawUtils.DrawStringWithBorder(spriteBatch, font, Label, new Vector2(Hitbox.X + pad, centerY), Color.White, Color.Black, scale, 0f,
+            Anchor.LeftCenter, 1f);
 
         var value = Value;
         var track = Track;
-        var pixel = TextureGlobals.Pixels[Color.White];
-        var dark = new Color(20, 40, 110);
+        var border = UIStyle.Px(2f);
 
-        spriteBatch.Draw(pixel, track, Color.Black * 0.25f);
+        var groove = track;
+        groove.Inflate(border, border);
+        UIStyle.Fill(spriteBatch, groove, Color.Black);
+        UIStyle.Fill(spriteBatch, track, new Color(34, 34, 34));
+
         var fill = new Rectangle(track.X, track.Y, (int)(track.Width * value), track.Height);
-        spriteBatch.Draw(pixel, fill, active ? Color.White : dark);
+        UIStyle.Fill(spriteBatch, fill, UIStyle.On);
+        UIStyle.Fill(spriteBatch, new Rectangle(fill.X, fill.Y, fill.Width, fill.Height / 2), UIStyle.Fade(Color.White, 0.22f));
 
-        var knobW = Math.Max(4, (int)10f.ToResolutionX());
+        var knobW = Math.Max(6, (int)12f.ToResolutionX());
         var knobH = (int)(Hitbox.Height * 0.62f);
         var knob = new Rectangle(track.X + fill.Width - knobW / 2, centerY - knobH / 2, knobW, knobH);
-        spriteBatch.Draw(pixel, new Rectangle(knob.X - 2, knob.Y - 2, knob.Width + 4, knob.Height + 4), Color.Black * 0.6f);
-        spriteBatch.Draw(pixel, knob, active ? Color.White : dark);
+        UIStyle.Fill(spriteBatch, knob.GetOffset(border, border), UIStyle.Fade(Color.Black, 0.35f));
+        UIStyle.Fill(spriteBatch, new Rectangle(knob.X - border, knob.Y - border, knob.Width + border * 2, knob.Height + border * 2), Color.Black);
+        UIStyle.Fill(spriteBatch, knob, active ? Color.White : new Color(226, 226, 226));
+        UIStyle.Fill(spriteBatch, new Rectangle(knob.X, knob.Y, knob.Width, knob.Height / 2), UIStyle.Fade(Color.White, 0.5f));
 
         var percent = $"{MathF.Round(value * 100f)}%";
-        var percentSize = font.MeasureString(percent);
-        spriteBatch.DrawString(font, percent, new Vector2(track.X - 22f.ToResolutionX(), centerY), dark, scale, 0f,
-            new Vector2(percentSize.X, percentSize.Y / 2f));
+        DrawUtils.DrawStringWithBorder(spriteBatch, font, percent, new Vector2(groove.X - 22f.ToResolutionX(), centerY), active ? UIStyle.Gold : Color.White,
+            Color.Black, scale, 0f, Anchor.RightCenter, 1f);
     }
 }
 
-/// <summary>A column title with an underline.</summary>
+/// <summary>A column title over a grey panel that reaches down to the last row in the column.</summary>
 public sealed class SettingsHeader : UIElement {
     readonly string _text;
-    public SettingsHeader(string text) {
+    readonly SettingsPage _page;
+
+    public SettingsHeader(string text, SettingsPage page) {
         _text = text;
+        _page = page;
         IgnoreMouseInteractions = true;
     }
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
+        var bottom = Hitbox.Bottom;
+        foreach (var element in _page.Elements) {
+            var box = element.Hitbox;
+            if (ReferenceEquals(element, this) || box.Y < Hitbox.Bottom || box.Center.X < Hitbox.X || box.Center.X > Hitbox.Right)
+                continue;
+            bottom = Math.Max(bottom, box.Bottom);
+        }
+        UIStyle.Section(spriteBatch, Hitbox, bottom + UIStyle.Px(bottom > Hitbox.Bottom ? 8f : 12f));
+
         var font = FontGlobals.RebirthFont;
-        DrawUtils.DrawStringWithBorder(spriteBatch, font, _text, new Vector2(Hitbox.X + 6f.ToResolutionX(), Hitbox.Center.Y),
-            Color.White, Color.Black, SettingsText.Scale(0.9f), 0f, Anchor.LeftCenter, 1f);
-        var line = new Rectangle(Hitbox.X, Hitbox.Bottom - (int)3f.ToResolutionY(), Hitbox.Width, Math.Max(1, (int)3f.ToResolutionY()));
-        spriteBatch.Draw(TextureGlobals.Pixels[Color.White], line, Color.White * 0.8f);
+        var size = font.MeasureString(_text);
+        spriteBatch.DrawString(font, _text, new Vector2(Hitbox.X + 16f.ToResolutionX(), Hitbox.Center.Y), UIStyle.Ink, SettingsText.Scale(0.85f), 0f,
+            new Vector2(0f, size.Y / 2f));
+    }
+}
+
+/// <summary>A push button on a settings page. Draws gold when highlighted and faded when disabled.</summary>
+public sealed class SettingsButton : UITextButton {
+    public SettingsButton(string text, float textScale) : base(text, FontGlobals.RebirthFont, Color.WhiteSmoke, textScale) { }
+
+    public override void DrawSelf(SpriteBatch spriteBatch) {
+        var enabled = Color != Color.Gray;
+        UIStyle.PillButton(spriteBatch, Hitbox, enabled && MouseHovering, enabled ? 1f : 0.45f, Color == Color.Gold ? UIStyle.Gold : Color.White);
+
+        if (TextScale is null || !DrawText)
+            return;
+
+        var font = FontGlobals.RebirthFont;
+        var scale = AutoResolutionHandle ? TextScale.Invoke().ToResolution() : TextScale.Invoke();
+        spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), enabled ? UIStyle.Ink : Color.Gray, scale, TextRotation, font.MeasureString(Text) / 2f);
+    }
+}
+
+/// <summary>The wooden backdrop of the settings window.</summary>
+public sealed class SettingsFrame : UIElement {
+    readonly Action<SpriteBatch> _afterDraw;
+
+    public SettingsFrame(Action<SpriteBatch> afterDraw) {
+        _afterDraw = afterDraw;
+        IgnoreMouseInteractions = true;
+    }
+
+    public override void DrawSelf(SpriteBatch spriteBatch) {
+        UIStyle.Window(spriteBatch, Hitbox);
+        _afterDraw(spriteBatch);
     }
 }
 
@@ -250,26 +310,23 @@ public sealed class SettingsTab : UIElement {
     public override void DrawSelf(SpriteBatch spriteBatch) {
         var selected = _page is not null && _page == SettingsUI.Current;
         var hovered = Hitbox.Contains(MouseUtils.MousePosition);
-        var background = selected ? Color.WhiteSmoke : hovered ? Color.CornflowerBlue : Color.Black * 0.45f;
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, background, Vector2.Zero);
 
         var font = FontGlobals.RebirthFont;
         var center = Hitbox.Center.ToVector2();
         if (_page is null) {
+            UIStyle.PillButton(spriteBatch, Hitbox, hovered);
             var arrow = _dir < 0 ? "< Q" : "E >";
-            DrawUtils.DrawStringWithBorder(spriteBatch, font, arrow, center, Color.White, Color.Black, SettingsText.Scale(0.7f), 0f, Anchor.Center, 1f);
+            spriteBatch.DrawString(font, arrow, center, UIStyle.Ink, SettingsText.Scale(0.7f), 0f, font.MeasureString(arrow) / 2f);
             return;
         }
 
+        UIStyle.PillButton(spriteBatch, Hitbox, hovered && !selected, 1f, selected ? Color.White : UIStyle.Charcoal);
         if (selected) {
             var size = font.MeasureString(_page.Name);
-            spriteBatch.DrawString(font, _page.Name, center, Color.Black, SettingsText.Scale(0.9f), 0f, size / 2f);
-            var bar = new Rectangle(Hitbox.X + (int)16f.ToResolutionX(), Hitbox.Bottom - (int)8f.ToResolutionY(),
-                Hitbox.Width - (int)32f.ToResolutionX(), Math.Max(2, (int)4f.ToResolutionY()));
-            spriteBatch.Draw(TextureGlobals.Pixels[Color.White], bar, Color.CornflowerBlue);
+            spriteBatch.DrawString(font, _page.Name, center, UIStyle.Ink, SettingsText.Scale(0.9f), 0f, size / 2f);
         }
         else {
-            DrawUtils.DrawStringWithBorder(spriteBatch, font, _page.Name, center, hovered ? Color.White : Color.LightGray, Color.Black,
+            DrawUtils.DrawStringWithBorder(spriteBatch, font, _page.Name, center, hovered ? Color.White : UIStyle.Cream, Color.Black,
                 SettingsText.Scale(0.85f), 0f, Anchor.Center, 1f);
         }
     }
@@ -280,7 +337,7 @@ public sealed class SettingsDescriptionBar : UIElement {
     public SettingsDescriptionBar() => IgnoreMouseInteractions = true;
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, Color.Black * 0.45f, Vector2.Zero);
+        UIStyle.Bar(spriteBatch, Hitbox);
         var text = SettingsUI.HoveredDescription();
         var font = FontGlobals.RebirthFont;
         var scale = SettingsText.Scale(0.6f);
@@ -295,4 +352,10 @@ public sealed class SettingsDescriptionBar : UIElement {
 
 static class SettingsText {
     public static Vector2 Scale(float scale) => new Vector2(scale).ToResolution();
+
+    /// <summary>A row's area pulled in from the sides so it doesn't cover the edge of its panel.</summary>
+    public static Rectangle Plate(Rectangle area) {
+        var inset = UIStyle.Px(3f);
+        return new Rectangle(area.X + inset, area.Y, area.Width - inset * 2, area.Height);
+    }
 }

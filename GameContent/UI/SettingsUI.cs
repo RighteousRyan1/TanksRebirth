@@ -53,6 +53,7 @@ public static class SettingsUI {
     public const float ThirdW = 490;
     public const float HeaderY = 115, FirstRowY = 172, RowH = 50, RowStep = 57;
     public const float DescY = 752, DescH = 58;
+    public const float ButtonW = 300, ButtonH = 42;
 
     const float TabY = 44, TabW = 300, TabH = 54, TabGap = 12, ArrowW = 110;
 
@@ -61,7 +62,7 @@ public static class SettingsUI {
     public static float ThirdX(int column) => LeftX + column * (RightX + ColumnW - LeftX - ThirdW) / 2f;
 
     static readonly List<UIElement> _frame = [];
-    static UIPanel _panel = null!;
+    static SettingsFrame _panel = null!;
     static uint _openedAt;
 
     /// <summary>Ignores the click that opened the window or switched the page (it lands on the same frame the rows appear).</summary>
@@ -76,10 +77,7 @@ public static class SettingsUI {
         _frame.Clear();
         IsOpen = false;
 
-        _panel = new UIPanel((_, sb) => DrawFrame(sb)) {
-            BackgroundColor = Color.Black * 0.55f,
-            IgnoreMouseInteractions = true,
-        };
+        _panel = new SettingsFrame(DrawFrame);
         AddFrame(_panel, PanelX, PanelY, PanelW, PanelH);
 
         var tabsWidth = _pages.Length * TabW + (_pages.Length - 1) * TabGap;
@@ -254,7 +252,7 @@ public sealed class SettingsPage(string name, string description, string hint) {
 
     /// <summary>A column title with an underline.</summary>
     public void Header(string text, float x, float y = SettingsUI.HeaderY, float width = SettingsUI.ColumnW)
-        => Add(new SettingsHeader(text), x, y, width, 46);
+        => Add(new SettingsHeader(text, this), x, y, width, 46);
 
     /// <summary>An option row: left click = next value, right click = previous.</summary>
     public SettingRow Row(float x, float y, string label, string description, Func<string> value, Action<int> step,
@@ -270,7 +268,7 @@ public sealed class SettingsPage(string name, string description, string hint) {
     public UITextButton Button(float x, float y, float width, string text, string description, Action onClick,
         Func<bool>? enabled = null, bool highlight = false) {
         enabled ??= () => true;
-        var button = new UITextButton(text, FontGlobals.RebirthFont, Color.WhiteSmoke, 0.75f) {
+        var button = new SettingsButton(text, 0.75f) {
             OnLeftClick = _ => {
                 if (!SettingsUI.InputReady || !enabled())
                     return;
@@ -278,7 +276,8 @@ public sealed class SettingsPage(string name, string description, string hint) {
             },
             OnMouseOver = _ => SettingsUI.PlayTick()
         };
-        Add(button, x, y, width, SettingsUI.RowH);
+        var buttonWidth = Math.Min(width, SettingsUI.ButtonW);
+        Add(button, x + (width - buttonWidth) / 2f, y + (SettingsUI.RowH - SettingsUI.ButtonH) / 2f, buttonWidth, SettingsUI.ButtonH);
         _buttons[button] = (description, enabled, highlight);
         return button;
     }
