@@ -62,33 +62,34 @@ public static class ControlsUI {
         Page.Updated = UpdateRebind;
 
         const float left = SettingsUI.LeftX, right = SettingsUI.RightX;
-        Page.Header("Keyboard & Mouse", left);
-        Page.Header("Players", right);
-
-        UpKeybindButton = BindingRow(0, "Move Up", _bindings[0]);
-        DownKeybindButton = BindingRow(1, "Move Down", _bindings[1]);
-        LeftKeybindButton = BindingRow(2, "Move Left", _bindings[2]);
-        RightKeybindButton = BindingRow(3, "Move Right", _bindings[3]);
-        MineKeybindButton = BindingRow(4, "Place Mine", _bindings[4]);
-
-        Page.Button(left, SettingsUI.RowY(6), SettingsUI.ColumnW, "Reset Bindings",
-            "Puts every binding back to its default.", ResetBindings);
-
         var lang = TankGame.GameLanguage;
+
+        Page.Header(lang.Settings.HeaderKeyboardMouse, left);
+        Page.Header(lang.LevelEdit.Players, right);
+
+        UpKeybindButton = BindingRow(0, lang.Settings.MoveUp, _bindings[0]);
+        DownKeybindButton = BindingRow(1, lang.Settings.MoveDown, _bindings[1]);
+        LeftKeybindButton = BindingRow(2, lang.Settings.MoveLeft, _bindings[2]);
+        RightKeybindButton = BindingRow(3, lang.Settings.MoveRight, _bindings[3]);
+        MineKeybindButton = BindingRow(4, lang.Settings.PlaceMine, _bindings[4]);
+
+        Page.Button(left, SettingsUI.RowY(6), SettingsUI.ColumnW, lang.Settings.ResetBindings,
+            lang.Settings.ResetBindingsDesc, ResetBindings);
+
         KeyboardPlayerButton = Page.Row(right, SettingsUI.RowY(0), lang.Settings.KeyboardPlayer ?? "Keyboard Player",
             "",
             () => PlayerID.GetLocalizedPlayerColorName(PlayerTank.KbPlayer),
             StepKeyboardPlayer,
             () => !Client.IsConnected());
         KeyboardPlayerButton.DynamicDescription = () => Client.IsConnected()
-            ? "In multiplayer the keyboard and mouse always control your own tank."
-            : $"Which player the keyboard and mouse control. The others use gamepads ({InputUtils.NumGamepadsConnected} connected).";
+            ? TankGame.GameLanguage.Settings.KeyboardPlayerLocked
+            : string.Format(TankGame.GameLanguage.Settings.KeyboardPlayerDesc, InputUtils.NumGamepadsConnected);
 
-        var shoot = Page.Row(right, SettingsUI.RowY(1), "Shoot", "Unbindable.",
-            () => MouseInput.Left.MouseAsString(), _ => { }, () => false);
+        var shoot = Page.Row(right, SettingsUI.RowY(1), lang.Settings.Shoot, lang.Settings.Unbindable,
+            () => MouseName(MouseInput.Left), _ => { }, () => false);
         shoot.ShowArrows = false;
 
-        var pause = Page.Row(right, SettingsUI.RowY(2), "Pause / Back", "Unbindable.",
+        var pause = Page.Row(right, SettingsUI.RowY(2), lang.Settings.PauseBack, lang.Settings.Unbindable,
             () => Keys.Escape.KeyAsString(), _ => { }, () => false);
         pause.ShowArrows = false;
     }
@@ -96,8 +97,7 @@ public static class ControlsUI {
     static SettingRow BindingRow(int index, string label, Binding binding) {
         binding.Bind.AllowMouse = true;
         var row = Page.Row(SettingsUI.LeftX, SettingsUI.RowY(index), label,
-            "Press escape to cancel bind setting. " +
-            "Repeated bindings are swapped. Right click to set to default.",
+            TankGame.GameLanguage.Settings.RebindDesc,
             () => _rebinding == binding ? TankGame.GameLanguage.Menu.PressAKey ?? "Press a key..." : InputName(BindInput.Of(binding.Bind)),
             dir => {
                 if (InputLocked)
@@ -113,7 +113,19 @@ public static class ControlsUI {
     }
 
     static string InputName(BindInput input) =>
-        input.Mouse != MouseInput.None ? input.Mouse.MouseAsString() : input.Key == Keys.None ? "Unbound" : input.Key.KeyAsString();
+        input.Mouse != MouseInput.None ? MouseName(input.Mouse) : input.Key == Keys.None ? TankGame.GameLanguage.Settings.Unbound : input.Key.KeyAsString();
+
+    static string MouseName(MouseInput mouse) {
+        var settings = TankGame.GameLanguage.Settings;
+        return mouse switch {
+            MouseInput.Left => settings.MouseLeft,
+            MouseInput.Right => settings.MouseRight,
+            MouseInput.Middle => settings.MouseMiddle,
+            MouseInput.Mouse3 => string.Format(settings.MouseExtra, 4),
+            MouseInput.Mouse4 => string.Format(settings.MouseExtra, 5),
+            _ => mouse.MouseAsString(),
+        };
+    }
 
     static void StartRebind(Binding binding) {
         CancelRebind();

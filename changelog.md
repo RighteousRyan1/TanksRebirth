@@ -68,6 +68,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Changes Important for Modders
 
+- If you wish to take advantage of the new dynamic lighting system...
+    - Anything drawn with their own effects needs to go through `LightingSystem.Submit`.
+    - Models that are imported using `ImportAsset<Model>` are instrumented automatically, so that is done for you
 - Don't create, modify, or generate textures in AI-related tank logic code now! It will throw an exception as it won't be the main thread
 	- You can enqueue to `TankGame.MainThreadTasks` for actions to be performed on the main thread
 - There is now a much higher limit on pitch-shifting (of specifically `OggAudio`. Change `OggAudio.Pitch` directly)
@@ -97,16 +100,19 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- Binary versions 1 to 6 still load
 - Added `ModModifier`, which handles everything automatically, including the UI element and net sync
 - Some `Shell` and `Tank` properties are now bit flags
-- Tanks are now drawn with a custom shader instead of `BaiscEffect`, so if you were modifying anything related to that- it will no longer work
+- Tanks are now drawn with a custom shader instead of `BasicEffect`, so if you were modifying anything related to that- it will no longer work
 - `PlacementSquare` -> `EditorTile`
     - The map now uses a grid system, so you can index into it rather than using arbitrary math
 - `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
 - `RuntimeData.DeltaTime` -> `RuntimeData.DeltaFrames`
     - Do NOT use the new `DeltaTime`, as it is actually what `DeltaTime` means now.
+        - This means that `DeltaTime` is now elapsed seconds in a given frame, `DeltaFrames` is how many 60ths of a second passed in the past frame.
 - `CameraGlobals.RebirthFreecam` -> `CameraGlobals.PerspectiveCamera`
-- Sound effects now have optional spatializaiton parameters
+- Sound effects now have optional spatialization parameters
 - `Particle.UniqueBehavior`/`Draw` -> `Particle.Update`/`DrawCallback`
 - When using a delta in tank AI related code, use `AIManager.AIDeltaFrames`
+- Keybind now supports mouse keys
+- ...and probably more things. Consult me in my discord server for any questions.
 
 - If there is anything unclear or uncertain after reading these notes, please reach out to me
 

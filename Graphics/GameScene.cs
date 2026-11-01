@@ -412,7 +412,7 @@ public static class GameScene {
         }
 
         // draws see-through stuff after everything else in the scene
-        public static void RenderCutouts() {
+        public static void RenderTransparentStuff() {
             if (Theme != MapTheme.Halloween || UseCustomSceneColor)
                 return;
 
@@ -530,8 +530,8 @@ public static class GameScene {
         }
     }
 
-    public static void RenderWorldCutouts() {
+    public static void RenderTransparentStuff() {
         if (UpdateAndRender)
-            BoundsRenderer.RenderCutouts();
+            BoundsRenderer.RenderTransparentStuff();
     }
 }

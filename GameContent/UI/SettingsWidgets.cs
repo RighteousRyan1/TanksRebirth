@@ -282,7 +282,7 @@ public sealed class SettingsTab : UIElement {
     readonly SettingsPage? _page;
     readonly int _dir;
 
-    public string Description => _page?.Description ?? (_dir < 0 ? "Previous page (Q)" : "Next page (E)");
+    public string Description => _page?.Description ?? (_dir < 0 ? TankGame.GameLanguage.Settings.PreviousPage : TankGame.GameLanguage.Settings.NextPage);
 
     /// <summary>A tab that opens <paramref name="page"/>.</summary>
     public SettingsTab(SettingsPage page) {

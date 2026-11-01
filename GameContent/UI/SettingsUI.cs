@@ -15,18 +15,18 @@ namespace TanksRebirth.GameContent.UI;
 
 /// <summary>The settings window.</summary>
 public static class SettingsUI {
-    public static readonly SettingsPage Audio = new("Audio",
-        "Music, sound effect and ambient volume.",
-        "Drag a slider to change the volume. Right click puts it back to the default.");
-    public static readonly SettingsPage Video = new("Video",
-        "Window mode, resolution, frame rate, dynamic lighting and graphics quality.",
-        "Left click an option for the next value, right click for the previous one.");
-    public static readonly SettingsPage Gameplay = new("Gameplay",
-        "Tank tracks and the battle in the main menu.",
-        "Left click an option for the next value, right click for the previous one.");
-    public static readonly SettingsPage Controls = new("Controls",
-        "Keyboard bindings and which player the keyboard and mouse control.",
-        "Hover a binding to view additional details.");
+    public static readonly SettingsPage Audio = new(() => TankGame.GameLanguage.Settings.PageAudio,
+        () => TankGame.GameLanguage.Settings.PageAudioDesc,
+        () => TankGame.GameLanguage.Settings.PageAudioHint);
+    public static readonly SettingsPage Video = new(() => TankGame.GameLanguage.Settings.PageVideo,
+        () => TankGame.GameLanguage.Settings.PageVideoDesc,
+        () => TankGame.GameLanguage.Settings.CycleHint);
+    public static readonly SettingsPage Gameplay = new(() => TankGame.GameLanguage.Settings.PageGameplay,
+        () => TankGame.GameLanguage.Settings.PageGameplayDesc,
+        () => TankGame.GameLanguage.Settings.CycleHint);
+    public static readonly SettingsPage Controls = new(() => TankGame.GameLanguage.Menu.Controls,
+        () => TankGame.GameLanguage.Settings.PageControlsDesc,
+        () => TankGame.GameLanguage.Settings.PageControlsHint);
 
     static readonly SettingsPage[] _pages = [Audio, Video, Gameplay, Controls];
 
@@ -204,13 +204,13 @@ public static class SettingsUI {
 }
 
 /// <summary>One page of the settings window: its rows, buttons and headers.</summary>
-public sealed class SettingsPage(string name, string description, string hint) {
+public sealed class SettingsPage(Func<string> name, Func<string> description, Func<string> hint) {
     /// <summary>Tab title.</summary>
-    public readonly string Name = name;
+    public string Name => name();
     /// <summary>Shown when the mouse is over the tab.</summary>
-    public readonly string Description = description;
+    public string Description => description();
     /// <summary>Shown in the description bar when the mouse isn't over anything on the page.</summary>
-    public readonly string Hint = hint;
+    public string Hint => hint();
 
     /// <summary>Runs when the page comes on screen.</summary>
     public Action? Opened;

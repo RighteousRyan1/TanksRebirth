@@ -259,7 +259,7 @@ public class GameHandler {
 
             Particles.RenderModelParticles();
 
-            GameScene.RenderWorldCutouts();
+            GameScene.RenderTransparentStuff();
 
             if ((DebugManager.DebugLevel == DebugManager.Id.LVL_DBG && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
                 EditorTile.RenderAll();

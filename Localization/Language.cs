@@ -187,6 +187,124 @@ public class Language {
         public string MusicVolume { get; set; }
         public string EffectsVolume { get; set; }
         public string AmbientVolume { get; set; }
+
+        public string PageAudio { get; set; }
+        public string PageAudioDesc { get; set; }
+        public string PageAudioHint { get; set; }
+        public string PageVideo { get; set; }
+        public string PageVideoDesc { get; set; }
+        public string PageGameplay { get; set; }
+        public string PageGameplayDesc { get; set; }
+        public string PageControlsDesc { get; set; }
+        public string PageControlsHint { get; set; }
+        public string CycleHint { get; set; }
+        public string PreviousPage { get; set; }
+        public string NextPage { get; set; }
+
+        public string Off { get; set; }
+        public string ResetDefaults { get; set; }
+        public string ResetPageDesc { get; set; }
+        public string Apply { get; set; }
+        public string Unlimited { get; set; }
+        public string Unavailable { get; set; }
+        public string QualityLow { get; set; }
+        public string QualityMedium { get; set; }
+        public string QualityHigh { get; set; }
+        public string QualityUltra { get; set; }
+        public string QualityCustom { get; set; }
+
+        public string MusicVolumeDesc { get; set; }
+        public string EffectsVolumeDesc { get; set; }
+        public string AmbientVolumeDesc { get; set; }
+        public string ResetVolumesDesc { get; set; }
+
+        public string TrackLimit { get; set; }
+        public string TrackLimitDesc { get; set; }
+        public string TeamColors { get; set; }
+        public string TeamColorsDesc { get; set; }
+        public string FirstPersonFOV { get; set; }
+        public string FirstPersonFOVDesc { get; set; }
+
+        public string HeaderDisplay { get; set; }
+        public string HeaderLighting { get; set; }
+        public string HeaderQuality { get; set; }
+        public string WindowModeDesc { get; set; }
+        public string ResolutionInfoDesc { get; set; }
+        public string WindowWindowed { get; set; }
+        public string WindowBorderless { get; set; }
+        public string WindowFullscreen { get; set; }
+        public string FrameLimit { get; set; }
+        public string FrameLimitDesc { get; set; }
+        public string ApplyDesc { get; set; }
+
+        public string DynamicLighting { get; set; }
+        public string DynamicLightingDesc { get; set; }
+        public string LightingQuality { get; set; }
+        public string LightingQualityDesc { get; set; }
+        public string SunShadows { get; set; }
+        public string SunShadowsDesc { get; set; }
+        public string UltraNoHiDef { get; set; }
+        public string LightShadows { get; set; }
+        public string LightShadowsDesc { get; set; }
+        public string LightShafts { get; set; }
+        public string LightShaftsDesc { get; set; }
+        public string LightCount { get; set; }
+        public string LightCountDesc { get; set; }
+        public string RoomShadows { get; set; }
+        public string RoomShadowsDesc { get; set; }
+        public string TimeOfDay { get; set; }
+        public string TimeOfDayDesc { get; set; }
+        public string TimeSunrise { get; set; }
+        public string TimeLateMorning { get; set; }
+        public string TimeMidday { get; set; }
+        public string TimeMidAfternoon { get; set; }
+        public string TimeLateAfternoon { get; set; }
+        public string TimeGoldenHour { get; set; }
+        public string TimeEvening { get; set; }
+        public string TimeDusk { get; set; }
+        public string TimeMidnight { get; set; }
+        public string TimeBlackout { get; set; }
+        public string TimeDayCycle { get; set; }
+        public string DayLength { get; set; }
+        public string DayLengthDesc { get; set; }
+        public string RealTime { get; set; }
+        public string DayLengthMinutes { get; set; }
+        public string GameplayLights { get; set; }
+        public string GameplayLightsDesc { get; set; }
+
+        public string AntiAliasing { get; set; }
+        public string AntiAliasingDesc { get; set; }
+        public string RainyWindows { get; set; }
+        public string RainyWindowsDesc { get; set; }
+        public string RainStrength { get; set; }
+        public string RainStrengthDesc { get; set; }
+        public string RainLight { get; set; }
+        public string RainMedium { get; set; }
+        public string RainHeavy { get; set; }
+        public string BlobShadows { get; set; }
+        public string BlobShadowsDesc { get; set; }
+        public string MenuBlur { get; set; }
+        public string MenuBlurDesc { get; set; }
+
+        public string HeaderKeyboardMouse { get; set; }
+        public string MoveUp { get; set; }
+        public string MoveDown { get; set; }
+        public string MoveLeft { get; set; }
+        public string MoveRight { get; set; }
+        public string PlaceMine { get; set; }
+        public string ResetBindings { get; set; }
+        public string ResetBindingsDesc { get; set; }
+        public string KeyboardPlayerLocked { get; set; }
+        public string KeyboardPlayerDesc { get; set; }
+        public string Shoot { get; set; }
+        public string PauseBack { get; set; }
+        public string Unbindable { get; set; }
+        public string Unbound { get; set; }
+        public string RebindDesc { get; set; }
+        public string MouseLeft { get; set; }
+        public string MouseRight { get; set; }
+        public string MouseMiddle { get; set; }
+        public string MouseExtra { get; set; }
     }
     public struct MiscLocales {
         public string BonusTank { get; set; }

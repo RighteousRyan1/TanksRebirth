@@ -21,22 +21,22 @@ public static class VolumeUI {
         var lang = TankGame.GameLanguage;
         const float x = SettingsUI.CenterX;
 
-        Page.Header("Volume", x);
+        Page.Header(lang.Menu.Volume, x);
 
         MusicVolume = Page.Slider(x, SettingsUI.RowY(0), lang.Settings.MusicVolume ?? "Music",
-            "Volume of music tracks.",
+            lang.Settings.MusicVolumeDesc,
             () => TankGame.Settings.Audio.MusicVolume, v => TankGame.Settings.Audio.MusicVolume = v, new GameConfig().Audio.MusicVolume);
 
         EffectsVolume = Page.Slider(x, SettingsUI.RowY(1), lang.Settings.EffectsVolume ?? "Sound Effects",
-            "Volume of gameplay and interface sound effects.",
+            lang.Settings.EffectsVolumeDesc,
             () => TankGame.Settings.Audio.EffectsVolume, v => TankGame.Settings.Audio.EffectsVolume = v, new GameConfig().Audio.EffectsVolume);
 
         AmbientVolume = Page.Slider(x, SettingsUI.RowY(2), lang.Settings.AmbientVolume ?? "Ambient",
-            "Volume of various ambient sounds",
+            lang.Settings.AmbientVolumeDesc,
             () => TankGame.Settings.Audio.AmbientVolume, v => TankGame.Settings.Audio.AmbientVolume = v, new GameConfig().Audio.AmbientVolume);
 
-        Page.Button(x, SettingsUI.RowY(4), SettingsUI.ColumnW, "Reset to Defaults",
-            "Puts all three volumes back to their defaults.", () => {
+        Page.Button(x, SettingsUI.RowY(4), SettingsUI.ColumnW, lang.Settings.ResetDefaults,
+            lang.Settings.ResetVolumesDesc, () => {
                 var defaults = new GameConfig();
                 MusicVolume.Value = defaults.Audio.MusicVolume;
                 EffectsVolume.Value = defaults.Audio.EffectsVolume;

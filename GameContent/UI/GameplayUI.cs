@@ -27,15 +27,15 @@ public static class GameplayUI {
         var lang = TankGame.GameLanguage;
         const float x = SettingsUI.CenterX;
 
-        Page.Header("Gameplay", x);
+        Page.Header(lang.Settings.PageGameplay, x);
 
         FadeTracksBtn = Page.Row(x, SettingsUI.RowY(0), lang.Settings.FadeTracks ?? "Fading Tank Tracks",
             lang.Settings.FadeTracksDesc ?? "Tank tracks slowly fade away.",
             () => GameUI.OnOff(TankGame.Settings.Gameplay.FadeFootprints),
             _ => TankFootprint.ShouldTracksFade = TankGame.Settings.Gameplay.FadeFootprints = !TankGame.Settings.Gameplay.FadeFootprints);
 
-        TrackLimitBtn = Page.Row(x, SettingsUI.RowY(1), "Tank Track Limit",
-            "How many tank tracks can stay on the ground before the oldest disappear.",
+        TrackLimitBtn = Page.Row(x, SettingsUI.RowY(1), lang.Settings.TrackLimit,
+            lang.Settings.TrackLimitDesc,
             () => $"{TankGame.Settings.Gameplay.TankFootprintLimit:N0}",
             dir => GraphicsSettings.SetFootprintLimit(GameUI.Cycle(GraphicsSettings.FootprintLimitOptions,
                 GameUI.NearestOf(GraphicsSettings.FootprintLimitOptions, TankGame.Settings.Gameplay.TankFootprintLimit), dir)));
@@ -51,18 +51,18 @@ public static class GameplayUI {
                     tank?.Remove(true);
             });
 
-        TeamVisualsBtn = Page.Row(x, SettingsUI.RowY(3), "Team Colors",
-            "Tints each tank's wooden trim with its team color.",
+        TeamVisualsBtn = Page.Row(x, SettingsUI.RowY(3), lang.Settings.TeamColors,
+            lang.Settings.TeamColorsDesc,
             () => GameUI.OnOff(TankGame.Settings.Gameplay.ShowTeamVisuals),
             _ => Tank.ShowTeamVisuals = TankGame.Settings.Gameplay.ShowTeamVisuals = !TankGame.Settings.Gameplay.ShowTeamVisuals);
 
-        FOVBtn = Page.Row(x, SettingsUI.RowY(4), "First-Person FOV",
-            $"How wide the first-person camera sees.",
+        FOVBtn = Page.Row(x, SettingsUI.RowY(4), lang.Settings.FirstPersonFOV,
+            lang.Settings.FirstPersonFOVDesc,
             () => TankGame.Settings.Gameplay.FirstPersonFOV.ToString(),
             dir => TankGame.Settings.Gameplay.FirstPersonFOV = GameUI.Cycle(_fovs, GameUI.NearestOf(_fovs, TankGame.Settings.Gameplay.FirstPersonFOV), dir));
 
-        Page.Button(x, SettingsUI.RowY(5), SettingsUI.ColumnW, "Reset to Defaults",
-            "Puts every option on this page back to its default.", () => {
+        Page.Button(x, SettingsUI.RowY(5), SettingsUI.ColumnW, lang.Settings.ResetDefaults,
+            lang.Settings.ResetPageDesc, () => {
                 var defaults = new GameConfig();
                 GraphicsSettings.SetFootprintLimit(defaults.Gameplay.TankFootprintLimit);
                 TankFootprint.ShouldTracksFade = TankGame.Settings.Gameplay.FadeFootprints = defaults.Gameplay.FadeFootprints;
