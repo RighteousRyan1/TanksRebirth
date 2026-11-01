@@ -138,8 +138,6 @@ public static class GameScene {
     public static class FloorRenderer {
         public static Model FloorModelBase;
 
-        public static float scale = 1f;
-
         public static void LoadFloor() {
             FloorModelBase = ModelGlobals.Floor.Asset;
             switch (Theme) {
@@ -162,13 +160,11 @@ public static class GameScene {
             // the halloween field is part of the bounds model
             if (Theme == MapTheme.Halloween) return;
 
-            scale = 0.95f; // cus naturally it's a little large?
-
             foreach (var mesh in FloorModelBase.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.View = DrawParams.View;
                     effect.Projection = DrawParams.Proj;
-                    effect.World = DrawParams.World * Matrix.CreateScale(scale);
+                    effect.World = DrawParams.World;
 
                     effect.TextureEnabled = true;
                     effect.Texture = Assets["floor_lower"];
@@ -269,7 +265,9 @@ public static class GameScene {
         public static void SetBoundTextureDefaults() {
             switch (Theme) {
                 case MapTheme.Vanilla:
+                    // temporary.
                     BoundaryModel = ModelGlobals.GameBoundary.Asset;
+                    SetBlockTexture(BoundaryModel.Meshes["Floor"], BoundaryTextureContext.floor_face);
                     break;
                 case MapTheme.Christmas:
                     BoundaryModel = ModelGlobals.GameBoundarySnowy.Asset;
@@ -281,19 +279,30 @@ public static class GameScene {
                     LoadHalloweenTextures();
                     return;
             }
-            SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
-            SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
-            SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
 
-            var tryShadow7 = BoundaryModel.Meshes.TryGetValue("shadow_7", out var shadow_7);
-            if (tryShadow7)
-                SetBlockTexture(shadow_7, BoundaryTextureContext.block_shadow_b); // polygon15
+            // for now, christmas is broken.
+            SetBlockTexture(BoundaryModel.Meshes["Block_Other_C"], BoundaryTextureContext.block_other_c);
+            SetBlockTexture(BoundaryModel.Meshes["Block_Other_A"], BoundaryTextureContext.block_other_a);
+            SetBlockTexture(BoundaryModel.Meshes["Block_Other_B"], BoundaryTextureContext.block_other_b_test);
 
-            SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
+            //var tryShadow7 = BoundaryModel.Meshes.TryGetValue("shadow_7", out var shadow_7);
+            //if (tryShadow7)
+                //SetBlockTexture(shadow_7, BoundaryTextureContext.block_shadow_b); // polygon15
+            SetBlockTexture(BoundaryModel.Meshes["Block_Shadow_B"], BoundaryTextureContext.block_shadow_b);
+            SetBlockTexture(BoundaryModel.Meshes["Block_Shadow_A"], BoundaryTextureContext.block_shadow_a);
+            SetBlockTexture(BoundaryModel.Meshes["Block_Shadow_H"], BoundaryTextureContext.block_shadow_h);
 
-            SetBlockTexture(BoundaryModel.Meshes["shadow_interior_upper"], BoundaryTextureContext.block_shadow_d);
-            SetBlockTexture(BoundaryModel.Meshes["shadow_interior_vertical"], BoundaryTextureContext.block_shadow_b); // polygon7
-            SetBlockTexture(BoundaryModel.Meshes["shadow_corner"], BoundaryTextureContext.block_shadow_b);
+            SetBlockTexture(BoundaryModel.Meshes["Block_Shadow_D"], BoundaryTextureContext.block_shadow_d);
+            // SetBlockTexture(BoundaryModel.Meshes["shadow_interior_vertical"], BoundaryTextureContext.block_shadow_b); // polygon7
+            // SetBlockTexture(BoundaryModel.Meshes["shadow_corner"], BoundaryTextureContext.block_shadow_b);
+
+            // set vertex color stuff
+            foreach (var mesh in BoundaryModel.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.VertexColorEnabled = mesh.MeshParts.Any(p => p.VertexBuffer.VertexDeclaration.GetVertexElements()
+                        .Any(e => e.VertexElementUsage == VertexElementUsage.Color));
+                }
+            }
         }
 
         static void LoadHalloweenTextures() {
@@ -303,7 +312,6 @@ public static class GameScene {
             _halloweenMeshes = BoundaryModel.Meshes.OrderBy(x => HalloweenLayer(x.Name)).ToArray();
         }
 
-        /// <summary>0 is solid, 1 is a shadow and 2 is a cutout. Higher layers are drawn later.</summary>
         static int HalloweenLayer(string meshName) => meshName switch {
             "Shadow_C" or "Shadow_S" => 1,
             "Cobweb" or "Fence" => 2,
@@ -314,41 +322,47 @@ public static class GameScene {
             // more hardcode yay
             switch (Theme) {
                 case MapTheme.Vanilla:
-                    foreach (var mesh in BoundaryModel.Meshes) {
-                        if (mesh.Name.Contains("outer", StringComparison.InvariantCultureIgnoreCase)) {
-                            continue;
-                        }
-
-                        foreach (BasicEffect effect in mesh.Effects) {
-                            effect.View = DrawParams.View;
-                            effect.Projection = DrawParams.Proj;
-                            effect.World = DrawParams.World;
-
-                            if (UseCustomSceneColor) {
-                                effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
-                                effect.LightingEnabled = false;
-                                effect.VertexColorEnabled = false;
+                    // hacky ass fix for draw order. i hope bigkitty fixes up the model so this bullshit isn't only in the Vanilla case
+                    for (var i = 0; i < 2; i++) {
+                        foreach (var mesh in BoundaryModel.Meshes) {
+                            // i have 
+                            if (mesh.Name.Contains("outer", StringComparison.InvariantCultureIgnoreCase)
+                                || mesh.Name is "Field") {
                                 continue;
                             }
 
-                            effect.VertexColorEnabled = true;
+                            var isShadow = mesh.Name.Contains("shadow", StringComparison.InvariantCultureIgnoreCase);
+                            if (isShadow != (i == 1)) continue;
 
-                            if (mesh.Name == "polygon2")
-                                effect.Alpha = 0.1f;
-                            else
-                                effect.Alpha = 1f;
+                            foreach (BasicEffect effect in mesh.Effects) {
+                                effect.View = DrawParams.View;
+                                effect.Projection = DrawParams.Proj;
+                                effect.World = DrawParams.World;
 
-                            if (mesh.Name.Contains("shadow", StringComparison.InvariantCultureIgnoreCase)) {
-                                TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
-                                effect.Alpha = 0.39f;
+                                if (UseCustomSceneColor) {
+                                    effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
+                                    effect.LightingEnabled = false;
+                                    effect.VertexColorEnabled = false;
+                                    continue;
+                                }
+
+                                if (mesh.Name == "polygon2")
+                                    effect.Alpha = 0.1f;
+                                else
+                                    effect.Alpha = 1f;
+
+                                if (mesh.Name.Contains("shadow", StringComparison.InvariantCultureIgnoreCase)) {
+                                    TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
+                                    effect.Alpha = 0.39f;
+                                }
+
+                                effect.SetDefaultGameLighting();
                             }
 
-                            effect.SetDefaultGameLighting();
+                            mesh.Draw();
+
+                            TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
                         }
-
-                        mesh.Draw();
-
-                        TankGame.Instance.GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
                     }
                     break;
                 case MapTheme.Christmas:
@@ -377,33 +391,55 @@ public static class GameScene {
                     }
                     break;
                 case MapTheme.Halloween:
-                    foreach (var mesh in _halloweenMeshes) {
-                        var layer = HalloweenLayer(mesh.Name);
-                        if (UseCustomSceneColor && layer != 0)
-                            continue;
-
-                        foreach (BasicEffect effect in mesh.Effects) {
-                            effect.View = DrawParams.View;
-                            effect.Projection = DrawParams.Proj;
-                            effect.World = DrawParams.World;
-                            effect.TextureEnabled = true;
-                            effect.Alpha = layer == 1 ? 0.39f : 1f;
-
-                            if (UseCustomSceneColor) {
-                                effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
-                                effect.LightingEnabled = false;
-                                continue;
-                            }
-
-                            effect.Texture = _halloweenTextures[mesh.Name];
-                            effect.SetDefaultGameLighting();
-                        }
-
-                        TankGame.Instance.GraphicsDevice.SamplerStates[0] = layer == 1 ? RenderGlobals.ClampingSampler : RenderGlobals.WrappingSampler;
-                        mesh.Draw();
-                    }
+                    DrawHalloweenMeshes(cutouts: false);
                     break;
             }
+        }
+
+        // draws see-through stuff after everything else in the scene
+        public static void RenderCutouts() {
+            if (Theme != MapTheme.Halloween || UseCustomSceneColor)
+                return;
+
+            var device = TankGame.Instance.GraphicsDevice;
+            device.BlendState = BlendState.AlphaBlend;
+            device.DepthStencilState = DepthStencilState.Default;
+
+            DrawHalloweenMeshes(cutouts: true);
+        }
+
+        static void DrawHalloweenMeshes(bool cutouts) {
+            var device = TankGame.Instance.GraphicsDevice;
+            foreach (var mesh in _halloweenMeshes) {
+                var layer = HalloweenLayer(mesh.Name);
+                if ((layer == 2) != cutouts)
+                    continue;
+                if (UseCustomSceneColor && layer != 0)
+                    continue;
+
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Proj;
+                    effect.World = DrawParams.World;
+                    effect.TextureEnabled = true;
+                    effect.Alpha = layer == 1 ? 0.39f : 1f;
+
+                    if (UseCustomSceneColor) {
+                        effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
+                        effect.LightingEnabled = false;
+                        continue;
+                    }
+
+                    effect.Texture = _halloweenTextures[mesh.Name];
+                    effect.SetDefaultGameLighting();
+                }
+
+                // shadows are draped over the boxes, so one that writes depth would hide a tank standing beside it
+                device.DepthStencilState = layer == 1 ? DepthStencilState.DepthRead : DepthStencilState.Default;
+                device.SamplerStates[0] = layer == 1 ? RenderGlobals.ClampingSampler : RenderGlobals.WrappingSampler;
+                mesh.Draw();
+            }
+            device.DepthStencilState = DepthStencilState.Default;
         }
 
         /// <summary>
@@ -425,6 +461,8 @@ public static class GameScene {
             block_other_c,
             block_other_b_test,
             floor_lower,
+            floor_face,
+            block_shadow_a,
             block_shadow_b,
             block_shadow_d,
             block_shadow_h
@@ -475,5 +513,10 @@ public static class GameScene {
             FloorRenderer.RenderFloor();
             BoundsRenderer.RenderBounds();
         }
+    }
+
+    public static void RenderWorldCutouts() {
+        if (UpdateAndRender)
+            BoundsRenderer.RenderCutouts();
     }
 }

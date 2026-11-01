@@ -39,7 +39,6 @@ public class JackOLantern {
             Range = 400f,
         };
 
-        // uses a frame light
         LightingSystem.CollectLights += AddLight;
 
         if (lightOnly) return;
@@ -50,7 +49,6 @@ public class JackOLantern {
         _p.Alpha = 1f;
         _p.Scale = new Vector3(scale);
 
-        // handles our update loop
         _p.UpdateCallback = (p) => {
             Update();
         };

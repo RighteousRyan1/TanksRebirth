@@ -8,17 +8,14 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics;
 
-/// <summary>Draws registered meshes as rainy-looking.</summary>
 public static class RainShader {
-    /// <summary>When off, the windows stay dry.</summary>
     public static bool Enabled = true;
-    /// <summary>The intensity thunder mode brings, from 0 to 1.</summary>
     public static float Strength = 1f;
     /// <summary>When set, the rain uses this intensity instead of automatic handling.</summary>
     public static float? IntensityOverride;
     /// <summary>How long the rain takes to fully fade in or out, in seconds.</summary>
     public static float FadeSeconds = 8f;
-    /// <summary>How much slow gusts lower the intensity, from 0 (steady rain) to 1.</summary>
+    /// <summary>How much slow gusts lower the intensity.</summary>
     public static float GustStrength = 0.3f;
 
     /// <summary>World size of one bead cell. Bigger cells mean bigger drops.</summary>
@@ -31,14 +28,14 @@ public static class RainShader {
     public static float DripSpeed = 1f;
     /// <summary>How strongly the water bends the view behind it.</summary>
     public static float Refraction = 1f;
-    /// <summary>How fogged the glass gets in full rain, from 0 (clear) to 1.</summary>
+    /// <summary>How fogged the glass gets in full rain.</summary>
     public static float FogAmount = 0.6f;
     public static Color FogColor = new(140, 153, 166);
     public static Color GlassTint = new(230, 235, 242);
     /// <summary>How much of <see cref="GlassTint"/> is mixed over the glass.</summary>
     public static float GlassTintAmount = 0.12f;
 
-    /// <summary>The current rain intensity, from 0 (dry) to 1.</summary>
+    /// <summary>The current rain intensity.</summary>
     public static float Intensity { get; private set; }
     /// <summary>Whether rainy meshes are currently drawn as rainy.</summary>
     public static bool IsActive => Intensity > 0.001f && _effect is not null;
