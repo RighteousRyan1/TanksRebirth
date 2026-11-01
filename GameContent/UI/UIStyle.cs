@@ -80,16 +80,7 @@ static class UIStyle {
 
     /// <summary>A wooden window with a shadow, a darkened edge and a thin bevel.</summary>
     public static void Window(SpriteBatch spriteBatch, Rectangle area) {
-        Shadow(spriteBatch, area, 10f, 18f, 0.5f);
         DrawWood(spriteBatch, area, new Color(235, 235, 235));
-
-        const int rings = 6;
-        var ringSize = Px(5f);
-        for (var i = 0; i < rings; i++) {
-            var inset = i * ringSize;
-            var ring = new Rectangle(area.X + inset, area.Y + inset, area.Width - inset * 2, area.Height - inset * 2);
-            Outline(spriteBatch, ring, ringSize, Color.Black * (0.32f * (1f - i / (float)rings)));
-        }
 
         var edge = Px(3f);
         Outline(spriteBatch, area, edge, Color.Black * 0.85f);

@@ -100,25 +100,6 @@ static class ModifierDraw {
         }
         Pill(spriteBatch, area, Fade(Color.White, alpha));
     }
-
-    public static void Check(SpriteBatch spriteBatch, Rectangle box, Color color) {
-        var thickness = Math.Max(2f, box.Width / 7f);
-        var start = new Vector2(box.X + box.Width * 0.22f, box.Y + box.Height * 0.54f);
-        var bottom = new Vector2(box.X + box.Width * 0.42f, box.Y + box.Height * 0.74f);
-        var end = new Vector2(box.X + box.Width * 0.80f, box.Y + box.Height * 0.28f);
-        Segment(spriteBatch, start, bottom, thickness, color);
-        Segment(spriteBatch, bottom, end, thickness, color);
-    }
-
-    static void Segment(SpriteBatch spriteBatch, Vector2 from, Vector2 to, float thickness, Color color) {
-        var delta = to - from;
-        var length = delta.Length();
-        if (length < 0.5f)
-            return;
-        var begin = from - delta / length * (thickness * 0.5f);
-        spriteBatch.Draw(Pixel, begin, null, color, MathF.Atan2(delta.Y, delta.X), new Vector2(0f, 0.5f),
-            new Vector2(length + thickness, thickness), SpriteEffects.None, 0f);
-    }
 }
 
 /// <summary>The wooden backdrop behind everything in the modifiers window.</summary>
@@ -127,16 +108,7 @@ public sealed class ModifiersFrame : UIElement {
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
         var area = Hitbox;
-        ModifierDraw.Shadow(spriteBatch, area, 10f, 18f, 0.5f);
         ModifierDraw.DrawWood(spriteBatch, area, new Color(235, 235, 235));
-
-        const int rings = 6;
-        var ringSize = ModifierDraw.Px(5f);
-        for (var i = 0; i < rings; i++) {
-            var inset = i * ringSize;
-            var ring = new Rectangle(area.X + inset, area.Y + inset, area.Width - inset * 2, area.Height - inset * 2);
-            ModifierDraw.Outline(spriteBatch, ring, ringSize, Color.Black * (0.32f * (1f - i / (float)rings)));
-        }
 
         var edge = ModifierDraw.Px(3f);
         ModifierDraw.Outline(spriteBatch, area, edge, Color.Black * 0.85f);
@@ -229,10 +201,6 @@ public sealed class ModifierRow : UIElement {
 
         var inner = new Rectangle(swatch.X + border, swatch.Y + border, swatch.Width - border * 2, swatch.Height - border * 2);
         ModifierDraw.Fill(spriteBatch, inner, ModifierDraw.Fade(Color.Lerp(new Color(34, 34, 34), ModifierColors.On, _switch), dim));
-        ModifierDraw.Fill(spriteBatch, new Rectangle(inner.X, inner.Y, inner.Width, inner.Height / 2), ModifierDraw.Fade(Color.White, (0.08f + 0.14f * _switch) * dim));
-
-        if (_switch > 0f)
-            ModifierDraw.Check(spriteBatch, inner, ModifierDraw.Fade(Color.White, _switch * dim));
     }
 
     void DrawPicker(SpriteBatch spriteBatch, float labelRight, Vector2 scale, bool active, bool hovered, bool editable) {

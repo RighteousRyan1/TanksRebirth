@@ -100,8 +100,9 @@ public static class LightManager {
             return;
 
         // allow only if debug mode is on
-        if (InputUtils.KeyJustPressed(Keys.F7))
-            Cycle();
+        if (DebugManager.DebugLevel == DebugManager.Id.LIGHTS)
+            if (InputUtils.KeyJustPressed(Keys.F7))
+                Cycle();
 
         if (LightingSystem.BeforeAfter) {
             if (InputUtils.KeyJustPressed(Keys.NumPad5)) sw *= -1;
