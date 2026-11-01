@@ -22,7 +22,7 @@ public unsafe struct AIBehaviorState {
         }
     }
 
-    public readonly bool TimerSatisfies(float rem) => Value % rem < RuntimeData.DeltaFrames;
+    public readonly bool TimerSatisfies(float rem) => Value % rem < AIManager.AIDeltaFrames;
 }
 
 // TODO: class vs struct?
@@ -52,10 +52,10 @@ public partial struct VanillaAISystem : IAISystem {
         Owner.Physics.OnCollision += Physics_OnCollision;
     }
     public void AILoop() {
-        ChassisMovement.Value += RuntimeData.DeltaFrames;
-        TurretMovement.Value  += RuntimeData.DeltaFrames;
-        ShellFire.Value       += RuntimeData.DeltaFrames;
-        MinePlace.Value       += RuntimeData.DeltaFrames;
+        ChassisMovement.Value += AIManager.AIDeltaFrames;
+        TurretMovement.Value  += AIManager.AIDeltaFrames;
+        ShellFire.Value       += AIManager.AIDeltaFrames;
+        MinePlace.Value       += AIManager.AIDeltaFrames;
 
         TurretRotationMultiplier = 1f;
 
@@ -117,7 +117,7 @@ public partial struct VanillaAISystem : IAISystem {
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
             Owner.Velocity = MathUtils.DirectionOf(Owner.ChassisRotation) * Owner.Speed;
-            Owner.TurnChassis(Owner.Properties.TurningSpeed * RuntimeData.DeltaFrames);
+            Owner.TurnChassis(Owner.Properties.TurningSpeed * AIManager.AIDeltaFrames);
         }
     }
 }

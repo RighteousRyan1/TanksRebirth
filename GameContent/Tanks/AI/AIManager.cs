@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -946,6 +947,22 @@ public static class AIManager {
     }
 
 
+    /// <summary>The time the current AI thread's last pass took, in 60ths of a second.</summary>
+    /// <remarks>This should be used if doing anything that requires a delta timescale within tank AI.</remarks>
+    public static float AIDeltaFrames => _aidf > 0f ? _aidf : RuntimeData.DeltaFrames;
+    // this is a pretty... workaroundish way to prevent different timesteps for higher/lower refresh rates for ai controlled tanks.
+    // when/if i separate logic time from render time (to prevent stupid physics desyncs in multiplayer on varying framerates) this will be phased out.
+    // aidf = AI delta frames
+    [ThreadStatic] static float _aidf;
+
+    const float MAX_AI_DELTA_FRAMES = 6f;
+
+    static void StepAIClock(ref long lastTimestamp) {
+        long now = Stopwatch.GetTimestamp();
+        _aidf = Math.Min((now - lastTimestamp) * 60f / Stopwatch.Frequency, MAX_AI_DELTA_FRAMES);
+        lastTimestamp = now;
+    }
+
     public const int SECTION_1 = 20;
     public const int SECTION_2 = 40;
     public const int SECTION_3 = 60;
@@ -1020,9 +1037,11 @@ public static class AIManager {
         }
     }
     public static void ProcessAISection1() {
+        long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
             int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
             Thread.Sleep(sleepTime);
+            StepAIClock(ref lastTimestamp);
 
             if (GameHandler.ActiveAITankCount == 0) continue;
             if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
@@ -1041,9 +1060,11 @@ public static class AIManager {
         }
     }
     public static void ProcessAISection2() {
+        long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
             int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
             Thread.Sleep(sleepTime);
+            StepAIClock(ref lastTimestamp);
 
             if (GameHandler.ActiveAITankCount < SECTION_1) continue;
             if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
@@ -1062,9 +1083,11 @@ public static class AIManager {
         }
     }
     public static void ProcessAISection3() {
+        long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
             int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
             Thread.Sleep(sleepTime);
+            StepAIClock(ref lastTimestamp);
 
             if (GameHandler.ActiveAITankCount < SECTION_2) continue;
             if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
@@ -1082,103 +1105,4 @@ public static class AIManager {
             }
         }
     }
-
-    /* experimental. not necessary right now
-    internal const int AI_TANK_TASK_COUNT = 4;
-    internal static Task[] AITasks = new Task[AI_TANK_TASK_COUNT];
-    internal static CancellationTokenSource? AICancelSource;
-
-    internal static void AITaskInit() {
-        AICancelSource = new CancellationTokenSource();
-
-        int chunk = GameHandler.MAX_AI_TANKS / AI_TANK_TASK_COUNT;
-
-        for (int i = 0; i < AI_TANK_TASK_COUNT; i++) {
-            int taskIndex = i;
-            int from = chunk * taskIndex;
-            int to = (taskIndex == AI_TANK_TASK_COUNT - 1)
-                ? GameHandler.MAX_AI_TANKS
-                : chunk * (taskIndex + 1);
-
-            AITasks[i] = Task.Factory.StartNew(
-                () => ProcessAISectionAsync(from, to, AICancelSource.Token),
-                AICancelSource.Token,
-                TaskCreationOptions.LongRunning,
-                TaskScheduler.Default
-            );
-        }
-    }
-    internal static void UpdateAITanks() {
-        if (ModLoader.Status != LoadStatus.Complete) return;
-
-        Span<AITank> aiTanks = GameHandler.AllAITanks;
-        ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
-        for (var i = 0; i < aiTanks.Length; i++) {
-            var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is null || tank.IsDestroyed) continue;
-
-            tank.Update();
-            tank.HandleTankMetaData();
-        }
-    }
-
-    internal static async Task ProcessAISectionAsync(
-        int from,
-        int toExclusive,
-        CancellationToken token) {
-        try {
-            while (!token.IsCancellationRequested) {
-                int sleepTime = TankGame.LastGameTime is null
-                    ? 1
-                    : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
-
-                await Task.Delay(sleepTime, token);
-
-                if (GameHandler.ActiveAITankCount == 0)
-                    continue;
-
-                if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected())
-                    continue;
-
-                if (!Client.IsHost() && Client.IsConnected())
-                    continue;
-
-                ChatSystem.SendMessage(sleepTime, ColorUtils.DiscoPartyColor);
-
-                //Span<AITank> aiTanks = GameHandler.AllAITanks;
-                //ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
-
-                var allTanks = GameHandler.AllAITanks;
-
-                for (int i = from; i < toExclusive; i++) {
-                    token.ThrowIfCancellationRequested();
-
-                    // var tank = Unsafe.Add(ref tanksSearchSpace, i);
-                    var tank = allTanks[i];
-                    if (tank is null || tank.IsDestroyed)
-                        continue;
-
-                    tank.AILoop();
-                    Client.SyncAITank(tank);
-                }
-            }
-        } catch (OperationCanceledException) {
-
-        }
-    }
-    internal static async Task StopAITasksAsync() {
-        if (AICancelSource == null) return;
-
-        AICancelSource.Cancel();
-
-        try {
-            await Task.WhenAll(AITasks);
-        } catch (OperationCanceledException) {
-            // expected
-        }
-        finally {
-            AICancelSource.Dispose();
-            AICancelSource = null;
-        }
-    }*/
 }

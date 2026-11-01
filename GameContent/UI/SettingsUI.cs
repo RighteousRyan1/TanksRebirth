@@ -17,7 +17,7 @@ namespace TanksRebirth.GameContent.UI;
 public static class SettingsUI {
     public static readonly SettingsPage Audio = new("Audio",
         "Music, sound effect and ambient volume.",
-        "Drag a slider (or scroll over it) to change the volume. Right click puts it back to the default.");
+        "Drag a slider to change the volume. Right click puts it back to the default.");
     public static readonly SettingsPage Video = new("Video",
         "Window mode, resolution, frame rate, dynamic lighting and graphics quality.",
         "Left click an option for the next value, right click for the previous one.");
