@@ -336,21 +336,12 @@ public sealed class ModifiersTitleBar : UIElement {
         spriteBatch.DrawString(font, title, pill.Center.ToVector2(), ModifierColors.Ink, titleScale, 0f, titleSize / 2f);
 
         var statusScale = ModifierColors.Scale(0.7f);
-        var left = pill.Right + 26f.ToResolutionX();
         var right = (float)Hitbox.Right;
 
         if (!MainMenuUI.CanEditModifiers) {
             var hostWidth = font.MeasureString(HostOnly).X * statusScale.X;
             DrawUtils.DrawStringWithBorder(spriteBatch, font, HostOnly, new Vector2(right - hostWidth, centerY), ModifierColors.Gold,
                 Color.Black, statusScale, 0f, Anchor.LeftCenter, 1f);
-            right -= hostWidth + 30f.ToResolutionX();
-        }
-
-        var active = Modifiers.ActiveCount();
-        if (active == 0) {
-            DrawUtils.DrawStringWithBorder(spriteBatch, font, "None active", new Vector2(left, centerY), Color.LightGray,
-                Color.Black, statusScale, 0f, Anchor.LeftCenter, 1f);
-            return;
         }
     }
 

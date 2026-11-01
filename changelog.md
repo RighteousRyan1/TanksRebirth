@@ -105,6 +105,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - `CameraGlobals.RebirthFreecam` -> `CameraGlobals.PerspectiveCamera`
 - Sound effects now have optional spatializaiton parameters
 - `Particle.UniqueBehavior`/`Draw` -> `Particle.Update`/`DrawCallback`
+- When using a delta in tank AI related code, use `AIManager.AIDeltaFrames`
 
 - If there is anything unclear or uncertain after reading these notes, please reach out to me
 

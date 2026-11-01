@@ -50,10 +50,8 @@ public static partial class MainMenuUI {
     static int _sentValuesVersion = -1;
     static int _sentPeerCount = -1;
 
-    /// <summary>Ignores the click that opened the window or switched the page (it lands on the same frame the rows appear).</summary>
     internal static bool ModifiersInputReady => RuntimeData.UpdateCount - _modsOpenedAt > 5;
 
-    /// <summary>Only the host (or a single player) can change modifiers.</summary>
     internal static bool CanEditModifiers => !Client.IsConnected() || Client.IsHost();
 
     // TODO: UI Layers. This is fucking ugly.
