@@ -5,7 +5,7 @@ using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent.UI;
 
-/// <summary>The Gameplay page of the settings window (<see cref="SettingsUI.Gameplay"/>): tank tracks, menu gameplay and team colors.</summary>
+/// <summary>The Gameplay page of the settings window.</summary>
 public static class GameplayUI {
     public static SettingRow FadeTracksBtn = null!;
     public static SettingRow TrackLimitBtn = null!;
@@ -52,12 +52,12 @@ public static class GameplayUI {
             });
 
         TeamVisualsBtn = Page.Row(x, SettingsUI.RowY(3), "Team Colors",
-            "Tints each tank's wooden trim with its team color, so you can tell the teams apart.",
+            "Tints each tank's wooden trim with its team color.",
             () => GameUI.OnOff(TankGame.Settings.Gameplay.ShowTeamVisuals),
             _ => Tank.ShowTeamVisuals = TankGame.Settings.Gameplay.ShowTeamVisuals = !TankGame.Settings.Gameplay.ShowTeamVisuals);
 
         FOVBtn = Page.Row(x, SettingsUI.RowY(4), "First-Person FOV",
-            $"How wide the first-person camera sees, in degrees ({GraphicsSettings.MinFOV} to {GraphicsSettings.MaxFOV}).",
+            $"How wide the first-person camera sees.",
             () => TankGame.Settings.Gameplay.FirstPersonFOV.ToString(),
             dir => TankGame.Settings.Gameplay.FirstPersonFOV = GameUI.Cycle(_fovs, GameUI.NearestOf(_fovs, TankGame.Settings.Gameplay.FirstPersonFOV), dir));
 

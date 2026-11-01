@@ -39,9 +39,12 @@ public class TankDeathMark {
         totalDeathMarks++;
 
         StoredTank = tank;
+
+        Position = tank.Position3D + new Vector3(0, 0.1f, 0);
+
         _texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/deathmark/deathmark_{color.ToString().ToLower()}");
 
-        _particle = GameHandler.Particles.MakeParticle(Position + new Vector3(0, 0.1f, 0), _texture);
+        _particle = GameHandler.Particles.MakeParticle(Position, _texture);
         _particle.Additive = false;
         _particle.Pitch = -MathHelper.PiOver2;
         _particle.Layer = 0;

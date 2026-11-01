@@ -120,7 +120,7 @@ public static class TankMusicSystem {
 
         if (GameScene.Theme == MapTheme.Christmas) {
             SnowLoop.SetVolume(TankGame.Settings.Audio.AmbientVolume);
-            return;
+            // return;
         }
 
         // maybe only need to update some of these things in the event of an Owner tank death?

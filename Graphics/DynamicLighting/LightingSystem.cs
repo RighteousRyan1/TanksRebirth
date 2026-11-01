@@ -21,9 +21,7 @@ namespace TanksRebirth.Graphics.DynamicLighting;
 /// <para>All render targets are <see cref="SurfaceFormat.Color"/>, max 2048.</para>
 /// </remarks>
 public static class LightingSystem {
-    /// <summary>The master switch. Call <see cref="Unload"/> to free the video memory.</summary>
     public static bool Enabled = true;
-    /// <summary>Set by the scene to show the unlit game without touching the user's <see cref="Enabled"/> choice.</summary>
     public static bool Suspended;
     /// <summary>True once <see cref="Initialize"/> succeeded and no unrecoverable error happened.</summary>
     public static bool IsAvailable { get; private set; }

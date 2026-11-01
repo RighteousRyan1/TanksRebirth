@@ -64,6 +64,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - A few minor changes to the Campaign Results UI. More changes in a future update!
 - The save file format is now much different but more modular. Backporting save files will no longer be possible to updates before this
 - Made the cursor trail a bit better looking
+- The christmas theme no longer prevents music from playing
 
 # Changes Important for Modders
 
@@ -98,7 +99,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Some `Shell` and `Tank` properties are now bit flags
 - Tanks are now drawn with a custom shader instead of `BaiscEffect`, so if you were modifying anything related to that- it will no longer work
 - `PlacementSquare` -> `EditorTile`
-    - The map now uses a grid system
+    - The map now uses a grid system, so you can index into it rather than using arbitrary math
 - `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
 - `RuntimeData.DeltaTime` -> `RuntimeData.DeltaFrames`
     - Do NOT use the new `DeltaTime`, as it is actually what `DeltaTime` means now.

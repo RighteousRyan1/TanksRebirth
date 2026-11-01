@@ -26,7 +26,7 @@ public static class SettingsUI {
         "Left click an option for the next value, right click for the previous one.");
     public static readonly SettingsPage Controls = new("Controls",
         "Keyboard bindings and which player the keyboard and mouse control.",
-        "Click a binding, then press the new key. Escape cancels, right click puts back the default.");
+        "Hover a binding to view additional details.");
 
     static readonly SettingsPage[] _pages = [Audio, Video, Gameplay, Controls];
 

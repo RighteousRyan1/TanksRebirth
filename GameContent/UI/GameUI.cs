@@ -366,7 +366,7 @@ public static class GameUI {
             return;
 
         if (SettingsUI.IsOpen) {
-            if (escape && ControlsUI.SwallowsEscape)
+            if (escape && ControlsUI.InputLocked)
                 return;
             SetSettingsUIVisibility(false);
             KeyboardPlayerButton.IsVisible = false;

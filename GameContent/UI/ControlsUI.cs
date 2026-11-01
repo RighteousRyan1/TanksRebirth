@@ -5,18 +5,12 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Internals.Common;
-using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI;
 
-/// <summary>The Controls page of the settings window (<see cref="SettingsUI.Controls"/>): bindings and the keyboard player.</summary>
-/// <remarks>
-/// Click a binding, then press a key or a mouse button (right, middle or a side button; left click shoots, so it can't
-/// be bound). Escape or a left click cancels; an input that's already used by another binding swaps with it.
-/// Right click puts a binding back to its default.
-/// </remarks>
+/// <summary>The Controls page of the settings window.</summary>
 public static class ControlsUI {
     public static SettingRow UpKeybindButton = null!;
     public static SettingRow LeftKeybindButton = null!;
@@ -31,14 +25,7 @@ public static class ControlsUI {
     /// <summary>A binding is waiting for a key or mouse button.</summary>
     public static bool IsRebinding => _rebinding is not null;
 
-    /// <summary>
-    /// True while waiting for an input and for a moment after. The input that finishes a rebind (Escape, a right
-    /// click...) also reaches the pause key and the UI on the same frame; they ignore it while this is set.
-    /// </summary>
     public static bool InputLocked => IsRebinding || RuntimeData.UpdateCount - _rebindEndedAt <= 2;
-
-    /// <summary>Same as <see cref="InputLocked"/> (Escape cancels a rebind instead of closing the settings).</summary>
-    public static bool SwallowsEscape => InputLocked;
 
     static SettingsPage Page => SettingsUI.Controls;
 
@@ -60,7 +47,6 @@ public static class ControlsUI {
     static BindInput _rebindPrevious;
     static uint _rebindStartedAt, _rebindEndedAt;
 
-    /// <summary>Applies the saved bindings (keys and mouse buttons) to the player's keybinds. <see cref="Initialize"/> calls it.</summary>
     public static void LoadBindings(GameConfig settings) {
         foreach (var binding in _bindings) {
             binding.Bind.AllowMouse = true;
@@ -86,7 +72,7 @@ public static class ControlsUI {
         MineKeybindButton = BindingRow(4, "Place Mine", _bindings[4]);
 
         Page.Button(left, SettingsUI.RowY(6), SettingsUI.ColumnW, "Reset Bindings",
-            "Puts every binding back to its default (W A S D and Space).", ResetBindings);
+            "Puts every binding back to its default.", ResetBindings);
 
         var lang = TankGame.GameLanguage;
         KeyboardPlayerButton = Page.Row(right, SettingsUI.RowY(0), lang.Settings.KeyboardPlayer ?? "Keyboard Player",
@@ -98,11 +84,11 @@ public static class ControlsUI {
             ? "In multiplayer the keyboard and mouse always control your own tank."
             : $"Which player the keyboard and mouse control. The others use gamepads ({InputUtils.NumGamepadsConnected} connected).";
 
-        var shoot = Page.Row(right, SettingsUI.RowY(1), "Shoot", "Left click always shoots (and clicks menus), so it can't be rebound.",
+        var shoot = Page.Row(right, SettingsUI.RowY(1), "Shoot", "Unbindable.",
             () => MouseInput.Left.MouseAsString(), _ => { }, () => false);
         shoot.ShowArrows = false;
 
-        var pause = Page.Row(right, SettingsUI.RowY(2), "Pause / Back", "Escape always pauses the game and goes back in menus.",
+        var pause = Page.Row(right, SettingsUI.RowY(2), "Pause / Back", "Unbindable.",
             () => Keys.Escape.KeyAsString(), _ => { }, () => false);
         pause.ShowArrows = false;
     }
@@ -110,8 +96,8 @@ public static class ControlsUI {
     static SettingRow BindingRow(int index, string label, Binding binding) {
         binding.Bind.AllowMouse = true;
         var row = Page.Row(SettingsUI.LeftX, SettingsUI.RowY(index), label,
-            "Click, then press a key or a mouse button (right, middle or side). Escape or left click cancels. " +
-            "An input that's already in use swaps with that binding. Right click for the default.",
+            "Press escape to cancel bind setting. " +
+            "Repeated bindings are swapped. Right click to set to default.",
             () => _rebinding == binding ? TankGame.GameLanguage.Menu.PressAKey ?? "Press a key..." : InputName(BindInput.Of(binding.Bind)),
             dir => {
                 if (InputLocked)
@@ -207,12 +193,17 @@ public static class ControlsUI {
     }
 
     static void StepKeyboardPlayer(int dir) {
-        var max = InputUtils.NumGamepadsConnected;
+        var numGps = InputUtils.NumGamepadsConnected;
         var next = PlayerTank.KbPlayer + dir;
-        if (next > max)
-            next = -1;
+
+        if (numGps == 0 && next == -1) next = 0;
+        if (next > numGps)
+            if (numGps != 0)
+                next = -1;
+            else
+                next = 0;
         else if (next < -1)
-            next = max;
+            next = numGps;
         PlayerTank.KbPlayer = next;
         if (GameUI.KeyboardPlayerButton is not null)
             GameUI.KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(next)}";

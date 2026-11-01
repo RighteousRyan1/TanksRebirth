@@ -87,7 +87,7 @@ public static class GraphicsUI {
         ResetPendingDisplay();
 
         Page.Header("Display", DisplayX, width: ColumnW);
-        Page.Header("Dynamic Lighting", LightingX, width: ColumnW);
+        Page.Header("Lighting System", LightingX, width: ColumnW);
         Page.Header("Graphics Quality", QualityX, width: ColumnW);
 
         var lang = TankGame.GameLanguage;
@@ -132,7 +132,7 @@ public static class GraphicsUI {
             "Puts every option on this page back to its default.", ResetToDefaults);
 
         // dynamic lighting
-        LightingBtn = Row(LightingX, RowY(0), "Lighting System",
+        LightingBtn = Row(LightingX, RowY(0), "Dynamic Lighting",
             "Real-time sun, lights, and shadows. Leave disabled for the original look.",
             () => GameUI.OnOff(DynLightSettings.Current.Enabled) + (LightingSystem.IsAvailable || !DynLightSettings.Current.Enabled ? "" : " (unavailable)"),
             _ => {
@@ -141,8 +141,8 @@ public static class GraphicsUI {
             });
 
         LightingQualityBtn = Row(LightingX, RowY(1), "Lighting Quality",
-            "Sets all the lighting options below at once. Changing one of them by hand makes this Custom.",
-            () => DynLightSettings.Current.QualityLevel.ToString(),
+            "Sets all the lighting options below at once.",
+            DynLightSettings.Current.QualityLevel.ToString,
             dir => {
                 LightingQualityLevel[] levels = [LightingQualityLevel.Low, LightingQualityLevel.Medium, LightingQualityLevel.High, LightingQualityLevel.Ultra];
                 var current = DynLightSettings.Current.QualityLevel == LightingQualityLevel.Custom ? LightingQualityLevel.High : DynLightSettings.Current.QualityLevel;
@@ -152,25 +152,25 @@ public static class GraphicsUI {
             enabled: LightingOn);
 
         SunShadowsBtn = Row(LightingX, RowY(2), "Sun Shadows",
-            "Shadows from the sun and moon, on the board and across the room. Ultra doubles the resolution (needs a HiDef capable GPU).",
+            "Shadows from the sun and moon, on the board and across the room.",
             () => QualityName(DynLightSettings.Current.SunShadows),
             dir => { DynLightSettings.Current.SunShadows = GameUI.  Cycle(Enum.GetValues<ShadowQuality>(), DynLightSettings.Current.SunShadows, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
         LampShadowsBtn = Row(LightingX, RowY(3), "Light Shadows",
-            "Shadows from lamps, tank headlights and explosions. Higher settings shadow more lights with smoother edges.",
+            "Shadows from lights around the scene.",
             () => QualityName(DynLightSettings.Current.LampShadows),
             dir => { DynLightSettings.Current.LampShadows = GameUI.Cycle(Enum.GetValues<ShadowQuality>(), DynLightSettings.Current.LampShadows, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
         LightShaftsBtn = Row(LightingX, RowY(4), "Light Shafts",
-            "Beams of sunlight through the windows. Higher settings render them at a higher resolution.",
+            "Beams of sunlight through the windows.",
             () => DynLightSettings.Current.LightShafts.ToString(),
             dir => { DynLightSettings.Current.LightShafts = GameUI.Cycle(Enum.GetValues<EffectQuality>(), DynLightSettings.Current.LightShafts, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
         LightCountBtn = Row(LightingX, RowY(5), "Light Count",
-            "How many lights can shine at once (lamps, headlights, shells, mines, explosions).",
+            "How many scene lights can exist at once.",
             () => DynLightSettings.Current.LightCount switch {
                 EffectQuality.Off => "Off",
                 EffectQuality.Low => "Low (8)",

@@ -2,11 +2,7 @@ using Microsoft.Xna.Framework;
 
 namespace TanksRebirth.Graphics.DynamicLighting;
 
-/// <summary>Base class for local (positional) lights.</summary>
-/// <remarks>
-/// Colors are linear multipliers on top of the existing scene: a light buffer value of 1 leaves a
-/// pixel exactly as the game drew it, 0 is black and values up to 2 over-brighten.
-/// </remarks>
+/// <summary>Base class for local lights.</summary>
 public abstract class Light {
     /// <summary>Lights that are not enabled are skipped entirely.</summary>
     public bool Enabled = true;
@@ -30,7 +26,7 @@ public abstract class Light {
     internal Vector3 ColorVector => Color.ToVector3() * Intensity;
 }
 
-/// <summary>A light that shines in every direction from a point (a bulb, a lantern, an explosion flash...).</summary>
+/// <summary>A light that shines in every direction from a point.</summary>
 public class PointLight : Light {
     public PointLight() { }
     public PointLight(Vector3 position, Color color, float intensity, float range, bool castsShadows = false) {
@@ -42,7 +38,7 @@ public class PointLight : Light {
     }
 }
 
-/// <summary>A cone of light (a desk lamp, a flashlight, a tank headlight...).</summary>
+/// <summary>A cone of light.</summary>
 public class SpotLight : Light {
     /// <summary>Direction the cone points at. Does not need to be normalized.</summary>
     public Vector3 Direction = Vector3.Down;
@@ -68,7 +64,7 @@ public class SpotLight : Light {
     public void LookAt(Vector3 target) => Direction = target - Position;
 }
 
-/// <summary>Light from very far away. All rays are parallel (the sun, the moon).</summary>
+/// <summary>Light from very far away.</summary>
 public class SunLight {
     public bool Enabled = true;
     /// <summary>The direction the light travels in (from the sun towards the ground). Does not need to be normalized.</summary>
@@ -88,9 +84,8 @@ public class SunLight {
     /// <summary>Depth bias in world units.</summary>
     public float ShadowBias = 1.5f;
     /// <summary>
-    /// When set, the sharp shadow map is fitted tightly around this box as seen from the sun instead of using
-    /// <see cref="ShadowCenter"/> / <see cref="ShadowRadius"/>. Much sharper, especially when the sun is low
-    /// (a square map wastes most of its texels on a low sun). Make it cover what the camera usually looks at.
+    /// When set, the sharp shadow map is fitted tightly around this box as seen from the sun instead 
+    /// of using <see cref="ShadowCenter"/> / <see cref="ShadowRadius"/>.
     /// </summary>
     public BoundingBox? ShadowBounds;
 
@@ -100,8 +95,7 @@ public class SunLight {
     /// </summary>
     public bool RoomShadows = true;
     /// <summary>
-    /// Area covered by the room shadow map. Leave null to fit it to everything drawn this frame
-    /// (works anywhere, but bounding spheres make the fit loose, so giving the real bounds is sharper).
+    /// Area covered by the room shadow map. Leave null to fit it to everything drawn this frame.
     /// </summary>
     public BoundingBox? RoomShadowBounds;
 
@@ -114,27 +108,21 @@ public class SunLight {
     internal Vector3 ColorVector => Color.ToVector3() * Intensity;
 }
 
-/// <summary>
-/// How the sun's volumetric light shafts look. Their cost (resolution, on/off) is a quality setting:
-/// <see cref="LightingQuality.LightShafts"/> and <see cref="LightingQuality.ShaftDownsample"/>.
-/// </summary>
+/// <summary>How the sun's volumetric light shafts look.</summary>
 public class LightShafts {
     public bool Enabled;
     public Color Color = new(255, 236, 200);
     /// <summary>Overall strength of the effect.</summary>
     public float Density = 0.18f;
-    /// <summary>Length (world units) of the ray marched from each surface back towards the camera.</summary>
+    /// <summary>Length of the ray marched from each surface back towards the camera.</summary>
     public float MarchLength = 1600f;
-    /// <summary>Henyey-Greenstein anisotropy. 0 = uniform, closer to 1 = glows strongly when looking into the light.</summary>
+    /// <summary>0 = uniform, closer to 1 = glows strongly when looking into the light.</summary>
     public float Anisotropy = 0.35f;
-    /// <summary>
-    /// Limits how much brighter the beams get when looking towards the sun (1 = no boost at all). Without a cap a
-    /// high <see cref="Anisotropy"/> makes them up to 10x brighter and blinding.
-    /// </summary>
+    /// <summary>Limits how much brighter the beams get when looking towards the sun (1 = no boost at all).</summary>
     public float MaxGlow = 4f;
 }
 
-/// <summary>Light that is everywhere. Blends between a sky color (up facing surfaces) and a ground color (down facing).</summary>
+/// <summary>Light that is everywhere. Blends between a sky color and a ground color.</summary>
 public class AmbientLight {
     public Color Sky = new(140, 140, 150);
     public Color Ground = new(110, 105, 100);

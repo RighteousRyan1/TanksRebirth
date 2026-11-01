@@ -273,7 +273,22 @@ public static class GameScene {
                     BoundaryModel = ModelGlobals.GameBoundarySnowy.Asset;
                     SetBlockTexture(BoundaryModel.Meshes["snow_field"], "snow");
                     SetBlockTexture(BoundaryModel.Meshes["snow_blocks"], "snow");
-                    break;
+
+                    // REMOVE THIS WHEN CHRISTMAS IS PROPERLY MADE.
+                    SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
+                    SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
+                    SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
+
+                    var tryShadow7 = BoundaryModel.Meshes.TryGetValue("shadow_7", out var shadow_7);
+                    if (tryShadow7)
+                        SetBlockTexture(shadow_7, BoundaryTextureContext.block_shadow_b); // polygon15
+
+                    SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
+
+                    SetBlockTexture(BoundaryModel.Meshes["shadow_interior_upper"], BoundaryTextureContext.block_shadow_d);
+                    SetBlockTexture(BoundaryModel.Meshes["shadow_interior_vertical"], BoundaryTextureContext.block_shadow_b); // polygon7
+                    SetBlockTexture(BoundaryModel.Meshes["shadow_corner"], BoundaryTextureContext.block_shadow_b);
+                    return; // put back to break when fixed
                 case MapTheme.Halloween:
                     BoundaryModel = ModelGlobals.GameBoundaryHalloween.Asset;
                     LoadHalloweenTextures();
