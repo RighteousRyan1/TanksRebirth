@@ -23,7 +23,7 @@ public static partial class MainMenuUI {
     }
     public static OggMusic GetAppropriateMusic() {
         OggMusic music = GameScene.Theme switch {
-            MapTheme.Vanilla => new OggMusic("Main Menu Theme", "Content/Assets/music/mainmenu/theme.ogg", 1f),
+            MapTheme.Vanilla or MapTheme.Halloween => new OggMusic("Main Menu Theme", "Content/Assets/music/mainmenu/theme.ogg", 1f),
             MapTheme.Christmas => new OggMusic("Main Menu Theme", "Content/Assets/music/mainmenu/theme_christmas.ogg", 1f),
             _ => throw new Exception("Invalid game theme for menu music.")
         };

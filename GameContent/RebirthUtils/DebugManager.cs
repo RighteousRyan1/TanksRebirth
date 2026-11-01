@@ -247,7 +247,7 @@ public static class DebugManager {
             Display.Text = powerups[mode].Name;
         };
     }
-    static JackOLantern jol;
+    // static JackOLantern jol;
     public static void UpdateDebug() {
         if (!GameLauncher.IsConsoleAllocated) return;
 
@@ -286,10 +286,10 @@ public static class DebugManager {
         }
 
         // guh...
-        if (InputUtils.KeyJustPressed(Keys.L)) {
+        /*if (InputUtils.KeyJustPressed(Keys.L)) {
             jol?.Remove();
             jol = JackOLantern.Create(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, 0) + new Vector3(0, 35, 0), 0f, 15f);
-        }
+        }*/
 
         if (SuperSecretDevOption) {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.IsDestroyed && !x.Properties.Stationary);

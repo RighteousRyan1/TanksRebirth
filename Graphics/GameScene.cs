@@ -8,10 +8,15 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Seasonal;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Graphics.Drawing;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Graphics;
 
@@ -19,6 +24,7 @@ namespace TanksRebirth.Graphics;
 public enum MapTheme {
     Vanilla,
     Christmas,
+    Halloween,
 }
 public static class GameScene {
     public static bool UpdateAndRender = true;
@@ -144,11 +150,18 @@ public static class GameScene {
                 case MapTheme.Christmas:
                     AssetRoot = "Assets/christmas/";
                     break;
+
+                case MapTheme.Halloween:
+                    AssetRoot = PathGlobals.HALLOWEEN_PATH;
+                    break;
             }
             PostLoadFloor?.Invoke();
         }
         // TODO: finish christmas stuff kekw failure
         public static void RenderFloor() {
+            // the halloween field is part of the bounds model
+            if (Theme == MapTheme.Halloween) return;
+
             scale = 0.95f; // cus naturally it's a little large?
 
             foreach (var mesh in FloorModelBase.Meshes) {
@@ -186,6 +199,25 @@ public static class GameScene {
         public const string BOUNDARY_TAG = "bounds";
         public static Body[] Boundaries = new Body[4];
         public static Model BoundaryModel;
+
+        static readonly Dictionary<string, string> _halloweenPaths = new() {
+            ["Floor"] = PathGlobals.HALLOWEEN_PATH + "field",
+            ["Field"] = PathGlobals.HALLOWEEN_PATH + "field",
+            ["Wood_1"] = PathGlobals.HALLOWEEN_PATH + "block_a",
+            ["Wood_2"] = PathGlobals.HALLOWEEN_PATH + "block_b",
+            ["House"] = PathGlobals.HALLOWEEN_PATH + "house",
+            ["Roof"] = PathGlobals.HALLOWEEN_PATH + "roof",
+            ["Gravestone"] = PathGlobals.HALLOWEEN_PATH + "grave",
+            ["Skeleton"] = PathGlobals.HALLOWEEN_PATH + "bone",
+            ["Cobweb"] = PathGlobals.HALLOWEEN_PATH + "cobweb",
+            ["Fence"] = PathGlobals.HALLOWEEN_PATH + "fence",
+            ["Pumpkin"] = PathGlobals.DECO_PATH + "pumpkin_tex",
+            ["Witch_Hat"] = "Assets/models/rebirth_tanks/tank_necro_extras",
+            ["Shadow_C"] = "Assets/textures/mine/mine_shadow",
+            ["Shadow_S"] = "Assets/textures/tank_shadow"
+        };
+        static readonly Dictionary<string, Texture2D> _halloweenTextures = [];
+        static ModelMesh[] _halloweenMeshes = [];
 
         // this will need to be adjusted if i make map sizes
         public static void LoadBounds() {
@@ -244,6 +276,10 @@ public static class GameScene {
                     SetBlockTexture(BoundaryModel.Meshes["snow_field"], "snow");
                     SetBlockTexture(BoundaryModel.Meshes["snow_blocks"], "snow");
                     break;
+                case MapTheme.Halloween:
+                    BoundaryModel = ModelGlobals.GameBoundaryHalloween.Asset;
+                    LoadHalloweenTextures();
+                    return;
             }
             SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
             SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
@@ -259,6 +295,20 @@ public static class GameScene {
             SetBlockTexture(BoundaryModel.Meshes["shadow_interior_vertical"], BoundaryTextureContext.block_shadow_b); // polygon7
             SetBlockTexture(BoundaryModel.Meshes["shadow_corner"], BoundaryTextureContext.block_shadow_b);
         }
+
+        static void LoadHalloweenTextures() {
+            foreach (var (meshName, path) in _halloweenPaths)
+                _halloweenTextures[meshName] = GameResources.GetGameResource<Texture2D>(path, premultiply: true);
+
+            _halloweenMeshes = BoundaryModel.Meshes.OrderBy(x => HalloweenLayer(x.Name)).ToArray();
+        }
+
+        /// <summary>0 is solid, 1 is a shadow and 2 is a cutout. Higher layers are drawn later.</summary>
+        static int HalloweenLayer(string meshName) => meshName switch {
+            "Shadow_C" or "Shadow_S" => 1,
+            "Cobweb" or "Fence" => 2,
+            _ => 0
+        };
 
         public static void RenderBounds() {
             // more hardcode yay
@@ -326,6 +376,33 @@ public static class GameScene {
                         mesh.Draw();
                     }
                     break;
+                case MapTheme.Halloween:
+                    foreach (var mesh in _halloweenMeshes) {
+                        var layer = HalloweenLayer(mesh.Name);
+                        if (UseCustomSceneColor && layer != 0)
+                            continue;
+
+                        foreach (BasicEffect effect in mesh.Effects) {
+                            effect.View = DrawParams.View;
+                            effect.Projection = DrawParams.Proj;
+                            effect.World = DrawParams.World;
+                            effect.TextureEnabled = true;
+                            effect.Alpha = layer == 1 ? 0.39f : 1f;
+
+                            if (UseCustomSceneColor) {
+                                effect.Texture = TextureGlobals.Pixels[SceneRenderColor];
+                                effect.LightingEnabled = false;
+                                continue;
+                            }
+
+                            effect.Texture = _halloweenTextures[mesh.Name];
+                            effect.SetDefaultGameLighting();
+                        }
+
+                        TankGame.Instance.GraphicsDevice.SamplerStates[0] = layer == 1 ? RenderGlobals.ClampingSampler : RenderGlobals.WrappingSampler;
+                        mesh.Draw();
+                    }
+                    break;
             }
         }
 
@@ -379,6 +456,11 @@ public static class GameScene {
     public static void InitializeRenderers() {
         FloorRenderer.LoadFloor();
         BoundsRenderer.LoadBounds();
+
+        if (Theme == MapTheme.Halloween)
+            SceneJackOLanterns.Spawn();
+        else
+            SceneJackOLanterns.Clear();
     }
 
     public static float Scale = 0.62f;

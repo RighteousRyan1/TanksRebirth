@@ -314,6 +314,7 @@ public sealed class SettingsTab : UIElement {
         var font = FontGlobals.RebirthFont;
         var center = Hitbox.Center.ToVector2();
         if (_page is null) {
+            // this would be really awkward on keyboards like AZERTY
             UIStyle.PillButton(spriteBatch, Hitbox, hovered);
             var arrow = _dir < 0 ? "< Q" : "E >";
             spriteBatch.DrawString(font, arrow, center, UIStyle.Ink, SettingsText.Scale(0.7f), 0f, font.MeasureString(arrow) / 2f);

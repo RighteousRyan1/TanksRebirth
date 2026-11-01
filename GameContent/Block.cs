@@ -208,7 +208,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
 
     public void AssignAssets(int type) {
         var model = GameScene.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack,
+            MapTheme.Vanilla or MapTheme.Halloween => IsAlternateModel ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack,
             MapTheme.Christmas => IsAlternateModel ? ModelGlobals.BlockStackAltSnowy : ModelGlobals.BlockStackSnowy,
             _ => throw new Exception()
         };
@@ -250,7 +250,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
 
         // this is abysmally shit. maybe make this ctor private and use something like Block.Create
         var modelname = GameScene.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/block_stack_alt" : "Assets/models/scene/block_stack",
+            MapTheme.Vanilla or MapTheme.Halloween => IsAlternateModel ? "Assets/models/scene/block_stack_alt" : "Assets/models/scene/block_stack",
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/block_stack_alt_snowy" : "Assets/christmas/block_stack_snowy",
             _ => ""
         };

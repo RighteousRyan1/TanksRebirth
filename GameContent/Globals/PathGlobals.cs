@@ -6,6 +6,7 @@ public static class PathGlobals {
 
     public const string COSMETICS_PATH = MODEL_PATH + "cosmetics/";
     public const string CHRISTMAS_PATH = ASSETS_PATH + "christmas/";
+    public const string HALLOWEEN_PATH = ASSETS_PATH + "halloween/";
 
     public const string MODEL_PATH = ASSETS_PATH + "models/";
     public const string SCENE_PATH = MODEL_PATH + "scene/";

@@ -38,6 +38,8 @@ public static class ModelGlobals {
     public static Resource<Model> BlockStackSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_snowy");
     public static Resource<Model> BlockStackAltSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_alt_snowy");
 
+    public static Resource<Model> GameBoundaryHalloween = new(PathGlobals.HALLOWEEN_PATH, "outer_bounds_halloween");
+
     // room scene models
     public static Resource<Model> Room = new(PathGlobals.SKYBOX_PATH, "room");
     public static Resource<Model> Hut = new(PathGlobals.SCENE_PATH, "hut");
