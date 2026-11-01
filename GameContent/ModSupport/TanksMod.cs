@@ -6,12 +6,14 @@ namespace TanksRebirth.GameContent.ModSupport;
 
 /// <summary>A class that contains an entrypoint into the game.</summary>
 public abstract class TanksMod : ILoadable {
+    /// <summary>A struct containing many things pertaining to the contents of a mod, such as added mod content, dependencies/loaded assemblies, and more.</summary>
+    public ModData Data = new();
     /// <summary>The folder within your mod path that contains project references with <c>.dll</c>.</summary>
-    public string RefsFolder { get;} = "modrefs";
-    /// <summary>The display name of this mod. Generally named the internal name, but split by PascalCase.</summary>
-    public virtual string Name { get; internal set; } = "";
+    public string RefsFolder { get; } = "modrefs";
+    /// <summary>Contains the frontend display information (e.g: name, description).</summary>
+    public ModInfo ModInfo { get; internal set; }
     /// <summary>The internal name of this mod. This is the name of the project the mod was built in.</summary>
-    public string InternalName { get; internal set; } = "";
+    public string InternalName { get; internal set; } = string.Empty;
     /// <summary>The local path to this mod.</summary>
     public string ModPath => Path.Combine(TankGame.SaveDirectory, "Mods", InternalName);
     /// <summary>The place where music for tanks is loaded from in your mod.</summary>
@@ -38,7 +40,7 @@ public abstract class TanksMod : ILoadable {
     /// <br></br>Do note that this parameter should only be true for things like 3D models, shaders, and others of the like which are not loaded pre-compiled.</param>
     /// <returns>The imported asset.</returns>
     public T ImportAsset<T>(string path, bool raw = false) where T : class {
-        var defaultContentPath = Path.Combine(TankGame.GameDirectory, TankGame.Instance.Content.RootDirectory);
+        var defaultContentPath = Path.Combine(TankGame.Instance.GameDirectory, TankGame.Instance.Content.RootDirectory);
         TankGame.Instance.Content.RootDirectory = ModPath;
 
         T asset;

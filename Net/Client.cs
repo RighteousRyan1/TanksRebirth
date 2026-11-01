@@ -1,14 +1,20 @@
-﻿using LiteNetLib;
+using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.IO;
 using System.Linq;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.GameContent.UI;
+
 using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.Net;
@@ -18,6 +24,7 @@ public class Client {
     public static event ClientStart? OnClientStart;
     public delegate void ClientDisconnected(Client client);
     public static event ClientDisconnected? OnClientDisconnect;
+
     public static NetManager ClientManager;
     public static EventBasedNetListener ClientListener;
     public static NetPeer NetClient;
@@ -45,6 +52,9 @@ public class Client {
     }
 
     public static void CreateClient(string username) {
+        // a client from an earlier session that was never shut down
+        ClientManager?.Stop();
+
         ClientListener = new();
         ClientManager = new(ClientListener) {
             NatPunchEnabled = true,
@@ -55,12 +65,12 @@ public class Client {
 
         Client c = new(0, username);
 
-        TankGame.ClientLog.Write($"Created a new client with name '{username}'.", Internals.LogType.Debug);
+        TankGame.ClientLog.Write($"Created a new client with name '{username}'.", Internals.RebirthLogLevel.Debug);
         NetPlay.CurrentClient = c;
     }
 
     public static void AttemptConnectionTo(string address, int port, string password) {
-        TankGame.ClientLog.Write($"Attempting connection to server...", Internals.LogType.Debug);
+        TankGame.ClientLog.Write($"Attempting connection to server...", Internals.RebirthLogLevel.Debug);
         ClientManager?.Start();
         NetClient = ClientManager!.Connect(address, port, password);
         if (NetClient is not null)
@@ -85,6 +95,34 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
+    /// <summary>Sends the host's mission result and everyone's lives, so clients end the mission the same way.</summary>
+    public static void SendMissionEnd(int restartTime, MissionEndContext context, bool extraLife) {
+        if (MainMenuUI.IsActive || !IsConnected() || !IsHost())
+            return;
+
+        NetDataWriter message = new();
+        message.Put(PacketID.MissionEnd);
+
+        message.Put(restartTime);
+        message.Put((int)context);
+        message.Put(extraLife);
+        message.Put(CampaignGlobals.LoadedCampaign.CurrentMissionId);
+
+        message.Put(PlayerTank.Lives.Length);
+        for (int i = 0; i < PlayerTank.Lives.Length; i++)
+            message.Put(PlayerTank.Lives[i]);
+
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
+    }
+    public static void SendStartOver() {
+        if (MainMenuUI.IsActive || !IsConnected() || !IsHost())
+            return;
+
+        NetDataWriter message = new();
+        message.Put(PacketID.StartOver);
+
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
+    }
     public static void SendKillCounts() {
         if (MainMenuUI.IsActive || !IsConnected())
             return;
@@ -99,7 +137,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     // int kind for the kind of plane soon?
-    public static void SendAirplaneSpawn(Vector2 spawnPos, Vector2 velocity) {
+    public static void SendAirplaneSpawn(Vector3 spawnPos, Vector3 velocity) {
         if (MainMenuUI.IsActive || !IsConnected())
             return;
 
@@ -226,14 +264,11 @@ public class Client {
         message.Put(shell.Velocity);
         message.Put(shell.RicochetsRemaining);
         message.Put(shell.Owner!.WorldId);
-        message.Put(shell.UID);
+        message.Put(shell.NetId);
+        message.Put(shell.VolleyId);
 
-        // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
-
-        // FIXME: could probably use more syncing... who cares?
-
-
-        NetClient.Send(message, DeliveryMethod.Sequenced);
+        // reliable: a lost fire message means a shell that exists for the shooter but nobody else
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     // maybe make contexts serializable?
     public static void SyncDamage(int hurtId, Color colorOverride) {
@@ -253,10 +288,7 @@ public class Client {
             return;
         NetDataWriter message = new();
         message.Put(PacketID.ShellDestroy);
-        //sending the shell UID on the current client.
-        message.Put(shell.UID);
-        // send the index of the shell in the owner's OwnedShell array for destruction on other clients
-        // message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
+        message.Put(shell.NetId);
         message.Put((byte)cxt);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
@@ -268,22 +300,23 @@ public class Client {
         NetDataWriter message = new();
         message.Put(PacketID.MineDetonate);
 
-        message.Put(mine.Id);
+        message.Put(mine.NetId);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-    public static void SyncMinePlace(Vector2 position, float detonateTime, int id) {
+    public static void SyncMinePlace(Mine mine) {
         if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
         message.Put(PacketID.MinePlacement);
 
-        message.Put(position);
-        message.Put(detonateTime);
-        message.Put(id);
+        message.Put(mine.Position);
+        message.Put(mine.DetonateTime);
+        message.Put(mine.Owner?.WorldId ?? -1);
+        message.Put(mine.NetId);
 
-        NetClient.Send(message, DeliveryMethod.Sequenced);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendMessage(string text, Color color, string sender) {
         if (!IsConnected())
@@ -306,69 +339,19 @@ public class Client {
 
         Server.NetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
     }
-    /// <summary>
-    /// Sends a campaign through the connected server.
-    /// 
-    /// <para></para>
-    /// 
-    /// Sends in this order: <para></para>
-    ///     Sends Campaign properties (name, lives, bg color, strip color), Mission Count
-    ///     Then sends each: Block Count, Tank Count, Mission Name, Mission Note <para></para>
-    ///         Then sends each: Mission Block (Position, Type, Stack, TpLink) <para></para>
-    ///             Finally, sends each: Mission TankTemplate (Position, Rotation, IsPlayer, Team)
-    ///             if IsPlayer is true, send PlayerType, otherwise send AiTier
-    /// 
-    /// </summary>
-    /// <param name="campaign">The campaign to send.</param>
-    public static void SendCampaignBytes(Campaign campaign) {
+    public static void SendCampaignByName(string name, int missionId) {
         if (!IsConnected())
             return;
         NetDataWriter message = new();
         message.Put(PacketID.SendCampaign);
 
-        message.Put(campaign.MetaData.Name);
-        message.Put(campaign.MetaData.StartingLives);
-        message.Put(campaign.MetaData.BackgroundColor);
-        message.Put(campaign.MetaData.MissionStripColor);
-
-        message.Put(campaign.CachedMissions.Length);
-
-        foreach (var mission in campaign.CachedMissions) {
-            message.Put(mission.Blocks.Length);
-            message.Put(mission.Tanks.Length);
-
-            message.Put(mission.Name);
-            message.Put(mission.Note);
-
-            foreach (var block in mission.Blocks) {
-                message.Put(block.Position);
-                message.Put(block.Type);
-                message.Put(block.Stack);
-                message.Put(block.TpLink);
-            }
-            foreach (var tank in mission.Tanks) {
-                message.Put(tank.Position);
-                message.Put(tank.Rotation);
-                message.Put(tank.IsPlayer);
-                message.Put(tank.Team);
-
-                if (tank.IsPlayer)
-                    message.Put(tank.PlayerType);
-                else
-                    message.Put(tank.AiTier);
-            }
-        }
-
-        NetClient.Send(message, DeliveryMethod.Sequenced);
-    }
-    public static void SendCampaignByName(string name, int missionId) {
-        if (!IsConnected())
-            return;
-        NetDataWriter message = new();
-        message.Put(PacketID.SendCampaignByName);
-
         message.Put(name);
         message.Put(missionId);
+
+        // every client plays this game with the same seed
+        var seed = Server.NewSessionSeed();
+        Server.SetSessionSeed(seed);
+        message.Put(seed);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
@@ -414,14 +397,14 @@ public class Client {
         NetDataWriter message = new();
 
         message.Put(PacketID.SyncDifficulties);
-        foreach (var item in Difficulties.Types) {
-            message.Put(item.Value);
+        // by key, only what isn't at its default: clients reset everything else, and skip keys they don't have (mods)
+        var values = Modifiers.NonDefaultValues();
+        message.Put(values.Count);
+        foreach (var (key, value) in values) {
+            message.Put(key);
+            message.Put(value);
         }
-        message.Put(Difficulties.RandomTanksLower);
-        message.Put(Difficulties.RandomTanksUpper);
-        message.Put(Difficulties.MonochromeValue);
-        message.Put(Difficulties.DisguiseValue);
-        NetClient.Send(message, DeliveryMethod.Sequenced);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendMapPing(Vector3 location, int pingId, int playerId) {
         NetDataWriter message = new();
@@ -433,19 +416,32 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
+    /// <summary>Leaves the server and resets everything multiplayer, so a new game can be hosted or joined. If this client is the host, the server is
+    /// stopped and every other client is disconnected. Safe to call more than once.</summary>
     public static void Disconnect() {
         NetPlay.UnmapClientNetworking();
 
         // tells all other clients that the host disconnected.
         NetPlay.TryUnmapServerNetworking();
 
-        Client.NetClient.Disconnect();
+        NetClient?.Disconnect();
+        ClientManager?.Stop();
+        NetClient = null;
 
-        for (int i = PlayerID.Red; i <= PlayerID.Yellow; i++)
-            GameHandler.AllPlayerTanks[i]?.Destroy(new TankHurtContextOther(), false);
+        // leaving mid game goes back to the main menu
+        if (!MainMenuUI.IsActive)
+            GameUI.QuitOut(true);
+
+        // the main menu puts this client's tank back when it isn't connected
+        for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++)
+            GameHandler.AllPlayerTanks[i]?.Remove(true);
 
         NetPlay.CurrentClient = null;
         NetPlay.CurrentServer = null;
+        NetPlay.PeerMap.Clear();
+        NetPlay.ReversePeerMap.Clear();
+        NetPlay.LobbyClientCount = 0;
+        LobbyDataReceived = false;
 
         Server.ConnectedClients = null;
         Server.NetManager = null;

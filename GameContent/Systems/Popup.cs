@@ -7,10 +7,9 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent.Systems;
 
 // TODO: finish
-public class Popup
-{
+public class Popup {
     public enum PopupAnchor {
-        Top, 
+        Top,
         Bottom
     }
 
@@ -46,8 +45,7 @@ public class Popup
         };
         // from here we start the popup appearance, then end it later
         Task.Run(async () => {
-            switch (Anchor)
-            {
+            switch (Anchor) {
                 case PopupAnchor.Top:
                     if (_curPos.Y < destination)
                         _curPos.Y += Easing;

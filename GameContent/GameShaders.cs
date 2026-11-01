@@ -7,25 +7,69 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
 #pragma warning disable
-public class GameShaders
-{
-    public static Effect MouseShader { get; private set; }
+public class GameShaders {
     public static Effect GaussianBlurShader { get; private set; }
     public static Effect LanternShader { get; private set; }
     public static Effect AnimatedRainbow { get; private set; }
+    public static Effect OriginalTankShader { get; private set; }
+    public static Texture2D BlueTankEnvironment { get; private set; }
 
     public static float BlurFactor = 0.0075f;
 
+    /// <summary>How strongly a tank's wooden trim is tinted toward its team color, where 0 = untouched, 1 = fully colored.</summary>
+    public static float TeamTintStrength = 0.55f;
+
     public static void Initialize() {
         GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/shaders/gaussian_blur");
-        MouseShader = GameResources.GetGameResource<Effect>("Assets/shaders/mouse");
         LanternShader = GameResources.GetGameResource<Effect>("Assets/shaders/lantern");
         AnimatedRainbow = GameResources.GetGameResource<Effect>("Assets/shaders/rainbow_grad_anim");
+        OriginalTankShader = GameResources.GetGameResource<Effect>("Assets/shaders/tank");
+        BlueTankEnvironment = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/tnk_tank_env");
+    }
+
+    /// <param name="teamColor">If set, the mesh's wooden trim is tinted with this color (see <see cref="Tanks.Tank.ShowTeamVisuals"/>).</param>
+    /// <param name="sceneLit">Whether the scene's light darkens / tints the tank like it does other models.</param>
+    public static void DrawTankMesh(ModelMesh mesh, Matrix world, Matrix view, Matrix projection,
+        Texture2D texture, float opacity, bool useEnvironment = false, Color? teamColor = null, bool sceneLit = true) {
+        // the tank shader isn't a BasicEffect, so tell the lighting system about this mesh directly
+        LightingSystem.Submit(mesh, world, view, projection, opacity);
+
+        var worldView = world * view;
+        OriginalTankShader.Parameters["WorldView"].SetValue(worldView);
+        OriginalTankShader.Parameters["NormalMatrix"].SetValue(Matrix.Transpose(Matrix.Invert(worldView)));
+        OriginalTankShader.Parameters["Projection"].SetValue(projection);
+        OriginalTankShader.Parameters["LightPosition"].SetValue(
+            Vector3.TransformNormal(Vector3.UnitY, view) * 1e10f);
+        OriginalTankShader.Parameters["Opacity"].SetValue(opacity);
+        OriginalTankShader.Parameters["HasEnvironment"].SetValue(useEnvironment ? 1f : 0f);
+        OriginalTankShader.Parameters["EnvironmentStrength"].SetValue(useEnvironment ? 1f : 0f);
+        OriginalTankShader.Parameters["DiffuseTexture"].SetValue(texture);
+        OriginalTankShader.Parameters["EnvironmentTexture"].SetValue(BlueTankEnvironment);
+        OriginalTankShader.Parameters["TeamTint"]?.SetValue(teamColor.HasValue ? TeamTintStrength : 0f);
+        OriginalTankShader.Parameters["TeamColor"]?.SetValue(teamColor?.ToVector4() ?? Vector4.Zero);
+        OriginalTankShader.Parameters["SceneLight"]?.SetValue(sceneLit ? StaticLighting.RelativeSceneLight : Vector3.One);
+
+        var parts = mesh.MeshParts.ToArray();
+        var originalEffects = parts.Select(part => part.Effect).ToArray();
+        try {
+            foreach (var part in parts)
+                part.Effect = OriginalTankShader;
+
+            TankGame.Instance.GraphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
+            TankGame.Instance.GraphicsDevice.SamplerStates[1] = SamplerState.LinearClamp;
+            mesh.Draw();
+        }
+        finally {
+            for (int i = 0; i < parts.Length; i++)
+                parts[i].Effect = originalEffects[i];
+        }
     }
     //static float val = 1f;
     public static void UpdateShaders() {
@@ -35,28 +79,11 @@ public class GameShaders
         AnimatedRainbow.Parameters["oSpeed"].SetValue(0.5f);
         AnimatedRainbow.Parameters["oMinLum"].SetValue(0.1f);
 
-        MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
-        var value = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
-        MouseShader.Parameters["oColor"].SetValue(value.ToVector3());
-        /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3());*/
-        MouseShader.Parameters["oSpeed"].SetValue(15f);
-        MouseShader.Parameters["oSpacing"].SetValue(10f);
-        // MouseShader.Parameters["oRotation"].SetValue(MathHelper.Pi);
-
-        GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
-        GaussianBlurShader.Parameters["oBlurFactor"].SetValue(BlurFactor);
-        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenuUI.IsActive);
-
-        /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
-            val += 0.01f;
-        else if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
-            val -= 0.01f;*/
-
 
         LanternShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         //TestShader.Parameters["oBend"]?.SetValue(val);
         //TestShader.Parameters["oDistortionFactor"].SetValue(MouseUtils.MousePosition.X / WindowUtils.WindowWidth);
-        if (Difficulties.Types["LanternMode"]) {
+        if (Modifiers.IsOn(Modifiers.LANTERN)) {
             var activeTanks = GameHandler.AllPlayerTanks.Where(x => x is not null && !x.IsDestroyed).ToArray();
 
             if (activeTanks.Length == 0 || MainMenuUI.IsActive) {
@@ -93,4 +120,3 @@ public class GameShaders
         }
     }
 }
-

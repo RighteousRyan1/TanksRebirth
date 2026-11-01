@@ -1,13 +1,13 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
-using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.ModSupport;
@@ -22,9 +22,14 @@ namespace TanksRebirth.GameContent.ModSupport;
 /// Create your own tank for this game!
 /// </summary>
 public class ModTank : ILoadable, IModContent {
-    private List<OggMusic> _music;
-    private Texture2D? _texture;
+    List<OggMusic> _music;
+    Texture2D? _texture;
 
+    public string ContentKey { get; internal set; }
+    string IModContent.ContentKey {
+        get => ContentKey;
+        set => ContentKey = value;
+    }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModTank"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     /// <summary>The AI Tier ID for the modded tank.</summary>
@@ -33,13 +38,18 @@ public class ModTank : ILoadable, IModContent {
     public virtual string Texture { get; internal set; }
 
     public AITank AITank { get; internal set; }
-    /// <summary>Should include the name of the tank type without 'Tank' after it. 
+    /// <summary>Should include the name of the tank type without 'Owner' after it. 
     /// <para>
-    /// i.e: a "Brown Tank" would just be called "Brown"
+    /// i.e: a "Brown Owner" would just be called "Brown"
     /// </para>
     /// The English localized name will be the name that gets added to the game internally.
     /// </summary>
     public virtual LocalizedString Name { get; internal set; }
+    /// <summary>
+    /// Describe how your tank works, in preferably multiple languages.<br></br>
+    /// This description will appear in the level editor menu.
+    /// </summary>
+    public virtual LocalizedString Description { get; internal set; }
     /// <summary>The color to associate with this <see cref="ModTank"/>. This color will be used for the "Hit!" graphics, the post-game
     /// results screen, and the color of the tank chunks when the tank is destroyed. Defaults to <see cref="Color.Black"/>.</summary>
     public virtual Color AssociatedColor => Color.Black;
@@ -53,7 +63,7 @@ public class ModTank : ILoadable, IModContent {
     public virtual void OnLoad() { }
     /// <summary>Manually unload things that may not be automatically unloaded by the game.</summary>
     public virtual void OnUnload() { }
-    //public virtual void TargetsSpotted(List<Tank> tanksSpotted) { }
+    //public virtual void TargetsSpotted(List<Owner> tanksSpotted) { }
     /// <summary>Change things about the tank when it is spawned in the world. Be absolutely sure to call <c>base.PostApplyDefaults(AITank)</c>
     /// to ensure that your modded tank's texture is placed onto any spawning tanks that are this <see cref="ModTank"/>.</summary>
     public virtual void PostApplyDefaults() {
@@ -68,9 +78,11 @@ public class ModTank : ILoadable, IModContent {
     /// <summary>Called when this tank detects danger.
     /// <br></br>Use <see cref="AITank.NearbyDangers"/> to access dangerous objects near the tank.</summary>
     public virtual void DangerDetected() { }
-    /// <summary>Called when this tank shoots.</summary>
+    /// <summary>Called for each <see cref="Shell"/> a tank shoots.</summary>
     /// <param name="shell">The shell which was shot.</param>
     public virtual void Shoot(Shell shell) { }
+    /// <summary>Called once when a tank shoots.</summary>
+    public virtual void Fire() { }
     /// <summary>Called when this tank lays a mine.</summary>
     /// <param name="mine">The mine that was laid</param>
     public virtual void LayMine(Mine mine) { }
@@ -82,32 +94,37 @@ public class ModTank : ILoadable, IModContent {
     /// <br></br>Metadata will STILL be updated if returned false. (i.e: <see cref="AITank.NearbyDangers"/>, <see cref="AITank.TanksNearMineAwareness"/>, etc)
     /// <br></br>Return true if you wish to keep standard tank behavior, return false if you wish to not use it.</summary>
     public virtual bool CustomAI() => true;
-    // Pre/Post render soon...
 
+    // Pre/Post render soon...
     internal static int unloadOffset = 0;
     internal void Unload() {
-        var name = Name.GetLocalizedString(LangCode.English)!;
-        // if more than one mod has a modded tank, the game unloads that, and indexes are not adjusted... unloadOffset fixes that
+        var name = Name[LangCode.English]!;
+        // if more than one mod has a modded tank, the game unloads that, and indices are not adjusted... unloadOffset fixes that
         TankID.Collection.TryRemove(Type - unloadOffset);
         AITank.TankDestructionColors.Remove(Type);
         if (!HasSong)
-            TankMusicSystem.TierExclusionRule_DoesntHaveSong.Remove(Type); 
+            TankMusicSystem.NoSongRule.Remove(Type); 
         for (int i = 0; i < _music.Count; i++) {
             _music[i].Stop();
             _music[i].BackingAudio.Dispose();
-            TankMusicSystem.Audio.Remove($"{name.ToLower()}{i + 1}");
+            var audioName = _music.Count > 1 ? $"{name.ToLower()}{i + 1}" : name.ToLower();
+            TankMusicSystem.Audio.Remove(audioName);
         }
         Tank.Assets.Remove("tank_" + name.ToLower());
     }
 
-    internal void Load() {
+    internal void Register() {
         _music = [];
 
-        var name = Name.GetLocalizedString(LangCode.English)!;
+        var name = Name[LangCode.English]!;
 
+        // this might entirely need to be saved when converting to ModName.TankName saving/loading
         Type = TankID.Collection.ForcefullyInsert(name);
+        ModRegistry.idToModTank.Add(Type, this);
         TankMusicSystem.MaxSongNumPerTank[Type] = Songs;
         AITank.TankDestructionColors[Type] = AssociatedColor;
+        DifficultyAlgorithm.TankDiffs[Type] = 0f; // introduce property?
+
         if (Songs > 1) {
             for (int i = 0; i < Songs; i++) {
                 var fileName = $"{name.ToLower()}{i + 1}";
@@ -122,7 +139,7 @@ public class ModTank : ILoadable, IModContent {
             // why was the first parameter "fileName" before instead of name.ToLower()?
             TankMusicSystem.Audio.Add(name.ToLower(), oggMusic);
         } else if (!HasSong) {
-            TankMusicSystem.TierExclusionRule_DoesntHaveSong.Add(Type);
+            TankMusicSystem.NoSongRule.Add(Type);
         }
 
         _texture = Mod.ImportAsset<Texture2D>(Texture);

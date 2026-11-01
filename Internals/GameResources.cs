@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Graphics.DynamicLighting;
 
 namespace TanksRebirth.Internals;
 
@@ -47,6 +48,10 @@ public static class GameResources {
         }
 
         var loaded = manager.Load<T>(name);
+
+        // lets the dynamic lighting system see this model's draws (no visual change on its own)
+        if (loaded is Model model)
+            LightingSystem.Instrument(model);
 
         ResourceCache[name] = loaded;
         return loaded;
@@ -138,6 +143,9 @@ public static class GameResources {
 
         var generic = t.MakeGenericMethod(typeof(T)).Invoke(manager, [assetName, null]) as T;
 
+        if (generic is Model model)
+            LightingSystem.Instrument(model);
+
         return generic;
     }
 
@@ -145,6 +153,9 @@ public static class GameResources {
         var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
 
         var generic = t.MakeGenericMethod(typeof(T)).Invoke(TankGame.Instance.Content, [assetName, null]) as T;
+
+        if (generic is Model model)
+            LightingSystem.Instrument(model);
 
         return generic;
 

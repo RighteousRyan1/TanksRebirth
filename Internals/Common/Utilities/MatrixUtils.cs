@@ -1,17 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class MatrixUtils
-{
-    public static Vector2 ConvertWorldToScreen(Vector3 position, Matrix world, Matrix view, Matrix projection)
-    {
+public static class MatrixUtils {
+    public static Vector2 ConvertWorldToScreen(Vector3 position, Matrix world, Matrix view, Matrix projection) {
         var viewport = TankGame.Instance.GraphicsDevice.Viewport;
 
         var proj = viewport.Project(position, projection, view, world);
@@ -23,17 +17,13 @@ public static class MatrixUtils
         // if i replace proj.Y with proj.Z it could be an indicator something is offscreen...?
         return new(proj.X, proj.Y);
     }
-    public static Vector3 ConvertScreenToWorld(Vector3 position, Matrix world, Matrix view, Matrix projection)
-    {
+    public static Vector3 ConvertScreenToWorld(Vector3 position, Matrix world, Matrix view, Matrix projection) {
         var viewport = TankGame.Instance.GraphicsDevice.Viewport;
-
         var proj = viewport.Unproject(position, projection, view, world);
-
         return proj;
     }
 
-    public static Vector3 GetWorldPosition(Vector2 screenCoords, float offset = 0f)
-    {
+    public static Vector3 GetWorldPosition(Vector2 screenCoords, float offset = 0f) {
         Plane gamePlane = new(Vector3.UnitY, offset);
 
         var nearPlane = ConvertScreenToWorld(new Vector3(screenCoords, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
@@ -49,14 +39,59 @@ public static class MatrixUtils
         return mouseRay.Position + mouseRay.Direction * distance.Value;
     }
 
-    public static Ray GetMouseToWorldRay()
-    {
+    /// <summary>
+    /// Gets a ray that is representative of where the mouse would cast towards the world.
+    /// </summary>
+    public static Ray GetMouseToWorldRay() {
         var nearPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
         var farPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         return new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
     }
+    /// <summary>
+    /// Extracts the camera rotation (pitch, yaw, roll) from a view matrix.
+    /// </summary>
+    public static EulerAngles GetRotationFromView(Matrix view) {
+        var camWorld = Matrix.Invert(view);
 
+        // quat that represents the rotation
+        var q = Quaternion.CreateFromRotationMatrix(camWorld);
+
+        float pitch, yaw, roll;
+
+        // pitch
+        float sinr_cosp = 2f * (q.W * q.X + q.Y * q.Z);
+        float cosr_cosp = 1f - 2f * (q.X * q.X + q.Y * q.Y);
+        pitch = MathF.Atan2(sinr_cosp, cosr_cosp);
+
+        // yaw
+        float sinp = 2f * (q.W * q.Y - q.Z * q.X);
+        if (MathF.Abs(sinp) >= 1f)
+            yaw = MathF.CopySign(MathHelper.PiOver2, sinp); // clamp to 90 degs
+        else
+            yaw = MathF.Asin(sinp);
+
+        // roll
+        float siny_cosp = 2f * (q.W * q.Z + q.X * q.Y);
+        float cosy_cosp = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
+        roll = MathF.Atan2(siny_cosp, cosy_cosp);
+
+        return new EulerAngles {
+            Pitch = pitch,
+            Yaw = yaw,
+            Roll = roll
+        };
+    }
+
+    /// <summary>Whether <paramref name="projection"/> is orthographic.</summary>
+    public static bool IsOrthographic(Matrix projection) => projection.M44 == 1f;
+    /// <summary>
+    /// Checks if two given matrices are "identical."
+    /// </summary>
+    /// <param name="m1">The first matrix.</param>
+    /// <param name="m2">The second matrix.</param>
+    /// <param name="epsilon">The "give" for the equality check. If too low, this check can fail even though the matrices are indeed equal, due to IEEE inaccuracy.</param>
+    /// <returns>Whether the two matrices are within <paramref name="epsilon"/>.</returns>
     public static bool AreMatricesEqual(Matrix m1, Matrix m2, float epsilon = 0.0001f) {
         return Math.Abs(m1.M11 - m2.M11) < epsilon &&
                Math.Abs(m1.M12 - m2.M12) < epsilon &&

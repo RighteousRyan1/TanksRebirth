@@ -1,78 +1,91 @@
-using TanksRebirth.Internals.UI;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.Internals.Common.Utilities;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using System.Linq;
-using System;
-using TanksRebirth.GameContent.Systems;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TanksRebirth.GameContent.UI;
-using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.Net;
+using System;
+using System.Linq;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.Systems.PingSystem;
-using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Cosmetics;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Graphics.Metrics;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.LevelSystem;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.PingSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
+using TanksRebirth.Internals.Common.Framework.Animation;
+using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.UI;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
 #pragma warning disable CS8618
 public class GameHandler {
 
-    public const int MAX_AI_TANKS = 50;
+    public const int MAX_AI_TANKS = 60;
     public const int MAX_PLAYERS = 4;
-    public const int MAX_PARTICLES = 15000;
+    //
+    // public const int MAX_PARTICLES = 15000; // removed for now
 
     public delegate void PostRender();
     public static event PostRender? OnPostRender;
     public delegate void PostUpdate();
     public static event PostUpdate? OnPostUpdate;
 
-    public static ParticleManager Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
-    public static XpBar ExperienceBar;
+    public static ParticleManager Particles { get; } = new(() => CameraGlobals.GameView, () => CameraGlobals.GameProjection) { DrawsFootprints = true };
+    public static XpBar ExpBar;
 
-    public static AITank[] AllAITanks = new AITank?[MAX_AI_TANKS];
-    public static PlayerTank[] AllPlayerTanks = new PlayerTank?[MAX_PLAYERS];
-    public static Tank[] AllTanks = new Tank?[MAX_PLAYERS + MAX_AI_TANKS];
+    public static byte ActiveTankCount;
+    public static byte ActiveAITankCount;
+    public static byte ActivePlayerTankCount;
+    public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
+    public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
+    public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
     internal static void MapEvents() {
         CampaignGlobals.OnMissionEnd += IntermissionHandler.DoEndMissionWorkload;
+        Tank.OnDamage += AttemptIntermission;
     }
 
     internal static void Initialize() {
-        Client.ClientRandSeed = DateTime.Now.Millisecond;
+        Client.ClientRandSeed = (int)DateTime.Now.Ticks;
         Client.ClientRandom = new(Client.ClientRandSeed);
 
         AllAITanks = new AITank[MAX_AI_TANKS];
         AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
         AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
-        ExperienceBar = new() {
+        ExpBar = new() {
             Level = (ushort)TankGame.SaveFile.ExpLevel
         };
-        ExperienceBar.Value = TankGame.SaveFile.ExpLevel - ExperienceBar.Level;
-        ExperienceBar.ApproachValue = ExperienceBar.Value;
+        ExpBar.Value = TankGame.SaveFile.ExpLevel - ExpBar.Level;
+        ExpBar.ApproachValue = ExpBar.Value;
 
-        ExperienceBar.Alignment = Anchor.LeftCenter;
-        ExperienceBar.FillColor = Color.Lime;
-        ExperienceBar.EmptyColor = Color.Red;
+        ExpBar.Alignment = Anchor.LeftCenter;
+        ExpBar.FillColor = Color.Lime;
+        ExpBar.EmptyColor = Color.Red;
 
-        GameSceneUI.Initialize();
         CosmeticsUI.Initialize();
-        RebirthMouse.Initialize();
     }
-    internal static void UpdateAll(GameTime gameTime) {
+
+    static void AttemptIntermission(Tank victim, bool destroy, ITankHurtContext context) {
+        if (!destroy) return;
+
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive)
+            CampaignProgression.CheckMissionCompletion();
+    }
+
+    internal static void GameLoopLogic(GameTime gameTime) {
+        ActiveTankCount = (byte)AllTanks.Count(t => t is not null);
+        ActiveAITankCount = (byte)AllAITanks.Count(t => t is not null);
+        ActivePlayerTankCount = (byte)AllPlayerTanks.Count(t => t is not null);
         /*void doTestWithFont() {
             var str = 
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
@@ -92,13 +105,12 @@ public class GameHandler {
         }
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
             doTestWithFont();*/
-        // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
 
-        ExperienceBar.Update();
+        ExpBar.Update();
+
         CosmeticsUI.Update();
-        RoomScene.Update();
 
-        Difficulties.GlobalManage();
+        Modifiers.GlobalManage();
 
         if (MainMenuUI.IsActive)
             PlayerTank.SetLives(999);
@@ -107,7 +119,7 @@ public class GameHandler {
 
         VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
-        if (RuntimeData.RunTime % 30 < RuntimeData.DeltaTime) {
+        if (RuntimeData.RunTime % 30 < RuntimeData.DeltaFrames) {
             Client.SendLives();
             Client.SendKillCounts();
         }
@@ -117,70 +129,66 @@ public class GameHandler {
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
         GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
-        if (InputUtils.KeyJustPressed(Keys.I)) {
-            new Shell(new Vector2(0, 100), -Vector2.UnitY * 2, ShellID.Standard, null);
-            new Shell(new Vector2(MouseUtils.Test.X * 10, -100), Vector2.UnitY * 2, ShellID.Standard, null);
-        }
-
-        if (Difficulties.Types["InfiniteLives"])
+        if (Modifiers.IsOn(Modifiers.INF_LIFE))
             PlayerTank.SetLives(PlayerTank.StartingLives);
 
         for (int i = 0; i < Animator.Animators.Count; i++)
-            Animator.Animators[i].PlayAnimation(gameTime);
+            Animator.Animators[i].PlayAnimationIfRunning(gameTime);
 
         foreach (var ping in IngamePing.AllIngamePings)
             ping?.Update();
 
-        if (!IntermissionSystem.IsAwaitingNewMission) {
-            foreach (var pTank in AllPlayerTanks)
-                pTank?.Update();
+        if (GameScene.UpdateAndRender) {
+            if (!IntermissionSystem.IsAwaitingNewMission) {
+                foreach (var pTank in AllPlayerTanks)
+                    pTank?.Update();
 
-            AIManager.ProcessAITanks();
+                // todo: reimpl
+                AIManager.UpdateAITanks();
 
-            foreach (var mine in Mine.AllMines)
-                mine?.Update();
+                foreach (var mine in Mine.AllMines)
+                    mine?.Update();
 
-            foreach (var bullet in Shell.AllShells)
-                bullet?.Update();
+                foreach (var bullet in Shell.AllShells)
+                    bullet?.Update();
 
-            foreach (var fp in TankFootprint.AllFootprints)
-                fp?.Update();
+                foreach (var fp in TankFootprint.AllFootprints)
+                    fp?.Update();
 
-            foreach (var p in Airplane.AllPlanes)
-                p?.Update();
-        }
-        if (CampaignGlobals.InMission) {
-            TankMusicSystem.Update();
-
-            foreach (var crate in Crate.crates)
-                crate?.Update();
-
-            foreach (var pu in Powerup.Powerups)
-                pu?.Update();
-        }
-        else {
-            foreach (var audio in TankMusicSystem.Audio.ToList()) {
-                audio.Value.Volume = 0;
-                audio.Value.Stop();
+                foreach (var p in Airplane.AllPlanes)
+                    p?.Update();
             }
+            if (CampaignGlobals.InMission) {
+                TankMusicSystem.Update();
+
+                foreach (var crate in Crate.AllCrates)
+                    crate?.Update();
+
+                foreach (var pu in Powerup.Powerups)
+                    pu?.Update();
+            }
+            else {
+                foreach (var audio in TankMusicSystem.Audio.ToList()) {
+                    audio.Value.Volume = 0;
+                    audio.Value.Stop();
+                }
+            }
+
+            // level editor update used to be here...?
+
+            foreach (var expl in Explosion.Explosions)
+                expl?.Update();
+
+            foreach (var cube in Block.AllBlocks)
+                cube?.OnUpdate();
+
+            if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LVL_DBG && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
+                EditorTile.UpdateAll();
+
+            Particles.UpdateParticles();
         }
 
         LevelEditorUI.Update();
-
-        foreach (var expl in Explosion.Explosions)
-            expl?.Update();
-
-        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive)
-            IntermissionHandler.HandleMissionChanging();
-
-        foreach (var cube in Block.AllBlocks)
-            cube?.OnUpdate();
-
-        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
-            foreach (var sq in PlacementSquare.Placements)
-                sq?.Update();
-
-        Particles.UpdateParticles();
 
         var mmActive = MainMenuUI.IsActive;
         if (mmActive)
@@ -204,67 +212,73 @@ public class GameHandler {
         OnPostUpdate?.Invoke();
     }
 
-    internal static void RenderAll() {
+    internal static void RenderAll(SpriteBatch spriteBatch) {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
-
-        if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
-            ExperienceBar.Position = new(WindowUtils.WindowWidth / 2 - ExperienceBar.Scale.X / 2, 50);
-            ExperienceBar.Scale = new(600, 20);
-            ExperienceBar.Alignment = Anchor.LeftCenter;
-            ExperienceBar.FillColor = Color.Green;
-            ExperienceBar.EmptyColor = Color.Red;
-            ExperienceBar.GainedColor = Color.Lime;
-            ExperienceBar.Render(TankGame.SpriteRenderer);
-        }
         
         // CHECK: move this back if necessary
         GameScene.RenderWorldModels();
         // TankFootprint.Draw();
 
-        foreach (var tank in AllTanks)
-            tank?.Render();
+        // TankGame.Instance.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        foreach (var tank in AllTanks) {
+            if (tank == null) continue;
+            // if (!CameraGlobals.ViewFrustum.Intersects(tank.Hurtbox)) continue;
+            tank.Render();
+        }
 
-        foreach (var cube in Block.AllBlocks)
-            cube?.OnRender();
+        // not worth doing culling logic for smaller tiny things. the tank render logic can be lengthy
 
-        foreach (var mine in Mine.AllMines)
-            mine?.Render();
+        if (GameScene.UpdateAndRender) {
 
-        foreach (var bullet in Shell.AllShells)
-            bullet?.Render();
+            foreach (var block in Block.AllBlocks)
+                block?.OnRender();
 
-        foreach (var mark in TankDeathMark.deathMarks)
-            mark?.Render();
+            foreach (var mine in Mine.AllMines)
+                mine?.Render();
 
-        foreach (var ping in IngamePing.AllIngamePings)
-            ping?.Render();
+            foreach (var bullet in Shell.AllShells)
+                bullet?.Render();
 
-        foreach (var p in Airplane.AllPlanes)
-            p?.Render();
+            foreach (var mark in TankDeathMark.DeathMarks)
+                mark?.Render();
 
-        //foreach (var print in TankFootprint.footprints)
-        //print?.Render();
+            foreach (var ping in IngamePing.AllIngamePings)
+                ping?.Render();
 
-        foreach (var crate in Crate.crates)
-            crate?.Render();
+            foreach (var p in Airplane.AllPlanes)
+                p?.Render();
 
-        foreach (var powerup in Powerup.Powerups)
-            powerup?.Render();
+            //foreach (var print in TankFootprint.footprints)
+            //print?.Draw();
 
-        Particles.RenderModelParticles();
+            foreach (var crate in Crate.AllCrates)
+                crate?.Render();
 
-        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
-            foreach (var sq in PlacementSquare.Placements)
-                sq?.Render();
+            foreach (var powerup in Powerup.Powerups)
+                powerup?.Render();
 
-        TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+            Particles.RenderModelParticles();
 
-        Particles.RenderParticles();
+            GameScene.RenderTransparentStuff();
+
+            if ((DebugManager.DebugLevel == DebugManager.Id.LVL_DBG && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
+                EditorTile.RenderAll();
+
+            TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+
+            Particles.RenderParticles(spriteBatch);
+        }
+
+        // shadows + lights, multiplied onto the world drawn so far. everything below is UI and stays unlit.
+        LightingSystem.EndFrame(TankGame.GameFrameBuffer);
+
+        foreach (var player in AllPlayerTanks)
+            player?.DrawExtras(spriteBatch);
 
         // only render the level editor if it's active
         // change depth stencil...?
         if (LevelEditorUI.IsActive) {
-            LevelEditorUI.Render();
+            LevelEditorUI.Render(spriteBatch);
         }
 
         // only draw if ingame + is multiplayer.
@@ -275,12 +289,14 @@ public class GameHandler {
         }
 
         IntermissionHandler.RenderCountdownGraphics();
+        WiimoteSystem.DrawWiimoteBatteryLife(TankGame.SpriteRenderer, FontGlobals.RebirthFont);
 
         OnPostRender?.Invoke();
     }
 
     public static void RenderUI() {
         foreach (var element in UIElement.AllUIElements.ToList()) {
+            if (!element.IsVisible) continue;
             // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
             if (element.Parent != null)
                 continue;
@@ -303,6 +319,6 @@ public class GameHandler {
         GameScene.InitializeRenderers();
         SceneManager.LoadGameScene();
         DebugManager.InitDebugUI();
-        PlacementSquare.InitializeLevelEditorSquares();
+        EditorTile.InitializeLevelEditorSquares();
     }
 }

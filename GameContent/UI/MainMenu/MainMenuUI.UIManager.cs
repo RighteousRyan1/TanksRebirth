@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Octokit;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
@@ -13,60 +14,68 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
-public static partial class MainMenuUI
-{
+public static partial class MainMenuUI {
     // ok are rendertargets just a death sentence???
     public static RenderTarget2D TextTarget;
 
-    private static readonly string tanksMessage =
-        $"Tanks Rebirth ALPHA v{RuntimeData.ShortVersion}" +
-        $"\nOriginal game and assets developed by Nintendo" +
-        $"\nProgrammed by RighteousRyan" +
-        $"\nArt and graphics by BigKitty1011" +
-        $"\nTANKS to all of our contributors, including:\n" +
-        $"\nDottik, Arram, TheGoldfishKing, LolXD87," +
-        $"\nAnotherGuy, Dymkar, Arctan Dev, 4mbro0s3-2," +
-        $"\nvsjoqvist, Tomat, nakamurash, timweh, Guthen, Vicerix";
+    static readonly string tanksMessage = $"Tanks Rebirth ALPHA v{RuntimeData.ShortVersion}";
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
+
     public enum UIState {
+        /// <summary>The "Loading Mods" menu state.</summary>
         LoadingMods,
+        /// <summary>The first menu the player sees after loading into the game.</summary>
         PrimaryMenu,
+        /// <summary>Where all of the buttons for controling the game are.</summary>
         PlayList,
+        /// <summary>Where the player's campaigns are.</summary>
         Campaigns,
-        Mulitplayer,
+        /// <summary>The multiplayer menu.</summary>
+        Multiplayer,
+        /// <summary>Where the player unlocks their cosmetic items.</summary>
         Cosmetics,
-        Difficulties,
+        /// <summary>Where the player manages their cosmetic items.</summary>
+        Customizing,
+        /// <summary>Where the player tweaks their gameplay experiences.</summary>
+        Modifiers,
+        /// <summary>Where the player changes their audio, graphics, and control settings.</summary>
         Settings,
-        StatsMenu
+        /// <summary>How the player views their all-time stats.</summary>
+        StatsMenu,
+        /// <summary>The menu where the player manages their mods.</summary>
+        ModsMenu,
+        /// <summary>The credits scene.</summary>
+        Credits
     }
-    private static UIState _menuState;
+    static UIState _menuState;
     public static UIState MenuState {
         get => _menuState;
         set {
             _menuState = value;
 
-            if (MenuCameraManipulations.ContainsKey(value)) {
+            if (MenuGraphicsStates.ContainsKey(value)) {
+                _goalBlur = MenuGraphicsStates[value].GaussianBlurFactor;
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: MenuCameraManipulations[value].Position));
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Position))
+                    .WithFrame(new(position: MenuGraphicsStates[value].Position, duration: CameraTransitionTime, easing: CameraEasingFunction));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: MenuCameraManipulations[value].Rotation));
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Rotation))
+                    .WithFrame(new(position: MenuGraphicsStates[value].Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
             }
             // if it doesn't have a proper camera position, just go to the regular one.
             else {
+                _goalBlur = DEFAULT_BLUR;
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: CamPosMain));
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Position))
+                    .WithFrame(new(position: CamPosMain, duration: CameraTransitionTime, easing: CameraEasingFunction));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: CamPosMainRotation));
+                    .WithFrame(new(position: CameraGlobals.PerspectiveCamera.Rotation))
+                    .WithFrame(new(position: CamPosMainRotation, duration: CameraTransitionTime, easing: CameraEasingFunction));
             }
             CameraPositionAnimator.Restart();
             CameraPositionAnimator.Run();
@@ -81,15 +90,16 @@ public static partial class MainMenuUI
     public static UITextButton StartMPGameButton;
     public static UITextButton DifficultiesButton;
 
-    private static UIElement[] _menuElements;
+    static UIElement[] _menuElements;
 
     internal static List<UIElement> campaignNames = [];
 
     public static UITextButton CosmeticsMenuButton;
     public static UITextButton StatsMenu;
+    public static UITextButton CreditsButton;
 
     public static void InitializeMain(SpriteFontBase font) {
-        PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
+        PlayButton = new(TankGame.GameLanguage.Menu.Play, font, Color.WhiteSmoke) {
             IsVisible = true,
         };
         PlayButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
@@ -98,31 +108,31 @@ public static partial class MainMenuUI
             MenuState = UIState.PlayList;
         };
 
-        PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke) {
+        PlayButton_Multiplayer = new(TankGame.GameLanguage.Menu.Multiplayer, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.MultiplayerFlavor
+            Tooltip = TankGame.GameLanguage.Menu.MultiplayerFlavor
         };
         PlayButton_Multiplayer.SetDimensions(() => new Vector2(700, 750).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
         PlayButton_Multiplayer.OnLeftClick = (uiElement) => {
             SetPlayButtonsVisibility(false);
             SetMPButtonsVisibility(true);
-            MenuState = UIState.Mulitplayer;
+            MenuState = UIState.Multiplayer;
         };
 
-        DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke) {
+        DifficultiesButton = new(TankGame.GameLanguage.Menu.Difficulties, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.DifficultiesFlavor
+            Tooltip = TankGame.GameLanguage.Menu.DifficultiesFlavor
         };
         DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
         DifficultiesButton.OnLeftClick = (element) => {
             ArrangeDifficultyButtons();
-            MenuState = UIState.Difficulties;
+            MenuState = UIState.Modifiers;
         };
 
-        PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke) {
+        PlayButton_SinglePlayer = new(TankGame.GameLanguage.Menu.SinglePlayer, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.SinglePlayerFlavor
+            Tooltip = TankGame.GameLanguage.Menu.SinglePlayerFlavor
         };
         PlayButton_SinglePlayer.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
@@ -132,38 +142,52 @@ public static partial class MainMenuUI
         };
         InitializeDifficultyButtons();
 
-        PlayButton_LevelEditor = new(TankGame.GameLanguage.LevelEditor, font, Color.WhiteSmoke) {
+        PlayButton_LevelEditor = new(TankGame.GameLanguage.Menu.LevelEditor, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.LevelEditFlavor
+            Tooltip = TankGame.GameLanguage.Menu.LevelEditFlavor
         };
         PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
         PlayButton_LevelEditor.OnLeftClick = (b) => {
             LevelEditorUI.Initialize();
             LevelEditorUI.TryOpen();
         };
-        CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke) {
+        CosmeticsMenuButton = new(TankGame.GameLanguage.Menu.CosmeticsMenu, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.CosmeticsFlavor
+            Tooltip = TankGame.GameLanguage.Menu.CosmeticsMenu,
+            OnLeftClick = (a) => {
+                CosmeticsUI.EnterMenu();
+
+                CosmeticsMenuButton.IsVisible = false;
+                SetPlayButtonsVisibility(false);
+                SetMPButtonsVisibility(false);
+                SetPrimaryMenuButtonsVisibility(false);
+
+                MenuState = UIState.Cosmetics;
+            }
         };
         CosmeticsMenuButton.SetDimensions(() => new Vector2(50, 50).ToResolution(), () => new Vector2(300, 50).ToResolution());
-        CosmeticsMenuButton.OnLeftClick += (elem) => {
-            CosmeticsMenuButton.IsVisible = false;
-            SetPlayButtonsVisibility(false);
-            SetMPButtonsVisibility(false);
-            SetPrimaryMenuButtonsVisibility(false);
 
-            MenuState = UIState.Cosmetics;
-        };
-        StatsMenu = new(TankGame.GameLanguage.GameStats, font, Color.WhiteSmoke) {
+        StatsMenu = new(TankGame.GameLanguage.Menu.GameStats, font, Color.WhiteSmoke) {
             IsVisible = false,
-            OnLeftClick = (a) => { MenuState = UIState.StatsMenu; },
-            Tooltip = "View your all-time statistics for this game!"
+            OnLeftClick = (a) => {
+                RequestStats();
+                MenuState = UIState.StatsMenu;
+            },
+            Tooltip = TankGame.GameLanguage.Menu.GameStatsFlavor
         };
-        StatsMenu.OnLeftClick = (a) => {
-            RequestStats();
-            MenuState = UIState.StatsMenu;
+        StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 200.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
+
+        CreditsButton = new(TankGame.GameLanguage.Credits.Credits, font, Color.WhiteSmoke) {
+            IsVisible = false,
+            OnLeftClick = (a) => {
+                CreditsHandler.Load(TankGame.GameLanguage);
+                MenuState = UIState.Credits;
+            },
+            // Tooltip = TankGame.GameLanguage.Menu.GameStatsFlavor
         };
-        StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
+        CreditsButton.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 + 20.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
+
+        InitModsMenu(font);
     }
     private static void HideAll() {
         PlayButton.IsVisible = false;
@@ -186,52 +210,53 @@ public static partial class MainMenuUI
         GameUI.BackButton.Size.Y = 50;
 
         PlayButton.IsVisible = visible;
-
+        ModsMenuButton.IsVisible = visible;
         StatsMenu.IsVisible = visible;
+        CreditsButton.IsVisible = visible;
     }
 
     // the code is horrid but at least it's separated now
     // TODO: make rainbow work, ask lolxd or someone knowledgeable
     public static void PrepareTextBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
-        RenderGlobals.EnsureRenderTargetOK(ref TextTarget, device, (int)500.ToResolutionX(), (int)300.ToResolutionY());
+        RenderGlobals.EnsureOK(ref TextTarget, device, (int)500.ToResolutionX(), (int)300.ToResolutionY());
 
         device.SetRenderTarget(TextTarget);
 
-        device.Clear(RenderGlobals.BackBufferColor);
+        device.Clear(Color.Transparent);
 
-        var bottomLeft = Anchor.BottomLeft.GetTextureAnchor(TextTarget);
+        if (MenuState == UIState.PrimaryMenu) {
 
-        var messageScale = new Vector2(0.8f).ToResolution();
-        var font = FontGlobals.RebirthFont;
+            var bottomLeft = Anchor.BottomLeft.GetTextureAnchor(TextTarget);
+            var messageScale = new Vector2(0.8f).ToResolution();
+            var font = FontGlobals.RebirthFont;
 
-        spriteBatch.Begin();
+            spriteBatch.Begin();
+            DrawUtils.DrawStringBorderOnly(spriteBatch, font, tanksMessage, bottomLeft, Color.Black, messageScale, 0f, Anchor.BottomLeft, borderThickness: 0.75f);
+            spriteBatch.End();
 
-        DrawUtils.DrawStringBorderOnly(spriteBatch, font, tanksMessage, bottomLeft, Color.Black, messageScale, 0f, Anchor.BottomLeft, borderThickness: 0.75f);
-
-        spriteBatch.End();
-
-        spriteBatch.Begin();
-        spriteBatch.DrawString(font, tanksMessage, bottomLeft, Color.White, messageScale, origin: Anchor.BottomLeft.GetAnchor(font.MeasureString(tanksMessage)));
-        //DrawUtils.DrawTextWithBorder(spriteBatch, FontGlobals.RebirthFont, tanksMessage, Anchor.BottomLeft.GetTextureAnchor(TextTarget),
-        //Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.5f);
-        spriteBatch.End();
+            spriteBatch.Begin();
+            spriteBatch.DrawString(font, tanksMessage, bottomLeft, Color.White, messageScale, origin: Anchor.BottomLeft.GetAnchor(font.MeasureString(tanksMessage)));
+            spriteBatch.End();
+        }
 
         device.SetRenderTarget(null);
     }
     public static void RenderGeneralUI(SpriteBatch spriteBatch) {
-        if (SteamworksUtils.IsInitialized)
-            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\n" +
-                $"You have {SteamworksUtils.FriendsCount} friends.", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
-        spriteBatch.End();
+        // this is scary to have here... oh well.
 
-        spriteBatch.Begin(effect: GameShaders.AnimatedRainbow);
-        spriteBatch.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
-        spriteBatch.End();
+        if (MenuState != UIState.ModsMenu) {
+            spriteBatch.End();
+            // uhhhhhhh.
+            GameShaders.AnimatedRainbow.Parameters["oMinLum"].SetValue(0.5f);
+            spriteBatch.Begin(effect: GameShaders.AnimatedRainbow);
+            spriteBatch.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
+            spriteBatch.End();
 
-        spriteBatch.Begin();
+            spriteBatch.Begin();
+        }
 
-        if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList) {
+        if (MenuState is UIState.PrimaryMenu or UIState.PlayList) {
             var size = FontGlobals.RebirthFont.MeasureString(TankGame.Instance.MOTD);
             var motdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
             spriteBatch.DrawString(FontGlobals.RebirthFont, TankGame.Instance.MOTD, motdPos, Color.White, Vector2.One * 0.5f, 0f, Anchor.TopCenter.GetAnchor(size));
@@ -239,14 +264,22 @@ public static partial class MainMenuUI
     }
     public static void UpdateUI() {
         // quite unfortunate hardcode. fix later.
-        if (MenuState == UIState.StatsMenu)
-            if (InputUtils.KeyJustPressed(Keys.Escape))
-                MenuState = UIState.PrimaryMenu;
+        if (InputUtils.KeyJustPressed(Keys.Escape)) {
+            switch (MenuState) {
+                case UIState.StatsMenu:
+                    MenuState = UIState.PrimaryMenu;
+                    break;
+                case UIState.Credits:
+                    MenuState = UIState.PrimaryMenu;
+                    CreditsHandler.Unload();
+                    break;
+            }
+        }
         // todo: do transitions
         SetPlayButtonsVisibility(MenuState == UIState.PlayList);
-        SetMPButtonsVisibility(MenuState == UIState.Mulitplayer);
+        SetMPButtonsVisibility(MenuState == UIState.Multiplayer);
         SetPrimaryMenuButtonsVisibility(MenuState == UIState.PrimaryMenu);
-        SetDifficultiesButtonsVisibility(MenuState == UIState.Difficulties);
+        SetDifficultiesButtonsVisibility(MenuState == UIState.Modifiers);
 
     }
     public static void OpenUI() {
@@ -268,8 +301,8 @@ public static partial class MainMenuUI
         // this manipulates the "back" button to be properly shown in the main menu
         // this will obviously be nuked during the UI rework
 
-        GameUI.QuitButtonPos.Y -= 50;
-        GameUI.OptionsButtonPos.Y += 75;
+        GameUI.QuitButtonPos.Y = GameUI.MENU_QUIT_BUTTON_Y;
+        GameUI.OptionsButtonPos.Y = GameUI.MENU_OPTIONS_BUTTON_Y;
 
         SetPrimaryMenuButtonsVisibility(true);
         SetPlayButtonsVisibility(false);
@@ -281,20 +314,22 @@ public static partial class MainMenuUI
         GameUI.OptionsButtonSize.Y = 50;
         GameUI.QuitButton.IsVisible = true;
         GameUI.OptionsButton.IsVisible = true;
+        GameUI.KeyboardPlayerButton.IsVisible = false;
     }
     public static void LeaveUI() {
         SetMPButtonsVisibility(false);
         SetPlayButtonsVisibility(false);
         SetPrimaryMenuButtonsVisibility(false);
         IsActive = false;
-        GraphicsUI.BatchVisible = false;
+        GraphicsUI.IsVisible = false;
+        GameplayUI.BatchVisible = false;
         ControlsUI.BatchVisible = false;
         VolumeUI.BatchVisible = false;
         GameUI.InOptions = false;
         GameUI.OptionsButtonSize.Y = 150;
         GameUI.QuitButtonSize.Y = 150;
-        GameUI.QuitButtonPos.Y += 50;
-        GameUI.OptionsButtonPos.Y -= 75;
+        GameUI.QuitButtonPos.Y = GameUI.QUIT_BUTTON_Y;
+        GameUI.OptionsButtonPos.Y = GameUI.OPTIONS_BUTTON_Y;
         HideAll();
 
         // invoked last.

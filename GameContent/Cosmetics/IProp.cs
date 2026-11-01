@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using System;
 using Microsoft.Xna.Framework;
-using System;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.GameContent.Cosmetics;
+
+public delegate void CosmeticUpdateCallback(IProp prop, Tank tank);
 public enum PropLockOptions {
     None,
     /// <summary>Will rotate with the tank.</summary>
@@ -11,13 +12,14 @@ public enum PropLockOptions {
     /// <summary>Will rotate with the turret.</summary>
     ToTurret,
     /// <summary>Will rotate around turret instead of rotating with turret.</summary>
-    ToTurretCentered
+    AroundTurret
+    // AroundTank too?
 };
-public interface IProp {
+public interface IProp : ICloneable {
     Vector3 RelativePosition { get; set; }
     Vector3 Rotation { get; set; }
     string Name { get; set; }
     PropLockOptions LockOptions { get; set; }
-    Action<IProp, Tank> UniqueBehavior { get; set; }
+    CosmeticUpdateCallback UniqueBehavior { get; set; }
     Vector3 Scale { get; set; }
 }

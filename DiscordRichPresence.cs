@@ -2,10 +2,10 @@ using DiscordRPC;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Net;
@@ -66,8 +66,8 @@ public static class DiscordRichPresence {
                     case MainMenuUI.UIState.Settings:
                         SetDetails("Making things juuuust right");
                         break;
-                    case MainMenuUI.UIState.Difficulties:
-                        var count = Difficulties.Types.Count(diff => diff.Value);
+                    case MainMenuUI.UIState.Modifiers:
+                        var count = Modifiers.ActiveCount();
 
 
                         SetDetails($"Challenging themselves with {count} {(count == 1 ? "difficulty" : "difficulties")}");
@@ -75,7 +75,7 @@ public static class DiscordRichPresence {
                     case MainMenuUI.UIState.Cosmetics:
                         SetDetails("Viewing what's to come");
                         break;
-                    case MainMenuUI.UIState.Mulitplayer:
+                    case MainMenuUI.UIState.Multiplayer:
                         if (Client.IsConnected()) {
                             var name = NetPlay.CurrentServer is not null ? NetPlay.CurrentServer.Name : "Loading...";
                             if (Client.IsHost())

@@ -1,20 +1,18 @@
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using tainicom.Aether.Physics2D.Fluids;
-using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Net;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
 /// <summary>Each of these particles are server-shared.</summary>
-public static class ParticleGameplay
-{
-    // TODO: track smokes as objects, so ai can't shoot through?
+public static class ParticleGameplay {
+    // TODO: track smokes as objects, so Owner can't shoot through?
     public static void CreateSmokeGrenade(ParticleManager manager, Vector3 position, Vector3 velocity) {
         var p = manager.MakeParticle(position, ModelGlobals.SmokeGrenade.Asset, GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
         bool exploded = false;
@@ -32,7 +30,7 @@ public static class ParticleGameplay
         Vector3 oldPosition = p.Position;
         float shadowPos = 0f;
 
-        p.UniqueBehavior = (a) => {
+        p.UpdateCallback = (a) => {
             shadowPos = 0.1f;
             p.Scale = new(125);
             p.IsIn2DSpace = false;
@@ -41,8 +39,8 @@ public static class ParticleGameplay
             velocity.Y -= gravity;
 
             if (hits > 0) {
-                p.Roll += 0.07f * velocity.Length() * RuntimeData.DeltaTime;
-                p.Pitch += 0.07f * velocity.Length() * RuntimeData.DeltaTime;
+                p.Roll += 0.07f * velocity.Length() * RuntimeData.DeltaFrames;
+                p.Pitch += 0.07f * velocity.Length() * RuntimeData.DeltaFrames;
             }
 
             // bounce off walls
@@ -81,47 +79,25 @@ public static class ParticleGameplay
                 }
             }
 
-            if (p.Position.Y < 7) {
+            const float Y_REST = 3f;
+            if (p.Position.Y < Y_REST) {
                 if (hits > 0) {
                     hits--;
                     velocity.Y = -velocity.Y * hits / maxHits;
-                    p.Position.Y = 7;
+                    p.Position.Y = Y_REST;
                 }
                 else if (hits <= 0) {
                     velocity = Vector3.Zero;
-                    p.Position.Y = 7;
+                    p.Position.Y = Y_REST;
                     startTimer = true;
                 }
             }
 
-            if (startTimer) timer += RuntimeData.DeltaTime;
+            if (startTimer) timer += RuntimeData.DeltaFrames;
 
             if (timer > 60 && !exploded) {
                 exploded = true;
-                SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f);
-                for (int i = 0; i < 8; i++) {
-                    var c = manager.MakeParticle(p.Position,
-                        ModelGlobals.Smoke.Asset,
-                        GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-                    var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
-                    c.Position += randDir;
-                    var randSize = Server.ServerRandom.NextFloat(5, 10);
-                    c.Scale.X = randSize;
-                    c.Scale.Z = randSize;
-                    c.UniqueBehavior = (b) => {
-                        c.Pitch += 0.005f * RuntimeData.DeltaTime;
-                        if (c.Scale.Y < randSize && c.LifeTime < 600)
-                            c.Scale.Y += 0.1f * RuntimeData.DeltaTime;
-                        if (c.LifeTime >= 600) {
-                            c.Scale.Y -= 0.06f * RuntimeData.DeltaTime;
-                            c.Alpha -= 0.06f / randSize * RuntimeData.DeltaTime;
-
-                            if (c.Scale.Y <= 0) {
-                                c.Destroy();
-                            }
-                        }
-                    };
-                }
+                MakeSmoke(manager, p.Position);
                 isSmokeDestroyed = true;
                 p.Destroy();
             }
@@ -131,11 +107,11 @@ public static class ParticleGameplay
         var shadow = manager.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
         shadow.Scale = new(0.8f);
         shadow.Color = Color.Black;
-        shadow.HasAdditiveBlending = false;
+        shadow.Additive = false;
         // shadow.Roll = -MathHelper.PiOver2;
         shadow.Pitch = MathHelper.PiOver2;
 
-        shadow.UniqueBehavior = (a) => {
+        shadow.UpdateCallback = (a) => {
             if (isSmokeDestroyed) {
                 shadow.Destroy();
             }
@@ -145,5 +121,32 @@ public static class ParticleGameplay
 
             shadow.Alpha = MathUtils.InverseLerp(150, 7, p.Position.Y, true);
         };
+    }
+
+    public static void MakeSmoke(ParticleManager manager, Vector3 position) {
+        SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, position: position);
+        for (int i = 0; i < 8; i++) {
+            var c = manager.MakeParticle(position,
+                ModelGlobals.Smoke.Asset,
+                GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
+            var randDir = new Vector3(Client.ClientRandom.NextFloat(-35, 35), 0, Client.ClientRandom.NextFloat(-35, 35));
+            c.Position += randDir;
+            var randSize = Client.ClientRandom.NextFloat(5, 10);
+            c.Scale.X = randSize;
+            c.Scale.Z = randSize;
+            c.UpdateCallback = (b) => {
+                c.Pitch += 0.005f * RuntimeData.DeltaFrames;
+                if (c.Scale.Y < randSize && c.LifeTime < 600)
+                    c.Scale.Y += 0.1f * RuntimeData.DeltaFrames;
+                if (c.LifeTime >= 600) {
+                    c.Scale.Y -= 0.06f * RuntimeData.DeltaFrames;
+                    c.Alpha -= 0.06f / randSize * RuntimeData.DeltaFrames;
+
+                    if (c.Scale.Y <= 0) {
+                        c.Destroy();
+                    }
+                }
+            };
+        }
     }
 }

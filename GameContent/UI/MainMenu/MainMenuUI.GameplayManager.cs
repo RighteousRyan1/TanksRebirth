@@ -1,11 +1,12 @@
 using System.IO;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -13,20 +14,25 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 public static partial class MainMenuUI {
     static bool _firstTime = true;
     public static void UpdateGameplay() {
+        if (!TankGame.Settings.Gameplay.MenuGameplayEnabled) return;
+
         if (IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha > 0) return;
         if (curMenuMission.Blocks is null) {
             LoadTemplateMission();
             return;
         }
         // do not count player tanks into the check
-        var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out _, (t) => t is not PlayerTank);
+        var missionComplete = CampaignProgression.VanillaCheckCompletion(curMenuMission, out _, (t) => t is not PlayerTank);
 
         if (missionComplete)
             LoadTemplateMission();
     }
     public static void OpenGP() {
         SceneManager.CleanupScene();
+        SceneManager.CleanupEntities();
         PlayerTank.TankKills.Clear();
+
+        if (!TankGame.Settings.Gameplay.MenuGameplayEnabled) return;
 
         LoadTemplateMission();
     }
@@ -34,7 +40,7 @@ public static partial class MainMenuUI {
         SceneManager.StartTnkScene();
         PlayerTank.SetLives(PlayerTank.StartingLives);
         SceneManager.CleanupEntities();
-        PlacementSquare.ResetSquares();
+        EditorTile.ResetSquares();
         SceneManager.CleanupScene();
         Theme.Stop();
     }
@@ -53,14 +59,14 @@ public static partial class MainMenuUI {
                 var bytes = WebUtils.DownloadWebFile(linkTry, out var name1, out var status);
 
                 if (status == System.Net.HttpStatusCode.OK) {
-                    using var reader1 = new BinaryReader(new MemoryStream(bytes));
+                    using var stream1 = new MemoryStream(bytes);
 
-                    _cachedMissions.Add(Mission.Read(reader1));
+                    _cachedMissions.Add(Mission.Read(stream1));
                     attempt++;
                     goto tryAgain;
                 }
                 else {
-                    TankGame.ClientLog.Write($"Unable to fetch map data via the internet (at map={attempt}). Status: {status}", LogType.Warn);
+                    TankGame.ClientLog.Write($"Unable to fetch map data via the internet (at map={attempt}). Status: {status}", RebirthLogLevel.Warn);
                     _failedFetch = true;
                     return;
                 }
@@ -78,7 +84,7 @@ public static partial class MainMenuUI {
                 curMenuMission = mission;
         }
         catch {
-            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
+            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", RebirthLogLevel.Warn);
         }
     }
 

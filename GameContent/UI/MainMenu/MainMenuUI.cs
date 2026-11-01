@@ -15,28 +15,36 @@ using TanksRebirth.Net;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Graphics;
 using Microsoft.Xna.Framework.Graphics;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
-// unfortunately godclassed asf
-public static partial class MainMenuUI
-{
+public static partial class MainMenuUI {
+    public const float DEFAULT_BLUR = 0.0075f;
+    // no eulerangles due to porting headaches
+    public readonly struct MenuGraphicsState(Vector3 position, Vector3 angles, float blurFactor) {
+        public readonly Vector3 Position = position;
+        public readonly Vector3 Rotation = angles;
+        public readonly float GaussianBlurFactor = blurFactor;
+    }
     public static bool IsActive { get; private set; } = true;
 
     public static Animator CameraPositionAnimator;
     public static Animator CameraRotationAnimator;
 
     public static OggAudio TickSound;
-
     public static OggMusic Theme;
-    private static bool _musicFading;
+
+    static bool _musicFading;
+    static float _goalBlur;
 
     public delegate void MenuOpenDelegate();
     public delegate void MenuCloseDelegate();
     public delegate void CampaignSelectedDelegate(Campaign campaign);
-    public static event MenuOpenDelegate OnMenuOpen;
-    public static event MenuCloseDelegate OnMenuClose;
-    public static event CampaignSelectedDelegate OnCampaignSelected;
+    public static event MenuOpenDelegate? OnMenuOpen;
+    public static event MenuCloseDelegate? OnMenuClose;
+    public static event CampaignSelectedDelegate? OnCampaignSelected;
 
     public static int MissionCheckpoint = 0;
 
@@ -50,15 +58,17 @@ public static partial class MainMenuUI
     // if this dict does not contain the UIState we want, we just default to CamPosMain
     // cosmetics menu in the future can be just a simple transition over to a post where a player tank can render in front of the camera at
     // the camera's position plus the Camera's world forward matrix times a certain amount for distance
-    public static Dictionary<UIState, (Vector3 Position, Vector3 Rotation)> MenuCameraManipulations = new() {
-        [UIState.Campaigns] = (new(330f, 204f, 879f), new(0, -0.18f, 0.29f)), // seat headrest
-        [UIState.PlayList] = (new Vector3(247.031f, 59.885f, 204.935f), new Vector3(0f, -0.404f, 1.397f)),
-        [UIState.Mulitplayer] = (new Vector3(57.25f, 47.419f, -263.85f), new Vector3(0f, -0.53f, 3.78f)), // behind game scene
-        [UIState.Settings] = (new(1461f, 928f, 623f), new(0, -0.33f, 0.53f)), // near grandfather clock
-        [UIState.StatsMenu] = (new(-1121f, 176f, 439f), new(0, -0.231f, -0.67f)), // near sheet music
-        [UIState.Difficulties] = (new(-1189f, 288f, 2583f), new(0f, -0.25f, -2.27f)), // near books
-        [UIState.LoadingMods] = (new(-3443f, 2088f, 3183f), new(0, -0.6307f, -0.91f)), // top of the door
-        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f)) // second-to-top shelf of bookshelf
+    public static readonly Dictionary<UIState, MenuGraphicsState> MenuGraphicsStates = new() {
+        [UIState.Campaigns] = new MenuGraphicsState(new Vector3(330f, 204f, 879f), new Vector3(0, -0.18f, 0.29f), DEFAULT_BLUR), // seat headrest
+        [UIState.PlayList] = new MenuGraphicsState(new Vector3(247.031f, 59.885f, 204.935f), new Vector3(0f, -0.404f, 1.397f), DEFAULT_BLUR),
+        [UIState.Multiplayer] = new MenuGraphicsState(new Vector3(57.25f, 47.419f, -263.85f), new Vector3(0f, -0.53f, 3.78f), DEFAULT_BLUR), // behind game scene
+        [UIState.Settings] = new MenuGraphicsState(new Vector3(1461f, 928f, 623f), new Vector3(0, -0.33f, 0.53f), DEFAULT_BLUR), // near grandfather clock
+        [UIState.StatsMenu] = new MenuGraphicsState(new Vector3(-1121f, 176f, 439f), new Vector3(0, -0.231f, -0.67f), 0.05f), // near sheet music
+        [UIState.Modifiers] = new MenuGraphicsState(new Vector3(-1189f, 288f, 2583f), new Vector3(0f, -0.25f, -2.27f), 0.005f), // near books
+        [UIState.LoadingMods] = new MenuGraphicsState(new Vector3(-3443f, 2088f, 3183f), new Vector3(0, -0.6307f, -0.91f), 0.01f), // top of the door
+        [UIState.Cosmetics] = new MenuGraphicsState(new Vector3(-953f, 1078f, 2753f), new Vector3(0f, -0.226f, -2.56f), 0f), // second-to-top shelf of bookshelf
+        [UIState.Customizing] = new MenuGraphicsState(new Vector3(-938.39f, 1020.87f, 2987.82f), new Vector3(0.00f, -0.18f, -2.81f), 0f), // facing towards the hut bookshelves
+        [UIState.ModsMenu] = new MenuGraphicsState(new Vector3(1305.43f, 1030.8687f, 340.08344f), new Vector3(0f, -0.6007973f, -0.789088f), DEFAULT_BLUR) // facing towards the clock pendulum
     };
 
     public static Vector3 CamPosMain = new(0, 150, GameScene.MAX_Z + 100); // this is in front of the game scene, viewing it
@@ -67,9 +77,9 @@ public static partial class MainMenuUI
     #endregion
 
     internal static Mission curMenuMission;
-    private static List<Mission> _cachedMissions = [];
+    static readonly List<Mission> _cachedMissions = [];
 
-    private static bool _initialized;
+    static bool _initialized;
 
     public static RebirthLogoModel RebirthLogo;
     public static void InitializeBasics() {
@@ -79,6 +89,7 @@ public static partial class MainMenuUI
         MenuState = UIState.PrimaryMenu;
         RebirthLogo = new() {
             Position = new(0, 500, 250),
+            Rotation = new(0, MathHelper.TwoPi, 0)
         };
 
         // LogoTexture = SteamworksUtils.GetAvatar(Steamworks.SteamUser.GetSteamID());
@@ -100,7 +111,7 @@ public static partial class MainMenuUI
 
         _menuElements = [PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton,
             CreateServerButton, UsernameInput, IPInput, PortInput, PasswordInput, ServerNameInput,
-            DifficultiesButton ];
+            DifficultiesButton, StatsMenu, CreditsButton, ModsMenuButton];
 
         foreach (var e in _menuElements) {
             e.OnMouseOver = (uiElement) => SoundPlayer.PlaySoundInstance(TickSound, SoundContext.Effect);
@@ -108,16 +119,17 @@ public static partial class MainMenuUI
     }
     public static void Leave() {
         // call partially implemented methods
+        MenuState = UIState.PlayList;
         LeaveUI();
         LeaveGP();
     }
-    private static void UpdateModels() {
+    static void UpdateModels() {
         RebirthLogo.Position = new Vector3(0, 300.ToResolutionY(), 0);
 
         // slowly return to normal if the mouse is not on-screen
         if (!MouseUtils.MouseOnScreen) {
-            RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, 0, 0.05f * RuntimeData.DeltaTime);
-            RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, MathHelper.PiOver2, 0.05f * RuntimeData.DeltaTime);
+            RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, 0, 0.05f * RuntimeData.DeltaFrames);
+            RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, MathHelper.PiOver2, 0.05f * RuntimeData.DeltaFrames);
 
             RebirthLogo.Rotation_Tanks = new(MathHelper.PiOver2, 0, 0);
             return;
@@ -127,8 +139,8 @@ public static partial class MainMenuUI
         var rotX = -(MouseUtils.Test.X - 0.5f) * scalar;
         var rotY = MathHelper.PiOver2 + (MouseUtils.Test.Y - 0.25f) * scalar;
 
-        RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, rotX, 0.1f * RuntimeData.DeltaTime);
-        RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, rotY, 0.1f * RuntimeData.DeltaTime);
+        RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, rotX, 0.1f * RuntimeData.DeltaFrames);
+        RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, rotY, 0.1f * RuntimeData.DeltaFrames);
     }
     public static void RenderModels() {
         UpdateModels();
@@ -147,7 +159,7 @@ public static partial class MainMenuUI
     internal static int plrsConfirmed;
     public static bool PrepareGameplay(string name, bool wasConfirmed = true, bool netRecieved = false, int? missionId = null) {
         if (missionId.HasValue) {
-            ChatSystem.SendMessage("We have received a custom mission identifier", Color.Green);
+            // ChatSystem.SendMessage("We have received a custom mission identifier", Color.Green);
             MissionCheckpoint = missionId.Value;
         }
 
@@ -212,58 +224,74 @@ public static partial class MainMenuUI
         foreach (var elem in campaignNames)
             elem?.Remove();
 
-        IntermissionSystem.TimeBlack = 280;
-
+        IntermissionSystem.TimeBlack = IntermissionSystem.DEF_TIMEBLACK;
         CampaignGlobals.ShouldMissionsProgress = true;
-
         _musicFading = true;
 
         IntermissionSystem.InitializeCountdowns();
 
+        // this is a very important method that i forgot existed
         IntermissionSystem.BeginOperation(600);
     }
 
     public static float VolumeMultiplier = 1f;
 
     public static void Update() {
-        if (!_initialized || !_diffButtonsInitialized)
-            return;
+        if (!_initialized || !_diffButtonsInitialized) return;
         IntermissionSystem.IsAwaitingNewMission = false;
+
         UpdateUI();
         UpdateDifficulties();
         UpdateMusic();
         UpdateMP();
 
-        if (RuntimeData.RunTime % 60f < RuntimeData.DeltaTime) {
+        if (MenuState == UIState.ModsMenu)
+            UpdateModsMenu();
+
+        // intermittent gameplay update, to keep fresh maps on the menu
+        if (RuntimeData.RunTime % 60f < RuntimeData.DeltaFrames)
             UpdateGameplay();
-        }
     }
     public static void Open() {
         OpenUI();
         OpenAudio();
         OpenGP();
+
         // there used to be stuff that manually removed entities. i hope we didn't need that
         OnMenuOpen?.Invoke();
     }
 
-    private static int _oldwheel;
-    public static void Render(SpriteBatch spriteBatch) {
+    static int _oldwheel;
+
+    public static void Render(SpriteBatch spriteBatch, GameTime gameTime) {
         if (!_initialized || !_diffButtonsInitialized)
             return;
 
         if (IsActive) {
             RenderGeneralUI(spriteBatch);
-            if (MenuState == UIState.StatsMenu)
-                RenderStatsMenu();
-            else if (MenuState == UIState.LoadingMods)
+
+            GameShaders.BlurFactor = MathUtils.SoftStep(GameShaders.BlurFactor, _goalBlur, 0.01f);
+
+            if (ModLoader.IsLoadingMods)
                 ModLoader.DrawModLoading();
 
-            else if (MenuState == UIState.Mulitplayer)
-                RenderMP();
-            else if (MenuState == UIState.Campaigns)
-                DrawCampaignsUI();
-            else if (MenuState == UIState.Cosmetics)
-                RenderCosmeticsUI();
+            switch (MenuState) {
+                case UIState.Campaigns:
+                    DrawCampaignsUI();
+                    break;
+                case UIState.Multiplayer:
+                    DrawMPMenu(gameTime);
+                    break;
+                case UIState.StatsMenu:
+                    DrawStatsMenu(gameTime);
+                    break;
+                case UIState.ModsMenu:
+                    DrawModMenu(spriteBatch);
+                    break;
+                case UIState.Credits:
+                    DrawCredits(spriteBatch);
+                    break;
+            }
         }
 
         // why does this need to be here?????????? doesn't work in Update()

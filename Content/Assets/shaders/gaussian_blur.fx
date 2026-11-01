@@ -1,38 +1,21 @@
-﻿bool oEnabledBlur : register(C0);
-float2 oResolution : register(C1);
-float oBlurFactor : register(C2);
+﻿// one pass per direction
+float2 oStep;
+// multiplies the color, so the second pass can brighten the result
+float oBrightness;
 
 sampler TexSampler : register(s0);
 
-float4 main(float4 sampleColor : COLOR0, float2 coords : TEXCOORD0) : COLOR0
+float4 main(float4 color : COLOR0, float2 uv : TEXCOORD0) : COLOR0
 {
-    if (oEnabledBlur == false)
-        return tex2D(TexSampler, coords);
-    //float4 color = tex2D(TexSampler, coords);
-    
-    float2 uv = coords / oResolution.xy;
-
-    float4 color = tex2D(TexSampler, uv);
-        
-    float PiOver2 = 6.28318530718;
-
-    float Directions = 16.0;
-    float Quality = 6.0; // normally 3.0
-    
-    float2 Radius = oBlurFactor / oResolution.xy;
-    
-    for (float d = 0.0; d < PiOver2; d += PiOver2 / Directions)
-    {
-        for (float i = 1.0 / Quality; i <= 1.0; i += 1.0 / Quality)
-        {
-            color += tex2D(TexSampler, uv + float2(cos(d), sin(d)) * Radius * i);
-        }
-    }
-    
-    color /= Quality * Directions - 15.0;
-        
-    return color;
+    float4 sum = tex2D(TexSampler, uv) * 0.2042;
+    sum += (tex2D(TexSampler, uv + oStep) + tex2D(TexSampler, uv - oStep)) * 0.1802;
+    sum += (tex2D(TexSampler, uv + oStep * 2.0) + tex2D(TexSampler, uv - oStep * 2.0)) * 0.1238;
+    sum += (tex2D(TexSampler, uv + oStep * 3.0) + tex2D(TexSampler, uv - oStep * 3.0)) * 0.0663;
+    sum += (tex2D(TexSampler, uv + oStep * 4.0) + tex2D(TexSampler, uv - oStep * 4.0)) * 0.0276;
+    sum.rgb *= oBrightness;
+    return float4(sum.rgb, 1.0);
 }
+
 technique GaussianBlur
 {
     pass BlurPass

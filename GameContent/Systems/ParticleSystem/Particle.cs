@@ -3,30 +3,31 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
 using TanksRebirth.Graphics;
-using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
-using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
-using HidSharp.Reports.Units;
+using System.Collections.Generic;
+using TanksRebirth.Graphics.Drawing;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
-public enum ParticleIntensity
-{
+// currently unused...
+public enum ParticleIntensity {
     None, // no particles at all
     Low, // Particles emit at 25% the frequency
     Medium, // ... 50%
     High, // ... 100%
 }
 public enum ParticleImportance {
-    Critical, // must always render (e.g., player hit, mine explosion, damage feedback)
-    Important, // render on Medium and High
-    Cosmetic // only render on High
+    /// <summary>Must always render (e.g., player hit, mine explosion, damage feedback).</summary>
+    Critical,
+    /// <summary>Generally important for feedback, but the player can deduce what happens even without.</summary>
+    Important,
+    /// <summary>Particles that are pureply haptic and are not necessary in any regard.</summary>
+    Cosmetic 
 }
-public class Particle
-{
+public class Particle {
     /// <summary>Data you may want to assign to this particle, such as assigning an owner to a particle, etc.</summary>
     public object Tag;
 
@@ -61,7 +62,7 @@ public class Particle
     public int Id;
 
     /// <summary>Whether to billboard this <see cref="Particle"/> towards the camera, if in a 3D space.</summary>
-    public bool FaceTowardsMe;
+    public bool Billboard;
 
     /// <summary>Whether or not this <see cref="Particle"/> should exist in a 2D space.</summary>
     public bool IsIn2DSpace;
@@ -69,13 +70,13 @@ public class Particle
     public bool ToScreenSpace = true;
 
     /// <summary>What this <see cref="Particle"/> should do every given update.</summary>
-    public Action<Particle>? UniqueBehavior;
+    public Action<Particle>? UpdateCallback;
 
     /// <summary>What this <see cref="Particle"/> should do every given draw call.</summary>
-    public Action<Particle>? UniqueDraw;
+    public Action<Particle>? DrawCallback;
 
     /// <summary>Whether or not the color of this <see cref="Particle"/> has addative blending applied.</summary>
-    public bool HasAdditiveBlending = true;
+    public bool Additive = true;
 
     /// <summary>How to crop the texture of this particle.</summary>
     public Rectangle? TextureCrop = null; // for framing a particle's texture
@@ -91,36 +92,46 @@ public class Particle
     /// <summary>The 3D scaling of this <see cref="Particle"/>.</summary>
     public Vector3 Scale;
     /// <summary>Light power multiplier for this <see cref="Particle"/>.</summary>
-    public float LightPower;
+    public float LightPower = 1f;
     /// <summary>The <see cref="ParticleSystem"/> this <see cref="Particle"/> exists in.</summary>
     public ParticleManager System { get; }
 
     public float Layer;
 
+    // Particle.cs is the gift that keeps on giving
+    // particle system needs a billion different refactors
+    /// <summary>If a 3D particle, ignores drawing these meshes (by name).</summary>
+    public List<string> MeshesToIgnore = []; // to default as initialized or not as initialized, that is the question
+    public ModelTextureMap Texturing;
+
+    // /// <summary>If true, this particle will not halt drawing if not viewable.</summary>
+    // public bool DrawAlways;
     /* TODO:
      * Model alpha must be set!
      * 
      * billboard from 'position' to the camera.
      */
 
-    internal Particle(Vector3 position, ParticleManager system)
-    {
+    public bool ApplyGameLight = true;
+
+    internal Particle(Vector3 position, ParticleManager system) {
         Position = position;
         System = system;
 
-        Id = System.CurrentParticles.AddWithIndex(this);
-        // Console.WriteLine($"{Id} -- count: {System.CurrentParticles.Count}");
+        Id = System.Register(this);
     }
 
-    public void Update()
-    {
-        UniqueBehavior?.Invoke(this);
-        LifeTime += RuntimeData.DeltaTime;
+    /// <summary>True once <see cref="Destroy"/> has been called. Destroyed particles are no longer updated or drawn.</summary>
+    public bool Destroyed { get; internal set; }
+
+    public void Update() {
+        UpdateCallback?.Invoke(this);
+        LifeTime += RuntimeData.DeltaFrames;
     }
 
     public static BasicEffect EffectHandle = new(TankGame.Instance.GraphicsDevice);
 
-    internal void RenderModels() {
+    internal void DrawModel() {
 
         // this code causes draw order malfunction. ts pmo
 
@@ -129,60 +140,68 @@ public class Particle
         //if (System.Scissor.HasValue) {
         //    TankGame.Instance.GraphicsDevice.ScissorRectangle = System.Scissor.Value;
         //}
-
         //TankGame.SpriteRenderer.Begin(blendState: HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: System.Rasterizer);
         Matrix world;
 
-        if (FaceTowardsMe) {
+        if (Billboard) {
             world = Matrix.CreateScale(Scale) *
+                    Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateBillboard(Position,
-                                            CameraGlobals.RebirthFreecam.Position,
+                                            CameraGlobals.PerspectiveCamera.Position,
                                             // up is wrong for some reason
-                                            CameraGlobals.RebirthFreecam.World.Down,
-                                            CameraGlobals.RebirthFreecam.World.Forward);
+                                            CameraGlobals.PerspectiveCamera.World.Down,
+                                            CameraGlobals.PerspectiveCamera.World.Forward);
         }
         else {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateTranslation(Position);
+
+            /*if (Billboard) world *= Matrix.CreateBillboard(Position,
+                                            CameraGlobals.PerspectiveCamera.Position,
+                                            // up is wrong for some reason
+                                            CameraGlobals.PerspectiveCamera.World.Down,
+                                            CameraGlobals.PerspectiveCamera.World.Forward);*/
         }
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? world : world * 
-                        Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = System.SystemView;
-                    effect.Projection = System.SystemProjection;
+        foreach (ModelMesh mesh in Model.Meshes) {
+            if (MeshesToIgnore.Contains(mesh.Name)) continue;
 
-                    effect.Texture = Texture;
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = world;
+                effect.View = System.SystemView;
+                effect.Projection = System.SystemProjection;
 
-                    effect.Alpha = Alpha;
+                effect.TextureEnabled = true;
 
-                    effect.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
+                if (Texturing != null && Texturing.Count > 0) effect.Texture = Texturing[mesh.Name];
+                else effect.Texture = Texture;
 
+                effect.Alpha = Alpha;
+
+                effect.EmissiveColor = Color.ToVector3();
+
+                if (ApplyGameLight) {
+                    effect.EmissiveColor *= SceneManager.GameLight.Brightness;
                     effect.SetDefaultGameLighting_IngameEntities(LightPower);
                 }
-                mesh.Draw();
             }
+            mesh.Draw();
         }
         // same here
         //TankGame.SpriteRenderer.End();
         //TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
     }
-    internal void Render()
-    {
-        if (Model is not null)
-            return;
-
+    /// <summary>Draws a world-space text particle. Sprite (texture) particles are batched by <see cref="ParticleManager"/> instead.</summary>
+    /// <remarks>Expects the <see cref="SpriteBatch"/> to be *ended*; manages its own Begin/End.</remarks>
+    internal void DrawText3D(SpriteBatch spriteBatch) {
         Matrix world;
 
-        if (FaceTowardsMe) {
+        if (Billboard) {
             world = Matrix.CreateScale(Scale) *
                     Matrix.CreateBillboard(Position,
-                                            CameraGlobals.RebirthFreecam.Position,
-                                            // might need up for other things tho
-                                            CameraGlobals.RebirthFreecam.World.Down,
-                                            CameraGlobals.RebirthFreecam.World.Forward);
+                                            CameraGlobals.PerspectiveCamera.Position,
+                                            CameraGlobals.PerspectiveCamera.World.Down,
+                                            CameraGlobals.PerspectiveCamera.World.Forward);
         }
         else {
             world = Matrix.CreateScale(Scale) *
@@ -190,49 +209,39 @@ public class Particle
                     Matrix.CreateTranslation(Position);
         }
 
-        if (!IsIn2DSpace)
-        {
-            if (Model is null) {
-                EffectHandle.World = world;
-                // EffectHandle.Texture = Texture;
-                EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
+        EffectHandle.World = world;
+        EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
+        EffectHandle.Alpha = Alpha;
 
-                EffectHandle.Alpha = Alpha;
-
-                EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
-
-                TankGame.SpriteRenderer.End();
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle); 
-                if (!IsText)
-                    TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, /*TextureScale*/ Scale.X, default, Layer);
-                else
-                    TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
-
-                TankGame.SpriteRenderer.End();
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-            }
+        if (ApplyGameLight) {
+            EffectHandle.EmissiveColor *= SceneManager.GameLight.Brightness;
+            EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
         }
-        else
-        {
-            TankGame.SpriteRenderer.End();
-            TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer); if (!IsText)
-                TankGame.SpriteRenderer.Draw(Texture, ToScreenSpace ? 
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
-                    new Vector2(Position.X, Position.Y), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
-            else
-                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, ToScreenSpace ? 
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
-                    new Vector2(Position.X, Position.Y), Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
-            TankGame.SpriteRenderer.End();
-            TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-        }
-        UniqueDraw?.Invoke(this);
+
+        spriteBatch.Begin(SpriteSortMode.FrontToBack, Additive ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle);
+        spriteBatch.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
+        spriteBatch.End();
     }
 
-    public void Destroy() {
-        UniqueBehavior = null;
+    /// <summary>Queues a screen-space particle on an already-begun <see cref="SpriteBatch"/>.</summary>
+    internal void Draw2D(SpriteBatch spriteBatch) {
+        var pos = ToScreenSpace ?
+            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) :
+            new Vector2(Position.X, Position.Y);
 
-        if (System.CurrentParticles.Contains(this))
-            System.CurrentParticles.RemoveAt(Id);
+        if (!IsText)
+            spriteBatch.Draw(Texture, pos, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
+        else
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, pos, Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
+    }
+
+    /// <summary>Removes this particle from its system. Safe to call multiple times; O(1).</summary>
+    public void Destroy() {
+        UpdateCallback = null;
+        DrawCallback = null;
+
+        if (Destroyed) return;
+        Destroyed = true;
+        System.Unregister(this);
     }
 }

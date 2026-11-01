@@ -14,10 +14,10 @@ namespace TanksRebirth;
 #pragma warning disable CA2211
 public static class RuntimeData {
     /// <summary>Total memory used by the Garbage Collector.</summary>
-    public static ulong GCMemory => (ulong)GC.GetTotalMemory(false);
-    public static ulong MemoryUsageInBytes;
+    public static long GCMemory => GC.GetTotalMemory(false);
+    public static long MemoryUsageInBytes;
 
-    /// <summary>Currently used physical memory by this application in bytes. Expensive to access to use sparingly.</summary>
+    /// <summary>Currently used physical memory by this application in bytes. Expensive to access, so use sparingly.</summary>
     public static long ProcessMemory {
         get {
             using Process process = Process.GetCurrentProcess();
@@ -31,7 +31,9 @@ public static class RuntimeData {
 
     // ### FLOATING POINT ###
     /// <summary>The amount of ticks elapsed in a second of update time.</summary>
-    public static float DeltaTime => Interp ? (!float.IsInfinity(60 / (float)LogicFPS) ? 60 / (float)LogicFPS : 0) : 1;
+    public static float DeltaFrames;
+    /// <summary>The amount of seconds elapsed since the last frame.</summary>
+    public static float DeltaTime;
     public static float RunTime { get; internal set; }
     public static double LogicFPS { get; internal set; }
     public static double RenderFPS { get; internal set; }

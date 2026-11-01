@@ -46,7 +46,7 @@ namespace TanksRebirth.Internals.Common.GameUI
         {
             base.DrawSelf(spriteBatch);
 
-            _newScroll = InputUtils.CurrentMouseSnapshot.ScrollWheelValue;
+            _newScroll = InputUtils.KeyboardMouse.CurrentMouse.ScrollWheelValue;
             if (_newScroll != _oldScroll && wrapper.Contains(MouseUtils.MousePosition) && Dropped)
             {
                 _gpuSettingsOffset = _newScroll - _oldScroll;
@@ -78,10 +78,10 @@ namespace TanksRebirth.Internals.Common.GameUI
             {
                 child.IsVisible = Dropped;
                 child.HasScissor = true;
-                child.Scissor = () => wrapper;
+                child.Scissor = wrapper;
             }
             HasScissor = true;
-            Scissor = () => wrapper;
+            Scissor = wrapper;
             OnLeftClick = (uiElement) =>
             {
                 Dropped = !Dropped;

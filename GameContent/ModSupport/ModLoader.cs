@@ -1,78 +1,118 @@
+using FontStashSharp;
+using MeltySynth;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Collections;
-using TanksRebirth.Localization;
+using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
-using FontStashSharp;
-using TanksRebirth.GameContent.UI.MainMenu;
-using System.Xml.Linq;
+using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.ModSupport;
 
-public enum LoadStatus
-{
+// fuck IDE0044
+#pragma warning disable CA2211, IDE0044
+public enum LoadStatus {
+    /// <summary>No mod is being loaded.</summary>
     Inactive,
+    /// <summary>Every mod is being unloaded.</summary>
     Unloading,
+    /// <summary>A mod is being loaded.</summary>
     Loading,
+    /// <summary>A mod is being compiled.</summary>
     Compiling,
-    Sandboxing,
+    /// <summary>All mods are finished loading.</summary>
     Complete
 }
 public static class ModLoader {
     public delegate void FinishModLoading();
+    /// <summary>Fired when every mod is finished loading.</summary>
     public static event FinishModLoading? OnFinishModLoading;
     public delegate void PostLoadModContent(TanksMod mod);
+    /// <summary>Fired when a specific mod is loaded</summary>
     public static event PostLoadModContent? OnPostModLoad;
 
+    static JsonSerializerOptions _indented = new() { WriteIndented = true };
+
+    /// <summary>All mods currently loaded into Tanks Rebirth.</summary>
     public static List<TanksMod> LoadedMods { get; set; } = [];
-    private static List<AssemblyLoadContext> _loadedAlcs = [];
+    static List<AssemblyLoadContext> _loadedAlcs = [];
 
+    static IModContent? _loadingContent;
+
+    /// <summary>True if mods are loading.</summary>
+    public static bool IsLoadingMods { get; private set; }
+    /// <summary>Determined at loading-time. False if:
+    /// <list type="bullet">
+    ///   <item>
+    ///     <description>The user does not have a .NET SDK Version >= MIN_NET_VERSION</description>
+    ///   </item>
+    ///   <item>
+    ///     <description>User does not have a SDK verison at all.</description>
+    ///   </item>
+    /// </list>
+    /// </summary>
     public static bool AreCompilesAllowed { get; set; } = false;
+    /// <summary>Number of mods * number of actions per mod (load, initialize).</summary>
     public static int ActionsNeeded { get; private set; }
+    /// <summary>Number of actions that have already been completed in the mod loading process.</summary>
     public static int ActionsComplete { get; private set; }
+    /// <summary>The current status of the mod loader.</summary>
     public static LoadStatus Status { get; private set; } = LoadStatus.Inactive;
+    /// <summary>The namespace of the mod being loaded.</summary>
     public static string ModBeingLoaded { get; private set; } = string.Empty;
-    public static bool LoadingMods { get; private set; }
+    /// <summary>The path to where mods are loaded from.</summary>
     public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
-
+    /// <summary>The oldest .NET version (within the CSPROJ) Tanks Rebirth expects mods to be.</summary>
     public const string EXPECTED_NET_VERSION = "net8.0";
+    /// <summary>The oldest .NET version Tanks Rebirth expects mod to be.</summary>
     public const int MIN_NET_VERSION = 8;
 
-    private volatile static List<Action> _loadingActions = [];
-    private volatile static List<Action> _sandboxingActions = [];
+    volatile static List<Action> _loadingActions = [];
 
-    private static Dictionary<string, AssemblyLoadContext> _modDeps = [];
-    private static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = [];
-    private static Dictionary<TanksMod, List<ModBlock>> _modBlockDictionary = [];
-    private static Dictionary<TanksMod, List<ModShell>> _modShellDictionary = [];
+    // set within the mods menu, generally
+    public static List<string> FirstLoadMods = [];
+
+    internal static List<string> modNames = [];
+    internal static List<bool> modEnablement = [];
+    /// <summary>A mod-agnostic list of modded tanks.</summary>
     public static ModTank[] ModTanks { get; private set; } = [];
-    private static List<ModTank> _modTanks = [];
-
+    static List<ModTank> _modTanks = [];
+    /// <summary>A mod-agnostic list of modded blocks.</summary>
     public static ModBlock[] ModBlocks { get; private set; } = [];
-    private static List<ModBlock> _modBlocks = [];
-
+    static List<ModBlock> _modBlocks = [];
+    /// <summary>A mod-agnostic list of modded shells.</summary>
     public static ModShell[] ModShells { get; private set; } = [];
-    private static List<ModShell> _modShells = [];
+    static List<ModShell> _modShells = [];
 
-    private static bool _firstLoad = true;
+    // i could PROBABLY make this not miserable and just have this not be a new class per modifier, but the implementation idea is nice for now
+    /// <summary>A mod-agnostic list of modded modifiers.</summary>
+    public static ModModifier[] ModModifiers { get; private set; } = [];
+    static List<ModModifier> _modModifiers = [];
+
+    static bool _firstLoad = true;
     /// <summary>The error given from the mod-loading process.</summary>
     public static string Error = string.Empty;
+    /// <summary>What kind of compilation is performed- Debug or Release.</summary>
     public static string LoadType = string.Empty;
     public static bool CheckIfCompilesAreAllowed() {
         if (!RuntimeData.IsWindows) {
-            TankGame.ClientLog.Write("Auto-compilation disallowed. Current OS is not Windows.", Internals.LogType.Warn);
+            TankGame.ClientLog.Write("Auto-compilation disallowed. Current OS is not Windows.", RebirthLogLevel.Warn);
             return false;
         }
         try {
@@ -101,63 +141,55 @@ public static class ModLoader {
             process.WaitForExit();
             // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
             if (versionsReal.All(x => x.Major < MIN_NET_VERSION)) {
-                TankGame.ClientLog.Write($"Auto-compilation disallowed. User does not have a .NET {MIN_NET_VERSION}.0 SDK or higher installed.", LogType.Warn);
+                TankGame.ClientLog.Write($"Auto-compilation disallowed. User does not have a .NET {MIN_NET_VERSION}.0 SDK or higher installed.", RebirthLogLevel.Warn);
                 return false;
             }
 
-            TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", LogType.Info);
+            TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", RebirthLogLevel.Info);
             return true;
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             var trace = new StackTrace(e, true);
             var frame = trace.GetFrame(0);
             int line = frame?.GetFileLineNumber() ?? -1;
 
-            TankGame.ClientLog.Write($"Auto-compile eligibility failed. (reason={e.Message}, where={line})", LogType.Info);
+            TankGame.ClientLog.Write($"Auto-compile eligibility failed. (reason={e.Message}, where={line})", RebirthLogLevel.Info);
 
             return false;
         }
     }
-    private static void AttemptCompile(string modName) {
+    static void AttemptCompile(string modName) {
         if (!AreCompilesAllowed) return;
 
         Status = LoadStatus.Compiling;
         Process proc = new();
         try {
-            LoadType = Debugger.IsAttached ? "Debug" : "Release";
+            // uses dotnet instead of just the cli -> dotnet command
             ProcessStartInfo startInfo = new() {
+                FileName = "dotnet",
+                Arguments = $"build -c {LoadType}",
+                WorkingDirectory = Path.Combine(ModsPath, modName),
                 UseShellExecute = false,
-
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
-                FileName = @"C:\Windows\system32\cmd.exe",
-                WorkingDirectory = Path.Combine(ModsPath, modName),
-                Arguments = $"/c dotnet build -c " + LoadType,
                 RedirectStandardOutput = true,
             };
 
             proc.StartInfo = startInfo;
             proc.Start();
 
-            var lines = proc.StandardOutput
-                .ReadToEnd()
-                .Replace("\n", "")
-                .Split('\r')
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrEmpty(x))
-                .ToArray();
+            var output = proc.StandardOutput.ReadToEnd();
+            proc.WaitForExit();
 
-            // find a build failure
-
-            var idx = Array.FindIndex(lines, l => l.Contains("build failed", StringComparison.CurrentCultureIgnoreCase));
-            if (idx > -1) {
-                var reasonP = Environment.NewLine + lines[idx - 1];
-                var reason = reasonP.Remove(Array.FindIndex(reasonP.ToArray(), x => x == '['));
-                Error = reason;
-                TankGame.ReportError(new Exception(reason));
+            if (proc.ExitCode != 0) {
+                var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+                var errorLine = lines.FirstOrDefault(l => l.Contains("error", StringComparison.OrdinalIgnoreCase));
+                Error = errorLine ?? "Unknown Build Failure";
+                TankGame.ReportError(new Exception(Error));
             }
 
             proc.WaitForExit();
+
+            ActionsComplete++;
         } catch (Exception e) {
             Error = e.Message;
             proc.Dispose();
@@ -174,66 +206,59 @@ public static class ModLoader {
             return;
         }
 
-        ChatSystem.SendMessage("Unloading mods...", Color.Yellow);
+        TankGame.ClientLog.Write("Unloading mods...", RebirthLogLevel.Info);
         Status = LoadStatus.Unloading;
         _loadingActions.Clear();
-        _sandboxingActions.Clear();
         LoadedMods.ForEach(mod => {
             // for indivudally unloaded mods.
 
+            var content = mod.Data;
+
             // unload modded stuff and all data
-            var modTankCount = _modTankDictionary[mod].Count;
+            var modTankCount = content.Tanks.Count;
             for (int i = modTankCount - 1; i >= 0; i--) {
-                _modTankDictionary[mod][i].Unload();
+                content.Tanks[i].Unload();
             }
             // this allows the next mod to unload properly... thrice
             ModTank.unloadOffset += modTankCount;
-            _modTankDictionary[mod].Clear();
+            content.Tanks.Clear();
 
-            var modBlockCount = _modBlockDictionary[mod].Count;
+            var modBlockCount = content.Blocks.Count;
             for (int i = modBlockCount - 1; i >= 0; i--) {
-                _modBlockDictionary[mod][i].Unload();
+                content.Blocks[i].Unload();
             }
             ModBlock.unloadOffset += modBlockCount;
-            _modBlockDictionary[mod].Clear();
-
-            var modShellCount = _modShellDictionary[mod].Count;
+            content.Blocks.Clear();
+            var modShellCount = content.Shells.Count;
             for (int i = modShellCount - 1; i >= 0; i--) {
-                _modShellDictionary[mod][i].Unload();
+                content.Shells[i].Unload();
             }
             ModShell.unloadOffset += modShellCount;
-            _modShellDictionary[mod].Clear();
+            content.Shells.Clear();
+
+            foreach (var modifier in _modModifiers.FindAll(modifier => modifier.Mod == mod))
+                modifier.Unload();
+            Modifiers.UnregisterAll(mod);
 
             mod.OnUnload();
-            UnloadModContent(ref mod);
+            ModRegistry.UnregisterAllConditionsForMod(mod);
+            UnloadModContent(mod);
         });
         LoadedMods.Clear();
-        _loadedAlcs.ForEach(asm => {
-            asm.Unload();
-            ChatSystem.SendMessage($"Unloaded '{asm.Name}'", Color.Orange);
-        });
-        foreach (var entry in _modDeps) {
-            var alc = entry.Value;
-            var mod = entry.Key;
-
-            ChatSystem.SendMessage($"Unloaded dependency '{alc.Name}' from {mod}", Color.DarkOrange);
-        }
+        _modModifiers.Clear();
+        ModModifiers = [];
         // for when the unloading process is done.
-        _modTankDictionary.Clear();
-        _modBlockDictionary.Clear();
-        _modShellDictionary.Clear();
-        ModContent.moddedTypes.Clear();
-        ResetContentDictionaries();
+        ModRegistry.singletonMap.Clear();
         _loadedAlcs.Clear();
+        ResetContentDictionaries();
         ModTank.unloadOffset = 0;
         ModBlock.unloadOffset = 0;
         ModShell.unloadOffset = 0;
-        ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
+        TankGame.ClientLog.Write("Mod unload successful!", RebirthLogLevel.Info);
         Status = LoadStatus.Complete;
-
     }
     // doesn't work?
-    private static void ResetContentDictionaries() {
+    static void ResetContentDictionaries() {
         BlockID.Collection = new(MemberType.Fields);
         PingID.Collection = new(MemberType.Fields);
         PlayerID.Collection = new(MemberType.Fields);
@@ -242,39 +267,75 @@ public static class ModLoader {
         TeamID.Collection = new(MemberType.Fields);
         TrackID.Collection = new(MemberType.Fields);
     }
-    private static void UnloadModContent(ref TanksMod mod) {
-        return;
-        // unfinished for now.
-        /*var types = mod.GetType().Assembly.GetTypes();
+    // strictly unloads static events within the assembly
+    static void UnloadModContent(TanksMod mod) {
+        // assembly that belongs to this mod (collectible ALC)
+        var modAssembly = mod.GetType().Assembly;
 
-        for (int i = 0; i < types.Length; i++) {
-            var fields = types[i].GetFields();
-            for (int j = 0; j < fields.Length; i++) {
-                var events = fields[j].FieldType.GetEvents();
+        var types = Assembly.GetExecutingAssembly().GetTypes();
 
-                for (int k = 0; k < events.Length; k++) {
-                    var @event = events[k];
-                    var eventType = @event.EventHandlerType;
-                    var cEvent = @event.get
-                    foreach (var subscriber in )
+        foreach (var type in types) {
+            if (type == null) continue;
+
+            // only static
+            var events = type.GetEvents(BindingFlags.Static | BindingFlags.Public);
+
+            foreach (var ev in events) {
+                try {
+                    // attempts to find the backing field
+                    var field = type.GetField(ev.Name, BindingFlags.NonPublic | BindingFlags.Static)
+                        ?? type.GetField($"<{ev.Name}>k__BackingField",
+                            BindingFlags.NonPublic | BindingFlags.Static);
+
+                    if (field == null) {
+                        continue;
+                    }
+
+                    if (field.GetValue(null) is not MulticastDelegate del)
+                        continue;
+
+                    // forcefully strip the event of any handlers that belong to the mod's assembly
+                    foreach (var handler in del.GetInvocationList()) {
+                        var handlerAsm = handler.Method.DeclaringType?.Assembly;
+                        if (handlerAsm == modAssembly) {
+                            // For static events the target is null
+                            ev.RemoveEventHandler(null, handler);
+                            TankGame.ClientLog.Write($"Mod {mod.InternalName} forgot to unsubscribe from event {ev.DeclaringType.Name}.{ev.Name}. Unsubscribing...", RebirthLogLevel.Info);
+                        }
+                    }
+                } catch {
+                    // oh well lol we tried
                 }
             }
-        }*/
+        }
+        mod.Data.assemblyContainer.Unload();
     }
+
     /// <summary>Prepare your garbage collector!</summary>
     internal static void LoadMods() {
-        if (Status == LoadStatus.Unloading)
-            ChatSystem.SendMessage("Mods are currently unloading! Unable to load mods.", Color.Red);
-        if (Status == LoadStatus.Loading || Status == LoadStatus.Compiling || Status == LoadStatus.Sandboxing)
-            ChatSystem.SendMessage("Mods are currently loading! Unable to load mods.", Color.Red);
-        if (LoadedMods.Count > 0)
+        if (Status == LoadStatus.Unloading) {
+            TankGame.ClientLog.Write("Mods are currently unloading! Unable to load mods.", RebirthLogLevel.Warn);
+            return;
+        }
+        if (IsLoadingMods) {
+            TankGame.ClientLog.Write("Mods are currently loading! Unable to load mods.", RebirthLogLevel.Warn);
+            return;
+        }
+
+        if (LoadedMods.Count > 0) {
             UnloadAll();
+        }
+        else {
+            TankGame.ClientLog.Write("No mods to unload. Skipping...", RebirthLogLevel.Warn);
+        }
+
+        LoadType = Debugger.IsAttached ? "Debug" : "Release";
 
         ActionsNeeded = 0;
         ActionsComplete = 0;
 
         if (!_firstLoad)
-            ChatSystem.SendMessage("Reloading mods...", Color.Red);
+            TankGame.ClientLog.Write("Reloading mods...", RebirthLogLevel.Info);
         else
             AreCompilesAllowed = CheckIfCompilesAreAllowed();
 
@@ -285,173 +346,279 @@ public static class ModLoader {
         if (folders.Length == 0) {
             _firstLoad = true;
             Status = LoadStatus.Complete;
-            ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
             return;
         }
-        LoadingMods = true;
 
-        foreach (var folder in folders) {
-            var files = Directory.GetFiles(folder);
-            foreach (var file1 in files) {
-                bool isProj = file1.Contains(".csproj");
-                if (isProj) {
-                    foreach (var file2 in files) {
-                        var fileName = Path.GetFileName(file2);
-                        var modName = folder.Split('\\')[^1];
-                        if (fileName == modName + ".csproj") {
-                            ActionsNeeded++;
+        IsLoadingMods = true;
+        Error = string.Empty;
 
-                            var lines = File.ReadAllLines(file2);
-                            var netVer = GetCsprojPropertyValue(lines, LocateCsprojProperty(lines, "TargetFramework"));
+        // largely refactored from the old one
 
-                            if (netVer != EXPECTED_NET_VERSION) {
-                                Error = $"This mod does not match TanksRebirth's .NET version ({EXPECTED_NET_VERSION})";
-                                return;
-                            }
+        // thing that prevents accessing outside of array bounds..es?
+        int dummyLittleIThing = 0;
+        for (int i = 0; i < folders.Length; i++) {
 
-                            _loadingActions.Add(() => {
-                                ModBeingLoaded = modName;
-                                // load assemblies included in the modrefs folder
-                                var dirPath = Path.Combine(folder, "modrefs");
+            var modFolder = folders[i];
+            var modName = new DirectoryInfo(modFolder).Name;
+            var proj = Path.Combine(modFolder, modName + ".csproj");
 
-                                // TODO: what the sigma? (translation - "why does this always throw an error when AttemptCompile is called?")
-                                if (Directory.Exists(dirPath)) {
-                                    foreach (var dllPath in Directory.GetFiles(dirPath).Where(x => x.EndsWith(".dll"))) {
-                                        var dll = Path.GetFileName(dllPath);
-                                        var depAlc = new AssemblyLoadContext(Path.GetFileNameWithoutExtension(dllPath), true);
+            // there's no csproj to run dotnet build on, skip (aka: not a mod)
+            if (!File.Exists(proj)) {
+                dummyLittleIThing--;
+                continue;
+            }
 
-                                        _modDeps[modName] = depAlc;
+            // check .NET compatibility
+            var lines = File.ReadAllLines(proj);
+            var netVer = GetCsprojPropertyValue(lines, LocateCsprojProperty(lines, "TargetFramework"));
 
-                                        depAlc.LoadFromStream(File.Open(dllPath, FileMode.Open));
-                                    }
-                                }
-                                AttemptCompile(modName);
-                                Status = LoadStatus.Loading;
-                                string filepath = Path.Combine(folder, "bin", LoadType, EXPECTED_NET_VERSION, $"{modName}.dll");
-                                string pdb = Path.ChangeExtension(filepath, ".pdb");
-                                // TODO: load PDB into the ALC.
-                                var alc = new AssemblyLoadContext(modName, true);
-                                // alc.LoadFromAssemblyPath(filepath);
-                                alc.LoadFromStream(File.Open(filepath, FileMode.Open), File.Open(pdb, FileMode.Open));
+            // if incompatible, don't compile
+            if (netVer != EXPECTED_NET_VERSION) {
+                Error = $"This mod does not match TanksRebirth's .NET version ({EXPECTED_NET_VERSION})";
+                return;
+            }
 
-                                _loadedAlcs.Add(alc);
+            if (!modNames.Contains(modName)) {
+                modNames.Add(modName);
+                modEnablement.Add(true);
+            }
 
-                                var assembly = alc.Assemblies.First();
+            if (!modEnablement[i + dummyLittleIThing]) {
+                TankGame.ClientLog.Write($"Skipping mod {modName}", RebirthLogLevel.Info);
+                continue;
+            }
 
-                                _sandboxingActions.Add(() => {
-                                    try {
-                                        Status = LoadStatus.Sandboxing;
-                                        var types = assembly.GetTypes();
-                                        int modClassCount = 0;
-                                        foreach (var type in types) {
-                                            if (type.IsSubclassOf(typeof(TanksMod)) && !type.IsAbstract) {
-                                                modClassCount++;
-                                                if (modClassCount > 1)
-                                                    throw new Exception("Too many mod classes. Only one is allowed per-mod.");
+            // this mod has two actions max: compilation and load or just load
+            ActionsNeeded += AreCompilesAllowed ? 2 : 1;
 
-                                                // let's run the virtually overridden methods.
-                                                var tanksMod = Activator.CreateInstance(type) as TanksMod;
-                                                tanksMod!.InternalName = modName;
-                                                tanksMod!.Name = modName;
+            _loadingActions.Add(() => {
+                try {
+                    ModBeingLoaded = modName;
 
-                                                _modTankDictionary.Add(tanksMod, []);
-                                                _modBlockDictionary.Add(tanksMod, []);
-                                                _modShellDictionary.Add(tanksMod, []);
+                    AttemptCompile(modName);
 
-                                                // now lets scan the mod's content
-                                                // i feel like this is gravely inefficient but it can be changed
-                                                // update: this is definitely somewhat horrid
-                                                foreach (var type2 in tanksMod.GetType().Assembly.GetTypes()) {
-                                                    var isModTank = type2.IsSubclassOf(typeof(ModTank));
-                                                    if (isModTank && !type2.IsAbstract) {
-                                                        var modTank = (Activator.CreateInstance(type2) as ModTank)!;
-                                                        _modTankDictionary[tanksMod].Add(modTank);
-                                                        _modTanks.Add(modTank);
-                                                        modTank!.Mod = tanksMod;
+                    Status = LoadStatus.Loading;
+                    string filepath = Path.Combine(modFolder, "bin", LoadType, EXPECTED_NET_VERSION, $"{modName}.dll");
+                    string pdb = Path.ChangeExtension(filepath, ".pdb");
 
-                                                        // load each tank and its data, add to moddedTypes the singleton of the ModTank.
-                                                        ModContent.moddedTypes.Add(modTank);
+                    var alc = new AssemblyLoadContext(modName, isCollectible: true);
 
-                                                        var tankName = modTank.GetType().Name;
-
-                                                        modTank.Name ??= new([]);
-                                                        modTank.Texture ??= tankName;
-
-                                                        // doesn't insert anything if there is already something for English
-                                                        modTank.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{tankName}");
-                                                        modTank!.Load();
-                                                        DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
-                                                        TankGame.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
-                                                    } 
-                                                    else if (type2.IsSubclassOf(typeof(ModBlock)) && !type.IsAbstract) {
-                                                        var modBlock = (Activator.CreateInstance(type2) as ModBlock)!;
-                                                        _modBlockDictionary[tanksMod].Add(modBlock);
-                                                        _modBlocks.Add(modBlock);
-                                                        modBlock!.Mod = tanksMod;
-
-                                                        // again, but with modlbocks
-                                                        ModContent.moddedTypes.Add(modBlock);
-                                                        modBlock.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modBlock.GetType().Name}");
-                                                        modBlock.Register();
-                                                        TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
-                                                    }
-                                                    else if (type2.IsSubclassOf(typeof(ModShell)) && !type.IsAbstract) {
-                                                        var modShell = (Activator.CreateInstance(type2) as ModShell)!;
-                                                        _modShellDictionary[tanksMod].Add(modShell);
-                                                        _modShells.Add(modShell);
-                                                        modShell!.Mod = tanksMod;
-
-                                                        // again, but with modshels
-                                                        ModContent.moddedTypes.Add(modShell);
-                                                        modShell.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modShell.GetType().Name}");
-                                                        modShell.Register();
-                                                        TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
-                                                    }
-                                                }
-
-                                                LoadedMods.Add(tanksMod);
-
-                                                tanksMod.OnLoad();
-
-                                                OnPostModLoad?.Invoke(tanksMod);
-                                            }
-                                        }
-                                    }
-                                    catch (Exception e) {
-                                        TankGame.ReportError(e, true, true);
-                                        Error = e.Message;
-                                        return;
-                                    }
-                                });
-
-                                ActionsComplete++;
-                                TankGame.ClientLog.Write($"Loaded mod assembly '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", Internals.LogType.Info);
-                            });
-                            break;
+                    // loads mod-specific dependencies into *this* ALC
+                    var dirPath = Path.Combine(modFolder, "modrefs");
+                    if (Directory.Exists(dirPath)) {
+                        foreach (var dllPath in Directory.GetFiles(dirPath, "*.dll")) {
+                            alc.LoadFromAssemblyPath(dllPath);
                         }
                     }
+
+                    // now load the mod itself into the same ALC
+                    using var mainDll = File.OpenRead(filepath);
+                    using var mainPdb = File.Exists(pdb) ? File.OpenRead(pdb) : null;
+
+                    if (mainPdb is not null)
+                        alc.LoadFromStream(mainDll, mainPdb);
+                    else
+                        alc.LoadFromStream(mainDll);
+
+                    _loadedAlcs.Add(alc);
+
+                    var assembly = alc.Assemblies.First(x => x.GetName().Name == modName);
+                    var types = assembly.GetTypes();
+                    var tanksModTypes = types.Where(t => t.IsSubclassOf(typeof(TanksMod)) && !t.IsAbstract).ToArray();
+
+                    TanksMod mod;
+
+                    if (tanksModTypes.Length != 1) {
+                        if (tanksModTypes.Length > 1)
+                            throw new ModLoadException($"Too many classes inherit from {nameof(TanksMod)}! Only one is allowed per-mod.");
+                        else
+                            throw new ModLoadException($"No classes that inherit from {nameof(TanksMod)}, no entrypoint to use.");
+                    }
+                    // initialize what needs to be initialized (DAMN THATS A BAR)
+                    else {
+                        mod = (Activator.CreateInstance(tanksModTypes[0]) as TanksMod)!;
+                        mod.InternalName = modName;
+                        mod.Data.LoadDirectory = modFolder;
+                        mod.Data.assemblyContainer = alc;
+                        mod.Data.LoadDirectory = filepath;
+                        mod.Data.Dependencies = alc.Assemblies.Select(x => x.FullName!).ToArray();
+                        mod.Data.Assemblies = alc.Assemblies;
+
+                        var modInfoPath = Path.Combine(modFolder, "mod_info.json");
+
+                        SetupMod(mod, modInfoPath);
+
+                        LoadModContent(mod, types);
+
+                        FirstLoadMods.Add(mod.InternalName);
+
+                        LoadedMods.Add(mod);
+                        mod.OnLoad();
+                        OnPostModLoad?.Invoke(mod);
+                    }
+                    ActionsComplete++;
+                    TankGame.ClientLog.Write($"Loaded mod '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", RebirthLogLevel.Info);
+                } catch (Exception e) {
+                    TankGame.ReportError(e, true, true);
+                    Error = e.Message;
+                    return;
                 }
-            }
+            });
         }
-        Task.Run(async () => {
-            _loadingActions.ForEach(x => x.Invoke());
-            while (Error != string.Empty)
-                await Task.Delay(10).ConfigureAwait(false);
-            _sandboxingActions.ForEach(x => x.Invoke());
-            while (Error != string.Empty)
-                await Task.Delay(10).ConfigureAwait(false);
-            LoadingMods = false;
+        Task.Run(() => {
+            _loadingActions.ForEach(x => x());
+
+            IsLoadingMods = false;
             ModBeingLoaded = string.Empty;
             Status = LoadStatus.Complete;
-            ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
+
+            TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", RebirthLogLevel.Info);
             _firstLoad = false;
 
-            OnFinishModLoading?.Invoke();
-            ModTanks = _modTanks.ToArray();
-            ModBlocks = _modBlocks.ToArray();
-            ModShells = _modShells.ToArray();
-        });
+            ModTanks = [.. _modTanks];
+            ModBlocks = [.. _modBlocks];
+            ModShells = [.. _modShells];
+            ModModifiers = [.. _modModifiers];
 
+            OnFinishModLoading?.Invoke();
+        });
+        /*IsLoadingMods = false;
+        ModBeingLoaded = string.Empty;
+        Status = LoadStatus.Complete;
+        TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", RebirthLogLevel.Info);
+        _firstLoad = false;
+
+        ModTanks = [.. _modTanks];
+        ModBlocks = [.. _modBlocks];
+        ModShells = [.. _modShells];*/
+
+    }
+    internal static void SetupMod(TanksMod mod, string modInfoPath) {
+        mod.Data.Tanks = [];
+        mod.Data.Blocks = [];
+        mod.Data.Shells = [];
+
+        // trycatch is now avoided typically
+        if (!File.Exists(modInfoPath)) {
+            TankGame.ClientLog.Write($"mod_info.json missing for '{mod.InternalName}', creating defaults.", RebirthLogLevel.Info);
+            File.WriteAllText(modInfoPath, JsonSerializer.Serialize<ModInfo>(default, _indented));
+            mod.ModInfo = new();
+            return;
+        }
+
+        try {
+            var modInfoJson = File.ReadAllText(modInfoPath);
+            mod.ModInfo = JsonSerializer.Deserialize<ModInfo>(modInfoJson);
+        } catch (JsonException ex) {
+            TankGame.ClientLog.Write($"Invalid JSON in '{mod.InternalName}': {ex.Message}.", RebirthLogLevel.Warn);
+            mod.ModInfo = new();
+        }
+    }
+    internal static void LoadModContent(TanksMod mod, Type[] types) {
+        foreach (var type in types) {
+            // now lets scan the mod's content
+
+            var isModTank = type.IsSubclassOf(typeof(ModTank)) && !type.IsAbstract;
+            var isModBlock = type.IsSubclassOf(typeof(ModBlock)) && !type.IsAbstract;
+            var isModShell = type.IsSubclassOf(typeof(ModShell)) && !type.IsAbstract;
+            var isModModifier = type.IsSubclassOf(typeof(ModModifier)) && !type.IsAbstract;
+
+            if (isModTank) {
+                LoadModTank(mod, type);
+            }
+            else if (isModBlock) {
+                LoadModBlock(mod, type);
+            }
+            else if (isModShell) {
+                LoadModShell(mod, type);
+            }
+            else if (isModModifier) {
+                LoadModModifier(mod, type);
+            }
+        }
+    }
+    public static void LoadModTank(TanksMod mod, Type type) {
+        var modContent = (Activator.CreateInstance(type) as ModTank)!;
+        var modType = modContent.GetType();
+        modContent.ContentKey = $"{type.Assembly.GetName().Name}.{modType.Name}";
+        var @namespace = string.Join(Path.DirectorySeparatorChar, modType.FullName!.Split('.')[1..]);
+
+        _loadingContent = modContent;
+
+        mod.Data.Tanks.Add(modContent);
+        _modTanks.Add(modContent);
+        modContent.Mod = mod;
+
+        // load each tank and its data, add to moddedTypes the singleton of the ModTank.
+        ModRegistry.singletonMap.Add(type, modContent);
+
+        modContent.Name ??= new();
+        modContent.Texture ??= @namespace;
+
+        // doesn't insert anything if there is already something for English
+        modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
+        DifficultyAlgorithm.TankDiffs[modContent.Type] = 0f;
+
+        modContent!.Register();
+        TankGame.ClientLog.Write($"Loaded modded tank '{modContent.ContentKey}'", RebirthLogLevel.Info);
+    }
+    public static void LoadModBlock(TanksMod mod, Type type) {
+        var modContent = (Activator.CreateInstance(type) as ModBlock)!;
+        var modType = modContent.GetType();
+        modContent.ContentKey = $"{type.Assembly.GetName().Name}.{modType.Name}";
+        var @namespace = string.Join(Path.DirectorySeparatorChar, modType.FullName!.Split('.')[1..]);
+
+        _loadingContent = modContent;
+
+        mod.Data.Blocks.Add(modContent);
+        _modBlocks.Add(modContent);
+        modContent!.Mod = mod;
+
+        modContent.Name ??= new();
+        modContent.Texture ??= @namespace;
+
+        // again, but with modlbocks
+        ModRegistry.singletonMap.Add(type, modContent);
+
+        modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
+        modContent.Register();
+        TankGame.ClientLog.Write($"Loaded modded block '{modContent.ContentKey}'", RebirthLogLevel.Info);
+    }
+    public static void LoadModShell(TanksMod mod, Type type) {
+        var modContent = (Activator.CreateInstance(type) as ModShell)!;
+        var modType = modContent.GetType();
+        modContent.ContentKey = $"{type.Assembly.GetName().Name}.{modType.Name}";
+        var @namespace = string.Join(Path.DirectorySeparatorChar, modType.FullName!.Split('.')[1..]);
+
+        _loadingContent = modContent;
+
+        mod.Data.Shells.Add(modContent);
+        _modShells.Add(modContent);
+        modContent!.Mod = mod;
+
+        modContent.Name ??= new();
+        modContent.Texture ??= @namespace;
+
+        // again, but with modshels
+        ModRegistry.singletonMap.Add(type, modContent);
+
+        modContent.Name.TryAdd(LangCode.English, modContent.ContentKey);
+        TankGame.MainThreadTasks.Enqueue(modContent.Register);
+        TankGame.ClientLog.Write($"Loaded modded shell '{modContent.ContentKey}'", RebirthLogLevel.Info);
+    }
+    public static void LoadModModifier(TanksMod mod, Type type) {
+        var modModifier = (Activator.CreateInstance(type) as ModModifier)!;
+        modModifier.ContentKey = modModifier.GetType().Name;
+        modModifier.Mod = mod;
+
+        _loadingContent = modModifier;
+        _modModifiers.Add(modModifier);
+
+        ModRegistry.singletonMap.Add(type, modModifier);
+
+        // the modifiers menu reads the registry every frame, so register on the main thread
+        TankGame.MainThreadTasks.Enqueue(modModifier.Register);
+        TankGame.ClientLog.Write($"Loaded modded modifier '{modModifier.Key}'", RebirthLogLevel.Info);
     }
     public static int LocateCsprojProperty(string[] contents, string match) {
         return Array.FindIndex(contents, x => {
@@ -465,28 +632,108 @@ public static class ModLoader {
         return property;
     }
 
-    // rendering
-
+    // okay this is refactored but idk if it's good enough
     public static void DrawModLoading() {
-        var alpha = 0.7f;
-        var width = WindowUtils.WindowWidth / 3;
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
+        var renderer = TankGame.SpriteRenderer;
+        var font = FontGlobals.RebirthFont;
+        var fontLarge = FontGlobals.RebirthFontLarge;
 
-        var barDims = new Vector2(width - 120, 20).ToResolution();
+        // dims the background to make the loading ui more apparent
+        renderer.Draw(
+            TextureGlobals.Pixels[Color.Black],
+            new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
+            Color.Black * 0.6f
+        );
 
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
-            barDims, default, 0f);
-        var ratio = (float)ModLoader.ActionsComplete / ModLoader.ActionsNeeded;
-        if (ModLoader.ActionsNeeded == 0)
-            ratio = 0;
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
-            barDims * new Vector2(ratio, 1f).ToResolution(), default, 0f);
+        // panel drawing parameters
+        // yes they're hardcoded. deal with it.
+        var center = new Vector2(WindowUtils.WindowWidth / 2f, WindowUtils.WindowHeight / 2f);
+        var panelWidth = 700.ToResolutionX();
+        var panelHeight = 350.ToResolutionY();
+        var panelRect = new Rectangle(
+            (int)(center.X - panelWidth / 2),
+            (int)(center.Y - panelHeight / 2),
+            (int)panelWidth,
+            (int)panelHeight
+        );
 
-        var txt = $"{ModLoader.Status} {ModLoader.ModBeingLoaded}...";
-        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, FontGlobals.RebirthFont.MeasureString(txt)));
+        // panel shadow
+        renderer.Draw(TextureGlobals.Pixels[Color.Black], panelRect.GetOffset(10, 10), Color.Black * 0.5f);
 
-        txt = ModLoader.Error == string.Empty ? $"Loading your mods... {ratio * 100:0}% ({ModLoader.ActionsComplete} / {ModLoader.ActionsNeeded})" :
-        $"Error Loading '{ModLoader.ModBeingLoaded}' ({ModLoader.Error})";
-        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, FontGlobals.RebirthFont.MeasureString(txt)));
+        // panel
+        renderer.Draw(TextureGlobals.Pixels[Color.Gray], panelRect, new Color(30, 30, 35));
+
+        // panel accent
+        var accentHeight = 6.ToResolutionY();
+        renderer.Draw(
+            TextureGlobals.Pixels[Color.White],
+            new Rectangle(panelRect.X, panelRect.Y, panelRect.Width, (int)accentHeight),
+            Color.Goldenrod
+        );
+
+        // text drawing
+        var titleText = "MOD INITIALIZATION";
+        var titleScale = new Vector2(0.6f).ToResolution();
+        var titleSize = fontLarge.MeasureString(titleText) * titleScale;
+        var titlePos = new Vector2(center.X, panelRect.Y + 60.ToResolutionY());
+
+        // title shadow
+        renderer.DrawString(fontLarge, titleText, titlePos + new Vector2(2), Color.Black * 0.5f, titleScale, 0f, GameUtils.GetAnchor(Anchor.Center, titleSize / titleScale), 1f, 0f);
+        renderer.DrawString(fontLarge, titleText, titlePos, Color.White, titleScale, 0f, GameUtils.GetAnchor(Anchor.Center, titleSize / titleScale), 1f, 0f);
+
+        // current status
+        var statusText = Error != string.Empty ? $"ERROR: {Error}" : $"{Status}: {ModBeingLoaded}...";
+        var statusScale = new Vector2(0.9f).ToResolution();
+        var contentScale = statusScale * 0.5f;
+        var currentContentLoading = _loadingContent != null ? _loadingContent.ContentKey : string.Empty;
+        var cmclSize = font.MeasureString(currentContentLoading) * contentScale;
+        var statusSize = font.MeasureString(statusText) * statusScale;
+
+        // make it "pulse" slightly using sine wave
+        var pulse = (float)Math.Sin(RuntimeData.RunTime / 20f) * 0.1f + 0.9f;
+        var statusColor = Error != string.Empty ? Color.Red : Color.LightGray * pulse;
+
+        renderer.DrawString(font, statusText, center - new Vector2(0, 20.ToResolutionY()), statusColor, statusScale, 0f, GameUtils.GetAnchor(Anchor.Center, statusSize / statusScale), 1f, 0f);
+
+        renderer.DrawString(font, currentContentLoading, center, statusColor, contentScale, 0f, GameUtils.GetAnchor(Anchor.Center, cmclSize / contentScale), 1f, 0f);
+
+        // progress bar
+
+        var barWidth = panelWidth * 0.8f;
+        var barHeight = 30.ToResolutionY();
+        var barRect = new Rectangle(
+            (int)(center.X - barWidth / 2),
+            (int)(center.Y + 40.ToResolutionY()),
+            (int)barWidth,
+            (int)barHeight
+        );
+
+        // bar border
+        var borderRect = barRect;
+        borderRect.Inflate(2, 2);
+        renderer.Draw(TextureGlobals.Pixels[Color.White], borderRect, Color.Gray);
+
+        // bar track
+        renderer.Draw(TextureGlobals.Pixels[Color.Black], barRect, Color.Black);
+
+        // bar fill
+        float ratio = ActionsNeeded == 0 ? 0 : (float)ActionsComplete / ActionsNeeded;
+        var fillWidth = (int)(barWidth * ratio);
+        var fillRect = new Rectangle(barRect.X, barRect.Y, fillWidth, barRect.Height);
+
+        // fill color, made to match accent
+        renderer.Draw(TextureGlobals.Pixels[Color.White], fillRect, Color.Goldenrod);
+
+        // gloss effect
+        renderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(fillRect.X, fillRect.Y, fillRect.Width, fillRect.Height / 2), Color.White * 0.3f);
+
+        var divisor = AreCompilesAllowed ? 2 : 1;
+        // progress text
+        var percentText = $"{ratio * 100:0}% ({ActionsComplete / divisor}/{ActionsNeeded / divisor})";
+        var percentScale = new Vector2(0.75f).ToResolution();
+        var percentSize = font.MeasureString(percentText) * percentScale;
+        var percentPos = new Vector2(center.X, barRect.Bottom + 15.ToResolutionY());
+
+        renderer.DrawString(font, percentText, percentPos, Color.Gray, percentScale, 0f, GameUtils.GetAnchor(Anchor.Center, percentSize / percentScale), 1f, 0f);
     }
 }

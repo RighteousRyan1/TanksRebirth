@@ -7,10 +7,13 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.CommandsSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -19,6 +22,12 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent;
 
 public sealed class Mine : IAITankDanger {
+    public struct MineDrawParams {
+        public Texture2D? MineTexture;
+        public Texture2D? ShadowTexture;
+
+        public Model Model;
+    }
 
     public delegate void ExplodeDelegate(Mine mine);
     public static event ExplodeDelegate? OnExplode;
@@ -36,29 +45,26 @@ public sealed class Mine : IAITankDanger {
     Vector2 _oldPosition;
     public Vector2 Position { get; set; }
 
-    public Matrix View;
-    public Matrix Projection;
-    public Matrix World;
+    public BasicDrawParams DrawParams = new();
+    public MineDrawParams DrawParamsMine;
 
     public Color InactiveColor = new(219, 228, 64);
     public Color ActiveColor = new(231, 62, 99);
 
     public Vector3 Position3D => Position.ExpandZ();
 
-    public Model Model;
-
-    static Texture2D? _mineTexture;
-    static Texture2D? _envTexture;
-
     public int Id { get; private set; }
+    /// <summary>Identifies this <see cref="Mine"/> over the network. <see cref="Id"/> can be different on every client.</summary>
+    public int NetId { get; private set; } = -1;
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     readonly ModelMesh? _mineMesh;
-    readonly ModelMesh? _envMesh;
+    readonly ModelMesh? _shadowMesh;
 
     public OggAudio? TickingNoise;
 
-    public Rectangle Hitbox;
+    public float HitBoxSize = 18.0f;
+    public BoundingBox HitBox;
 
     float _oldDetonateTime;
     /// <summary>The time left (in ticks) until detonation.</summary>
@@ -66,7 +72,8 @@ public sealed class Mine : IAITankDanger {
     /// <summary>The time until detonation (in ticks) from when this <see cref="Mine"/> was/is created.</summary>
     public readonly float DetonateTimeMax;
 
-    bool _tickRed;
+    /// <summary>Whether or not the mine is currently flashing red (low time remaining)</summary>
+    public bool RedTick;
     /// <summary>Whether or not this <see cref="Mine"/> is near destructible <see cref="Block"/>s.</summary>
     public bool IsNearDestructibles { get; private set; }
 
@@ -93,54 +100,81 @@ public sealed class Mine : IAITankDanger {
     /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
     /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
     /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-    public Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 1f) { // radius, old = 65
+    Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 1f) { // radius, old = 65
         Owner = owner;
         ExplosionRadius = radius;
-
-        AITank.Dangers.Add(this);
-
-        Model = ModelGlobals.Mine.Asset;
-
         DetonateTime = detonateTime;
         DetonateTimeMax = detonateTime;
-
         Position = pos;
 
+        DrawParamsMine.Model = ModelGlobals.Mine.Asset;
+
         if (owner != null) {
-            var placeSound = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f);
+            var placeSound = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift, position: Position3D);
 
             //if (CameraGlobals.IsUsingFirstPresonCamera)
-            //    SoundUtils.CreateSpatialSound(placeSound, Position3D, CameraGlobals.RebirthFreecam.Position);
+            //    SoundUtils.CreateSpatialSound(placeSound, Position3D, CameraGlobals.PerspectiveCamera.Position);
         }
 
-        _mineMesh = Model.Meshes["polygon1"];
-        _envMesh = Model.Meshes["polygon0"];
+        DrawParamsMine.MineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
+        DrawParamsMine.ShadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow").Duplicate(TankGame.Instance.GraphicsDevice);
 
-        _mineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
-        _envTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
+        _mineMesh = DrawParamsMine.Model.Meshes["mine"];
+        _shadowMesh = DrawParamsMine.Model.Meshes["shadow"];
 
         MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits;
 
-        int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
-
+        int index = Array.IndexOf(AllMines, null);
         Id = index;
-
         AllMines[index] = this;
+
+        NetId = NetParity.NewNetId();
+
+        AITank.Dangers.Add(this);
     }
 
-    /// <summary>Detonates this <see cref="Mine"/>.</summary>
-    public void Detonate() {
-        Detonated = true;
-        var scale = ExplosionRadiusInUnits * 0.101f * (Difficulties.Types["UltraMines"] ? 2 : 1);
-        var expl = new Explosion(Position, scale, Owner);
+    /// <summary>
+    /// Creates a new <see cref="Mine"/>. This method is thread-agnostic.
+    /// </summary>
+    /// <param name="owner">The <see cref="Tank"/> which owns this <see cref="Mine"/>.</param>
+    /// <param name="position">The position of this <see cref="Mine"/> in the game world.</param>
+    /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
+    /// <param name="explosionRadius">The radius of this <see cref="Mine"/>'s explosion.</param>
+    /// <returns>The created <see cref="Mine"/>, or <see langword="null"/> if there are already <see cref="MAX_MINES"/> mines.</returns>
+    public static Mine? Create(Tank? owner, Vector2 position, float detonateTime, float explosionRadius = 1f) {
+        var mine = TankGame.ThreadAgnostic(() => Array.IndexOf(AllMines, null) < 0 ? null : new Mine(owner, position, detonateTime, explosionRadius));
+        return mine;
+    }
+    /// <summary>Gives the mine the ID another client assigned to it (used when a placed mine arrives over the network).</summary>
+    public void SetNetId(int netId) => NetId = netId;
 
-        if (Owner != null)
+    /// <summary>The live mine with this <see cref="NetId"/>, or null.</summary>
+    public static Mine? FindByNetId(int netId) {
+        if (netId < 0) return null;
+        for (int i = 0; i < AllMines.Length; i++) {
+            var mine = AllMines[i];
+            if (mine is not null && mine.NetId == netId)
+                return mine;
+        }
+        return null;
+    }
+    /// <summary>Detonates this <see cref="Mine"/>. Does nothing if it already detonated.</summary>
+    /// <param name="netSend">Whether to tell the other clients. Pass <see langword="false"/> when the detonation came from the network.</param>
+    public void Detonate(bool netSend = true) {
+        if (Detonated) return;
+        Detonated = true;
+        var scale = ExplosionRadiusInUnits * 0.101f * (Modifiers.IsOn(Modifiers.BIG_MINES) ? 2 : 1);
+        var expl = Explosion.Create(Position, scale, Owner);
+
+        // remote copies of a tank never counted the mine in the first place
+        if (Owner != null && Owner.OwnedMineCount > 0)
             Owner.OwnedMineCount--;
         TickingNoise?.Stop();
 
         OnExplode?.Invoke(this);
 
-        Client.SyncMineDetonate(this);
+        if (netSend)
+            Client.SyncMineDetonate(this);
 
         Remove();
     }
@@ -152,43 +186,48 @@ public sealed class Mine : IAITankDanger {
     }
 
     internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
-            return;
+        if (!CampaignGlobals.InMission && !MainMenuUI.IsActive) return;
 
-        World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
+        DrawParams.World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
 
-        Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
+        // this might need offsetting due to the nature of the orthographic camera
+        HitBox = new(Position3D - new Vector3(HitBoxSize / 2, HitBoxSize / 2, HitBoxSize / 2),
+                Position3D + new Vector3(HitBoxSize / 2, HitBoxSize / 2, HitBoxSize / 2));
 
+        // only decrements mine timing if the host
         if (Server.NetManager != null || !Client.IsConnected()) {
-            DetonateTime -= RuntimeData.DeltaTime;
+            DetonateTime -= RuntimeData.DeltaFrames;
 
             if (DetonateTime < TICKS_OF_FLASHING) {
-                if (DetonateTime % 3.5f <= RuntimeData.DeltaTime) {
-                    _tickRed = !_tickRed;
+                if (DetonateTime % 3.5f <= RuntimeData.DeltaFrames) {
+                    RedTick = !RedTick;
                 }
                 if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f, position: Position3D);
                 }
             }
             if (Owner is not null && Owner is PlayerTank) {
                 if (DetonateTime < TICKS_OF_FLASHING - 5 && _oldDetonateTime > TICKS_OF_FLASHING - 5) {
-                    TickingNoise = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_tick.ogg", SoundContext.Effect, 0.7f);
+                    TickingNoise = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_tick.ogg", SoundContext.Effect, 0.7f, position: Position3D);
                     TickingNoise.Instance.IsLooped = true;
                 }
             }
 
-            if (DetonateTime <= 0)
+            if (DetonateTime <= 0) {
                 Detonate();
+                return;
+            }
 
             foreach (var shell in Shell.AllShells) {
-                if (shell is not null && shell.Hitbox.Intersects(Hitbox)) {
+                if (shell is not null && shell.Hitbox.Intersects(HitBox)) {
                     shell.Destroy(Shell.DestructionContext.WithMine);
                     Detonate();
+                    return;
                 }
             }
 
             if (Position != _oldPosition) // magicqe number
-                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.Properties.IsDestructible);
+                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.DistanceTo(b.Position) <= ExplosionRadius - 6f && b.Properties.IsDestructible);
 
             // NOTE: this scope may be inconsistent over a server? check soon.
             if (DetonateTime > MineReactTime) {
@@ -198,7 +237,7 @@ public sealed class Mine : IAITankDanger {
                     if (tank.IsDestroyed) continue;
                     if (Owner is null) continue;
 
-                    var dist = GameUtils.Distance_WiiTanksUnits(tank.Position, Position);
+                    var dist = GameUtils.TanksDistance(tank.Position, Position);
                     if (dist > MineReactRadius) continue;
 
                     // don't try any further, we don't want to explode if these conditions are true
@@ -221,83 +260,86 @@ public sealed class Mine : IAITankDanger {
     }
 
     internal void Render() {
-        if (!GameScene.ShouldRenderAll)
-            return;
+        DrawParams.View = CameraGlobals.GameView;
+        DrawParams.Proj = CameraGlobals.GameProjection;
 
-        View = CameraGlobals.GameView;
-        Projection = CameraGlobals.GameProjection;
-        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+        if (DebugManager.DebuggingEnabled) {
+            if (DebugManager.DebugLevel == DebugManager.Id.ENT_DAT)
+                DebugManager.DrawBoundingBox(HitBox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        }
+
+        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",
+            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, 20), 1, centered: true);
 
         // this is horrendous but it looks better
+        // this is fucking horrible - ryan, 11/24/25
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
-        foreach (ModelMesh mesh in Model.Meshes) {
+        foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = World;
-                effect.View = View;
-                effect.Projection = Projection;
+                effect.World = DrawParams.World;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Proj;
 
                 effect.TextureEnabled = true;
 
                 if (mesh == _mineMesh) {
-                    effect.EmissiveColor = (_tickRed ?
+                    effect.EmissiveColor = (RedTick ?
                         ActiveColor.ToVector3() : InactiveColor.ToVector3())
                         * SceneManager.GameLight.Brightness;
                     effect.DiffuseColor *= 0.5f;
-                    effect.Texture = _mineTexture;
+                    effect.Texture = DrawParamsMine.MineTexture;
+                    effect.Alpha = 1f;
+
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                    mesh.Draw();
+                }
+            }
+        }
+        TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
+        foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = DrawParams.World;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Proj;
+
+                effect.TextureEnabled = true;
+
+                if (mesh == _shadowMesh) {
+                    if (!CommandGlobals.DrawMeshShadows)
+                        continue;
+                    effect.Texture = DrawParamsMine.ShadowTexture;
+                    effect.Alpha = 0.6f;
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                    mesh.Draw();
+                }
+            }
+        }
+        foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = DrawParams.World;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Proj;
+
+                effect.TextureEnabled = false;
+
+                ActiveColor = new Color(231, 62, 99);
+                InactiveColor = new Color(219, 228, 64);
+                if (mesh == _mineMesh) {
+                    effect.EmissiveColor = (RedTick ?
+                        ActiveColor.ToVector3() : InactiveColor.ToVector3())
+                        * SceneManager.GameLight.Brightness;
+                    effect.DiffuseColor *= 0.5f;
+                    //effect.Texture = _mineTexture;
                     effect.Alpha = 1f;
 
                     mesh.Draw();
                 }
-                effect.SetDefaultGameLighting_IngameEntities();
-            }
-        }
-        TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
-        foreach (ModelMesh mesh in Model.Meshes) {
-            foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = World;
-                effect.View = View;
-                effect.Projection = Projection;
-
-                effect.TextureEnabled = true;
-
-                if (mesh == _envMesh) {
-                    effect.Texture = _envTexture;
+                else {
+                    if (!CommandGlobals.DrawMeshShadows)
+                        continue;
                     effect.Alpha = 0.6f;
-                    mesh.Draw();
                 }
-                effect.SetDefaultGameLighting_IngameEntities();
-            }
-        }
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = View;
-                    effect.Projection = Projection;
-
-                    effect.TextureEnabled = false;
-
-                    ActiveColor = new Color(231, 62, 99);
-                    InactiveColor = new Color(219, 228, 64);
-                    if (mesh == _mineMesh) {
-                        effect.EmissiveColor = (_tickRed ? 
-                            ActiveColor.ToVector3() : InactiveColor.ToVector3())
-                            * SceneManager.GameLight.Brightness;
-                        effect.DiffuseColor *= 0.5f;
-                        //effect.Texture = _mineTexture;
-                        effect.Alpha = 1f;
-
-                        mesh.Draw();
-                    }
-                    else {
-                        if (!Lighting.AccurateShadows) {
-                            //effect.Texture = _envTexture;
-                            effect.Alpha = 0.6f;
-                            //mesh.Draw();
-                        }
-                    }
-                    effect.SetDefaultGameLighting_IngameEntities();
-                }
+                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
             }
         }
         OnPostRender?.Invoke(this);

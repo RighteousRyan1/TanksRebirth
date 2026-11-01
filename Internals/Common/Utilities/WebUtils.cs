@@ -50,7 +50,7 @@ public static class WebUtils {
             response.Content.Headers.ContentDisposition.FileName : 
             System.IO.Path.GetFileName(url).Split('?')[0];
             
-        // GameHandler.ClientLog.Write($"WebRequest sent to '{url}'", LogType.Debug); make a logger.. of course.
+        // GameHandler.ClientLog.Write($"WebRequest sent to '{url}'", RebirthLogLevel.Debug); make a logger.. of course.
 
         return (await response.Content.ReadAsByteArrayAsync(), fileName, response.StatusCode)!;
     }

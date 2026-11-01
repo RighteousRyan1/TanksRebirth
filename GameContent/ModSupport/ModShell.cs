@@ -8,7 +8,13 @@ using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.ModSupport;
 
+#pragma warning disable CS8618
 public class ModShell : ILoadable, IModContent {
+    public string ContentKey { get; internal set; }
+    string IModContent.ContentKey {
+        get => ContentKey;
+        set => ContentKey = value;
+    }
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModShell"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
     public Shell Shell { get; set; }
@@ -16,12 +22,12 @@ public class ModShell : ILoadable, IModContent {
 
     private Texture2D? _texture;
     /// <summary>If not assigned manually, the texture will default to the regular, (mostly) white shell texture.</summary>
-    public virtual string Texture => string.Empty;
+    public virtual string Texture { get; internal set; } = string.Empty;
     /// <summary>The sound for when this shell is shot. Utilize Path.Combine(ModPath, ...)</summary>
     public virtual string ShootSound => string.Empty;
     /// <summary>The sound for while this shell is flying. Utilize Path.Combine(ModPath, ...)</summary>
     public virtual string TrailSound => string.Empty;
-    public virtual LocalizedString Name => new([]);
+    public virtual LocalizedString Name { get; internal set; }
 
     /// <summary>Initialize what you want alongside the loading of your modded shell.</summary>
     public virtual void OnLoad() { }
@@ -29,12 +35,14 @@ public class ModShell : ILoadable, IModContent {
     public virtual void OnUnload() { }
     /// <summary>Called upon the creation of the shell. Be sure to call <c>base.OnCreate()</c></summary>
     public virtual void OnCreate() {
-        if (_texture is null || Texture is null)
-            return;
-        Shell.SwapTexture(!string.IsNullOrEmpty(Texture) ? Mod.ImportAsset<Texture2D>(Texture) : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet"));
-        if (Shell.Properties.LeavesTrail)
-            Shell.TrailSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(Path.Combine(Mod.ModPath, TrailSound), 0.3f) : new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
-        Shell.ShootSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(Path.Combine(Mod.ModPath, ShootSound)) : new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg");
+        if (_texture != null)
+            Shell.DrawParamsShell.ShellTexture = _texture;
+
+        if (Shell.Properties.Visuals.HasFlag(VisualFlags.SmokeTrail) && _cachedTrailSound != null)
+            Shell.TrailSound = _cachedTrailSound;
+
+        if (_cachedShootSound != null)
+            Shell.ShootSound = _cachedShootSound;
     }
     /// <summary>Called every update.</summary>
     public virtual void PostUpdate() { }
@@ -48,15 +56,31 @@ public class ModShell : ILoadable, IModContent {
     /// <param name="playSound">Set to false to not play sounds.</param>
     public virtual void OnDestroy(Shell.DestructionContext context, ref bool playSound) { }
 
+    // non-api
     internal static int unloadOffset = 0;
+    OggAudio? _cachedShootSound;
+    OggAudio? _cachedTrailSound;
     internal void Register() {
-        var name = Name.GetLocalizedString(LangCode.English);
+        var name = Name[LangCode.English]!;
         Type = ShellID.Collection.ForcefullyInsert(name);
         _texture = Mod.ImportAsset<Texture2D>(Texture);
+        LoadSounds();
+
+        ModRegistry.idToModShell.Add(Type, this);
     }
     internal void Unload() {
         ShellID.Collection.TryRemove(Type - unloadOffset);
     }
+    internal void LoadSounds() {
+        if (!string.IsNullOrEmpty(ShootSound))
+            _cachedShootSound = new OggAudio(Path.Combine(Mod.ModPath, ShootSound));
+        else
+            _cachedShootSound = new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg");
 
+        if (!string.IsNullOrEmpty(TrailSound))
+            _cachedTrailSound = new OggAudio(Path.Combine(Mod.ModPath, TrailSound), 0.3f);
+        else
+            _cachedTrailSound = new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
+    }
     internal virtual ModShell Clone() => (ModShell)MemberwiseClone();
 }

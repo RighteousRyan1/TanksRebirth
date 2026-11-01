@@ -5,22 +5,82 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class ColorUtils
-{
-    public static Color[] AllColors { get; } = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!).ToArray();
-    public static Color[] BrightColors { get; } = [.. AllColors.Where(x => GetLuminosity(x) > 0.33f)];
-    public static Color DiscoPartyColor => HsvToRgb(RuntimeData.UpdateCount % 255 / 255f * 360, 1, 1);
+public static class ColorUtils {
+    static readonly PropertyInfo[] _colorProperties = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public);
+    public static Color[] AllColors { get; }
+    // mainly used for book colors in the background. xd.
+    public static Color[] BrightColors { get; }
+    public static Color DiscoPartyColor => HsvToRgb(RuntimeData.RunTime % 255 / 255f * 360, 1, 1);
+
+    public static readonly Dictionary<string, Color> ColorsByName;
+
+    static ColorUtils() {
+        AllColors = [.. _colorProperties.Select(x => (Color)x.GetValue(null)!)];
+        BrightColors = [.. AllColors.Where(x => GetLuminosity(x) > 0.33f)];
+        ColorsByName = [];
+        for (int i = 0; i < _colorProperties.Length; i++) {
+            var prop = _colorProperties[i];
+
+            ColorsByName.Add(prop.Name, AllColors[i]);
+        }
+    }
+    /// <summary>Returns black if the luminosity of <paramref name="input"/> is above <paramref name="lumCutoff"/>, otherwise, white.</summary>
+    public static Color WhiteBlack(Color input, float lumCutoff = 0.85f) {
+        if (GetLuminosity(input) > lumCutoff) return Color.Black;
+        else return Color.White;
+    }
+    /// <summary>
+    /// Inverts the colors of a <see cref="Color"/>.
+    /// </summary>
+    public static Color Invert(Color input) {
+        return new Color {
+            R = (byte)(255 - input.R),
+            G = (byte)(255 - input.G),
+            B = (byte)(255 - input.B),
+            A = input.A
+        };
+    }
+
+    /// <summary>Returns the average color of a given <see cref="Texture2D"/>.</summary>
+    public static Color GetAverageColor(Texture2D texture) {
+        ArgumentNullException.ThrowIfNull(texture);
+
+        Color[] pixels = new Color[texture.Width * texture.Height];
+        texture.GetData(pixels);
+
+        long totalR = 0;
+        long totalG = 0;
+        long totalB = 0;
+        long totalA = 0;
+
+        foreach (var pixel in pixels) {
+            totalR += pixel.R;
+            totalG += pixel.G;
+            totalB += pixel.B;
+            totalA += pixel.A;
+        }
+
+        int pixelCount = pixels.Length;
+
+        return new Color(
+            (byte)(totalR / pixelCount),
+            (byte)(totalG / pixelCount),
+            (byte)(totalB / pixelCount),
+            (byte)(totalA / pixelCount)
+        );
+    }
     /// <summary>
     /// Creates color with corrected brightness.
     /// </summary>
-    /// <param name="color">Color to correct.</param>
+    /// <param name="color">The color to correct.</param>
     /// <param name="correctionFactor">The brightness correction factor. Must be between -1 and 1. 
     /// Negative values produce darker colors.</param>
     /// <returns>
-    /// Corrected <see cref="Color"/> structure.
+    /// The corrected <see cref="Color"/>.
     /// </returns>
     public static Color ChangeColorBrightness(Color color, float correctionFactor) {
         float red = color.R;
@@ -41,6 +101,10 @@ public static class ColorUtils
 
         return new((int)red, (int)green, (int)blue, color.A);
     }
+
+    /// <summary>
+    /// Adjusts the saturation of a color by a saturation factor.
+    /// </summary>
     public static void AdjustSaturation(Texture2D texture, float saturation) {
         if (texture.Format != SurfaceFormat.Color)
             throw new InvalidOperationException("Texture format must be Color.");
@@ -65,109 +129,46 @@ public static class ColorUtils
 
         texture.SetData(pixels);
     }
-    public static Color HsvToRgb(double h, double S, double V)
-    {
-        Color c = new();
-        double H = h;
-        while (H < 0) { H += 360; };
-        while (H >= 360) { H -= 360; };
-        double R, G, B;
-        if (V <= 0)
-            R = G = B = 0;
-        else if (S <= 0)
-            R = G = B = V;
-        else
-        {
-            double hf = H / 60.0;
-            int i = (int)Math.Floor(hf);
-            double f = hf - i;
-            double pv = V * (1 - S);
-            double qv = V * (1 - S * f);
-            double tv = V * (1 - S * (1 - f));
-            switch (i)
-            {
+    /// <summary>Converts a HSV color to RGB.</summary>
+    public static Color HsvToRgb(double h, double s, double v) {
+        // force hue to be 0-360
+        double hue = (h % 360.0 + 360.0) % 360.0;
 
-                // Red is the dominant color
+        // saturation / value clamp
+        double sat = Math.Clamp(s, 0.0, 1.0);
+        double val = Math.Clamp(v, 0.0, 1.0);
 
-                case 0:
-                    R = V;
-                    G = tv;
-                    B = pv;
-                    break;
-
-                // Green is the dominant color
-
-                case 1:
-                    R = qv;
-                    G = V;
-                    B = pv;
-                    break;
-                case 2:
-                    R = pv;
-                    G = V;
-                    B = tv;
-                    break;
-
-                // Blue is the dominant color
-
-                case 3:
-                    R = pv;
-                    G = qv;
-                    B = V;
-                    break;
-                case 4:
-                    R = tv;
-                    G = pv;
-                    B = V;
-                    break;
-
-                // Red is the dominant color
-
-                case 5:
-                    R = V;
-                    G = pv;
-                    B = qv;
-                    break;
-
-                // Just in case we overshoot on our math by a little, we put these here. Since its a switch it won't slow us down at all to put these here.
-
-                case 6:
-                    R = V;
-                    G = tv;
-                    B = pv;
-                    break;
-                case -1:
-                    R = V;
-                    G = pv;
-                    B = qv;
-                    break;
-
-                // The color is not defined, we should throw an error.
-
-                default:
-                    //LFATAL("i Value error in Pixel conversion, Value is %d", i);
-                    R = G = B = V; // Just pretend its black/white
-                    break;
-            }
-        }
-        c.R = Clamp((byte)(R * 255));
-        c.G = Clamp((byte)(G * 255));
-        c.B = Clamp((byte)(B * 255));
-        c.A = 255;
-
-        byte Clamp(byte i)
-        {
-            if (i < 0) return 0;
-            if (i > 255) return 255;
-            return i;
+        // grayscale case
+        if (sat <= 0.0 || val <= 0.0) {
+            int gray = (int)(val * 255.0);
+            return new Color(gray, gray, gray);
         }
 
-        return c;
+        // color wheel segments
+        double sector = hue / 60.0;
+        int i = (int)Math.Floor(sector);
+        double f = sector - i;
+
+        double p = val * (1.0 - sat);
+        double q = val * (1.0 - sat * f);
+        double t = val * (1.0 - sat * (1.0 - f));
+
+        // map to RGB
+        var (r, g, b) = i switch {
+            0 => (val, t, p),
+            1 => (q, val, p),
+            2 => (p, val, t),
+            3 => (p, q, val),
+            4 => (t, p, val),
+            _ => (val, p, q) // fallback in case
+        };
+
+        return new Color((int)(r * 255), (int)(g * 255), (int)(b * 255));
     }
     public static float GetLuminosity(Color color) => Vector3.Dot(color.ToVector3(), new Vector3(0.299f, 0.587f, 0.114f));
-    public static void FromPremultiplied(ref Texture2D texture)
-    {
-        var buffer =  new Color[texture.Width * texture.Height];
+    /// <summary>Premultiplies the colors of a texture.</summary>
+    public static void FromPremultiplied(ref Texture2D texture) {
+        var buffer = new Color[texture.Width * texture.Height];
         texture.GetData(buffer);
 
         Span<Color> bufSpan = buffer;
@@ -178,5 +179,6 @@ public static class ColorUtils
         }
         texture.SetData(buffer);
     }
+    /// <summary>Converts normalized RGB to RGB.</summary>
     public static Color ToColor(this Vector3 vec) => new((int)Math.Round(vec.X * 255), (int)Math.Round(vec.Y * 255), (int)Math.Round(vec.Z * 255));
 }

@@ -1,7 +1,10 @@
-﻿using Microsoft.Xna.Framework.Audio;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using TanksRebirth.Internals.Common.Framework.Audio.AudioSerializers;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Audio;
 
@@ -15,9 +18,20 @@ public class OggAudio : IDisposable, IAudio {
             throw new ObjectDisposedException(nameof(OggAudio), "This object instance has been disposed.");
     }
 
+    FieldInfo _pitchField;
+
     public SoundEffectInstance Instance;
     public bool IsDisposed { get; private set; }
     public string Path { get; }
+
+    float _pitch;
+    public float Pitch {
+        get => _pitch;
+        set {
+            _pitch = value;
+            _pitchField?.SetValue(Instance, value);
+        }
+    }
     public float Volume {
         get => _backingVolume;
         set {
@@ -28,7 +42,7 @@ public class OggAudio : IDisposable, IAudio {
                 value = 0f;
 
             _backingVolume = value;
-            Instance.Volume = value * MaxVolume;
+            Instance.Volume = value * MaxVolume * _positionVolume;
         }
     }
 
@@ -45,6 +59,36 @@ public class OggAudio : IDisposable, IAudio {
     }
     public string Name { get; set; }
 
+    Vector3? _position;
+    /// <summary>Where this sound plays from in the world. Null plays it without positional panning or falloff.</summary>
+    /// <remarks>It can be moved while playing. Pan and volume follow it every frame until the sound stops.</remarks>
+    public Vector3? Position {
+        get => _position;
+        set {
+            _position = value;
+            // stopped sounds start being followed again when played
+            if (value is not null && !IsStopped())
+                SoundPlayer.Track(this);
+        }
+    }
+    /// <summary>In perspective view, the distance from the camera before the sound starts fading.</summary>
+    public float MinDistance = SoundPlayer.DEFAULT_MIN_DISTANCE;
+    /// <summary>In perspective view, the distance from the camera where the sound becomes silent.</summary>
+    public float MaxDistance = SoundPlayer.DEFAULT_MAX_DISTANCE;
+    /// <summary>Pan the positional pan is added to.</summary>
+    public float BasePan;
+    /// <summary>Whether this sound also fades by distance in orthographic view, as heard from the game scene.</summary>
+    public bool OrthographicFade;
+    float _positionVolume = 1f;
+
+    /// <summary>Sets pan and volume from <see cref="Position"/> and the current camera.</summary>
+    public void ApplyPosition() {
+        var spatial = _position is { } position ? SoundUtils.GetSpatialParams(position, MinDistance, MaxDistance, OrthographicFade) : new SpatialParams(0f, 1f);
+        Instance.Pan = MathHelper.Clamp(BasePan + spatial.Pan, -1f, 1f);
+        _positionVolume = spatial.Volume;
+        Volume = Volume;
+    }
+
     public SoundState State => Instance.State;
 
     public static OggDeserializer _oggDeserializer = new();
@@ -52,6 +96,8 @@ public class OggAudio : IDisposable, IAudio {
     public void Play() {
         ThrowIfDisposed();
         Instance.Play();
+        if (_position is not null)
+            SoundPlayer.Track(this);
     }
 
     public void Pause() {
@@ -88,11 +134,12 @@ public class OggAudio : IDisposable, IAudio {
         MaxVolume = maxVolume;
     }
 
-    private void Load(string path, bool compressToMono = false) {
+    void Load(string path, bool compressToMono = false) {
         var soundEffect = GameResources.GetGameResource<SoundEffect>(path);
         if (soundEffect != null) {
             _effect = soundEffect;
             Instance = soundEffect.CreateInstance();
+            _pitchField = Instance.GetType().GetField("_pitch", BindingFlags.NonPublic | BindingFlags.Instance)!;
             return;
         }
         
@@ -118,6 +165,8 @@ public class OggAudio : IDisposable, IAudio {
 
         _effect = new SoundEffect(audioData.binaryData, audioData.sampleRate, (AudioChannels)audioData.channelCount);
         Instance = _effect.CreateInstance();
+
+        _pitchField = Instance.GetType().GetField("_pitch", BindingFlags.NonPublic | BindingFlags.Instance)!;
     }
 
     public bool IsPaused() {

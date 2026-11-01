@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -20,7 +19,9 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -28,11 +29,12 @@ namespace TanksRebirth.GameContent.UI;
 public static class CampaignCompleteUI {
     public static bool IsViewingResults;
     public static Rectangle ParseGradeRect(Grade grade) {
+        const int gradeSize = 128;
         // 128 being the width of each section.
         int col = (int)grade / 3;
         int row = (int)grade % 3;
 
-        return new(col * 128, row * 128, 128, 128);
+        return new(col * gradeSize, row * gradeSize, gradeSize, gradeSize);
     }
 
     static float _animationTime;
@@ -44,15 +46,11 @@ public static class CampaignCompleteUI {
 
     public static Grade Grade;
 
-    static float _gradeAlpha;
-    static float _gradeScale;
-    static float _gradeScaleDefault = 3f;
-    static float _gradeFadeSpeed = 0.1f;
-    static float _gradeTargetScale = 1f;
+    static float _gradeAlpha, _gradeScale,
+        _gradeScaleDefault = 3f, _gradeFadeSpeed = 0.1f,
+        _gradeTargetScale = 1f;
 
-    static float _panelAlpha = 0f;
-    static float _panelAlphaMax = 1f;
-    static float _panelFadeSpeed = 0.03f;
+    static float _panelAlpha = 0f, _panelAlphaMax = 1f, _panelFadeSpeed = 0.03f;
 
     static float _defaultSize = 2.5f;
     static float _appearSpeed = 0.1f;
@@ -68,11 +66,12 @@ public static class CampaignCompleteUI {
 
     public static bool ForceSkip;
     static bool _shouldShowGrade;
-    private static Color _textColor = Color.DarkGray;
+    static Color _textColor = Color.DarkGray;
+    static string[] _funFacts;
 
     public static int TanksPerColumn = 18;
 
-    private static MissionEndContext _lastContext;
+    static MissionEndContext _lastContext;
 
     public static Dictionary<MissionEndContext, (OggAudio, TimeSpan)> FanfaresAndDurations = new() {
         [MissionEndContext.CampaignCompleteMinor] = (new OggAudio("Content/Assets/music/fanfares/mission_complete_M20.ogg"), TimeSpan.FromMilliseconds(3400)), // 4327
@@ -82,7 +81,7 @@ public static class CampaignCompleteUI {
     public static OggMusic ResultsFanfare = new("Results Fanfare", "Content/Assets/music/fanfares/endresults.ogg", 0.6f);
 
     /// <summary>Perform a multithreaded operation that will display tanks killed and their kill counts for the player.</summary>
-    public static void PerformSequence(MissionEndContext context) {
+    public static void Start(MissionEndContext context) {
         IsViewingResults = true;
 
         _curTier = 0;
@@ -97,6 +96,13 @@ public static class CampaignCompleteUI {
         _gradeAlpha = 0f;
         _soundPlayed = false;
 
+        _funFacts = new[] {
+            $"% Shots Hit: {ShotToKillRatio * 100:0}% ({ShellHits}/{ShellsFired})",
+            $"% Mine Effect: {MineToKillRatio * 100:0}% ({MineHits}/{MinesLaid})",
+            $"% Lives Earned: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})",
+            $"% Missions Complete: {MissionRatio * 100:0}% ({CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}/{CampaignGlobals.LoadedCampaign.CachedMissions.Length})"
+        };
+
         if (context != MissionEndContext.GameOver)
             TankGame.SaveFile.CampaignsCompleted++;
 
@@ -109,63 +115,11 @@ public static class CampaignCompleteUI {
         Grade = FormulateGradeLevel(true);
 
         ForceSkip = false;
-
-        /*Task.Run(async () => {
-            while (_panelAlpha < 1f)
-                await Task.Delay(TankGame.LastGameTime.ElapsedGameTime).ConfigureAwait(false);
-            if (!ResultsFanfare.IsPlaying()) {
-                ResultsFanfare.SetVolume(1f);
-                ResultsFanfare.Play();
-            }
-            // sleep the thread for the duration of the fanfare.
-            Vector2 basePos = new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.2f);
-            for (int i = 0; i < KillsPerType.Count; i++) {
-                ModifyTracks();
-
-                var killData = KillsPerType.ElementAt(i);
-
-                _tierDisplays[i] = true;
-
-                //ChatSystem.SendMessage($"{killData.Key}:{killData.Value}", Color.White);
-
-                if (!ForceSkip) {
-                    if (i % 4 == 3) // i think this is the value
-                        SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_double.ogg", SoundContext.Effect, 1f);
-                    else
-                        SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_singular.ogg", SoundContext.Effect, 1f);
-
-                    await Task.Delay(_delayPerTank).ConfigureAwait(false);
-
-                    //ChatSystem.SendMessage("sleep", Color.White);
-                }
-            }
-
-            //ChatSystem.SendMessage("whistle", Color.White);
-            SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_full.ogg", SoundContext.Effect, 1f);
-
-            ForceSkip = true;
-            _shouldShowGrade = true;
-
-            // TODO: make this thread-safe. it's probably causing tank models to become null somehow
-            while (!InputUtils.KeyJustPressed(Keys.Enter)) {
-                ModifyTracks();
-                await Task.Delay(TankGame.LastGameTime.ElapsedGameTime).ConfigureAwait(false);
-            }
-
-            _panelAlpha = 0f;
-            _gradeAlpha = 0f;
-            IsViewingResults = false;
-            if (!ResultsFanfare.IsStopped())
-                ResultsFanfare.Stop();
-            MainMenuUI.Open();
-        });*/
-        // changing bools in other threads = safe
-        // - ryan
     }
 
     public static void Update() {
         if (!ResultsFanfare.IsPlaying()) {
-            ResultsFanfare.SetVolume(TankGame.Settings.MusicVolume);
+            ResultsFanfare.SetVolume(TankGame.Settings.Audio.MusicVolume);
             ResultsFanfare.Play();
         }
         if (_panelAlpha < _panelAlphaMax)
@@ -174,7 +128,7 @@ public static class CampaignCompleteUI {
         Vector2 basePos = new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.2f);
 
         if (_curTier < KillsPerType.Count) {
-            if (ForceSkip ? true : _animationTime % _delayPerTank < RuntimeData.DeltaTime) {
+            if (ForceSkip ? true : _animationTime % _delayPerTank < RuntimeData.DeltaFrames) {
                 var killData = KillsPerType.ElementAt(_curTier);
 
                 _tierDisplays[_curTier] = true;
@@ -201,14 +155,14 @@ public static class CampaignCompleteUI {
             if (InputUtils.AreKeysJustPressed(Keys.OemOpenBrackets, Keys.OemCloseBrackets)) {
                 ResetThings();
 
-                PerformSequence(_lastContext);
+                Start(_lastContext);
             }
             else if (InputUtils.KeyJustPressed(Keys.P))
                 ResetThings();
         }
 
-        ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
-        _animationTime += RuntimeData.DeltaTime;
+        ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.Audio.MusicVolume : 0f);
+        _animationTime += RuntimeData.DeltaFrames;
 
         if (InputUtils.KeyJustPressed(Keys.Enter)) {
             SkipOrExit();
@@ -237,7 +191,7 @@ public static class CampaignCompleteUI {
 
     private static void ModifyTracks() {
         try {
-            ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
+            ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.Audio.MusicVolume : 0f);
         } catch { }
     }
 
@@ -254,7 +208,7 @@ public static class CampaignCompleteUI {
         }
     }
     private static bool _soundPlayed;
-    public static void Render() {
+    public static void Render(SpriteBatch sb) {
         if (InputUtils.KeyJustPressed(Keys.Enter))
             ForceSkip = true;
 
@@ -263,33 +217,28 @@ public static class CampaignCompleteUI {
             _panelAlpha = _panelAlphaMax;
         float width = 400;
         // IntermissionSystem.BackgroundColor looks too dull
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width.ToResolutionX(), WindowUtils.WindowHeight / 2), default, 0f);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
-        var txt = TankGame.GameLanguage.FunFacts;
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width.ToResolutionX(), WindowUtils.WindowHeight / 2), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
+        var txt = TankGame.GameLanguage.Misc.FunFacts;
         var measure = FontGlobals.RebirthFont.MeasureString(txt);
-        DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(width.ToResolutionX() / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
+        DrawUtils.DrawStringWithShadow(sb, FontGlobals.RebirthFont, new Vector2(width.ToResolutionX() / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
             txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, Anchor.TopCenter, 0.4f);
 
-        string[] funFacts =
-        {
-            $"% Shots Hit: {ShotToKillRatio * 100:0}% ({ShellHits}/{ShellsFired})",
-            $"% Mine Effect: {MineToKillRatio * 100:0}% ({MineHits}/{MinesLaid})",
-            $"% Lives Earned: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})",
-            $"% Missions Complete: {MissionRatio * 100:0}% ({CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}/{CampaignGlobals.LoadedCampaign.CachedMissions.Length})"
-        };
-        for (int i = 0; i < funFacts.Length; i++) {
-            var ff = funFacts[i];
+        // this sounds like a literal allocation nightmare. in future just cache it. good lord ryan
+        
+        for (int i = 0; i < _funFacts.Length; i++) {
+            var ff = _funFacts[i];
 
-            DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
+            DrawUtils.DrawStringWithShadow(sb, FontGlobals.RebirthFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
                 ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, Anchor.LeftCenter, 0.4f);
         }
 
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight), default, 0f);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
 
         if (_shouldShowGrade) {
-            _gradeAlpha += _gradeFadeSpeed / 2 * RuntimeData.DeltaTime;
-            _gradeScale -= _gradeFadeSpeed * RuntimeData.DeltaTime;
+            _gradeAlpha += _gradeFadeSpeed / 2 * RuntimeData.DeltaFrames;
+            _gradeScale -= _gradeFadeSpeed * RuntimeData.DeltaFrames;
             if (_gradeAlpha > 1f)
                 _gradeAlpha = 1f;
             if (_gradeScale <= _gradeTargetScale) {
@@ -301,7 +250,9 @@ public static class CampaignCompleteUI {
                 }
             }
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/grades");
-            TankGame.SpriteRenderer.Draw(tex, new Vector2(WindowUtils.WindowWidth / 3 * 2, 250.ToResolutionY()), ParseGradeRect(Grade), Color.White * _gradeAlpha, 0f, new Vector2(64, 64), new Vector2(_gradeScale).ToResolution(), default, 0f);
+            var gradePos = new Vector2(WindowUtils.WindowWidth / 3 * 2, 250.ToResolutionY());
+            DrawUtils.DrawTextureWithShadow(sb, tex, gradePos, Vector2.One, Color.White, new Vector2(_gradeScale).ToResolution(),
+                _gradeAlpha, shadowDistScale: 0.5f, srcRect: ParseGradeRect(Grade));
         }
 
         #region Tank Graphics
@@ -313,8 +264,8 @@ public static class CampaignCompleteUI {
             if (_tierDisplays[i]) {
                 #region Handle Appearance
 
-                _tierScales[i] -= _appearSpeed * RuntimeData.DeltaTime;
-                _tierAlphas[i] += _appearSpeed * RuntimeData.DeltaTime;
+                _tierScales[i] -= _appearSpeed * RuntimeData.DeltaFrames;
+                _tierAlphas[i] += _appearSpeed * RuntimeData.DeltaFrames;
 
                 if (_tierScales[i] < _tankSize)
                     _tierScales[i] = _tankSize;
@@ -357,7 +308,7 @@ public static class CampaignCompleteUI {
         }
         #endregion
         txt = ForceSkip ? "Press 'Enter' to exit." : "Press 'Enter' to skip.";
-        DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - 8), Vector2.One, txt, Color.Black, Vector2.One.ToResolution(), 1f, Anchor.BottomCenter, 0.4f);
+        DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - 8), Vector2.One, txt, Color.Beige, Vector2.One.ToResolution(), 1f, Anchor.BottomCenter, 0.4f);
 
         txt = "Campaign Results";
         DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, new Vector2(WindowUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, Anchor.TopCenter);

@@ -1,4 +1,6 @@
-﻿using TanksRebirth.Internals.Common.Framework.Collections;
+﻿using System;
+using TanksRebirth.Internals.Common.Framework.Collections;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.ID;
 
@@ -29,6 +31,8 @@ public sealed class TankID {
     public const int Gold = 17;
     public const int Obsidian = 18;
 
+    public static readonly int VanillaCount = Obsidian + 1;
+
     // ...future tanks will go here
 
     /* IDEAS:
@@ -40,8 +44,19 @@ public sealed class TankID {
      * 
      * Rampart tank: creates a shield (or something similar) that blocks projectiles
      * Charging tank: charges at you upon line of sight
+     * Trailblazer tank: shots lay a trail of fire that *enemy* tanks cannot pass through for X amount of time
+     * Toxic tank: bullet bounces (or kills) spawn gas clouds that slow movement and decrease fire rate
+     * Ghost Tank: moves through any block (except for outer border)
      * 
+     * ... more ideas later...
      */
 
     public static ReflectionDictionary<TankID> Collection { get; internal set; } = new(MemberType.Fields);
+
+    // methods...
+
+    public static int ServerRandomTier() => Server.ServerRandom.Next(Brown, Collection.Count);
+    /// <summary>A random tier from <paramref name="random"/> (e.g. one from <see cref="Server.RandomFor"/>).</summary>
+    public static int RandomTier(Random random) => random.Next(0, Collection.Count);
+    public static int ClientRandomTier() => Client.ClientRandom.Next(0, Collection.Count);
 }

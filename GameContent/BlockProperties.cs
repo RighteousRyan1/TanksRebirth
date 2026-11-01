@@ -1,10 +1,8 @@
-﻿using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
+﻿using TanksRebirth.GameContent.Tanks.AI;
 
 namespace TanksRebirth.GameContent;
 
-public class BlockProperties
-{
+public struct BlockProperties() {
     /// <summary>Whether or not this <see cref="Block"/> is destructible from explosions.</summary>
     public bool IsDestructible { get; set; }
     /// <summary>Whether or not this <see cref="Block"/> is solid. This only affects <see cref="Shell"/>s and their ability to pass through.</summary>

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using tainicom.Aether.Physics2D.Collision;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.GameUI;
@@ -109,7 +110,7 @@ namespace TanksRebirth.Internals.UI {
             if (!Hitbox.Contains(MouseUtils.MousePosition))
                 return false;
 
-            return (HasScissor && Scissor.Invoke().Contains(MouseUtils.MousePosition)) || !HasScissor;
+            return (HasScissor && Scissor.Contains(MouseUtils.MousePosition)) || !HasScissor;
         }
 
         public Action<UIElement> OnLeftClick;
@@ -219,7 +220,7 @@ namespace TanksRebirth.Internals.UI {
             if (!Hitbox.Contains(MouseUtils.MousePosition) || _wasHovered)
                 return;
 
-            if ((!HasScissor || !Scissor.Invoke().Contains(MouseUtils.MousePosition)) && HasScissor)
+            if ((!HasScissor || !Scissor.Contains(MouseUtils.MousePosition)) && HasScissor)
                 return;
 
             OnMouseOver?.Invoke(this);

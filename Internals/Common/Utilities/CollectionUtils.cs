@@ -2,14 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class CollectionUtils
-{
+public static class CollectionUtils {
     public static Vector2 Closest(this IEnumerable<Vector2> positions, Vector2 source) {
         if (positions == null || !positions.Any())
             return source;
@@ -44,35 +40,28 @@ public static class CollectionUtils
 
         return positions.IndexOf(closest);
     }
-    public static ICollection<T> Combine<T>(this ICollection<T> collection1, ICollection<T> mergeTo)
-    {
+    public static ICollection<T> Combine<T>(this ICollection<T> collection1, ICollection<T> mergeTo) {
         foreach (var item in collection1)
             mergeTo.Add(item);
 
         return mergeTo;
     }
 
-    public static TSource TryGetFirst<TSource>(this IEnumerable<TSource> source, out bool found)
-    {
-        if (source == null)
-        {
+    public static TSource TryGetFirst<TSource>(this IEnumerable<TSource> source, out bool found) {
+        if (source == null) {
             throw new ArgumentNullException(source.ToString());
         }
 
-        if (source is IList<TSource> list)
-        {
-            if (list.Count > 0)
-            {
+        if (source is IList<TSource> list) {
+            if (list.Count > 0) {
                 found = true;
                 return list[0];
             }
         }
-        else
-        {
+        else {
             using IEnumerator<TSource> e = source.GetEnumerator();
 
-            if (e.MoveNext())
-            {
+            if (e.MoveNext()) {
                 found = true;
                 return e.Current;
             }
@@ -81,28 +70,22 @@ public static class CollectionUtils
         found = false;
         return default!;
     }
-    public static bool TryGetFirst<TSource>(this IEnumerable<TSource> source, out TSource value)
-    {
+    public static bool TryGetFirst<TSource>(this IEnumerable<TSource> source, out TSource value) {
         value = default!;
-        if (source == null)
-        {
+        if (source == null) {
             throw new ArgumentNullException(source.ToString());
         }
 
-        if (source is IList<TSource> list)
-        {
-            if (list.Count > 0)
-            {
+        if (source is IList<TSource> list) {
+            if (list.Count > 0) {
                 value = list[0];
                 return true;
             }
         }
-        else
-        {
+        else {
             using IEnumerator<TSource> e = source.GetEnumerator();
 
-            if (e.MoveNext())
-            {
+            if (e.MoveNext()) {
                 value = e.Current;
                 return true;
             }
@@ -111,22 +94,17 @@ public static class CollectionUtils
         return false;
     }
 
-    public static TSource TryGetFirst<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, out bool found)
-    {
-        if (source == null)
-        {
+    public static TSource TryGetFirst<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, out bool found) {
+        if (source == null) {
             throw new ArgumentNullException(source.ToString());
         }
 
-        if (predicate == null)
-        {
+        if (predicate == null) {
             throw new ArgumentNullException(predicate.ToString());
         }
 
-        foreach (TSource element in source)
-        {
-            if (predicate(element))
-            {
+        foreach (TSource element in source) {
+            if (predicate(element)) {
                 found = true;
                 return element;
             }
@@ -135,24 +113,19 @@ public static class CollectionUtils
         found = false;
         return default!;
     }
-    public static bool TryGetFirst<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, out TSource found)
-    {
+    public static bool TryGetFirst<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, out TSource found) {
         found = default!;
 
-        if (source == null)
-        {
+        if (source == null) {
             throw new ArgumentNullException(source.ToString());
         }
 
-        if (predicate == null)
-        {
+        if (predicate == null) {
             throw new ArgumentNullException(predicate.ToString());
         }
 
-        foreach (TSource element in source)
-        {
-            if (predicate(element))
-            {
+        foreach (TSource element in source) {
+            if (predicate(element)) {
                 found = element;
                 return true;
             }

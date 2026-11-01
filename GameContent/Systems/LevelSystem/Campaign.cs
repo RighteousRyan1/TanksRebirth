@@ -1,0 +1,425 @@
+using Microsoft.Xna.Framework;
+using System;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Graphics;
+using TanksRebirth.Internals.Common.IO;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
+
+namespace TanksRebirth.GameContent.Systems.LevelSystem;
+
+// IDEA: convert to ubjson/json loading? or something of the like?
+
+/// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
+public class Campaign {
+    public delegate void MissionLoadDelegate(Tank[] tanks, Block[] blocks);
+    public static event MissionLoadDelegate? OnMissionLoad;
+
+    public delegate void PreLoadTankDelegate(ref TankTemplate template);
+    public static event PreLoadTankDelegate? OnPreLoadTank;
+
+    public delegate void PreLoadBlockDelegate(ref BlockTemplate template);
+    public static event PreLoadBlockDelegate? OnPreLoadBlock;
+
+    /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
+    public static string[] GetCampaignNames()
+        => Directory.GetFiles(Path.Combine(TankGame.SaveDirectory, "Campaigns")); //IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
+    public Mission[] CachedMissions;
+    public Mission CurrentMission { get; private set; }
+    public Mission LoadedMission { get; private set; }
+    public int CurrentMissionId { get; private set; }
+
+    /// <summary>The meta-data for this campaign.</summary>
+    public CampaignMetaData MetaData;
+
+    public Campaign() {
+        CachedMissions = new Mission[1];
+        CurrentTrackedSpawns = [];
+        MetaData = CampaignMetaData.GetDefault();
+    }
+    /// <summary>Register a specific mission into the current mission.</summary>
+    /// <param name="mission">The mission.</param>
+    public void LoadMission(Mission mission) {
+        if (string.IsNullOrEmpty(mission.Name))
+            return;
+
+        CurrentTrackedSpawns = new (Point, bool)[mission.Tanks.Length];
+        LoadedMission = mission;
+    }
+    /// <summary>Register a mission already in memory by ID.</summary>
+    /// <param name="id">The index of the mission in the <see cref="CachedMissions"/> array.</param>
+    public void LoadMission(int id) {
+        LoadedMission = CachedMissions[id];
+
+        CurrentMissionId = id;
+        if (LoadedMission.Tanks != null) {
+            CurrentTrackedSpawns = new (Point, bool)[LoadedMission.Tanks.Length];
+            for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
+                CurrentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
+                CurrentTrackedSpawns[i].Alive = true;
+            }
+        }
+    }
+
+    /// <summary>Loads an array of <see cref="Mission"/>s into memory.</summary>
+    public void LoadMissionsToCache(params Mission[] missions) {
+        var list = CachedMissions.ToList();
+
+        list.AddRange(missions);
+
+        CachedMissions = [.. list];
+    }
+
+    /// <summary>Loads the next mission in the <see cref="Campaign"/>.</summary>
+    public void LoadNextMission() {
+        if (CurrentMissionId + 1 >= CachedMissions.Length) {
+            TankGame.ClientLog.Write($"CachedMissions[{CurrentMissionId + 1}] is not existent.", RebirthLogLevel.Warn);
+            return;
+        }
+        CurrentMissionId++;
+
+        LoadedMission = CachedMissions[CurrentMissionId];
+
+        CurrentTrackedSpawns = new (Point, bool)[LoadedMission.Tanks.Length];
+        for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
+            CurrentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
+            CurrentTrackedSpawns[i].Alive = true;
+        }
+        // run line 120 and 121 in each when i get back
+    }
+
+    const int roundingFactor = 5;
+
+    // FIXME: not sure why this is public? ...or why this is even here.
+    public static (Point Position, bool Alive)[] CurrentTrackedSpawns { get; set; } // position of spawn, alive
+
+    /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
+    /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
+    public void SetupLoadedMission(bool spawnNewSet) {
+        // FIXME: source of level editor bug.
+        EditorTile.ResetSquares();
+        SceneManager.CleanupEntities();
+        SceneManager.CleanupScene();
+
+        bool hasSpawnedCompanion = false;
+
+        var flip = LevelEditorUI.IsActive ? 0 : Modifiers.Get(Modifiers.FLIP);
+        var mission = Modifiers.FlipMission(LoadedMission, x: (flip & 1) != 0, y: (flip & 2) != 0);
+
+        // do not be confused by there being more tanks than there is visible. Tanks also contains the players that are not spawned
+        for (int i = 0; i < mission.Tanks.Length; i++) {
+            var template = mission.Tanks[i];
+
+            CurrentTrackedSpawns[i].Position = mission.Tanks[i].Position;
+            if (spawnNewSet) {
+                CurrentTrackedSpawns[i].Alive = true;
+            }
+
+            // prevents absurd rotations... from legacy tanks rebirth. doubt anyone's playing that anymore but whatever
+            while (template.Rotation < 0) {
+                template.Rotation += MathHelper.Tau;
+            }
+
+            while (template.Rotation > MathHelper.Tau) {
+                template.Rotation -= MathHelper.Tau;
+            }
+
+            OnPreLoadTank?.Invoke(ref template);
+
+            var chassisRotation = MathF.Round(template.Rotation, roundingFactor);
+
+            if (!template.IsPlayer) {
+                if (CurrentTrackedSpawns[i].Alive)
+                    LoadAIControlled(template, chassisRotation);
+            }
+            else {
+                LoadPlayer(mission, template, chassisRotation, hasSpawnedCompanion);
+            }
+        }
+
+        for (int b = 0; b < mission.Blocks.Length; b++) {
+            var template = mission.Blocks[b];
+
+            OnPreLoadBlock?.Invoke(ref template);
+
+            var block = template.GetBlock();
+
+            var placement = EditorTile.GetFromClosest(block.Position3D);
+            if (placement is not null) {
+                placement.BlockId = block.Id;
+                placement.HasBlock = true;
+            }
+        }
+
+        CurrentMission = LoadedMission;
+        TankGame.ClientLog.Write($"Loaded mission '{LoadedMission.Name}' with {LoadedMission.Tanks.Length} " +
+            $"({LoadedMission.Tanks.Count(x => x.IsPlayer)} player(s), {LoadedMission.Tanks.Count(x => !x.IsPlayer)} AI(s)) tanks and {LoadedMission.Blocks.Length} obstacles.", RebirthLogLevel.Info);
+
+        OnMissionLoad?.Invoke(GameHandler.AllTanks, Block.AllBlocks);
+    }
+
+    void LoadPlayer(Mission mission, TankTemplate template, float chassisRotation, bool hasSpawnedCompanion) {
+        var lives = PlayerTank.Lives[template.PlayerType];
+        var isValidMPPlayer = Server.IsOccupied(template.PlayerType);
+        var isLocalGame = !Client.IsConnected();
+
+        if (lives <= 0) return;
+
+        if (isLocalGame && !LevelEditorUI.IsActive) {
+            // probably should introduce a method for this
+            int inputCheckValue = PlayerTank.NumLocalPlayers;
+            var isValidLocalPlayer = template.PlayerType < inputCheckValue;
+            if (!isValidLocalPlayer) return;
+        }
+
+        if (isValidMPPlayer || isLocalGame) {
+            var tank = template.GetPlayerTank(Server.RandomFor(Server.RandomKey.PLR_TIER, CurrentMissionId, template.PlayerType));
+
+            tank.Position = template.WorldPosition;
+            tank.ChassisRotation = chassisRotation;
+            tank.DesiredChassisRotation = chassisRotation;
+            tank.TurretRotation = chassisRotation;
+            tank.IsDestroyed = false;
+            tank.Team = template.Team;
+
+            // NOTE TO SELF: no more level editor checks since i'm disabling the access of the level editor while in a multiplayer context
+            if (NetPlay.IsClientMatched(tank.PlayerId)) {
+                PlayerTank.MyTeam = tank.Team;
+                PlayerTank.MyTankType = tank.PlayerType;
+            }
+
+            // almost definitely never fails.
+            var placement = EditorTile.GetFromClosest(tank.Position3D);
+
+            if (Modifiers.IsOn(Modifiers.AI_COMPANION) && !hasSpawnedCompanion) {
+                var companionPos = template.WorldPosition;
+
+                var nextPlayerIdx = Array.FindIndex(mission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);
+
+                if (nextPlayerIdx > -1) {
+                    companionPos = mission.Tanks[nextPlayerIdx].WorldPosition;
+                }
+
+                var randomTier = TankID.RandomTier(Server.RandomFor(Server.RandomKey.COMPANION_TIER, CurrentMissionId, template.PlayerType));
+                var tnk = new AITank(randomTier) {
+                    Position = companionPos,
+                    Team = tank.Team,
+                    ChassisRotation = chassisRotation,
+                    DesiredChassisRotation = chassisRotation,
+                    TurretRotation = chassisRotation,
+                    IsDestroyed = false,
+                };
+
+                hasSpawnedCompanion = true;
+                // tnk.Physics.Position = template.Position / Owner.UNITS_PER_METER;
+            }
+
+            if (placement is not null) {
+                placement.TankId = tank.WorldId;
+                placement.HasBlock = false;
+            }
+        }
+    }
+    static void LoadAIControlled(TankTemplate template, float chassisRotation) {
+        var tank = template.GetAiTank();
+
+        tank.Position = template.WorldPosition;
+
+        tank.ChassisRotation = chassisRotation;
+        tank.DesiredChassisRotation = chassisRotation;
+        tank.TurretRotation = chassisRotation;
+        tank.IsDestroyed = false;
+        tank.Team = template.Team;
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {
+            tank.OnDestroy += () => {
+                var tankSpawnIndex = Array.IndexOf(CurrentTrackedSpawns, CurrentTrackedSpawns.First(pos => pos.Position == template.Position));
+
+                if (tankSpawnIndex > -1)
+                    CurrentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
+            };
+        }
+        var placement = EditorTile.GetFromClosest(tank.Position3D);
+        if (placement is not null) {
+            // ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
+            placement.TankId = tank.WorldId;
+            placement.HasBlock = false;
+
+            // set the position since there doesn't need to be any hassle
+            tank.Position = placement.Position.FlattenZ();
+        }
+    }
+
+    /// <summary>
+    /// Saves the campaign as a <c>.campaign</c> file.
+    /// </summary>
+    /// <param name="fileName"></param>
+    /// <param name="campaign"></param>
+    public static void Save(string fileName, Campaign campaign) {
+        var newFileName = fileName.EndsWith(".campaign") ? fileName : fileName + ".campaign";
+        LevelFiles.WriteCampaign(newFileName, campaign);
+
+        TankGame.ClientLog.Write($"Saved campaign with {campaign.CachedMissions.Count(m => m != default)} missions.", RebirthLogLevel.Info);
+    }
+
+    public static Campaign Load(string fileName) {
+        using var stream = File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read);
+
+        var campaign = LevelFiles.ReadCampaign(stream);
+        if (campaign is not null)
+            return campaign;
+
+        return LoadLegacy(new BinaryReader(stream), fileName);
+    }
+
+    /// <summary>Loads a campaign saved in the binary format used before version 7.</summary>
+    static Campaign LoadLegacy(BinaryReader reader, string fileName) {
+        Campaign campaign = new();
+
+        var header = reader.ReadBytes(4);
+        if (!header.SequenceEqual(LevelEditorUI.LevelFileHeader))
+            throw new FileLoadException($"The byte header of this file does not match what this game expects! File name = \"{fileName}\"");
+        var editorVersion = reader.ReadInt32();
+        if (editorVersion < 2)
+            throw new FileLoadException($"Cannot load a campaign at this level editor version! File name = \"{fileName}\"");
+        // first available version.
+        if (editorVersion == 2 || editorVersion == 3) {
+            var totalMissions = reader.ReadInt32();
+
+            campaign.CachedMissions = new Mission[totalMissions];
+
+            campaign.MetaData.Name = reader.ReadString();
+            campaign.MetaData.Description = reader.ReadString();
+            campaign.MetaData.Author = reader.ReadString();
+            campaign.MetaData.Tags = new string[reader.ReadInt32()];
+            for (int j = 0; j < campaign.MetaData.Tags.Length; j++)
+                campaign.MetaData.Tags[j] = reader.ReadString();
+            campaign.MetaData.StartingLives = reader.ReadInt32();
+            campaign.MetaData.ExtraLivesMissions = new int[reader.ReadInt32()];
+            for (int j = 0; j < campaign.MetaData.ExtraLivesMissions.Length; j++)
+                campaign.MetaData.ExtraLivesMissions[j] = reader.ReadInt32();
+
+            campaign.MetaData.Version = reader.ReadString();
+            campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
+            campaign.MetaData.MissionStripColor = reader.ReadColor();
+            campaign.MetaData.BackgroundColor = reader.ReadColor();
+
+            for (int i = 0; i < totalMissions; i++) {
+                campaign.CachedMissions[i] = Mission.Read(reader);
+                var isIdMatched = campaign.MetaData.ExtraLivesMissions.Any(x => x == i + 1);
+                campaign.CachedMissions[i].GrantsExtraLife = isIdMatched;
+            }
+        }
+        else if (editorVersion is >= 4 and <= 6) {
+            var totalMissions = reader.ReadInt32();
+
+            campaign.CachedMissions = new Mission[totalMissions];
+
+            campaign.MetaData.Name = reader.ReadString();
+            campaign.MetaData.Description = reader.ReadString();
+            campaign.MetaData.Author = reader.ReadString();
+            campaign.MetaData.Tags = new string[reader.ReadInt32()];
+            for (int j = 0; j < campaign.MetaData.Tags.Length; j++)
+                campaign.MetaData.Tags[j] = reader.ReadString();
+            campaign.MetaData.StartingLives = reader.ReadInt32();
+
+            campaign.MetaData.Version = reader.ReadString();
+            campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
+            campaign.MetaData.MissionStripColor = reader.ReadColor();
+            campaign.MetaData.BackgroundColor = reader.ReadColor();
+
+            for (int i = 0; i < totalMissions; i++) {
+                // TODO: do for loop, load each.
+
+                campaign.CachedMissions[i] = Mission.Read(reader);
+            }
+        }
+        else
+            throw new FileLoadException($"This campaign was saved with a newer version of the level editor ({editorVersion}). File name = \"{fileName}\"");
+        return campaign;
+    }
+    /// <summary>The metadata for any given campaign.</summary>
+    public struct CampaignMetaData {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Author { get; set; }
+        public string Version { get; set; }
+        public string[] Tags { get; set; }
+        public bool HasMajorVictory { get; set; }
+
+        public int[] ExtraLivesMissions { get; set; }
+        public int StartingLives { get; set; }
+
+        public UnpackedColor BackgroundColor { get; set; }
+        public UnpackedColor MissionStripColor { get; set; }
+        public static CampaignMetaData Get(string path, string fileName) {
+            var properties = GetDefault();
+
+            var file = Path.Combine(path, fileName);
+
+            var opts = new JsonSerializerOptions() { WriteIndented = true };
+            JsonHandler<CampaignMetaData> handler = new(properties, opts, file);
+
+            if (!File.Exists(file)) {
+                // fine to change from WriteIndented probably???
+                handler.Serialize(true);
+                return properties;
+            }
+
+            properties = handler.Deserialize();
+
+            return properties;
+        }
+
+        public static CampaignMetaData GetDefault() {
+            return new() {
+                Name = "Unnamed",
+                Description = "No description",
+                Author = "Unknown",
+                Version = "0.0.0.0",
+                Tags = ["N/A"],
+                ExtraLivesMissions = [],
+                StartingLives = 3,
+                BackgroundColor = IntermissionSystem.DefaultBackgroundColor,
+                MissionStripColor = IntermissionSystem.DefaultStripColor,
+                HasMajorVictory = false
+            };
+        }
+    }
+
+    /*public int LoadRandomizedMission(Range<int> missionRange, TankTier highestTier = TankTier.None, int highestCount = 0)
+    {
+        if (missionRange.Max >= CachedMissions.Length)
+            missionRange.Max = CachedMissions.Length - 1;
+
+        int num = Client.ClientRandom.Next(missionRange.Min, missionRange.Max);
+
+        var mission = CachedMissions[num];
+
+        for (int i = 0; i < mission.Tanks.Length; i++)
+        {
+            var tnk = mission.Tanks[i];
+
+            if (!tnk.IsPlayer)
+            {
+                tnk.AIType = TankTier.Random;
+                tnk.RandomizeRange = new();
+            }
+        }
+
+        return num;
+    }*/
+    // Considering making all 100 campaigns unique...
+}

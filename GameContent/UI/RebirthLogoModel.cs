@@ -137,7 +137,7 @@ public class RebirthLogoModel {
     }
 
     public void Render() {
-        if (RuntimeData.RunTime % 2 <= RuntimeData.DeltaTime) {
+        if (RuntimeData.RunTime % 2 <= RuntimeData.DeltaFrames) {
             _gradient_t = GameResources.GetGameResource<Texture2D>($"Assets/models/logo/anim/anim_{_animNum:0000}");
             _animNum++;
             if (_animNum > 159) _animNum = 0;

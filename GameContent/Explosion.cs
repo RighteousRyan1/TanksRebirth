@@ -1,16 +1,10 @@
-using Microsoft.Win32;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Linq;
-using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -26,9 +20,9 @@ public class Explosion : IAITankDanger {
     public Tank? Owner;
 
     // 500 -> 80
-    public const int MINE_EXPLOSIONS_MAX = 80;
+    public const int EXPLOSIONS_MAX = 80;
 
-    public static Explosion[] Explosions = new Explosion[MINE_EXPLOSIONS_MAX];
+    public static Explosion[] Explosions = new Explosion[EXPLOSIONS_MAX];
     public Vector2 Position { get; set; }
     public bool IsPlayerSourced { get; set; }
     /// <summary>
@@ -43,7 +37,8 @@ public class Explosion : IAITankDanger {
     public int Id { get; private set; }
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
-    public float Scale;
+    public float MaxScale;
+    public float DamageRadiusScale;
     public float LingerDuration = 40f;
     public float Rotation;
     public float RotationSpeed;
@@ -52,10 +47,24 @@ public class Explosion : IAITankDanger {
 
     public Color ExplosionColor = Color.White;
 
-    public Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
+    /// <summary>
+    /// Creates a new <see cref="Explosion"/>. This method is thread-agnostic.
+    /// </summary>
+    /// <param name="pos">The position of this <see cref="Explosion"/> in the game world.</param>
+    /// <param name="scale">How big this <see cref="Explosion"/> gets. Its damage radius is this times <see cref="MAGIC_EXPLOSION_NUMBER"/>.</param>
+    /// <param name="owner">The <see cref="Tank"/> responsible for this <see cref="Explosion"/>, if any.</param>
+    /// <param name="rotationSpeed">How fast the flames spin around the center.</param>
+    /// <param name="soundPitch">Added to the pitch of the explosion sound.</param>
+    /// <returns>The created <see cref="Explosion"/>, or <see langword="null"/> if there are already <see cref="EXPLOSIONS_MAX"/> explosions.</returns>
+    public static Explosion? Create(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
+        var explosion = TankGame.ThreadAgnostic(() => Array.IndexOf(Explosions, null) < 0 ? null : new Explosion(pos, scale, owner, rotationSpeed, soundPitch));
+        return explosion;
+    }
+
+    Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
         RotationSpeed = rotationSpeed;
         Position = pos;
-        Scale = scale;
+        MaxScale = scale;
         Owner = owner;
 
         AITank.Dangers.Add(this);
@@ -74,13 +83,13 @@ public class Explosion : IAITankDanger {
 
         ring.Scale = new(1.3f);
         ring.Pitch = MathHelper.PiOver2;
-        ring.HasAdditiveBlending = true;
+        ring.Additive = true;
         ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
 
-        ring.UniqueBehavior = (a) => {
-            ring.Alpha -= 0.08f * RuntimeData.DeltaTime;
+        ring.UpdateCallback = (a) => {
+            ring.Alpha -= 0.08f * RuntimeData.DeltaFrames;
 
-            GeometryUtils.Add(ref ring.Scale, 0.04f * RuntimeData.DeltaTime);
+            GeometryUtils.Add(ref ring.Scale, 0.04f * RuntimeData.DeltaFrames);
             if (ring.Alpha <= 0)
                 ring.Destroy();
         };
@@ -93,16 +102,17 @@ public class Explosion : IAITankDanger {
                 float rotation = 0f;
                 float rotationSpeed1 = 0.06f * RotationSpeed;
 
-                var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
+                // var explScalar = MAGIC_EXPLOSION_NUMBER * MaxScale;
                 var lingerRandom = Client.ClientRandom.NextFloat(0.8f, 1.2f);
                 var position = Vector3.UnitY * -5000f;
                 var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);
 
-                // TODO: make particles face center of explosion
-                particle.UniqueBehavior = (a) => {
+                // TODO: make particles face center of explosion -- i think this is done?
+                particle.UpdateCallback = (a) => {
                     act?.Invoke(particle);
                     particle.Color = ExplosionColor;
-                    rotation += rotationSpeed1 * RuntimeData.DeltaTime;
+                    rotation += rotationSpeed1 * RuntimeData.DeltaFrames;
+                    var explScalar = MAGIC_EXPLOSION_NUMBER * DamageRadiusScale;
 
                     // find why the rotation isnt rotating the right way. maybe needs a unit circle offset? piover2?
                     position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
@@ -117,47 +127,62 @@ public class Explosion : IAITankDanger {
             }
             horizLayers -= (int)MathF.Round((float)horizLayers / vertLayers);
         }
-
-        var audio = SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, pitchOverride: soundPitch);
+        var audio = SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, pitchOverride: soundPitch + GameUtils.NaturalPitchShift, position: Position3D);
         //if (CameraGlobals.IsUsingFirstPresonCamera)
-        //    SoundUtils.CreateSpatialSound(audio, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
+        //    SoundUtils.CreateSpatialSound(audio, Position3D, CameraGlobals.PerspectiveCamera.Position, 1.25f);
 
         Id = index;
 
         Explosions[index] = this;
     }
-
+    
     public void Update() {
+        DamageRadiusScale = MathUtils.SoftStep(DamageRadiusScale, MaxScale, 0.2f * RuntimeData.DeltaFrames);
+        var damageRadiusReal = DamageRadiusScale * MAGIC_EXPLOSION_NUMBER;
+        damageRadiusReal *= damageRadiusReal;
+
         if (!IntermissionSystem.IsAwaitingNewMission) {
             foreach (var mine in Mine.AllMines) {
-                if (mine is not null && Vector2.Distance(mine.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER) // magick
-                    mine.Detonate();
+                if (mine == null) continue;
+                if (Vector3.DistanceSquared(mine.Position3D, Position3D) > damageRadiusReal) continue;
+                
+                mine.Detonate();
             }
             foreach (var block in Block.AllBlocks) {
-                if (block is not null && Vector2.Distance(block.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER && block.Properties.IsDestructible)
-                    block.Destroy();
+                if (block == null) continue;
+                if (!block.Properties.IsDestructible) continue;
+                if (Vector3.DistanceSquared(block.Position3D, Position3D) > damageRadiusReal) continue;
+
+                block.Destroy();
             }
             foreach (var shell in Shell.AllShells) {
-                if (shell is not null && Vector2.Distance(shell.Position, Position) < Scale * MAGIC_EXPLOSION_NUMBER)
-                    shell.Destroy(Shell.DestructionContext.WithExplosion);
+                if (shell == null) continue;
+                if (Vector3.DistanceSquared(shell.Position3D, Position3D) > damageRadiusReal) continue;
+
+                shell.Destroy(Shell.DestructionContext.WithExplosion);
             }
             foreach (var tank in GameHandler.AllTanks) {
-                if (tank is null || Vector2.Distance(tank.Position, Position) > Scale * MAGIC_EXPLOSION_NUMBER
-                    || tank.IsDestroyed || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
-                    continue;
+                if (tank is null) continue;
+                if (tank.IsDestroyed || HasHit[tank.WorldId]) continue;
+                if (Vector3.DistanceSquared(tank.Position3D, Position3D) > damageRadiusReal) continue;
+
                 HasHit[tank.WorldId] = true;
-                if (Owner is null)
+
+                // only one client reports each hit, the others get it over the network
+                if (!NetPlay.IsReporter(Owner)) continue;
+
+                // Owner.Damage prevents damage within the method
+                if (Owner == null)
                     tank.Damage(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion"), true);
-                else if (Owner is not null) {
+                else
                     tank.Damage(new TankHurtContextExplosion(this), true);
-                }
             }
         }
         if (LifeTime > LingerDuration)
             Remove();
 
-        Rotation += RotationSpeed * RuntimeData.DeltaTime;
-        LifeTime += RuntimeData.DeltaTime;
+        Rotation += RotationSpeed * RuntimeData.DeltaFrames;
+        LifeTime += RuntimeData.DeltaFrames;
 
         OnPostUpdate?.Invoke(this);
     }

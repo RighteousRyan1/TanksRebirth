@@ -1,13 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using TanksRebirth.Internals.Common.Utilities;
-using FontStashSharp;
+using TanksRebirth;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.Net;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace TanksRebirth.GameContent.UI;
-
+namespace TanksRebirth.GameContent.UI; 
 public class XpBar {
     // TODO: make fancy and cool
     float _interp;
@@ -24,13 +22,16 @@ public class XpBar {
 
     //Vector2 _animPos;
     //Vector2 _targetPos;
-    public Vector2 Position;
+    public Vector2 Position { get; set; }
 
     public Color EmptyColor;
     public Color FillColor;
     public Color GainedColor;
 
     public Anchor Alignment;
+
+    // Added a timer to drive the glowing pulse animation
+    private float _glowTimer;
 
     public void GainExperience(float xp) {
         _interp = 0;
@@ -45,9 +46,12 @@ public class XpBar {
         //if (_popupInterp >= 1) {
 
         //}
-        //else _popupInterp += 0.005f * RuntimeData.DeltaTime;
+        //else _popupInterp += 0.005f * RuntimeData.DeltaFrames;
+
+        _glowTimer += RuntimeData.DeltaFrames * 0.1f;
+
         if (_interp < 1) {
-            _interp += 0.005f * RuntimeData.DeltaTime;
+            _interp += 0.005f * RuntimeData.DeltaFrames;
 
             // later.
             /*var p = GameHandler.Particles.MakeParticle(new Vector3(), TextureGlobals.Pixels[Color.White]);
@@ -56,8 +60,8 @@ public class XpBar {
             float initVelY = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
             // p.Position.X = 
 
-            p.UniqueBehavior = (a) => {
-                float velX = Client.ClientRandom.NextFloat(-0.5f, -0.1f) * RuntimeData.DeltaTime;
+            p.UpdateCallback = (a) => {
+                float velX = Client.ClientRandom.NextFloat(-0.5f, -0.1f) * RuntimeData.DeltaFrames;
             };*/
             if (Value >= MaxValue) {
                 // bring back to the beginning of the bar
@@ -67,23 +71,44 @@ public class XpBar {
         }
         else _interp = 1;
 
-        Value += (ApproachValue - Value) * Easings.GetEasingBehavior(EasingFunction.InOutQuint, _interp);
+        Value += (ApproachValue - Value) * Easings.ComputeEase(EasingFunction.InOutQuint, _interp);
     }
 
     // todo, when xp gained, draw a text particle that shows how much was gained
     // also when leveling up make it go to end and then go to supposed xp value
-    public void Render(SpriteBatch sb) {
-        var text = $"Level: {Level} | {MathF.Floor(Value * 100)}%";
-        // draw empty xp
+    public void Draw(SpriteBatch sb) {
+        var text = $"Level: {Level} | {MathF.Floor(Value / MaxValue * 100)}%";
+        Alignment = Anchor.Center;
+        // draw empty xp (text)
         DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFont, text, Position - (Vector2.UnitY * 20).ToResolution(), Color.White, Color.Black, new Vector2(0.6f).ToResolution(),
             0f, Alignment, borderThickness: 0.5f);
 
-        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, EmptyColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), Scale.ToResolution(), default, 0f);
+        Vector2 origin = Alignment.GetAnchor(TextureGlobals.Pixels[Color.White].Size());
+        float borderSize = 2f.ToResolutionX();
 
-        // draw approaching xp value
-        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, GainedColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), new Vector2(Scale.X * MathF.Min(MaxValue, ApproachValue), Scale.Y).ToResolution(), default, 0f);
+        // outline
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, Color.Black * 0.85f, 0f, origin, (Scale + new Vector2(borderSize * 2)).ToResolution(), default, 0f);
 
-        // draw gained xp
-        sb.Draw(TextureGlobals.Pixels[Color.White], Position , null, FillColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), new Vector2(Scale.X * Value, Scale.Y).ToResolution(), default, 0f);
+        // draw empty xp (track)
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, EmptyColor, 0f, origin, Scale.ToResolution(), default, 0f);
+
+        // inner shadow
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, Color.Black * 0.3f, 0f, origin, new Vector2(Scale.X, Scale.Y * 0.25f).ToResolution(), default, 0f);
+
+        // calculates widths dynamically based on MaxValue
+        float approachRatio = MathF.Min(MaxValue, ApproachValue) / MaxValue;
+        float currentRatio = Value / MaxValue;
+
+        // sine wave pulse for approach bar
+        float pulseAlpha = 0.6f + MathF.Sin(_glowTimer) * 0.4f;
+
+        // draw approaching xp value (glow trail)
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, GainedColor * pulseAlpha, 0f, origin, new Vector2(Scale.X * approachRatio, Scale.Y).ToResolution(), default, 0f);
+
+        // draw gained xp (main fill)
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, FillColor, 0f, origin, new Vector2(Scale.X * currentRatio, Scale.Y).ToResolution(), default, 0f);
+
+        // glossy highlight (maybe remove?)
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, Color.White * 0.25f, 0f, origin, new Vector2(Scale.X * currentRatio, Scale.Y * 0.35f).ToResolution(), default, 0f);
     }
 }

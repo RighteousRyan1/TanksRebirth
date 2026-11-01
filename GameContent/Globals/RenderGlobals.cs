@@ -19,22 +19,26 @@ public static class RenderGlobals {
 
     public static readonly DepthStencilState DefaultStencilState = DepthStencilState.Default;
 
-    public static readonly SamplerState WrappingSampler = new() {
+    public static SamplerState WrappingSampler { get; } = new() {
         AddressU = TextureAddressMode.Wrap,
         AddressV = TextureAddressMode.Wrap,
     };
-    public static readonly SamplerState ClampingSampler = new() {
+    public static SamplerState ClampingSampler { get; } = new() {
         AddressU = TextureAddressMode.Clamp,
         AddressV = TextureAddressMode.Clamp,
     };
 
-    public static void EnsureRenderTargetOK(ref RenderTarget2D rt, GraphicsDevice device, int desiredWidth, int desiredHeight) {
-        if (rt == null || rt.IsDisposed || rt.Size() != new Vector2(desiredWidth, desiredHeight)) {
+    public static RenderTarget2D EnsureOK(ref RenderTarget2D? rt, GraphicsDevice device, int desiredWidth, int desiredHeight, string? name = null) {
+        if (rt == null || rt.IsDisposed || rt.Width != desiredWidth || rt.Height != desiredHeight) {
             rt?.Dispose();
             var presentationParams = TankGame.Instance.GraphicsDevice.PresentationParameters;
             rt = new RenderTarget2D(device,
                 desiredWidth, desiredHeight, false,
-                presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
+                presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents) {
+                Name = name
+            };
         }
+
+        return rt;
     }
 }

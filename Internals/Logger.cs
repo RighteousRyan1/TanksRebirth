@@ -5,10 +5,11 @@ using System;
 using System.Globalization;
 using System.Text;
 using TanksRebirth.Internals.Common.Utilities;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TanksRebirth.Internals;
 
-public enum LogType {
+public enum RebirthLogLevel {
     /// <summary>Information about what is happening during runtime to serve as a sequence of events to
     /// any kind of fatal error.</summary>
     Info,
@@ -25,33 +26,32 @@ public enum LogType {
     Debug
 }
 
+public delegate void OnLog(Assembly assembly, string data, RebirthLogLevel logType);
+
 /// <summary>Represents a system which reads and writes to a logging file.</summary>
 public sealed class Logger : IDisposable {
-    private readonly StringBuilder _stringBuilder = new(128);
-    private readonly string writeTo;
+    readonly StringBuilder _builder = new(128);
+    readonly string _filePath;
+    readonly FileStream _stream;
+    readonly StreamWriter _writer;
 
-    public readonly string Name;
+    public event OnLog? OnLogWrite;
 
-    public readonly string FileName;
+    public string Name { get; }
+    public string FileName { get; }
 
-    private readonly Assembly assembly;
-
-    private static FileStream fStream;
-    private static StreamWriter sWriter;
-    
     public Logger(string writeFile, string name) {
-        assembly = Assembly.GetExecutingAssembly();
         Name = name;
 
-        FileName = _stringBuilder.Append(name).Append('_').Append(DateTime.Now.StringFormatCustom("_")).Append(".log").ToString();
+        FileName = _builder.Append(name).Append('_').Append(DateTime.Now.StringFormatCustom("_")).Append(".log").ToString();
 
-        writeTo = Path.Combine(writeFile, $"{FileName}");
+        _filePath = Path.Combine(writeFile, $"{FileName}");
 
-        Debug.WriteLine($"Created '{writeTo}'");
+        Debug.WriteLine($"Created '{_filePath}'");
 
-        fStream = new(writeTo, FileMode.OpenOrCreate);
-        fStream.SetLength(0);
-        sWriter = new(fStream);
+        _stream = new(_filePath, FileMode.OpenOrCreate);
+        _stream.SetLength(0);
+        _writer = new(_stream);
     }
 
     /// <summary>
@@ -61,43 +61,46 @@ public sealed class Logger : IDisposable {
     /// <param name="writeType">The type of logging being done.</param>
     /// <param name="throwException">Whether or not to throw an exception upon write completion.</param>
     /// <exception cref="Exception">If <paramref name="throwException"/> is set to <see langword="true"/>, this exception will be thrown upon write completion.</exception>
-    public void Write(object contents, LogType writeType, bool throwException = false) {
-        var contentsAsString = contents.ToString();
-        fStream.Position = fStream.Length;
-        lock (sWriter) {
-            _stringBuilder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
+    public void Write(object contents, RebirthLogLevel writeType, bool throwException = false) {
+        var contentsAsString = contents.ToString()!;
+        _stream.Position = _stream.Length;
+        lock (_writer) {
+            _builder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
             // Equivalent to $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}"
-            _stringBuilder
+
+            var callingAssembly = Assembly.GetCallingAssembly();
+            _builder
                 .Append('[').Append(DateTime.Now.ToString(CultureInfo.InvariantCulture)).Append("] ")
-                .Append('[').Append(assembly.GetName().Name).Append("] ")
+                .Append('[').Append(callingAssembly.GetName().Name).Append("] ")
                 .Append('[').Append(FromLogLevel(writeType)).Append("]: ")
                 .Append(contentsAsString);
 
-            var str = _stringBuilder.ToString();
-            sWriter.WriteLine(str);
-            Debug.WriteLine(str);
-            if (GameLauncher.IsConsoleAllocated) Console.WriteLine(str);
-            sWriter.Flush();
+            var finalStr = _builder.ToString();
+            _writer.WriteLine(finalStr);
+            Debug.WriteLine(finalStr);
+            OnLogWrite?.Invoke(callingAssembly, contentsAsString, writeType);
+            if (GameLauncher.IsConsoleAllocated) Console.WriteLine(finalStr);
+            _writer.Flush();
         }
 
         if (throwException)
             throw new Exception(contentsAsString);
     }
 
-    private static string FromLogLevel(LogType type) { // Converts a LogType to a string without the use of Reflection.
+    private static string FromLogLevel(RebirthLogLevel type) { // Converts a RebirthLogLevel to a string without the use of Reflection.
         return type switch {
-            LogType.Info => "Info",
-            LogType.Warn => "Warn",
-            LogType.ErrorFatal => "ErrorFatal",
-            LogType.ErrorSilent => "ErrorSilent",
-            LogType.Debug => "Debug",
+            RebirthLogLevel.Info => "Info",
+            RebirthLogLevel.Warn => "Warn",
+            RebirthLogLevel.ErrorFatal => "ErrorFatal",
+            RebirthLogLevel.ErrorSilent => "ErrorSilent",
+            RebirthLogLevel.Debug => "Debug",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
     
     public void Dispose() {
-        sWriter.Dispose();
-        fStream.Dispose();
+        _writer.Dispose();
+        _stream.Dispose();
         GC.SuppressFinalize(this);
     }
     ~Logger() {

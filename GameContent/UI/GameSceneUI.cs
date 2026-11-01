@@ -1,24 +1,48 @@
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals;
-using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.Net;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
-using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI;
 
 public static class GameSceneUI {
-    public static void Initialize() {
-        // put any initialization logic here if needed
+    public static bool DrawingEnabled = true;
+    static GameSceneUI() {
+        // any init logic
     }
+    public static void DrawAll() {
+        if (!DrawingEnabled) return;
+
+        if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
+            var xpBar = GameHandler.ExpBar;
+            xpBar.Position = new(WindowUtils.WindowWidth / 2, 50);
+            xpBar.Scale = new(600, 20);
+            xpBar.Alignment = Anchor.LeftCenter;
+            xpBar.FillColor = Color.Green;
+            xpBar.EmptyColor = Color.Red;
+            xpBar.GainedColor = Color.Lime;
+            xpBar.Draw(TankGame.SpriteRenderer);
+        }
+
+        DrawScores();
+        DrawMissionInfoBar();
+    }
+
     public static void DrawScores() {
-        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : 1;
+        var connected = Client.IsConnected();
+        var drawCount = connected ? GameHandler.MAX_PLAYERS : PlayerTank.NumLocalPlayers;
         for (int i = 0; i < drawCount; i++) {
+            // slots can be empty after someone leaves
+            if (connected && !Server.IsOccupied(i)) continue;
 
             float y = WindowUtils.WindowHeight * 0.9f;
             bool flip = i % 2 != 0;
@@ -36,16 +60,17 @@ public static class GameSceneUI {
         var tnk = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
         var barPos = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - (bar.Height + 35).ToResolutionY());
         var missionInfo = LevelEditorUI.IsTestingLevel ? 
-            LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
+            LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.General.Mission}"}";
         var infoMeasure = font.MeasureString(missionInfo) * infoScale;
         var infoScaling = 1f - ((float)missionInfo.Length / LevelEditorUI.MAX_MISSION_CHARS) + 0.4f;
-        var tanksRemaining = $"× {AIManager.CountAll()}";
+        var tanksRemaining = $"Ã— {AIManager.CountAll()}";
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
             Vector2.UnitY, IntermissionSystem.BannerColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
-            Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
+            Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(2f).ToResolution(), 
+            alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
         DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
             Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale * infoScaling).ToResolution(),
@@ -57,7 +82,7 @@ public static class GameSceneUI {
     }
 
     // helpers
-    private static void DrawScore(Color color, int score, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
+    static void DrawScore(Color color, int score, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
         color = ColorUtils.ChangeColorBrightness(color, 0.25f);
         var brighterColor = ColorUtils.ChangeColorBrightness(color, 0.5f);
 
@@ -126,24 +151,5 @@ public static class GameSceneUI {
             new Vector2(flipSide ? pertrusionReal + 10 : pertrusionReal - 10,
             y - 7f * scale),
             Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.375f * scale), 1f, shadowAlpha: 0.5f);
-    }
-
-    // pretty sure this doesn't work.
-    private static Texture2D GenerateScoreboard(Color color) {
-        var scoreboard = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard");
-
-        var colors = new Color[scoreboard.Width * scoreboard.Height];
-        scoreboard.GetData(colors);
-
-        for (int i = 0; i < colors.Length; i++) {
-            if (colors[i] == Color.Black) {
-                colors[i] = color;
-            }
-        }
-
-        var texture = new Texture2D(TankGame.Instance.GraphicsDevice, scoreboard.Width, scoreboard.Height);
-
-        texture.SetData(colors);
-        return texture;
     }
 }

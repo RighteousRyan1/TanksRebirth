@@ -46,5 +46,7 @@ public class UITextButton : UIImage
         Vector2 drawOrigin = font.MeasureString(Text) / 2f;
         if (TextScale != null && DrawText)
             spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, AutoResolutionHandle ? TextScale.Invoke().ToResolution() : TextScale.Invoke(), TextRotation, drawOrigin);
+
+        base.DrawSelf(spriteBatch);
     }
 }

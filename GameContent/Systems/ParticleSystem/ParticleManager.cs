@@ -2,106 +2,198 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.NetworkInformation;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
-using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
-public class ParticleManager
-{
-    // maybe rendertarget for lvl edit particles?
-    public SwapBackArray<Particle> CurrentParticles;
+public partial class ParticleManager(Func<Matrix> view, Func<Matrix> proj) {
+    // Particles live in one flat array. Removal is an O(1) swap-with-last (each particle stores its own index).
+    Particle[] _items = new Particle[256];
+    int _count;
+
+    /// <summary>The number of live particles.</summary>
+    public int Count => _count;
 
     public Matrix SystemView => _viewFunc.Invoke();
     public Matrix SystemProjection => _projFunc.Invoke();
 
-    private readonly Func<Matrix> _viewFunc;
-    private readonly Func<Matrix> _projFunc;
+    readonly Func<Matrix> _viewFunc = view;
+    readonly Func<Matrix> _projFunc = proj;
 
-    public ParticleManager(int maxParticles, Func<Matrix> view, Func<Matrix> proj) {
-        CurrentParticles = [];
-        _viewFunc = view;
-        _projFunc = proj;
-        CurrentParticles.OnSwapBack += OnSwapBack;
+    /// <summary>Whether this system also draws the batched tank tracks (<see cref="TankFootprint"/>). Only the in-game system should.</summary>
+    public bool DrawsFootprints { get; init; }
+
+    // render scratch (reused every frame; no per-frame allocation)
+    readonly SpriteParticleBatcher _sprites = new();
+    readonly List<Particle> _text3D = [];
+    readonly List<Particle> _screenSpace = [];
+    readonly List<Particle> _customDraw = [];
+
+    internal int Register(Particle particle) {
+        if (_count == _items.Length)
+            Array.Resize(ref _items, _items.Length * 2);
+        _items[_count] = particle;
+        return _count++;
     }
-    void OnSwapBack(int index, Particle particle) {
-        //Console.WriteLine($"remove: {particle.Id} ---> {index}");
-        particle.Id = index;
+
+    internal void Unregister(Particle particle) {
+        int index = particle.Id;
+        if (index < 0 || index >= _count || !ReferenceEquals(_items[index], particle))
+            return;
+
+        int last = --_count;
+        if (index != last) {
+            var moved = _items[last];
+            _items[index] = moved;
+            moved.Id = index;
+        }
+        _items[last] = null;
     }
+
     public void Empty() {
-        CurrentParticles.Clear();
-        for (int i = 0; i < CurrentParticles.Count; i++) {
-            CurrentParticles[i]?.Destroy();
+        for (int i = 0; i < _count; i++) {
+            var p = _items[i];
+            if (p is null) continue;
+            p.UpdateCallback = null;
+            p.DrawCallback = null;
+            p.Destroyed = true;
+            _items[i] = null;
         }
+        _count = 0;
+        if (DrawsFootprints)
+            ShellTrail.Clear();
     }
 
-    public void RenderParticles(bool renderInReverseOrder = false) {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
-        //if (Internals.Common.InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.U))
-            //Console.Clear();
-
-        //Console.SetCursorPosition(0, 0);
-        //var s = Stopwatch.StartNew();
-
-        Particle.EffectHandle.TextureEnabled = true;
-        Particle.EffectHandle.View = SystemView;
-        Particle.EffectHandle.Projection = SystemProjection;
-        Particle.EffectHandle.FogEnabled = false;
-
-        if (renderInReverseOrder) {
-            for (int i = CurrentParticles.Count - 1; i >= 0; i--)
-                CurrentParticles[i]?.Render();
-        }
-        else {
-            for (int i = 0; i < CurrentParticles.Count; i++)
-                CurrentParticles[i]?.Render();
-        }
-        //double ms = s.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency / 1000;
-        //Console.WriteLine($"Particle Render: {ms:0.000}ms");
-    }
-    public void RenderModelParticles(bool renderInReverseOrder = false) {
-        if (!GameScene.ShouldRenderAll)
-            return;
-
-        if (renderInReverseOrder) {
-            for (int i = CurrentParticles.Count - 1; i >= 0; i--) {
-                var particle = CurrentParticles[i];
-                if (particle is not null)
-                    if (particle.Model != null)
-                        particle.RenderModels();
-            }
-        }
-        else {
-            for (int i = 0; i < CurrentParticles.Count; i++) {
-                var particle = CurrentParticles[i];
-                if (particle is not null)
-                    if (particle.Model != null)
-                        particle.RenderModels();
-            }
-        }
-    }
     public void UpdateParticles() {
-        if (!GameScene.ShouldRenderAll)
-            return;
+        if (DrawsFootprints)
+            ShellTrail.UpdateAll(RuntimeData.DeltaFrames);
 
-        //var s = Stopwatch.StartNew();
-
-        for (int i = 0; i < CurrentParticles.Count; i++) {
-            CurrentParticles[i].Update();
+        int i = 0;
+        while (i < _count) {
+            var p = _items[i];
+            p.Update();
+            // if it destroyed itself, the last particle was swapped into slot i and still needs its update this frame
+            if (i < _count && ReferenceEquals(_items[i], p))
+                i++;
         }
-        
-        //double ms = s.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency / 1000;
-        //Console.WriteLine($"Particle Logic: {ms:0.000}ms");
+    }
+
+    /// <summary>Draws all sprite particles. Total cost is one draw call per distinct (texture, blend mode) pair
+    /// instead of several state changes and a draw call per particle.</summary>
+    public void RenderParticles(SpriteBatch spriteBatch) {
+        var device = TankGame.Instance.GraphicsDevice;
+        bool spriteBatchEnded = false;
+
+        void EndSpriteBatch() {
+            if (spriteBatchEnded) return;
+            spriteBatch.End();
+            spriteBatchEnded = true;
+        }
+
+        var view = SystemView;
+        var projection = SystemProjection;
+
+        // tracks before everything else
+        if (DrawsFootprints && TankFootprint.Count > 0) {
+            EndSpriteBatch();
+            TankFootprint.Render(device, view, projection);
+        }
+
+        // rocket smoke: before the sprites, so the flames draw over it
+        if (DrawsFootprints && ShellTrail.All.Count > 0) {
+            EndSpriteBatch();
+            ShellTrail.RenderAll(device, view, projection, TanksRebirth.GameContent.RebirthUtils.SceneManager.GameLight.Brightness / 0.75f);
+        }
+
+        // put each particles into their own draw lists for optimizations
+        _sprites.Begin();
+        _text3D.Clear();
+        _screenSpace.Clear();
+        _customDraw.Clear();
+
+        for (int i = 0; i < _count; i++) {
+            var p = _items[i];
+            if (p.Model is not null) continue; // RenderModelParticles
+
+            if (p.DrawCallback is not null)
+                _customDraw.Add(p);
+
+            if (p.IsIn2DSpace) {
+                _screenSpace.Add(p);
+            }
+            else if (p.IsText) {
+                _text3D.Add(p);
+            }
+            else if (p.Texture is not null && p.Alpha > 0f) {
+                _sprites.Add(p);
+            }
+        }
+
+        // world space particles
+        if (_sprites.HasSprites) {
+            EndSpriteBatch();
+            _sprites.Draw(device, view, projection);
+        }
+
+        // world space text
+        if (_text3D.Count > 0) {
+            EndSpriteBatch();
+            Particle.EffectHandle.TextureEnabled = true;
+            Particle.EffectHandle.View = view;
+            Particle.EffectHandle.Projection = projection;
+            Particle.EffectHandle.FogEnabled = false;
+            for (int i = 0; i < _text3D.Count; i++)
+                _text3D[i].DrawText3D(spriteBatch);
+        }
+
+        // screen space particles. should probably differentiate via two structs (Particle2D / Particle3D)
+        if (_screenSpace.Count > 0) {
+            EndSpriteBatch();
+            DrawScreenSpace(spriteBatch, additive: false);
+            DrawScreenSpace(spriteBatch, additive: true);
+        }
+
+        if (spriteBatchEnded)
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+
+        // custom draw hooks run with the same SpriteBatch state they always did
+        for (int i = 0; i < _customDraw.Count; i++)
+            _customDraw[i].DrawCallback?.Invoke(_customDraw[i]);
+    }
+
+    void DrawScreenSpace(SpriteBatch spriteBatch, bool additive) {
+        bool begun = false;
+        for (int i = 0; i < _screenSpace.Count; i++) {
+            var p = _screenSpace[i];
+            if (p.Additive != additive) continue;
+
+            if (!begun) {
+                spriteBatch.Begin(SpriteSortMode.FrontToBack, additive ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
+                begun = true;
+            }
+            p.Draw2D(spriteBatch);
+        }
+        if (begun)
+            spriteBatch.End();
+    }
+
+    public void RenderModelParticles() {
+        for (int i = 0; i < _count; i++) {
+            var particle = _items[i];
+            if (particle.Model is null || particle.Alpha <= 0f) continue;
+
+            particle.DrawModel();
+        }
+    }
+    /// <summary>Creates a particle with no draw data.</summary>
+    /// <remarks>This is particularly useful for temporary elements, such as lights.</remarks>
+    public Particle MakeParticle(Vector3 position) {
+        return new(position, this);
     }
     /// <summary>Creates a particle.</summary>
     /// <param name="position">The initial position of this particle.</param>
@@ -124,32 +216,37 @@ public class ParticleManager
             Text = text
         };
     }
+    /// <summary>How long an explosion's flames last in ticks, before the linger multiplier.</summary>
+    public static float ExplosionFlameDuration = 110f;
+    /// <summary>How the flames move through the explosion texture. Below 1 spends less time on the white flash at the start.</summary>
+    public static float ExplosionFlameCurve = 0.6f;
     public Particle MakeExplosionFlameParticle(Vector3 position, out Action<Particle> ourAction, float lingerMultiplier = 1f, float particleScaleMultiplier = 1f) {
         var t = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion");
         var p = MakeParticle(position, t);
 
-        int frame = 0;
         int frameHeight = 66;
+        int frameCount = t.Height / frameHeight;
+        // in ticks. about 1.2 seconds for a regular explosion
+        float duration = ExplosionFlameDuration * lingerMultiplier;
+        float elapsed = 0f;
 
         p.Scale = new(particleScaleMultiplier);
         p.IsIn2DSpace = false;
-        p.HasAdditiveBlending = false;
+        p.Additive = false;
         p.Alpha = 1;
         p.Origin2D = new Vector2(t.Width / 2, frameHeight / 2);
+        p.TextureCrop = new Rectangle(0, 0, t.Width, frameHeight);
         void act(Particle b) {
-            b.TextureCrop = new Rectangle(0, frame * frameHeight, t.Width, frameHeight);
-
-            if (frame < 50) {
-                if (b.LifeTime % 0.8f <= RuntimeData.DeltaTime)
-                    frame++;
-            }
-            else {
-                if (b.LifeTime % (0.8f * lingerMultiplier) <= RuntimeData.DeltaTime)
-                    frame++;
-            }
-
-            if (frame * frameHeight >= t.Height)
+            elapsed += RuntimeData.DeltaFrames;
+            var progress = elapsed / duration;
+            if (progress >= 1f) {
                 p.Destroy();
+                return;
+            }
+
+            // the first frames are a white flash. the curve keeps it short and leaves more time for the fire
+            var frame = Math.Min((int)(MathF.Pow(progress, ExplosionFlameCurve) * frameCount), frameCount - 1);
+            b.TextureCrop = new Rectangle(0, frame * frameHeight, t.Width, frameHeight);
         }
         ourAction = act;
         return p;
@@ -176,13 +273,13 @@ public class ParticleManager
             spark.Yaw = angles.Yaw;
             spark.Alpha = 1f;
             spark.Scale = new(Client.ClientRandom.NextFloat(0.4f, 0.6f));
-            spark.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
+            spark.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
 
             spark.Color = Color.Yellow;
 
-            spark.UniqueBehavior = (part) => {
-                part.Position += vel * RuntimeData.DeltaTime;
-                part.Alpha -= 0.025f * RuntimeData.DeltaTime;
+            spark.UpdateCallback = (part) => {
+                part.Position += vel * RuntimeData.DeltaFrames;
+                part.Alpha -= 0.025f * RuntimeData.DeltaFrames;
 
                 if (part.Alpha <= 0f)
                     part.Destroy();
@@ -195,24 +292,24 @@ public class ParticleManager
 
             var smoke = MakeParticle(position, texture);
 
-            smoke.HasAdditiveBlending = true;
+            smoke.Additive = true;
 
             smoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             smoke.Scale = new(0.8f);
 
-            smoke.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
+            smoke.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
 
-            var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
+            var velocity = Vector2.UnitY.RotatedBy(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
 
             smoke.Position.Y += 5f + Client.ClientRandom.NextFloat(0f, 8f);
 
             var smokeInitColor = Color.DarkOrange;
             float fullLerpTime = 50f;
 
-            smoke.UniqueBehavior = (p) => {
+            smoke.UpdateCallback = (p) => {
                 smoke.Position += velocity;
-                smoke.Scale -= new Vector3(0.01f) * RuntimeData.DeltaTime;
+                smoke.Scale -= new Vector3(0.01f) * RuntimeData.DeltaFrames;
                 var time = MathF.Min(smoke.LifeTime, fullLerpTime);
                 smoke.Color = Color.Lerp(smokeInitColor, new Color(40, 40, 40), time / fullLerpTime);
 
@@ -220,10 +317,10 @@ public class ParticleManager
                     smoke.Destroy();
 
                 if (smoke.LifeTime > timeMovingSideways) {
-                    smoke.Alpha -= 0.02f * RuntimeData.DeltaTime;
-                    smoke.Position.Y += Client.ClientRandom.NextFloat(0.1f, 0.25f) * RuntimeData.DeltaTime;
-                    velocity.X *= 0.9f * RuntimeData.DeltaTime;
-                    velocity.Z *= 0.9f * RuntimeData.DeltaTime;
+                    smoke.Alpha -= 0.02f * RuntimeData.DeltaFrames;
+                    smoke.Position.Y += Client.ClientRandom.NextFloat(0.1f, 0.25f) * RuntimeData.DeltaFrames;
+                    velocity.X *= 0.9f * RuntimeData.DeltaFrames;
+                    velocity.Z *= 0.9f * RuntimeData.DeltaFrames;
                 }
             };
         }
@@ -232,11 +329,11 @@ public class ParticleManager
         var p = MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
         p.Scale = new(scale);
         p.Color = color;
-        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
-        p.UniqueBehavior = (part) => {
-            GeometryUtils.Add(ref p.Scale, -0.0175f * RuntimeData.DeltaTime);
+        p.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
+        p.UpdateCallback = (part) => {
+            GeometryUtils.Add(ref p.Scale, -0.0175f * RuntimeData.DeltaFrames);
 
-            p.Alpha -= 0.025f * RuntimeData.DeltaTime;
+            p.Alpha -= 0.025f * RuntimeData.DeltaFrames;
 
             if (p.Alpha <= 0f || p.Scale.X <= 0f)
                 p.Destroy();

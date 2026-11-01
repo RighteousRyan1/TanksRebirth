@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.Enums;
+﻿using System.Collections.Generic;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.LevelSystem;
 
 namespace TanksRebirth.GameContent.Systems;
 
-public static class DifficultyAlgorithm
-{
+public static class DifficultyAlgorithm {
 
     public static Dictionary<int, float> TankDiffs = new() {
         [TankID.Brown] = 0.01f,
         [TankID.Ash] = 0.025f,
-        [TankID.Marine] = 0.9f,
+        [TankID.Marine] = 0.09f,
         [TankID.Yellow] = 0.065f,
         [TankID.Pink] = 0.12f,
         [TankID.Green] = 0.28f,
@@ -38,18 +33,17 @@ public static class DifficultyAlgorithm
         //[0] = TankGame.GameLanguage.Trivial,
     };
 
-    public static float GetDifficulty(Mission mission)
-    {
+    public static float GetDifficulty(Mission mission) {
         float difficulty = 0;
         // Dictionary<int, int> tankCounts = [];
 
         foreach (var tank in mission.Tanks) {
             if (tank.IsPlayer) continue;
 
-            //if (!tankCounts.TryGetValue(tank.AiTier, out int value)) tankCounts.Add(tank.AiTier, 1);
-            //else tankCounts[tank.AiTier] = ++value;
+            //if (!tankCounts.TryGetValue(tank.AIType, out int value)) tankCounts.Add(tank.AIType, 1);
+            //else tankCounts[tank.AIType] = ++value;
 
-            difficulty += TankDiffs[tank.AiTier];
+            difficulty += TankDiffs[tank.AIType];
         }
 
         foreach (var block in mission.Blocks) {

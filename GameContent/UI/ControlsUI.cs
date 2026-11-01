@@ -1,131 +1,240 @@
-using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Input;
-using TanksRebirth.Internals.Common.GameUI;
-using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.UI
-{
-    public static class ControlsUI
-    {
-        public static UITextButton UpKeybindButton;
+namespace TanksRebirth.GameContent.UI;
 
-        public static UITextButton LeftKeybindButton;
+/// <summary>The Controls page of the settings window.</summary>
+public static class ControlsUI {
+    public static SettingRow UpKeybindButton = null!;
+    public static SettingRow LeftKeybindButton = null!;
+    public static SettingRow RightKeybindButton = null!;
+    public static SettingRow DownKeybindButton = null!;
+    public static SettingRow MineKeybindButton = null!;
+    public static SettingRow KeyboardPlayerButton = null!;
 
-        public static UITextButton RightKeybindButton;
+    /// <summary>Whether the Controls page is on screen. Clearing it closes the settings window.</summary>
+    public static bool BatchVisible { get; set; }
 
-        public static UITextButton DownKeybindButton;
+    /// <summary>A binding is waiting for a key or mouse button.</summary>
+    public static bool IsRebinding => _rebinding is not null;
 
-        public static UITextButton MineKeybindButton;
+    public static bool InputLocked => IsRebinding || RuntimeData.UpdateCount - _rebindEndedAt <= 2;
 
-        public static bool BatchVisible { get; set; }
+    static SettingsPage Page => SettingsUI.Controls;
 
-        public static void Initialize()
-        {
-            var pressKey = TankGame.GameLanguage.PressAKey;
-            UpKeybindButton = new("Up: " + PlayerTank.controlUp.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
-            {
-                IsVisible = false
-            };
-            UpKeybindButton.SetDimensions(() => new Vector2(550, 200).ToResolution(), () => new Vector2(300, 150).ToResolution());
-            UpKeybindButton.OnLeftClick = (uiElement) =>
-            {
-                UpKeybindButton.Text = pressKey;
-                PlayerTank.controlUp.OnReassign = (key) =>
-                {
-                    UpKeybindButton.Text = "Up: " + key.KeyAsString();
-                    TankGame.Settings.UpKeybind = key;
-                    PlayerTank.controlUp.OnReassign = null;
-                };
-                PlayerTank.controlUp.PendReassign = true;
-            };
+    readonly record struct BindInput(Keys Key, MouseInput Mouse) {
+        public bool Matches(Keybind bind) => Mouse != MouseInput.None ? bind.AssignedMouse == Mouse : bind.AssignedMouse == MouseInput.None && bind.Assigned == Key;
+        public static BindInput Of(Keybind bind) => new(bind.Assigned, bind.AssignedMouse);
+    }
 
-            LeftKeybindButton = new("Left: " + PlayerTank.controlLeft.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
-            {
-                IsVisible = false
-            };
-            LeftKeybindButton.SetDimensions(() => new Vector2(1050, 200).ToResolution(), () => new Vector2(300, 150).ToResolution());
-            LeftKeybindButton.OnLeftClick = (uiElement) =>
-            {
-                LeftKeybindButton.Text = pressKey;
-                PlayerTank.controlLeft.OnReassign = (key) =>
-                {
-                    LeftKeybindButton.Text = "Left: " + key.KeyAsString();
-                    TankGame.Settings.LeftKeybind = key;
-                    PlayerTank.controlLeft.OnReassign = null;
-                };
-                PlayerTank.controlLeft.PendReassign = true;
-            };
+    sealed record Binding(Keybind Bind, Func<GameConfig, BindInput> Get, Action<GameConfig, BindInput> Set);
+    static readonly List<Binding> _bindings = [
+        new(PlayerTank.MoveUp, c => new(c.Control.UpKeybind, c.Control.UpMouseBind), (c, i) => (c.Control.UpKeybind, c.Control.UpMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.MoveDown, c => new(c.Control.DownKeybind, c.Control.DownMouseBind), (c, i) => (c.Control.DownKeybind, c.Control.DownMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.MoveLeft, c => new(c.Control.LeftKeybind, c.Control.LeftMouseBind), (c, i) => (c.Control.LeftKeybind, c.Control.LeftMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.MoveRight, c => new(c.Control.RightKeybind, c.Control.RightMouseBind), (c, i) => (c.Control.RightKeybind, c.Control.RightMouseBind) = (i.Key, i.Mouse)),
+        new(PlayerTank.PlaceMine, c => new(c.Control.MineKeybind, c.Control.MineMouseBind), (c, i) => (c.Control.MineKeybind, c.Control.MineMouseBind) = (i.Key, i.Mouse)),
+    ];
 
-            RightKeybindButton = new("Right: " + PlayerTank.controlRight.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
-            {
-                IsVisible = false
-            };
-            RightKeybindButton.SetDimensions(() => new Vector2(550, 400).ToResolution(), () => new Vector2(300, 150).ToResolution());
-            RightKeybindButton.OnLeftClick = (uiElement) =>
-            {
-                RightKeybindButton.Text = pressKey;
-                PlayerTank.controlRight.OnReassign = (key) =>
-                {
-                    RightKeybindButton.Text = "Right: " + key.KeyAsString();
-                    TankGame.Settings.RightKeybind = key;
-                    PlayerTank.controlRight.OnReassign = null;
-                };
-                PlayerTank.controlRight.PendReassign = true;
-            };
+    static Binding? _rebinding;
+    static BindInput _rebindPrevious;
+    static uint _rebindStartedAt, _rebindEndedAt;
 
-            DownKeybindButton = new("Down: " + PlayerTank.controlDown.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
-            {
-                IsVisible = false
-            };
-            DownKeybindButton.SetDimensions(() => new Vector2(1050, 400).ToResolution(), () => new Vector2(300, 150).ToResolution());
-            DownKeybindButton.OnLeftClick = (uiElement) =>
-            {
-                DownKeybindButton.Text = pressKey;
-                PlayerTank.controlDown.OnReassign = (key) =>
-                {
-                    DownKeybindButton.Text = "Down: " + key.KeyAsString();
-                    TankGame.Settings.DownKeybind = key;
-                    PlayerTank.controlDown.OnReassign = null;
-                };
-                PlayerTank.controlDown.PendReassign = true;
-            };
-
-            MineKeybindButton = new("Mine: " + PlayerTank.controlMine.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
-            {
-                IsVisible = false
-            };
-            MineKeybindButton.SetDimensions(() => new Vector2(800, 600).ToResolution(), () => new Vector2(300, 150).ToResolution());
-            MineKeybindButton.OnLeftClick = (uiElement) =>
-            {
-                MineKeybindButton.Text = pressKey;
-                PlayerTank.controlMine.OnReassign = (key) =>
-                {
-                    MineKeybindButton.Text = "Mine: " + key.KeyAsString();
-                    TankGame.Settings.MineKeybind = key;
-                    PlayerTank.controlMine.OnReassign = null;
-                };
-                PlayerTank.controlMine.PendReassign = true;
-            };
+    public static void LoadBindings(GameConfig settings) {
+        foreach (var binding in _bindings) {
+            binding.Bind.AllowMouse = true;
+            Apply(binding.Bind, binding.Get(settings));
         }
+    }
 
-        public static void HideAll()
-        {
-            UpKeybindButton.IsVisible = false;
-            LeftKeybindButton.IsVisible = false;
-            RightKeybindButton.IsVisible = false;
-            DownKeybindButton.IsVisible = false;
-            MineKeybindButton.IsVisible = false;
-        }
+    public static void Initialize() {
+        CancelRebind();
+        LoadBindings(TankGame.Settings);
+        Page.Clear();
+        Page.Closed = CancelRebind;
+        Page.Updated = UpdateRebind;
 
-        public static void ShowAll()
-        {
-            UpKeybindButton.IsVisible = true;
-            LeftKeybindButton.IsVisible = true;
-            RightKeybindButton.IsVisible = true;
-            DownKeybindButton.IsVisible = true;
-            MineKeybindButton.IsVisible = true;
+        const float left = SettingsUI.LeftX, right = SettingsUI.RightX;
+        var lang = TankGame.GameLanguage;
+
+        Page.Header(lang.Settings.HeaderKeyboardMouse, left);
+        Page.Header(lang.LevelEdit.Players, right);
+
+        UpKeybindButton = BindingRow(0, lang.Settings.MoveUp, _bindings[0]);
+        DownKeybindButton = BindingRow(1, lang.Settings.MoveDown, _bindings[1]);
+        LeftKeybindButton = BindingRow(2, lang.Settings.MoveLeft, _bindings[2]);
+        RightKeybindButton = BindingRow(3, lang.Settings.MoveRight, _bindings[3]);
+        MineKeybindButton = BindingRow(4, lang.Settings.PlaceMine, _bindings[4]);
+
+        Page.Button(left, SettingsUI.RowY(6), SettingsUI.ColumnW, lang.Settings.ResetBindings,
+            lang.Settings.ResetBindingsDesc, ResetBindings);
+
+        KeyboardPlayerButton = Page.Row(right, SettingsUI.RowY(0), lang.Settings.KeyboardPlayer ?? "Keyboard Player",
+            "",
+            () => PlayerID.GetLocalizedPlayerColorName(PlayerTank.KbPlayer),
+            StepKeyboardPlayer,
+            () => !Client.IsConnected());
+        KeyboardPlayerButton.DynamicDescription = () => Client.IsConnected()
+            ? TankGame.GameLanguage.Settings.KeyboardPlayerLocked
+            : string.Format(TankGame.GameLanguage.Settings.KeyboardPlayerDesc, InputUtils.NumGamepadsConnected);
+
+        var shoot = Page.Row(right, SettingsUI.RowY(1), lang.Settings.Shoot, lang.Settings.Unbindable,
+            () => MouseName(MouseInput.Left), _ => { }, () => false);
+        shoot.ShowArrows = false;
+
+        var pause = Page.Row(right, SettingsUI.RowY(2), lang.Settings.PauseBack, lang.Settings.Unbindable,
+            () => Keys.Escape.KeyAsString(), _ => { }, () => false);
+        pause.ShowArrows = false;
+    }
+
+    static SettingRow BindingRow(int index, string label, Binding binding) {
+        binding.Bind.AllowMouse = true;
+        var row = Page.Row(SettingsUI.LeftX, SettingsUI.RowY(index), label,
+            TankGame.GameLanguage.Settings.RebindDesc,
+            () => _rebinding == binding ? TankGame.GameLanguage.Menu.PressAKey ?? "Press a key..." : InputName(BindInput.Of(binding.Bind)),
+            dir => {
+                if (InputLocked)
+                    return;
+                if (dir > 0)
+                    StartRebind(binding);
+                else
+                    Assign(binding, binding.Get(new GameConfig()));
+            });
+        row.ShowArrows = false;
+        row.Highlighted = () => _rebinding == binding;
+        return row;
+    }
+
+    static string InputName(BindInput input) =>
+        input.Mouse != MouseInput.None ? MouseName(input.Mouse) : input.Key == Keys.None ? TankGame.GameLanguage.Settings.Unbound : input.Key.KeyAsString();
+
+    static string MouseName(MouseInput mouse) {
+        var settings = TankGame.GameLanguage.Settings;
+        return mouse switch {
+            MouseInput.Left => settings.MouseLeft,
+            MouseInput.Right => settings.MouseRight,
+            MouseInput.Middle => settings.MouseMiddle,
+            MouseInput.Mouse3 => string.Format(settings.MouseExtra, 4),
+            MouseInput.Mouse4 => string.Format(settings.MouseExtra, 5),
+            _ => mouse.MouseAsString(),
+        };
+    }
+
+    static void StartRebind(Binding binding) {
+        CancelRebind();
+        var bind = binding.Bind;
+        _rebinding = binding;
+        _rebindPrevious = BindInput.Of(bind);
+        _rebindStartedAt = RuntimeData.UpdateCount;
+
+        bind.OnReassign = key => FinishRebind(binding, new BindInput(key, MouseInput.None));
+        bind.OnReassignMouse = mouse => FinishRebind(binding, new BindInput(Keys.None, mouse));
+        bind.PendReassign = true;
+    }
+
+    static void FinishRebind(Binding binding, BindInput input) {
+        var bind = binding.Bind;
+        bind.OnReassign = null;
+        bind.OnReassignMouse = null;
+        _rebinding = null;
+        _rebindEndedAt = RuntimeData.UpdateCount;
+
+        Apply(bind, _rebindPrevious);
+        // Escape makes the keybind unbind itself (no key, no mouse button): treat it as cancel
+        if (input.Key == Keys.None && input.Mouse == MouseInput.None)
+            return;
+        Assign(binding, input);
+    }
+
+    static void UpdateRebind() {
+        // a left click anywhere (after the one that started the rebind) cancels it
+        if (IsRebinding && RuntimeData.UpdateCount > _rebindStartedAt && InputUtils.Click())
+            CancelRebind();
+    }
+
+    static void CancelRebind() {
+        if (_rebinding is null)
+            return;
+        var bind = _rebinding.Bind;
+        bind.PendReassign = false;
+        bind.OnReassign = null;
+        bind.OnReassignMouse = null;
+        Apply(bind, _rebindPrevious);
+        _rebinding = null;
+        _rebindEndedAt = RuntimeData.UpdateCount;
+    }
+
+    static void Apply(Keybind bind, BindInput input) {
+        if (input.Mouse != MouseInput.None)
+            bind.ForceReassign(input.Mouse);
+        else
+            bind.ForceReassign(input.Key);
+    }
+
+    /// <summary>Binds <paramref name="input"/>; a binding that already used it gets this one's old input.</summary>
+    static void Assign(Binding binding, BindInput input) {
+        var old = BindInput.Of(binding.Bind);
+        if (input.Matches(binding.Bind))
+            return;
+        foreach (var other in _bindings) {
+            if (other != binding && input.Matches(other.Bind)) {
+                Apply(other.Bind, old);
+                other.Set(TankGame.Settings, old);
+            }
         }
+        Apply(binding.Bind, input);
+        binding.Set(TankGame.Settings, input);
+        SettingsUI.PlayTick();
+    }
+
+    static void ResetBindings() {
+        CancelRebind();
+        var defaults = new GameConfig();
+        foreach (var binding in _bindings) {
+            var input = binding.Get(defaults);
+            Apply(binding.Bind, input);
+            binding.Set(TankGame.Settings, input);
+        }
+    }
+
+    static void StepKeyboardPlayer(int dir) {
+        var numGps = InputUtils.NumGamepadsConnected;
+        var next = PlayerTank.KbPlayer + dir;
+
+        if (numGps == 0 && next == -1) next = 0;
+        if (next > numGps)
+            if (numGps != 0)
+                next = -1;
+            else
+                next = 0;
+        else if (next < -1)
+            next = numGps;
+        PlayerTank.KbPlayer = next;
+        if (GameUI.KeyboardPlayerButton is not null)
+            GameUI.KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(next)}";
+
+        // properly hide unused mice/input methods
+        var mice = TankGame.PlayerMice;
+        for (int i = 0; i < mice.Length; i++) {
+            if (mice[i] is null) continue;
+            mice[i].IsActive = true;
+            if (i >= PlayerTank.NumLocalPlayers) mice[i].IsActive = false;
+        }
+    }
+
+    /// <summary>Opens the settings window on this page.</summary>
+    public static void ShowAll() => SettingsUI.Open(SettingsUI.Controls);
+
+    /// <summary>Closes the settings window if it's on this page.</summary>
+    public static void HideAll() {
+        if (SettingsUI.IsOpen && SettingsUI.Current == SettingsUI.Controls)
+            SettingsUI.Close();
     }
 }

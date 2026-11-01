@@ -23,13 +23,13 @@ public static partial class GameLauncher
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool AllocConsole();
     
-    // [Conditional("DEBUG")]
+    [Conditional("DEBUG")]
     public static void DebugCheck() {
         /*
          *  Boot up console for debugging purposes and other goods.
          *  ...Only if a debugger is attached.
          */
-        if (!Debugger.IsAttached) return;
+        // if (!Debugger.IsAttached) return;
         AllocConsole();
         Thread.Sleep(1000);
         Console.OpenStandardOutput();
@@ -38,10 +38,10 @@ public static partial class GameLauncher
     }
     
     //[STAThread]
-    static void Main() {
-
+    static void Main(string[] args) {
         DebugCheck();
-        
+        Console.WriteLine("args: " + string.Join(", ", args));
+
         if (AutoLaunch)
             LaunchGame();
     }

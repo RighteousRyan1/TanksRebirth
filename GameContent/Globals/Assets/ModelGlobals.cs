@@ -35,24 +35,30 @@ public static class ModelGlobals {
     public static Resource<Model> BlockStackAlt = new(PathGlobals.SCENE_PATH, "block_stack_alt");
 
     public static Resource<Model> GameBoundarySnowy = new(PathGlobals.CHRISTMAS_PATH, "outer_bounds_snowy");
-    public static Resource<Model> BlockStackSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_alt_snowy");
+    public static Resource<Model> BlockStackSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_snowy");
     public static Resource<Model> BlockStackAltSnowy = new(PathGlobals.CHRISTMAS_PATH, "block_stack_alt_snowy");
 
-    // skybox model
+    public static Resource<Model> GameBoundaryHalloween = new(PathGlobals.HALLOWEEN_PATH, "outer_bounds_halloween");
+
+    // room scene models
     public static Resource<Model> Room = new(PathGlobals.SKYBOX_PATH, "room");
+    public static Resource<Model> Hut = new(PathGlobals.SCENE_PATH, "hut");
 
     // cosmetics
     public static Resource<Model> ArmyHat = new(PathGlobals.COSMETICS_PATH, "army_hat");
     public static Resource<Model> BlenderDefaultCube = new(PathGlobals.COSMETICS_PATH, "blender_default_cube");
-    public static Resource<Model> Crown = new(PathGlobals.COSMETICS_PATH, "crown");
+    public static Resource<Model> KingsCrown = new(PathGlobals.COSMETICS_PATH, "crown");
     public static Resource<Model> Halo = new(PathGlobals.COSMETICS_PATH, "halo");
     public static Resource<Model> Horns = new(PathGlobals.COSMETICS_PATH, "horns");
     public static Resource<Model> SantaHat = new(PathGlobals.COSMETICS_PATH, "santa_hat");
     public static Resource<Model> WitchHat = new(PathGlobals.COSMETICS_PATH, "witch_hat");
+    public static Resource<Model> TopHat = new(PathGlobals.COSMETICS_PATH, "top_hat");
+    public static Resource<Model> StrawHat = new(PathGlobals.COSMETICS_PATH, "straw_hat");
+    public static Resource<Model> KingsRobe = new(PathGlobals.COSMETICS_PATH, "robe");
 
     // misc
     public static Resource<Model> Logo = new(PathGlobals.MODEL_PATH + "/logo", "logo");
-    public static void Initialize() {
-        
-    }
+
+    // decorations
+    public static Resource<Model> JackOLantern = new(PathGlobals.DECO_PATH, "pumpkin");
 }

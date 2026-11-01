@@ -1,23 +1,34 @@
-﻿using Microsoft.Xna.Framework;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Internals.Common.Utilities;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Steamworks;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.Net;
+using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Cameras;
-using System.Linq;
-using System;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Globals;
 
+#pragma warning disable
 public static class CameraGlobals {
-
-    public static bool IsUsingFirstPresonCamera => MatrixUtils.AreMatricesEqual(GameProjection, RebirthFreecam.Projection, 0.1f);
+    enum CameraMode {
+        Overhead,
+        POV,
+        MainMenu,
+        Freecam
+    }
+    public static bool IsUsingFirstPersonCamera => MatrixUtils.AreMatricesEqual(GameProjection, PerspectiveCamera.Projection, 0.1f);
 
     // screen camera stuff
 
@@ -26,18 +37,17 @@ public static class CameraGlobals {
     public static Matrix ScreenProjPerspective;
 
     public static void SetMatrices() {
-        // old = Matrix.CreateOrthographicOffCenter(0f, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.1f, 100000f); 
-        ScreenProjOrthographic = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
-        ScreenProjPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000f);
-        
+        ScreenProjOrthographic = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -1000f, 1000f);
+        ScreenProjPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 1f, 10000f);
+
         // still dont know why i offset z by -500
-        ScreenView = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(0, 0, -500);
+        ScreenView = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(-Vector3.UnitZ);
     }
 
     // game camera stuff
 
-    private static bool _oView;
-    private static int _transitionTimer;
+    static bool _oView;
+    static float _transitionTimer;
     public static bool OverheadView {
         get => _oView;
         set {
@@ -46,7 +56,7 @@ public static class CameraGlobals {
         }
     }
 
-    public static Freecam RebirthFreecam;
+    public static Freecam PerspectiveCamera;
 
     public static int SpectatorId;
 
@@ -57,188 +67,261 @@ public static class CameraGlobals {
     public const float LVL_EDIT_ZOOM = 0.6f;
     public const float LVL_EDIT_Y_OFF = 82f;
     public const float LVL_EDIT_ANGLE = MathHelper.PiOver2;
+
     public static float AddativeZoom = 1f;
     public static float POVCameraRotation;
 
-    public static Vector2 CameraFocusOffset;
+    public const float CAMERA_DEF_OFF_Y = -110;
+    public static Vector3 CameraFocusOffset;
     public static Vector2 OrthoRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
     public static Vector3 POVCameraPosition = new(0, 100, 0);
 
     public static Matrix GameView;
     public static Matrix GameProjection;
 
+    public const float POV_CAM_OFFSET_Y = 20f;
+
+    public static BoundingFrustum ViewFrustum = new(Matrix.Identity);
+
+    // freecam options
+
+    // 1.0 = locked, 0.0 = unlocked
+    static Vector3 _locks;
+
     public static void Initialize(GraphicsDevice device) {
-        RebirthFreecam = new(device);
-        RebirthFreecam.Position = MainMenuUI.MenuCameraManipulations[MainMenuUI.UIState.LoadingMods].Position;
+        PerspectiveCamera = new(device) {
+            Position = MainMenuUI.MenuGraphicsStates[MainMenuUI.UIState.LoadingMods].Position
+        };
     }
     public static void UpdateOverhead() {
         if (_transitionTimer > 0) {
-            _transitionTimer--;
+            _transitionTimer -= RuntimeData.DeltaFrames;
             if (OverheadView) {
-                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, LVL_EDIT_ANGLE, 0.08f * RuntimeData.DeltaTime);
-                AddativeZoom = MathUtils.SoftStep(AddativeZoom, LVL_EDIT_ZOOM, 0.08f * RuntimeData.DeltaTime);
-                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, LVL_EDIT_Y_OFF, 2f * RuntimeData.DeltaTime);
+                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, LVL_EDIT_ANGLE, 0.08f * RuntimeData.DeltaFrames);
+                AddativeZoom = MathUtils.SoftStep(AddativeZoom, LVL_EDIT_ZOOM, 0.08f * RuntimeData.DeltaFrames);
+                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, LVL_EDIT_Y_OFF, 2f * RuntimeData.DeltaFrames);
             }
             else {
-                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * RuntimeData.DeltaTime);
+                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * RuntimeData.DeltaFrames);
                 if (!LevelEditorUI.IsActive)
-                    AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaTime);
-                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaTime);
+                    AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaFrames);
+                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaFrames);
+                // Console.WriteLine(RuntimeData.DeltaFrames);
             }
         }
     }
-
-    public static void Update() {
-        bool isFreecam = DebugManager.DebugLevel == DebugManager.Id.FreeCamTest || DebugManager.persistFreecam;
+    static CameraMode GetCameraMode() {
         bool isMainMenu = MainMenuUI.IsActive;
-        bool isPOV = Difficulties.Types["POV"] && !isMainMenu;
+        bool isFreecamFlag =
+            DebugManager.DebugLevel == DebugManager.Id.FREECAM ||
+            DebugManager.persistFreecam;
 
-        if (!isFreecam) {
-            if (!isMainMenu) {
-                if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive) {
-                    UpdateOverhead();
+        bool isPOV = Modifiers.IsOn(Modifiers.POV) && !isMainMenu;
 
-                    GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
-                               Matrix.CreateLookAt(new(0f, 0, 100), Vector3.Zero, Vector3.Up) *
-                               Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y - 110, 0) *
-                               Matrix.CreateRotationY(OrthoRotationVector.X) *
-                               Matrix.CreateRotationX(OrthoRotationVector.Y);
+        if (isMainMenu)
+            return CameraMode.MainMenu;
 
-                    GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
-                    // GameProjection = Matrix.CreateOrthographic(WindowUtils.WindowWidth, WindowUtils.WindowHeight, -2000, 5000);
-                }
-            }
-            else {
-                if (MainMenuUI.CameraPositionAnimator.CurrentPosition3D != Vector3.Zero) {
-                    RebirthFreecam.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition3D;
-                    RebirthFreecam.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition3D;
-                }
+        if (isFreecamFlag && DebugManager.DebuggingEnabled)
+            return CameraMode.Freecam;
 
-                RebirthFreecam.HasLookAt = false;
-                RebirthFreecam.FieldOfView = 100f;
-                RebirthFreecam.NearViewDistance = 0.1f;
-                RebirthFreecam.FarViewDistance = 100000f;
+        if (isPOV)
+            return CameraMode.POV;
 
-                GameView = RebirthFreecam.View;
-                GameProjection = RebirthFreecam.Projection;
-            }
-
-            if (isPOV) {
-                if (PlayerTank.ClientTank is { IsDestroyed: false }) {
-                    SpectatorId = NetPlay.GetMyClientId();
-                    POVCameraPosition = PlayerTank.ClientTank.Position.ExpandZ();
-                    POVCameraRotation = -PlayerTank.ClientTank.TurretRotation;
-                }
-                else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
-                    if (InputUtils.KeyJustPressed(Keys.Left))
-                        SpectatorId = SpectateValidTank(SpectatorId, false);
-                    else if (InputUtils.KeyJustPressed(Keys.Right))
-                        SpectatorId = SpectateValidTank(SpectatorId, true);
-
-                    POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
-                    POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
-                }
-
-                if (IntermissionHandler.ThirdPersonTransitionAnimation is not null && PlayerTank.ClientTank is not null) {
-                    IntermissionHandler.ThirdPersonTransitionAnimation.KeyFrames[1] = new(
-                        position2d: new Vector2(-PlayerTank.ClientTank.TurretRotation),
-                        position3d: PlayerTank.ClientTank.Position3D
-                    );
-                }
-
-                var anim = IntermissionHandler.ThirdPersonTransitionAnimation;
-                var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
-                    anim.CurrentPosition2D.X : POVCameraRotation;
-
-                var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
-                    anim.CurrentPosition3D : POVCameraPosition;
-
-                GameView = Matrix.CreateLookAt(
-                    povCameraPosCurrent,
-                    POVCameraPosition + new Vector2(0, 20).Rotate(povCameraRotationCurrent).ExpandZ(),
-                    Vector3.Up
-                ) * Matrix.CreateScale(AddativeZoom) *
-                    Matrix.CreateTranslation(0, -20, 0);
-
-                RebirthFreecam.FieldOfView = 90f;
-                GameProjection = RebirthFreecam.Projection;
-
-                RebirthFreecam.Position = POVCameraPosition;
-            }
-        }
-        else if (!GameUI.Paused && !isMainMenu && DebugManager.DebuggingEnabled) {
-            if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X)) {
-                DebugManager.persistFreecam = !DebugManager.persistFreecam;
-            }
-
-            var realMoveSpeed = 10f * RuntimeData.DeltaTime;
-            var rotationSpeed = 0.01f;
-
-            RebirthFreecam.HasLookAt = false;
-            RebirthFreecam.NearViewDistance = 0.1f;
-            RebirthFreecam.FarViewDistance = 1_000_000f;
-            RebirthFreecam.MinPitch = -180;
-            RebirthFreecam.MaxPitch = 180;
-
-            bool isPlayerActive = PlayerTank.ClientTank is not null;
-
-            var keysprint = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
-            var keyslow = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
-
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
-                realMoveSpeed *= 2;
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyslow))
-                realMoveSpeed /= 4;
-
-            var keyf = LevelEditorUI.IsActive || !isPlayerActive ? Keys.W : Keys.Up;
-            var keyb = LevelEditorUI.IsActive || !isPlayerActive ? Keys.S : Keys.Down;
-            var keyl = LevelEditorUI.IsActive || !isPlayerActive ? Keys.A : Keys.Left;
-            var keyr = LevelEditorUI.IsActive || !isPlayerActive ? Keys.D : Keys.Right;
-
-            if (InputUtils.MouseRight) {
-                RebirthFreecam.Rotation -= new Vector3(0, 
-                    MouseUtils.MouseVelocity.Y * rotationSpeed,
-                    MouseUtils.MouseVelocity.X * rotationSpeed);
-
-                 RebirthFreecam.Rotation = new Vector3(0,
-                     MathHelper.Clamp(RebirthFreecam.Rotation.Y, -MathHelper.PiOver2, MathHelper.PiOver2),
-                     RebirthFreecam.Rotation.Z);
-            }
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
-                RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
-                RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaTime;
-            if (InputUtils.MouseMiddle)
-                RebirthFreecam.FieldOfView = 90;
-
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyf))
-                RebirthFreecam.Move(RebirthFreecam.World.Forward * realMoveSpeed);
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyb))
-                RebirthFreecam.Move(RebirthFreecam.World.Backward * realMoveSpeed);
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyl))
-                RebirthFreecam.Move(RebirthFreecam.World.Left * realMoveSpeed);
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyr))
-                RebirthFreecam.Move(RebirthFreecam.World.Right * realMoveSpeed);
-
-            GameView = RebirthFreecam.View;
-            GameProjection = RebirthFreecam.Projection;
-        }
+        return CameraMode.Overhead;
     }
+    public static void UpdateCamera() {
+        var mode = GetCameraMode();
+
+        switch (mode) {
+            case CameraMode.MainMenu:
+                UpdateMainMenuCamera();
+                break;
+
+            case CameraMode.Freecam:
+                UpdateFreecamCamera();
+                break;
+
+            case CameraMode.POV:
+                UpdateOverheadCamera(); 
+                ManagePOV();
+                break;
+
+            case CameraMode.Overhead:
+            default:
+                UpdateOverheadCamera();
+                break;
+        }
+
+        // if (InputUtils.KeyJustPressed(Keys.N))
+        ViewFrustum.Matrix = GameView * GameProjection;
+    }
+    static void UpdateOverheadCamera() {
+        UpdateOverhead();
+
+        // default orthographic view. maybe i should split into cameras, like ICamera?
+
+        GameView =
+            Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
+            Matrix.CreateLookAt(new(0f, 0f, 100f), Vector3.Zero, Vector3.Up) *
+            Matrix.CreateTranslation(
+                CameraFocusOffset.X,
+                -CameraFocusOffset.Y + CAMERA_DEF_OFF_Y,
+                -CameraFocusOffset.Z) *
+            Matrix.CreateRotationY(OrthoRotationVector.X) *
+            Matrix.CreateRotationX(OrthoRotationVector.Y);
+
+        var defRes = WindowUtils.RenderResolution;
+        GameProjection = Matrix.CreateOrthographic(defRes.X, defRes.Y, -3500, 75000f);
+    }
+    static void UpdateMainMenuCamera() {
+        if (MainMenuUI.CameraPositionAnimator.CurrentPosition != Vector3.Zero) {
+            PerspectiveCamera.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition;
+            PerspectiveCamera.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition;
+        }
+
+        PerspectiveCamera.UseFocus = false;
+        PerspectiveCamera.FieldOfView = 100f;
+
+        GameView = PerspectiveCamera.View;
+        GameProjection = PerspectiveCamera.Projection;
+    }
+    static void UpdateFreecamCamera() {
+        if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X))
+            DebugManager.persistFreecam = !DebugManager.persistFreecam;
+
+        float realMoveSpeed = 5f * RuntimeData.DeltaFrames;
+        const float rotationSpeed = 0.01f;
+
+        PerspectiveCamera.UseFocus = false;
+        PerspectiveCamera.Far = 75000;
+        PerspectiveCamera.MinPitch = -180f;
+        PerspectiveCamera.MaxPitch = 180f;
+
+        bool isPlayerActive = PlayerTank.ClientTank is not null;
+        bool editorOrNoPlayer = LevelEditorUI.IsActive || !isPlayerActive;
+
+        Keys keySprint = editorOrNoPlayer ? Keys.LeftShift : Keys.RightShift;
+        Keys keySlow = editorOrNoPlayer ? Keys.LeftControl : Keys.RightControl;
+
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keySprint))
+            realMoveSpeed *= 2f;
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keySlow))
+            realMoveSpeed /= 4f;
+
+        Keys keyF = editorOrNoPlayer ? Keys.W : Keys.Up;
+        Keys keyB = editorOrNoPlayer ? Keys.S : Keys.Down;
+        Keys keyL = editorOrNoPlayer ? Keys.A : Keys.Left;
+        Keys keyR = editorOrNoPlayer ? Keys.D : Keys.Right;
+        Keys keyU = Keys.E;
+        Keys keyD = Keys.Q;
+
+        // smooths movement based on zoom/low fov
+        var mul = CameraGlobals.PerspectiveCamera.FieldOfView / 90;
+        if (InputUtils.MouseRight) {
+            var subPos = new Vector3(
+                0f,
+                MouseUtils.MouseVelocity.Y * rotationSpeed,
+                MouseUtils.MouseVelocity.X * rotationSpeed);
+            PerspectiveCamera.Rotation -= subPos * mul;
+
+            var clamped = new Vector3(
+                0f,
+                MathHelper.Clamp(
+                    PerspectiveCamera.Rotation.Y,
+                    -MathHelper.PiOver2,
+                    MathHelper.PiOver2),
+                PerspectiveCamera.Rotation.Z);
+            PerspectiveCamera.Rotation = clamped;
+        }
+
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
+            PerspectiveCamera.FieldOfView += 0.5f * RuntimeData.DeltaFrames;
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
+            PerspectiveCamera.FieldOfView -= 0.5f * RuntimeData.DeltaFrames;
+        if (InputUtils.MouseMiddle)
+            PerspectiveCamera.FieldOfView = 90f;
+
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyF))
+            PerspectiveCamera.Move(PerspectiveCamera.World.Forward * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyB))
+            PerspectiveCamera.Move(PerspectiveCamera.World.Backward * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyL))
+            PerspectiveCamera.Move(PerspectiveCamera.World.Left * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyR))
+            PerspectiveCamera.Move(PerspectiveCamera.World.Right * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyU))
+            PerspectiveCamera.Move(Vector3.UnitY * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyD))
+            PerspectiveCamera.Move(-Vector3.UnitY * realMoveSpeed);
+
+        GameView = PerspectiveCamera.View;
+        GameProjection = PerspectiveCamera.Projection;
+
+        // ensures rotation doesn't just... go haywire.
+        PerspectiveCamera.Rotation = new(PerspectiveCamera.Rotation.X, PerspectiveCamera.Rotation.Y, PerspectiveCamera.Rotation.Z % MathHelper.Tau);
+    }
+
+    public static void ManagePOV() {
+        var clientTank = PlayerTank.ClientTank;
+
+        if (clientTank is null) return;
+
+        Vector3 offsetVector = new(0, POV_CAM_OFFSET_Y, 0);
+        var plOffset = clientTank.Position3D + offsetVector;
+        if (!clientTank.IsDestroyed) {
+            SpectatorId = NetPlay.GetMyClientId();
+            POVCameraPosition = plOffset;
+            POVCameraRotation = clientTank.TurretRotation;
+        }
+        else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
+            if (InputUtils.KeyJustPressed(Keys.Left))
+                SpectatorId = SpectateValidTank(SpectatorId, false);
+            else if (InputUtils.KeyJustPressed(Keys.Right))
+                SpectatorId = SpectateValidTank(SpectatorId, true);
+
+            var spectated = GameHandler.AllPlayerTanks[SpectatorId];
+            if (spectated is null || spectated.IsDestroyed) {
+                SpectatorId = SpectateValidTank(SpectatorId, true);
+                spectated = GameHandler.AllPlayerTanks[SpectatorId];
+            }
+            if (spectated is not null) {
+                POVCameraPosition = spectated.Position.ExpandZ() + offsetVector;
+                POVCameraRotation = spectated.TurretRotation;
+            }
+        }
+        var anim = IntermissionHandler.ThirdPersonTransition;
+        if (anim is not null && clientTank is not null) {
+            // keeps the animation updated
+            anim.ModifyFloat(0, clientTank.TurretRotation);
+        }
+
+        var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
+            // the current anim rotation to meet the tank turret rotation
+            clientTank.TurretRotation : POVCameraRotation;
+
+        var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
+            anim.CurrentPosition : POVCameraPosition;
+
+        GameView = Matrix.CreateLookAt(
+            povCameraPosCurrent,
+            POVCameraPosition + new Vector2(0, 20).RotatedBy(povCameraRotationCurrent).ExpandZ(),
+            Vector3.Up
+        ) * Matrix.CreateScale(AddativeZoom);
+
+        PerspectiveCamera.FieldOfView = MathHelper.Clamp(TankGame.Settings.Gameplay.FirstPersonFOV, GraphicsSettings.MinFOV, GraphicsSettings.MaxFOV);
+        GameProjection = PerspectiveCamera.Projection;
+
+        PerspectiveCamera.Position = povCameraPosCurrent;
+    }
+
     public static int SpectateValidTank(int id, bool increase) {
-        var count = GameHandler.AllPlayerTanks.Count(x => x is not null);
-
-        if (count == 0)
-            return 0;
-
-        var arr = GameHandler.AllPlayerTanks.Where(x => x is not null).ToArray();
-
-        var newId = id + (increase ? 1 : -1);
-
-        if (newId < 0) newId = arr.Length - 1;
-        else if (newId >= arr.Length) newId = 0;
-
-        if (arr[newId].IsDestroyed)
-            return SpectateValidTank(newId, increase); // this should just return the only player then...?
-        else return newId;
+        var tanks = GameHandler.AllPlayerTanks;
+        for (int step = 1; step <= tanks.Length; step++) {
+            // maintains id in array bounds. looks funny but works
+            var next = ((increase ? id + step : id - step) % tanks.Length + tanks.Length) % tanks.Length;
+            if (tanks[next] is { IsDestroyed: false })
+                return next;
+        }
+        return id;
     }
 }

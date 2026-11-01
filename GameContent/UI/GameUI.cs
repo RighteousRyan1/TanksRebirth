@@ -1,41 +1,58 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Linq;
+using TanksRebirth.Enums;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Speedrunning;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.LevelSystem;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.Internals.Common;
-using System;
 using TanksRebirth.Internals.UI;
-using TanksRebirth.Internals.Common.Framework.Input;
-using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent.UI;
 
 // holy fucking shit. this class is beyond horrid. organize ts
-public static class GameUI
-{
+
+#pragma warning disable 
+public static class GameUI {
+    // this will be put somewhere else at some point istg
+    /// <summary>The next (dir = 1) or previous (dir = -1) entry, wrapping around. Unknown values start from the first entry.</summary>
+    internal static T Cycle<T>(T[] values, T current, int dir) {
+        var index = Array.IndexOf(values, current);
+        if (index < 0)
+            return values[0];
+        return values[((index + dir) % values.Length + values.Length) % values.Length];
+    }
+    internal static float NearestOf(float[] values, float value) => values.OrderBy(v => MathF.Abs(v - value)).First();
+    internal static int NearestOf(int[] values, int value) => values.OrderBy(v => Math.Abs(v - value)).First();
+    internal static string OnOff(bool value) => TankGame.GameLanguage.GetEnablement(value);
+    // ^^^ IGNORE!!!!!
+
     public static bool InOptions { get; set; }
 
     public static Keybind Pause = new("Pause", Keys.Escape);
 
     public static UITextButton ResumeButton;
-
     public static UITextButton RestartButton;
-
+    public static UITextButton OptionsButton;
     public static UITextButton QuitButton;
 
-    public static UITextButton OptionsButton;
+    public static UITextButton KeyboardPlayerButton;
 
     public static UITextButton VolumeButton;
-
     public static UITextButton GraphicsButton;
-
     public static UITextButton ControlsButton;
-
     public static UITextButton BackButton;
 
     public static UIElement[] menuElements;
@@ -43,25 +60,30 @@ public static class GameUI
 
     public static bool Paused { get; set; } = false;
 
-    private static int _delay;
+    static int _delay;
 
-    private static float _gpuSettingsOffset = 0f;
+    static float _gpuSettingsOffset = 0f;
 
     // TODO: make rect scissor work -> get powerups to be pickupable
-    private static bool _initialized;
+    static bool _initialized;
 
     internal static Vector2 QuitButtonSize = new(500, 150);
     internal static Vector2 OptionsButtonSize = new(500, 150);
 
-    internal static Vector2 QuitButtonPos = new(700, 850);
-    internal static Vector2 OptionsButtonPos = new(700, 600);
+    internal const float QUIT_BUTTON_Y = 850;
+    internal const float OPTIONS_BUTTON_Y = 600;
+    // the main menu shows smaller versions of these buttons, moved a little
+    internal const float MENU_QUIT_BUTTON_Y = QUIT_BUTTON_Y - 50;
+    internal const float MENU_OPTIONS_BUTTON_Y = OPTIONS_BUTTON_Y + 75;
 
-    internal static void Initialize()
-    {
+    internal static Vector2 QuitButtonPos = new(700, QUIT_BUTTON_Y);
+    internal static Vector2 OptionsButtonPos = new(700, OPTIONS_BUTTON_Y);
+
+    internal static void Initialize() {
         if (_initialized) {
             foreach (var field in typeof(GameUI).GetFields()) {
-                if (field.GetValue(null) is UIElement) {
-                    ((UIElement)field.GetValue(null)).Remove();
+                if (field.GetValue(null) is UIElement element) {
+                    element.Remove();
                     field.SetValue(null, null);
                 }
             }
@@ -70,26 +92,23 @@ public static class GameUI
         var ttColor = Color.LightGray;
         var font = FontGlobals.RebirthFont;
 
-        ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
-        {
+        ResumeButton = new(TankGame.GameLanguage.General.Resume, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         ResumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
         ResumeButton.OnLeftClick = (uiElement) => Pause.Fire();
 
-        RestartButton = new(TankGame.GameLanguage.StartOver, font, Color.WhiteSmoke)
-        {
+        RestartButton = new(TankGame.GameLanguage.General.StartOver, font, Color.WhiteSmoke) {
             IsVisible = false,
         };
         RestartButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
+        RestartButton.OnLeftClick = (uiElement) => StartOver();
 
-        OptionsButton = new(TankGame.GameLanguage.Options, font, Color.WhiteSmoke)
-        {
+        OptionsButton = new(TankGame.GameLanguage.Menu.Options, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         OptionsButton.SetDimensions(() => OptionsButtonPos.ToResolution(), () => OptionsButtonSize.ToResolution());
-        OptionsButton.OnLeftClick = (uiElement) =>
-        {
+        OptionsButton.OnLeftClick = (uiElement) => {
             _delay = 1;
             InOptions = true;
 
@@ -104,87 +123,71 @@ public static class GameUI
 
             BackButton.Size.Y = 150;
 
-            if (MainMenuUI.IsActive)
-            {
+            if (MainMenuUI.IsActive) {
                 MainMenuUI.PlayButton.IsVisible = false;
             }
         };
 
-        VolumeButton = new(TankGame.GameLanguage.Volume, font, Color.WhiteSmoke)
-        {
+        VolumeButton = new(TankGame.GameLanguage.Menu.Volume, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         VolumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        VolumeButton.OnLeftClick = (uiElement) =>
-        {
-            VolumeUI.BatchVisible = true;
-            VolumeUI.ShowAll();
-            VolumeUI.MusicVolume.IgnoreMouseInteractions = true;
-            _delay = 1;
-            VolumeButton.IsVisible = false;
-            GraphicsButton.IsVisible = false;
-            ControlsButton.IsVisible = false;
-        };
+        VolumeButton.OnLeftClick = (uiElement) => SettingsUI.Show(SettingsUI.Audio);
 
-        GraphicsButton = new(TankGame.GameLanguage.Graphics, font, Color.WhiteSmoke)
-        {
+        GraphicsButton = new(TankGame.GameLanguage.Menu.Graphics, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         GraphicsButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        GraphicsButton.OnLeftClick = (uiElement) =>
-        {
-            GraphicsUI.BatchVisible = true;
-            GraphicsUI.ShowAll();
-            GraphicsUI.VsyncButton.IgnoreMouseInteractions = true;
-            _delay = 1;
-            VolumeButton.IsVisible = false;
-            GraphicsButton.IsVisible = false;
-            ControlsButton.IsVisible = false;
-        };
+        GraphicsButton.OnLeftClick = (uiElement) => SettingsUI.Show(SettingsUI.Video);
 
-        ControlsButton = new(TankGame.GameLanguage.Controls, font, Color.WhiteSmoke)
-        {
+        ControlsButton = new(TankGame.GameLanguage.Menu.Controls, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         ControlsButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 150).ToResolution());
-        ControlsButton.OnLeftClick = (uiElement) =>
-        {
-            ControlsUI.BatchVisible = true;
-            ControlsUI.ShowAll();
-            VolumeButton.IsVisible = false;
-            GraphicsButton.IsVisible = false;
-            ControlsButton.IsVisible = false;
-        };
+        ControlsButton.OnLeftClick = (uiElement) => SettingsUI.Show(SettingsUI.Controls);
 
-        QuitButton = new(TankGame.GameLanguage.Quit, font, Color.WhiteSmoke)
-        {
+        QuitButton = new(TankGame.GameLanguage.Menu.Quit, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         QuitButton.SetDimensions(() => QuitButtonPos.ToResolution(), () => QuitButtonSize.ToResolution());
-        QuitButton.OnLeftClick = (ui) =>
-        {
+        QuitButton.OnLeftClick = (ui) => {
             QuitOut();
         };
 
-        BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke)
-        {
+        BackButton = new(TankGame.GameLanguage.Menu.Back, font, Color.WhiteSmoke) {
             IsVisible = false
         };
         BackButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
         BackButton.OnLeftClick = (uiElement) => HandleBackButton();
 
+        KeyboardPlayerButton = new($"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.KbPlayer)}", font, Color.WhiteSmoke) {
+            IsVisible = false
+        };
+        KeyboardPlayerButton.SetDimensions(() => new Vector2(WindowUtils.WindowWidth - 300.ToResolutionX(), 10.ToResolutionY()), () => new Vector2(250, 50).ToResolution());
+        KeyboardPlayerButton.OnLeftClick = (ui) => {
+            PlayerTank.KbPlayer++;
+            if (PlayerTank.KbPlayer > InputUtils.NumGamepadsConnected)
+                PlayerTank.KbPlayer = -1;
+
+            KeyboardPlayerButton.Text = $"{TankGame.GameLanguage.Settings.KeyboardPlayer}: {PlayerID.GetLocalizedPlayerColorName(PlayerTank.KbPlayer)}";
+        };
+
         // MainMenuUI.Initialize();
 
-        GraphicsUI.Initialize();
-        ControlsUI.Initialize();
+        SettingsUI.Initialize();
         VolumeUI.Initialize();
+        GraphicsUI.Initialize();
+        GameplayUI.Initialize();
+        ControlsUI.Initialize();
         PostInitialize();
     }
 
+    /// <summary>Opens (on the last used page) or closes the settings window, with the Back button under it.</summary>
     public static void SetSettingsUIVisibility(bool visible) {
-        VolumeButton.IsVisible = visible;
-        GraphicsButton.IsVisible = visible;
-        ControlsButton.IsVisible = visible;
+        if (visible)
+            SettingsUI.Open();
+        else
+            SettingsUI.Close();
         BackButton.IsVisible = visible;
     }
 
@@ -196,10 +199,9 @@ public static class GameUI
                 SoundPlayer.SoundError();
                 return;
             }
-            if (!netSent)
-                Client.SendQuit();
-            foreach (var elem in MainMenuUI.campaignNames)
-                elem?.Remove();
+            if (!netSent) Client.SendQuit();
+
+            foreach (var elem in MainMenuUI.campaignNames) elem?.Remove();
             MainMenuUI.campaignNames.Clear();
 
             // LOL: fuck it it's a funny bug, leave it in.
@@ -209,9 +211,9 @@ public static class GameUI
             IntermissionSystem.Alpha = 0f;
 
             IntermissionSystem.BonusLifeAnimator?.Restart();
+            IntermissionSystem.BonusLifeAnimator?.Stop();
             IntermissionSystem.IntermissionAnimator?.Restart();
-            IntermissionSystem.BonusLifeAnimator?.Stop();
-            IntermissionSystem.BonusLifeAnimator?.Stop();
+            IntermissionSystem.IntermissionAnimator?.Stop();
 
             MainMenuUI.Open();
             if (LevelEditorUI.IsActive) {
@@ -224,14 +226,72 @@ public static class GameUI
         }
     }
 
-    private static void PostInitialize()
-    {
-        Pause.OnPress = () =>
-        {
+    // this could probably be in a better place than GameUI.... modders might struggle to find it
+    /// <summary>Starts the campaign over from the mission it was started on, with the starting lives and fresh stats.</summary>
+    /// <param name="netSent">Whether this came from the host over the network.</param>
+    public static void StartOver(bool netSent = false) {
+        if (MainMenuUI.IsActive || CampaignCompleteUI.IsViewingResults)
+            return;
+
+        // if a non-host client tries starting over, deny
+        if (!netSent && Client.IsConnected() && !Client.IsHost()) {
+            ChatSystem.SendMessage("Only the host can start the campaign over!", Color.Red);
+            SoundPlayer.SoundError();
+            return;
+        }
+        if (!netSent) Client.SendStartOver();
+
+        // close the pause menu without resuming the music
+        Paused = false;
+        ResumeButton.IsVisible = false;
+        RestartButton.IsVisible = false;
+        QuitButton.IsVisible = false;
+        OptionsButton.IsVisible = false;
+        TankMusicSystem.StopAll();
+
+        // freeze everything while the intermission fades in
+        IntermissionSystem.IsAwaitingNewMission = true;
+        CampaignGlobals.InMission = false;
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is null) continue;
+            tank.Velocity = Vector2.Zero;
+            tank.Physics.LinearVelocity = Vector2.Zero;
+        }
+
+        // back to how the campaign began
+        for (int i = 0; i < PlayerTank.Lives.Length; i++)
+            PlayerTank.Lives[i] = PlayerTank.StartingLives;
+        for (int i = 0; i < PlayerTank.KillCounts.Length; i++)
+            PlayerTank.KillCounts[i] = 0;
+        PlayerTank.TankKills.Clear();
+        PlayerTank.PlayerStatistics = default;
+        // a new one starts with the first mission
+        Speedrun.CurrentSpeedrun = null;
+
+        // should probably have a MissionEndContext for misc things
+        IntermissionHandler.LastResult = (MissionEndContext)(-1);
+        IntermissionSystem.ShouldDrawBanner = true;
+        IntermissionSystem.ShouldDrawBonusBanner = false;
+        IntermissionSystem.BonusLifeAnimator?.Restart();
+        IntermissionSystem.BonusLifeAnimator?.Stop();
+
+        // a level editor playtest restarts the mission being tested
+        var missionId = CampaignGlobals.ShouldMissionsProgress ? MainMenuUI.MissionCheckpoint : CampaignGlobals.LoadedCampaign.CurrentMissionId;
+        CampaignGlobals.LoadedCampaign.LoadMission(missionId);
+
+        SceneManager.ClearTankTracks();
+
+        // the intermission sets the mission up once the screen is covered
+        IntermissionSystem.InitializeCountdowns();
+        IntermissionSystem.TimeBlack =IntermissionSystem.DEF_TIMEBLACK;
+        IntermissionSystem.BeginOperation(IntermissionHandler.DEF_INTERMISSION_TIME);
+    }
+    static void PostInitialize() {
+        Pause.OnPress = () => {
             if (CampaignCompleteUI.IsViewingResults)
                 return;
             if (InOptions) {
-                HandleBackButton();
+                HandleBackButton(escape: true);
                 return;
             }
             else if (!MainMenuUI.IsActive) {
@@ -266,27 +326,27 @@ public static class GameUI
             GraphicsButton,
             ControlsButton,
             BackButton,
-            GraphicsUI.VsyncButton,
-            GraphicsUI.PerPixelLightingButton,
-            GraphicsUI.FullScreenButton,
-            GraphicsUI.ResolutionButton,
+
+            GraphicsUI.VSyncBtn,
+            GraphicsUI.PPLButton,
+            GraphicsUI.WinKindBtn,
+            GraphicsUI.ResBtn,
+            GameplayUI.MenuGameplayBtn,
+            GameplayUI.FadeTracksBtn,
             VolumeUI.MusicVolume,
             VolumeUI.EffectsVolume,
             VolumeUI.AmbientVolume
         ];
         graphicsElements =
         [
-            GraphicsUI.VsyncButton,
-            GraphicsUI.VsyncToggle,
-            GraphicsUI.PerPixelLightingButton,
-            GraphicsUI.PerPixelLightingToggle,
-            GraphicsUI.FullScreenButton,
-            GraphicsUI.ResolutionButton
+            GraphicsUI.VSyncBtn,
+            GraphicsUI.PPLButton,
+            GraphicsUI.WinKindBtn,
+            GraphicsUI.ResBtn
         ];
-        foreach (UIElement button in graphicsElements)
-        {
-            button.HasScissor = true;
-            button.Scissor = () => new(0, (int)(WindowUtils.WindowHeight * 0.05f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.7f));
+        foreach (UIElement button in graphicsElements) {
+            // button.HasScissor = true;
+            // button.Scissor = () => new(0, (int)(WindowUtils.WindowHeight * 0.05f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.7f));
             button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
         }
         foreach (var e in menuElements)
@@ -297,197 +357,95 @@ public static class GameUI
 
     // 7/7/25 - WHAT THE FUCK IS THIS SHIT.
     // TODO: pls get arctan to finish the rewrite
-    private static void HandleBackButton()
-    {
+    // TODO: arctan is fucking ignoring me
+
+    // todo: ui states/screens/panels/whatever
+    // anti-sigma code
+    static void HandleBackButton(bool escape = false) {
         if (!_initialized)
             return;
-        if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics)
+
+        if (SettingsUI.IsOpen) {
+            if (escape && ControlsUI.InputLocked)
+                return;
+            SetSettingsUIVisibility(false);
+            KeyboardPlayerButton.IsVisible = false;
+
+            if (MainMenuUI.IsActive) {
+                MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
+                MainMenuUI.PlayButton.IsVisible = true;
+                OptionsButton.IsVisible = true;
+                QuitButton.IsVisible = true;
+            }
+            else {
+                InOptions = false;
+                ResumeButton.IsVisible = true;
+                RestartButton.IsVisible = true;
+                OptionsButton.IsVisible = true;
+                QuitButton.IsVisible = true;
+            }
+            return;
+        }
+
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics) {
             MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
+            CosmeticsUI.LeaveMenu();
+        }
         if (MainMenuUI.MenuState == MainMenuUI.UIState.StatsMenu)
             MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
 
-        // We are on the main menu and in the settings menu.
-        if (MainMenuUI.MenuState == MainMenuUI.UIState.Settings && MainMenuUI.IsActive && VolumeButton.IsVisible) {
-            // Set to main menu, we are going back to it after all.
-            MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
-            
-            // Hide Options buttons and load MMenu buttons.
-            MainMenuUI.PlayButton.IsVisible = true;
-            OptionsButton.IsVisible = true;
-            QuitButton.IsVisible = true;
-            
-            ResumeButton.IsVisible = false;
-            RestartButton.IsVisible = false;
-            BackButton.IsVisible = false;
-            ControlsButton.IsVisible = false;
-            GraphicsButton.IsVisible = false;
-            VolumeButton.IsVisible = false;
-        }
-        
+        // WHAT THE HELL IS THIS CODE????
+        if (MainMenuUI.IsActive) {
+            if (MainMenuUI.PlayButton.IsVisible)
+                return;
+            if (MainMenuUI.campaignNames.Count > 0) {
+                foreach (var elem in MainMenuUI.campaignNames)
+                    elem.Remove();
+                MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
 
-        if (VolumeButton.IsVisible && !MainMenuUI.IsActive)
-        {
-            ResumeButton.IsVisible = true;
-            OptionsButton.IsVisible = true;
-            RestartButton.IsVisible = true;
-            QuitButton.IsVisible = true;
-
-            BackButton.IsVisible = false;
-            ControlsButton.IsVisible = false;
-            GraphicsButton.IsVisible = false;
-            VolumeButton.IsVisible = false;
-        }
-        else if (VolumeUI.BatchVisible)
-        {
-            VolumeUI.BatchVisible = false;
-            VolumeUI.HideAll();
-            VolumeButton.IsVisible = true;
-            GraphicsButton.IsVisible = true;
-            ControlsButton.IsVisible = true;
-        }
-        else if (GraphicsUI.BatchVisible)
-        {
-            GraphicsUI.BatchVisible = false;
-            GraphicsUI.HideAll();
-            VolumeButton.IsVisible = true;
-            GraphicsButton.IsVisible = true;
-            ControlsButton.IsVisible = true;
-
-            if (TankGame.Settings.WindowKind == WindowKind.Windowed) {
-                TankGame.Settings.ResWidth = GraphicsUI.CurrentRes.Key;
-                TankGame.Settings.ResHeight = GraphicsUI.CurrentRes.Value;
-
-                TankGame.Instance.Graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
-                TankGame.Instance.Graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
-
-                TankGame.Instance.Graphics.ApplyChanges();
+                MainMenuUI.campaignNames.Clear();
             }
+            else if (MainMenuUI.PlayButton_SinglePlayer.IsVisible) {
+                MainMenuUI.PlayButton.IsVisible = true;
+                OptionsButton.IsVisible = true;
+                QuitButton.IsVisible = true;
 
-            // FIXME: acts weird
-            // TankGame.Instance.CalculateProjection();
-        }
-        else if (ControlsUI.BatchVisible)
-        {
-            ControlsUI.BatchVisible = false;
-            ControlsUI.HideAll();
-            VolumeButton.IsVisible = true;
-            GraphicsButton.IsVisible = true;
-            ControlsButton.IsVisible = true;
-        }
-        else
-        {
-            // WHAT THE HELL IS THIS CODE????
-            if (MainMenuUI.IsActive)
-            {
-                if (MainMenuUI.PlayButton.IsVisible)
-                    return;
-                if (MainMenuUI.campaignNames.Count > 0)
-                {
-                    foreach (var elem in MainMenuUI.campaignNames)
-                        elem.Remove();
-                    MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
-
-                    MainMenuUI.campaignNames.Clear();
-                }
-                else if (MainMenuUI.PlayButton_SinglePlayer.IsVisible)
-                {
-                    MainMenuUI.PlayButton.IsVisible = true;
-                    OptionsButton.IsVisible = true;
-                    QuitButton.IsVisible = true;
-
-                    BackButton.IsVisible = false;
-
-                    MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
-                }
-
-                else if (GraphicsButton.IsVisible)
-                {
-                    BackButton.IsVisible = false;
-                    VolumeButton.IsVisible = false;
-                    GraphicsButton.IsVisible = false;
-                    ControlsButton.IsVisible = false;
-                    OptionsButton.IsVisible = true;
-                    QuitButton.IsVisible = true;
-                    GraphicsUI.BatchVisible = false;
-                    VolumeUI.BatchVisible = false;
-
-                    MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
-                }
-                else if (MainMenuUI.ConnectToServerButton.IsVisible || MainMenuUI.DisconnectButton.IsVisible)
-                {
-                    MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
-                }
-                if (MainMenuUI.TanksAreCalculators.IsVisible)
-                {
-                    MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
-                }
-            }
-            else
-            {
-                InOptions = false;
-                VolumeUI.HideAll();
                 BackButton.IsVisible = false;
-                VolumeButton.IsVisible = false;
-                GraphicsButton.IsVisible = false;
-                ControlsButton.IsVisible = false;
+
+                MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
             }
+
+            else if (MainMenuUI.ConnectToServerButton.IsVisible || MainMenuUI.DisconnectButton.IsVisible) {
+                MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
+            }
+            if (MainMenuUI.ModifiersOpen) {
+                MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
+            }
+        }
+        else {
+            InOptions = false;
+            VolumeUI.HideAll();
+            BackButton.IsVisible = false;
+            VolumeButton.IsVisible = false;
+            GraphicsButton.IsVisible = false;
+            ControlsButton.IsVisible = false;
         }
 
         // UIElement.ResizeAndRelocate();
     }
 
     // i swear these are present elsewhere in the codebase
-    private static int _newScroll;
-    private static int _oldScroll;
 
-    public static void UpdateButtons()
-    {
-        if (!Paused) {
-            _newScroll = 0;
-            _oldScroll = 0;
-        }    
+    public static void UpdateButtons() {
         if (!_initialized)
             return;
-        _newScroll = InputUtils.CurrentMouseSnapshot.ScrollWheelValue;
 
-        if (_newScroll != _oldScroll)
-        {
-            _gpuSettingsOffset = _newScroll - _oldScroll;
-            foreach (var b in graphicsElements)
-            {
-                b.Position = new(b.Position.X, b.Position.Y + _gpuSettingsOffset);
-                b.MouseHovering = false;
-            }
-            // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
-        }
-
-        TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
-        TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;
-        TankGame.Settings.AmbientVolume = VolumeUI.AmbientVolume.Value;
-
-        if (VolumeUI.MusicVolume.Value <= 0.01f)
-            VolumeUI.MusicVolume.Value = 0f;
-
-        if (VolumeUI.EffectsVolume.Value <= 0.01f)
-            VolumeUI.EffectsVolume.Value = 0f;
-
-        if (VolumeUI.AmbientVolume.Value <= 0.01f)
-            VolumeUI.AmbientVolume.Value = 0f;
+        SettingsUI.Update();
 
         if (!MainMenuUI.IsActive)
             TankMusicSystem.UpdateVolume();
 
         if (_delay > 0 && !InputUtils.MouseLeft)
             _delay--;
-        if (_delay <= 0)
-        {
-            VolumeUI.MusicVolume.IgnoreMouseInteractions = false;
-            GraphicsUI.VsyncButton.IgnoreMouseInteractions = false;
-        }
-        VolumeUI.MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
-        VolumeUI.EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";
-        VolumeUI.AmbientVolume.Tooltip = $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%";
-
-        _oldScroll = _newScroll;
     }
 }

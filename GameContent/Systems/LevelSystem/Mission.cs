@@ -1,0 +1,431 @@
+using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.Tanks.AI;
+
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+
+namespace TanksRebirth.GameContent.Systems.LevelSystem;
+
+public record struct Mission {
+    /// <summary>The name of this <see cref="Mission"/>.</summary>
+    public string Name { get; set; } = "No Name";
+
+    /// <summary>The popup text that will display at the beginning of this <see cref="Mission"/>.</summary>
+    public string Note { get; set; } = string.Empty;
+    /// <summary>The <see cref="Tank"/>s that will be spawned upon mission load.</summary>
+    public TankTemplate[] Tanks { get; set; }
+
+    /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
+    public BlockTemplate[] Blocks { get; set; }
+
+    public bool GrantsExtraLife { get; set; }
+
+    /// <summary>
+    /// Construct a mission. Should generally never be called by the user unless you want to use a lot of time figuring things out.
+    /// </summary>
+    /// <param name="tanks"></param>
+    /// <param name="obstacles"></param>
+    public Mission(TankTemplate[] tanks, BlockTemplate[] obstacles) {
+        Tanks = tanks;
+        Blocks = obstacles;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Mission"/> instance from the current placement of everything.
+    /// </summary>
+    /// <returns>The mission that is currently active, or created.</returns>
+    public static Mission GetCurrent(string? name = null, bool grantsLife = false) {
+        const int roundingFactor = 5;
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is not null) {
+                var tmp = new TankTemplate {
+                    IsPlayer = tank is PlayerTank,
+                    Position = MapGrid.Current.WorldToCell(tank.Position),
+                    Rotation = MathF.Round(tank.ChassisRotation, roundingFactor),
+                    Team = tank.Team,
+                };
+
+                if (tmp.IsPlayer)
+                    tmp.PlayerType = (tank as PlayerTank).PlayerType;
+                else
+                    tmp.AIType = (tank as AITank).AiTankType;
+
+                tanks.Add(tmp);
+            }
+        }
+        foreach (var block in Block.AllBlocks) {
+            if (block is not null) {
+                blocks.Add(new() {
+                    Position = MapGrid.Current.WorldToCell(block.Position),
+                    Stack = block.Stack,
+                    TpLink = block.TpLink,
+                    Type = block.Type,
+                });
+            }
+        }
+
+        return new([.. tanks], [.. blocks]) { Name = name, GrantsExtraLife = grantsLife };
+    }
+
+    /// <summary>
+    /// Loads a <see cref="Mission"/> and instantly applies it to the game field.
+    /// </summary>
+    /// <param name="mission">The mission instance to load.</param>
+    public static void LoadDirectly(Mission mission) {
+        SceneManager.CleanupEntities();
+        EditorTile.ResetSquares();
+        SceneManager.CleanupScene();
+        for (int i = 0; i < mission.Tanks.Length; i++) {
+            var tnk = mission.Tanks[i];
+            tnk.Rotation = tnk.Rotation; // Use setter for magical purposes.
+
+            var tank = tnk.GetTank();
+
+            var placement = EditorTile.GetFromClosest(tank.Position3D);
+
+            if (placement is not null) {
+                placement.TankId = tank.WorldId;
+                placement.HasBlock = false;
+                tank.Position = placement.Position.FlattenZ();
+            }
+
+            tank.ChassisRotation = MathF.Round(tnk.Rotation, 5);
+            tank.DesiredChassisRotation = tank.ChassisRotation;
+            tank.TurretRotation = tank.ChassisRotation;
+            if (tank is AITank aiTank)
+                aiTank.TargetTurretRotation = tank.TurretRotation;
+        }
+        for (int i = 0; i < mission.Blocks.Length; i++) {
+            var blockr = mission.Blocks[i];
+
+            var block = blockr.GetBlock();
+
+            var placement = EditorTile.GetFromClosest(block.Position3D);
+            if (placement is not null) {
+                placement.BlockId = block.Id;
+                placement.HasBlock = true;
+            }
+        }
+    }
+
+    /// <summary>Saves this mission as a gzipped JSON <c>.mission</c> file.</summary>
+    public readonly void Save(string path) {
+        if (Path.GetExtension(path) == string.Empty)
+            path += ".mission";
+
+        var existed = File.Exists(path);
+        LevelFiles.WriteMission(path, this);
+
+        TankGame.ClientLog.Write($"{(existed ? "Overwrote" : "Saved")} mission file \"{Name}.mission\".", RebirthLogLevel.Info);
+        TankGame.ClientLog.Write($"Saved mission with {Tanks.Length} tank(s) and {Blocks.Length} block(s).", RebirthLogLevel.Info);
+    }
+
+    /// <summary>
+    /// Loads a mission from a <c>.mission</c> file and returns it for code use.
+    /// </summary>
+    /// <param name="missionName">The name of the mission.</param>
+    /// <param name="campaignName">The campaign to search for the mission in. If null, searches the <c>Missions/</c> directory.</param>
+    /// <returns>The successfully loaded mission.</returns>
+    /// <exception cref="FileLoadException"></exception>
+    public static Mission Load(string missionName, string? campaignName) {
+        string root;
+        if (campaignName is not null)
+            root = Path.Combine(TankGame.SaveDirectory, "Campaigns", campaignName);
+        else
+            root = Path.Combine(TankGame.SaveDirectory, "Missions");
+        var path = missionName.EndsWith(".mission") ? Path.Combine(root, missionName) : Path.Combine(root, missionName + ".mission");
+
+        Directory.CreateDirectory(root);
+
+        if (!File.Exists(path)) {
+            ChatSystem.SendMessage($"Mission not found in file system. Aborting.", Color.Red);
+            return default;
+        }
+
+        using var stream = File.Open(path, FileMode.Open, FileAccess.Read);
+
+        // ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Magenta);
+
+        return Read(stream);
+    }
+
+    /// <summary>Reads a mission in any format. JSON and gzipped JSON are read directly and binary files go to the legacy loaders.</summary>
+    public static Mission Read(Stream stream) => LevelFiles.ReadMission(stream);
+
+    /// <summary>
+    /// Reads a binary mission (versions 1 to 6) from the current position in the <paramref name="reader"/>'s stream.
+    /// </summary>
+    /// <param name="reader">The <see cref="BinaryReader"/> that is accessed.</param>
+    /// <returns>The read mission data.</returns>
+    /// <exception cref="FileLoadException"></exception>
+    public static Mission Read(BinaryReader reader) {
+        var header = reader.ReadBytes(4);
+
+        if (!header.SequenceEqual(LevelEditorUI.LevelFileHeader))
+            throw new FileLoadException($"The byte header of this file does not match what this game expects!");
+
+        var version = reader.ReadInt32();
+
+        return version switch {
+            1 => LoadMissionV2(reader),
+            2 => LoadMissionV2(reader),
+            3 => LoadMissionV3(reader),
+            4 => LoadMissionV4(reader),
+            5 => LoadMissionV5(reader),
+            _ => throw new FileLoadException($"This mission was saved with a newer version of the level editor ({version})."),
+        };
+    }
+
+    // methods of loading mission data
+    // preceding numbers represent the version of the editor the level was saved with
+
+    // the binary layout these used to read. only for backwards compatibility. probably at some point these methods will be removed. how many people have truly used the level editor?
+    /* File Order / Format
+     * 1) File Header (TANK in ASCII) (byte[])
+     * 2) Level Editor version (to _particle if older levels might cause anomalies!)
+     * 3) Name (string)
+     * 4) GrantsBonusLife (bool)
+     *
+     * 5) Total Tanks Used (int)
+     *
+     * 6) Storing of Tanks (their respective templates)
+     *  - IsPlayer (bool)
+     *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
+     *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
+     *  - Facing (byte) (VERSION 6 or GREATER, was Rotation (float))
+     *  - AiType (byte) - should be as default if it's a player.
+     *  - PlayerType (byte) - should be as default if it's an AI.
+     *  - Team (byte)
+     *
+     * 7) Total Blocks Used (int)
+     *
+     * 8) Storing of Blocks (their respective templates)
+     *  - Type (byte)
+     *  - Stack (sbyte)
+     *  - Grid X (byte) (VERSION 6 or GREATER, was X (float))
+     *  - Grid Y (byte) (VERSION 6 or GREATER, was Y (float))
+     *  - TpLink (sbyte) (VERSION 2 or GREATER)
+     *
+     *  9) Extras
+     *   - Note (string) (NOT IMPLEMENTED YET)
+     */
+
+    // this exists solely to port from older versions (< 5) to the version where the center is actually at (0, 0)
+    const float ADJUST_FOR_CENTER = 131f;
+
+    // backwards compat
+    static Point OgLoad(float x, float y) => MapGrid.Current.WorldToCell(new Vector2(x, y));
+    public static Mission LoadMissionV2(BinaryReader reader) {
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+        var name = reader.ReadString();
+
+        var totalTanks = reader.ReadInt32();
+
+        for (int i = 0; i < totalTanks; i++) {
+            var isPlayer = reader.ReadBoolean();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var rotation = reader.ReadSingle();
+            var tier = reader.ReadByte();
+
+            tier = (byte)MathHelper.Clamp(tier, TankID.Brown, TankID.Collection.Count);
+
+            // this is due to the failures of removing 2 constants in TankID.
+            // if the player doesn't update their campaign for a minute then oh well
+            if (!isPlayer) tier -= 1;
+            var pType = reader.ReadByte();
+            var team = reader.ReadByte();
+
+            tanks.Add(new() {
+                IsPlayer = isPlayer,
+                Position = OgLoad(x, y),
+                Rotation = rotation,
+                AIType = tier,
+                PlayerType = pType,
+                Team = team
+            });
+        }
+
+        var totalBlocks = reader.ReadInt32();
+
+        for (int i = 0; i < totalBlocks; i++) {
+            var type = reader.ReadByte();
+            var stack = reader.ReadByte();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var link = reader.ReadByte();
+
+            blocks.Add(new() {
+                Type = type,
+                Stack = stack,
+                Position = OgLoad(x, y),
+                TpLink = link
+            });
+        }
+
+        return new Mission([.. tanks], [.. blocks]) {
+            Name = name
+        };
+    }
+    public static Mission LoadMissionV3(BinaryReader reader) {
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+        var name = reader.ReadString();
+
+        var totalTanks = reader.ReadInt32();
+
+        for (int i = 0; i < totalTanks; i++) {
+            var isPlayer = reader.ReadBoolean();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var rotation = reader.ReadSingle();
+            var tier = reader.ReadByte();
+            var pType = reader.ReadByte();
+            var team = reader.ReadByte();
+
+            tier = (byte)MathHelper.Clamp(tier, TankID.Brown, TankID.Collection.Count);
+
+            tanks.Add(new() {
+                IsPlayer = isPlayer,
+                Position = OgLoad(x, y),
+                Rotation = rotation,
+                AIType = tier,
+                PlayerType = pType,
+                Team = team
+            });
+        }
+
+        var totalBlocks = reader.ReadInt32();
+
+        for (int i = 0; i < totalBlocks; i++) {
+            var type = reader.ReadByte();
+            var stack = reader.ReadByte();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var link = reader.ReadByte();
+
+            blocks.Add(new() {
+                Type = type,
+                Stack = stack,
+                Position = OgLoad(x, y),
+                TpLink = link
+            });
+        }
+
+        return new Mission([.. tanks], [.. blocks]) {
+            Name = name
+        };
+    }
+    public static Mission LoadMissionV4(BinaryReader reader) {
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+        var name = reader.ReadString();
+        var grantsLife = reader.ReadBoolean();
+
+        var totalTanks = reader.ReadInt32();
+
+        for (int i = 0; i < totalTanks; i++) {
+            var isPlayer = reader.ReadBoolean();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var rotation = reader.ReadSingle();
+            var tier = reader.ReadByte();
+            var pType = reader.ReadByte();
+            var team = reader.ReadByte();
+
+            tanks.Add(new() {
+                IsPlayer = isPlayer,
+                Position = OgLoad(x, y),
+                Rotation = rotation,
+                AIType = tier,
+                PlayerType = pType,
+                Team = team
+            });
+        }
+
+        var totalBlocks = reader.ReadInt32();
+
+        for (int i = 0; i < totalBlocks; i++) {
+            var type = reader.ReadByte();
+            var stack = reader.ReadByte();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var link = reader.ReadByte();
+
+            blocks.Add(new() {
+                Type = type,
+                Stack = stack,
+                Position = OgLoad(x, y),
+                TpLink = link
+            });
+        }
+
+        return new Mission([.. tanks], [.. blocks]) {
+            Name = name,
+            GrantsExtraLife = grantsLife
+        };
+    }
+    // could possibly be different.
+    public static Mission LoadMissionV5(BinaryReader reader) {
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+        var name = reader.ReadString();
+        var grantsLife = reader.ReadBoolean();
+
+        var totalTanks = reader.ReadInt32();
+
+        for (int i = 0; i < totalTanks; i++) {
+            var isPlayer = reader.ReadBoolean();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle();
+            var rotation = reader.ReadSingle();
+            var tier = reader.ReadByte();
+            var pType = reader.ReadByte();
+            var team = reader.ReadByte();
+
+            tanks.Add(new() {
+                IsPlayer = isPlayer,
+                Position = OgLoad(x, y),
+                Rotation = rotation,
+                AIType = tier,
+                PlayerType = pType,
+                Team = team
+            });
+        }
+
+        var totalBlocks = reader.ReadInt32();
+
+        for (int i = 0; i < totalBlocks; i++) {
+            var type = reader.ReadByte();
+            var stack = reader.ReadByte();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle();
+            var link = reader.ReadByte();
+
+            blocks.Add(new() {
+                Type = type,
+                Stack = stack,
+                Position = OgLoad(x, y),
+                TpLink = link
+            });
+        }
+
+        return new Mission([.. tanks], [.. blocks]) {
+            Name = name,
+            GrantsExtraLife = grantsLife
+        };
+    }
+}

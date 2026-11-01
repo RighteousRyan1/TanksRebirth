@@ -1,11 +1,26 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class DrawUtils {
+    public static float StringSizeProportional(int length,
+        int baseLength,
+        float baseScale,
+        float minScale = 0.25f) {
+        if (length <= 0)
+            return baseScale;
+
+        if (length <= baseLength)
+            return baseScale;
+
+        float scale = baseScale * ((float)baseLength / length);
+
+        return Math.Max(scale, minScale);
+    }
     /// <summary>Converts a centered-orthographic coordinate to screen coordinates.</summary>
     public static Vector2 CenteredOrthoToScreen(Vector2 orthoPos) {
         // i think this works. probably not lol.
@@ -28,82 +43,140 @@ public static class DrawUtils {
         // right line
         TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitX * (end.X - start.X), null, boxColor, 0f, Vector2.Zero, new Vector2(1, end.Y - start.Y), default, 0);
     }
-    public static void DrawStringWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
+    public static void DrawBox(Rectangle rect, Color boxColor, float width = 1, Point origin = default) {
+        var tex = TextureGlobals.Pixels[Color.White];
+
+        rect.X -= origin.X;
+        rect.Y -= origin.Y;
+
+        var start = new Vector2(rect.X, rect.Y);
+        var end = new Vector2(rect.X + rect.Width, rect.Y + rect.Height);
+
+        // top line
+        TankGame.SpriteRenderer.Draw(tex, start, null, boxColor, 0f, Vector2.Zero, new Vector2(end.X - start.X, width), default, 0);
+        // bottom line
+        TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitY * (end.Y - start.Y), null, boxColor, 0f, Vector2.Zero, new Vector2(end.X - start.X + width, width), default, 0);
+        // left line
+        TankGame.SpriteRenderer.Draw(tex, start, null, boxColor, 0f, Vector2.Zero, new Vector2(width, end.Y - start.Y), default, 0);
+        // right line
+        TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitX * (end.X - start.X), null, boxColor, 0f, Vector2.Zero, new Vector2(width, end.Y - start.Y + width), default, 0);
+    }
+    /// <summary>
+    /// Draws a filled rectangle with a border.
+    /// </summary>
+    /// <param name="sb">The SpriteBatch to draw with.</param>
+    /// <param name="rectangle">The destination rectangle.</param>
+    /// <param name="color">The fill color of the box.</param>
+    /// <param name="borderCol">The color of the border.</param>
+    /// <param name="borderSize">The thickness of the border in pixels.</param>
+    public static void DrawBoxWithOutline(SpriteBatch sb, Rectangle rectangle, Color color, Color borderCol, int borderSize) {
+        // Draw the inner filled background
+        sb.Draw(TextureGlobals.Pixels[Color.White], rectangle, color);
+
+        // Draw the 4 sides of the border
+        // Top
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.X, rectangle.Y, rectangle.Width, borderSize), borderCol);
+        // Bottom
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.X, rectangle.Bottom - borderSize, rectangle.Width, borderSize), borderCol);
+        // Left
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.X, rectangle.Y, borderSize, rectangle.Height), borderCol);
+        // Right
+        sb.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(rectangle.Right - borderSize, rectangle.Y, borderSize, rectangle.Height), borderCol);
+    }
+    public static void DrawStringWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
 
-        DrawStringBorderOnly(spriteBatch, font, text, position, borderColor, scale, rotation, anchor, borderThickness, charSpacing, origMeasureScale);
+        var origin = GameUtils.GetAnchor(anchor, MeasureString(font, text, charSpacing, origMeasureScale));
+        DrawBorder(spriteBatch, font, text, position, borderColor, scale, rotation, origin, borderThickness, charSpacing);
 
-        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 1f, characterSpacing: charSpacing);
+        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, origin, 1f, characterSpacing: charSpacing);
     }
-    public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor, 
-        Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f) {
+    static void DrawBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
+        Color borderColor, Vector2 scale, float rotation, Vector2 origin, float borderThickness, float charSpacing) {
         for (int i = 0; i < 4; i++)
-            spriteBatch.Draw(texture, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4),
-                null, borderColor, rotation, GameUtils.GetAnchor(anchor, texture.Size()), scale, default, 0f);
-        spriteBatch.Draw(texture, position, null, textureColor, rotation, GameUtils.GetAnchor(anchor, texture.Size()), scale, default, 1f);
+            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
+                borderColor, scale, rotation, origin, 0f, characterSpacing: charSpacing);
     }
-    public static void DrawStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
-        string text, Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
+    public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor,
+        Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f) {
+        var origin = GameUtils.GetAnchor(anchor, texture.Size());
+        DrawTextureBorder(spriteBatch, texture, position, null, borderColor, rotation, origin, scale, default, borderThickness);
+        spriteBatch.Draw(texture, position, null, textureColor, rotation, origin, scale, default, 1f);
+    }
+    static void DrawTextureBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Rectangle? srcRect,
+        Color borderColor, float rotation, Vector2 origin, Vector2 scale, SpriteEffects flip, float borderThickness) {
+        for (int i = 0; i < 4; i++)
+            spriteBatch.Draw(texture, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4),
+                srcRect, borderColor, rotation, origin, scale, flip, 0f);
+    }
+    public static void DrawStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,
+        string text, Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
         float shadowDistScale = 1f, float shadowAlpha = 1f, float origMeasureScale = 1f, float charSpacing = 0) {
 
         DrawStringShadowOnly(spriteBatch, font, position, shadowDir, text, scale, alpha, anchor, shadowDistScale, shadowAlpha, origMeasureScale, charSpacing);
 
-        spriteBatch.DrawString(font, text, position, color * alpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+        spriteBatch.DrawString(font, text, position, color * alpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
     }
-    public static void DrawTextureWithShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir, 
-        Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
+    public static void DrawTextureWithShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir,
+        Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
         SpriteEffects flip = SpriteEffects.None, float shadowDistScale = 1f, float shadowAlpha = 1f, float rotation = 0f, Rectangle? srcRect = null) {
 
+        var origin = srcRect is Rectangle rect ? anchor.GetAnchor(rect.Size.ToVector2()) : anchor.GetAnchor(texture.Size());
         if (shadowAlpha > 0) {
             spriteBatch.Draw(texture,
-                position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
+                position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale),
                 srcRect,
                 Color.Black * alpha * shadowAlpha,
                 rotation,
-                anchor.GetAnchor(texture.Size()),
+                origin,
                 scale,
                 flip,
                 default);
         }
-        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, anchor.GetAnchor(texture.Size()), scale, flip, default);
+        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, origin, scale, flip, default);
     }
-    public static void DrawStringWithBorderAndShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
-        string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
+    public static void DrawTextureWithBorderAndShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir,
+        Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
+        SpriteEffects flip = SpriteEffects.None, float shadowDistScale = 1f, float shadowAlpha = 1f, float borderThickness = 1f,
+        float rotation = 0f, Rectangle? srcRect = null) {
+
+        var origin = srcRect is Rectangle rect ? anchor.GetAnchor(rect.Size.ToVector2()) : anchor.GetAnchor(texture.Size());
+        if (shadowAlpha > 0)
+            spriteBatch.Draw(texture, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale), srcRect,
+                Color.Black * alpha * shadowAlpha, rotation, origin, scale, flip, default);
+
+        DrawTextureBorder(spriteBatch, texture, position, srcRect, borderColor * alpha, rotation, origin, scale, flip, borderThickness);
+        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, origin, scale, flip, default);
+    }
+    public static void DrawStringWithBorderAndShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,
+        string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
         float shadowDistScale = 1f, float shadowAlpha = 1f, float borderThickness = 1f, float charSpacing = 0, float origMeasureScale = 1f) {
 
-        spriteBatch.DrawString(font, text, position + 
-            Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), 
-            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+        spriteBatch.DrawString(font, text, position +
+            Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
+            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
 
-        DrawStringWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale); 
+        DrawStringWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale);
     }
 
     public static void DrawStringBorderOnly(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,
         Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
-        for (int i = 0; i < 4; i++)
-            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
-                borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+        DrawBorder(spriteBatch, font, text, position, borderColor, scale, rotation, GameUtils.GetAnchor(anchor, MeasureString(font, text, charSpacing, origMeasureScale)), borderThickness, charSpacing);
     }
     public static void DrawStringShadowOnly(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,
     string text, Vector2 scale, float alpha, Anchor anchor = Anchor.Center,
     float shadowDistScale = 1f, float shadowAlpha = 1f, float origMeasureScale = 1f, float charSpacing = 0) {
 
         spriteBatch.DrawString(font, text, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
-            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(MeasureString(font, text, charSpacing, origMeasureScale)), 0f, characterSpacing: charSpacing);
     }
 
-    public static float GetTextXOffsetForSpacing(string text, float spacing) {
-        var multiplicand = text.Length - 2;
+    /// <summary>The size of the text as it's drawn, including the spacing between characters. Used to anchor text.</summary>
+    static Vector2 MeasureString(SpriteFontBase font, string text, float charSpacing, float origMeasureScale)
+        => font.MeasureString(text, characterSpacing: charSpacing) * origMeasureScale;
 
-        // nothing to do lol
-        if (multiplicand < 0)
-            multiplicand = 0;
-
-        return spacing * multiplicand;
-    }
-    
     public static void DrawNineSliced(SpriteBatch spriteBatch, Texture2D texture, int border, Rectangle area, Color color, Vector2 origin) {
         Point useBorder = new Vector2(border, border).ToResolution().ToPoint();
 
@@ -124,5 +197,297 @@ public static class DrawUtils {
         spriteBatch.Draw(texture, new Rectangle(area.X, bottomY, useBorder.X, useBorder.Y), new Rectangle(0, texture.Height - border, border, border), color, 0f, origin, default, 0f);
         spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, area.Width - useBorder.X * 2, useBorder.Y), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color, 0f, origin, default, 0f);
         spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, useBorder.X, useBorder.Y), new Rectangle(texture.Width - border, texture.Height - border, border, border), color, 0f, origin, default, 0f);
+    }
+
+    public static Rectangle GetOffset(this Rectangle rect, int x, int y) => new Rectangle(rect.X + x, rect.Y + y, rect.Width, rect.Height);
+
+    public static void DrawBoundingBox(
+         BoundingBox box,
+         Color color,
+         Matrix view,
+         Matrix projection,
+         Matrix? world = null) {
+
+        EnsureDebugEffect();
+
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        _debugEff.World = world ?? Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        Vector3[] corners = box.GetCorners();
+
+        int v = 0;
+        void AddEdge(int i0, int i1) {
+            _bboxVertices[v++] = new VertexPositionColor(corners[i0], color);
+            _bboxVertices[v++] = new VertexPositionColor(corners[i1], color);
+        }
+
+        // corner order:
+        // 0: near Bottom Left
+        // 1: near Top Left
+        // 2: near Top Right
+        // 3: near Bottom Right
+        // 4: nar Bottom Left
+        // 5: nar Top Left
+        // 6: nar Top Right
+        // 7: nar Bottom Right
+
+        // near face
+        AddEdge(0, 1);
+        AddEdge(1, 2);
+        AddEdge(2, 3);
+        AddEdge(3, 0);
+
+        // far face
+        AddEdge(4, 5);
+        AddEdge(5, 6);
+        AddEdge(6, 7);
+        AddEdge(7, 4);
+
+        // connect near & far
+        AddEdge(0, 4);
+        AddEdge(1, 5);
+        AddEdge(2, 6);
+        AddEdge(3, 7);
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            gd.DrawUserPrimitives(PrimitiveType.LineList, _bboxVertices, 0, 12);
+        }
+    }
+    static BasicEffect _debugEff;
+    static readonly VertexPositionColor[] _lineVertices = new VertexPositionColor[2];
+    /// <summary>Draws a 3D line.</summary>
+    public static void DrawLine(Vector3 start, Vector3 end, Color color, Matrix view, Matrix projection) {
+        EnsureDebugEffect();
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        _lineVertices[0] = new VertexPositionColor(start, color);
+        _lineVertices[1] = new VertexPositionColor(end, color);
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            TankGame.Instance.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, _lineVertices, 0, 1);
+        }
+    }
+    static readonly VertexPositionColor[] _bboxVertices = new VertexPositionColor[24];
+    static void EnsureDebugEffect() {
+        _debugEff ??= new BasicEffect(TankGame.Instance.GraphicsDevice) {
+            VertexColorEnabled = true
+        };
+        _debugEff.World = Matrix.Identity;
+        _debugEff.View = CameraGlobals.GameView;
+        _debugEff.Projection = CameraGlobals.GameProjection;
+    }
+    const float AXIS_DRAW_LEN = 5f;
+    public static void DrawAxes() {
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        var cam = CameraGlobals.PerspectiveCamera;
+
+        Vector3 origin = Vector3.Zero;
+        if (CameraGlobals.IsUsingFirstPersonCamera)
+            origin = cam.Position + cam.World.Forward * 100;
+
+        var vertices = new VertexPositionColor[6];
+
+        // X+ = red
+        vertices[0] = new VertexPositionColor(origin, Color.Red);
+        vertices[1] = new VertexPositionColor(origin + Vector3.UnitX * AXIS_DRAW_LEN, Color.Red);
+
+        // Y+ green
+        vertices[2] = new VertexPositionColor(origin, Color.Green);
+        vertices[3] = new VertexPositionColor(origin + Vector3.UnitY * AXIS_DRAW_LEN, Color.Green);
+
+        // Z+ blue
+        vertices[4] = new VertexPositionColor(origin, Color.Blue);
+        vertices[5] = new VertexPositionColor(origin + Vector3.UnitZ * AXIS_DRAW_LEN, Color.Blue);
+
+        EnsureDebugEffect();
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            gd.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 3);
+        }
+    }
+
+    // eensy weensy bit of ai help cuz i was programming this at 3am
+    /// <summary>Draws a wireframe 3D bounding sphere.</summary>
+    public static void DrawBoundingSphere(BoundingSphere sphere, Color color, Matrix view,
+        Matrix projection, Matrix? world = null, int segments = 32) {
+
+        if (segments < 4) segments = 4;
+
+        EnsureDebugEffect();
+
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        _debugEff.World = world ?? Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        float radius = sphere.Radius;
+        Vector3 center = sphere.Center;
+
+        // latitudes and longitudes to draw
+        int latitudeCount = segments / 2; // around y
+        int meridianCount = segments / 2; // around x
+        int circleSegments = segments;
+
+        // should i make this publicly accessible?
+        void CircleDraw(Func<float, Vector3> pointOnCircle) {
+            var verts = new VertexPositionColor[circleSegments + 1];
+
+            for (int i = 0; i <= circleSegments; i++) {
+                float t = (float)i / circleSegments; // 0 -> 1
+                float angle = t * MathHelper.TwoPi; // 0 -> 2pi
+                verts[i] = new VertexPositionColor(
+                    center + pointOnCircle(angle),
+                    color);
+            }
+
+            gd.DrawUserPrimitives(
+                PrimitiveType.LineStrip,
+                verts,
+                0,
+                circleSegments);
+        }
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+
+            // latitudes w/o poles
+            for (int lat = 1; lat < latitudeCount; lat++) {
+                float v = (float)lat / latitudeCount;
+                float elev = (v - 0.5f) * MathHelper.Pi;
+
+                float y = radius * MathF.Sin(elev);
+                float r = radius * MathF.Cos(elev); // radius at given y
+
+                CircleDraw(angle => new Vector3(
+                    MathF.Cos(angle) * r,
+                    y,
+                    MathF.Sin(angle) * r));
+            }
+
+            // meridians
+            for (int m = 0; m < meridianCount; m++) {
+                float phi = (float)m / meridianCount * MathHelper.TwoPi;
+
+                CircleDraw(theta => {
+                    float cosT = MathF.Cos(theta);
+                    float sinT = MathF.Sin(theta);
+                    float y = radius * cosT;
+                    float z = radius * sinT;
+
+                    float sinPhi = MathF.Sin(phi);
+                    float cosPhi = MathF.Cos(phi);
+
+                    float x = z * sinPhi;
+                    float zRot = z * cosPhi;
+
+                    return new Vector3(x, y, zRot);
+                });
+            }
+        }
+    }
+    public static void DrawFrustum(GraphicsDevice device, BoundingFrustum frustum, Color color, Matrix view, Matrix proj) {
+        _debugEff ??= new BasicEffect(device) {
+            VertexColorEnabled = true
+        };
+
+        _debugEff.World = Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = proj;
+
+        // gets the 8 corners of the frustum
+        // indices:
+        // 0-3: near Plane (TopLeft, TopRight, BottomRight, BottomLeft)
+        // 4-7: far Plane (TopLeft, TopRight, BottomRight, BottomLeft)
+        var corners = frustum.GetCorners();
+
+        // needs 12 lines x 2 vertices per line = 24 vertices
+        var verts = new VertexPositionColor[24];
+
+        // fills the array easily
+        int i = 0;
+        void AddLine(int indexA, int indexB) {
+            verts[i++] = new VertexPositionColor(corners[indexA], color);
+            verts[i++] = new VertexPositionColor(corners[indexB], color);
+        }
+
+        // near
+        AddLine(0, 1);
+        AddLine(1, 2);
+        AddLine(2, 3);
+        AddLine(3, 0);
+
+        // far
+        AddLine(4, 5);
+        AddLine(5, 6);
+        AddLine(6, 7);
+        AddLine(7, 4);
+
+        // near to far
+        AddLine(0, 4);
+        AddLine(1, 5);
+        AddLine(2, 6);
+        AddLine(3, 7);
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            device.DrawUserPrimitives(PrimitiveType.LineList, verts, 0, 12);
+        }
+    }
+
+    /// <summary>Draws a circle of <paramref name="radius"/> around <paramref name="axis"/>.</summary>
+    public static void DrawCircle(Vector3 center, Vector3 axis, float radius, Color color, Matrix view, Matrix projection, int segments = 16) {
+        var side = Vector3.Normalize(Vector3.Cross(axis, MathF.Abs(axis.Y) < 0.99f ? Vector3.Up : Vector3.Right));
+        var up = Vector3.Cross(side, axis);
+
+        var previous = center + side * radius;
+        for (int i = 1; i <= segments; i++) {
+            var angle = MathHelper.TwoPi * i / segments;
+            var point = center + (side * MathF.Cos(angle) + up * MathF.Sin(angle)) * radius;
+            DrawUtils.DrawLine(previous, point, color, view, projection);
+            previous = point;
+        }
+    }
+    /// <summary>Draws a cone <paramref name="length"/> long, as a circle at its end plus four lines back to its tip.</summary>
+    public static void DrawCone(Vector3 tip, Vector3 direction, float length, float halfAngle, Color color, Matrix view, Matrix projection) {
+        // the lighting system clamps the cone the same way
+        halfAngle = MathHelper.Clamp(halfAngle, 0.01f, MathHelper.PiOver2 * 0.98f);
+
+        var center = tip + direction * (length * MathF.Cos(halfAngle));
+        var radius = length * MathF.Sin(halfAngle);
+        DrawCircle(center, direction, radius, color, view, projection);
+
+        var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right));
+        var up = Vector3.Cross(side, direction);
+        DrawUtils.DrawLine(tip, center + side * radius, color, view, projection);
+        DrawUtils.DrawLine(tip, center - side * radius, color, view, projection);
+        DrawUtils.DrawLine(tip, center + up * radius, color, view, projection);
+        DrawUtils.DrawLine(tip, center - up * radius, color, view, projection);
+    }
+    public static void DrawArrow(Vector3 start, Vector3 end, Color color, Matrix view, Matrix projection) {
+        DrawUtils.DrawLine(start, end, color, view, projection);
+
+        var direction = Vector3.Normalize(end - start);
+        var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right)) * 15f;
+        DrawUtils.DrawLine(end, end - direction * 30f + side, color, view, projection);
+        DrawUtils.DrawLine(end, end - direction * 30f - side, color, view, projection);
+        DrawBoundingSphere(new BoundingSphere(start, 6f), color, view, projection, segments: 16);
+    }
+
+    public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
+
+        var scaling = new Vector2(3.25f, 3f);
+
+        spriteBatch.Draw(tex, new Vector2(-12 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
+        spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
     }
 }
