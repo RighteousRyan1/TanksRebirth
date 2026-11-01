@@ -131,6 +131,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # TODO
 
 - [ ] Real-time multiplayer stats
+- [ ] Make all UI look cleaner. Could rework existing UI revamps as well
 
 # Note for Everyone
 
