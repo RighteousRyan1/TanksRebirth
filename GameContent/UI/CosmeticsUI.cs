@@ -138,7 +138,8 @@ public static class CosmeticsUI {
         var keyCount = 3; // TankGame.SaveFile.CollectedKeys;
 
         _dispPart = GameHandler.Particles.MakeParticle(Vector3.Zero, 
-            string.Format(TankGame.GameLanguage.Misc.KeysCount, keyCount));
+            /*string.Format(TankGame.GameLanguage.Misc.KeysCount, keyCount)*/
+            "Coming Soon!");
 
         _dispPart.IsIn2DSpace = true;
         _dispPart.ToScreenSpace = true;

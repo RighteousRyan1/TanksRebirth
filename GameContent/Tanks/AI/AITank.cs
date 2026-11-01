@@ -346,7 +346,8 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 TankGame.SaveFile.TotalKills++;
             }
 
-            KeyDropLogic(PlayerID.PlayerTankColors[p.PlayerId]);
+            // TODO: nonono, not yet. cosmetics are NOT ready
+            // KeyDropLogic(PlayerID.PlayerTankColors[p.PlayerId]);
         }
 
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))

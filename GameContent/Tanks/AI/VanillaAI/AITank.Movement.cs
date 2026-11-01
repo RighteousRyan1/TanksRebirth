@@ -236,7 +236,8 @@ public partial struct VanillaAISystem {
     }
 
     // makes the tank turn if it happens to run into a block
-    readonly bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
+    // on second thought, this causes so many dumb issues. i think im gonna leave it out for now.
+    /*readonly bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
         if (other.Body.Tag is Block) {
             // contact.Manifold.LocalNormal
             // var pPos = Physics.Position;
@@ -252,5 +253,5 @@ public partial struct VanillaAISystem {
             PivotQueue.Enqueue(oppNormal);
         }   
         return true;
-    }
+    }*/
 }

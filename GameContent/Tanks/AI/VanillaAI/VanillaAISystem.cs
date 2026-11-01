@@ -49,7 +49,7 @@ public partial struct VanillaAISystem : IAISystem {
     }
 
     public readonly void Initialize() {
-        Owner.Physics.OnCollision += Physics_OnCollision;
+        // Owner.Physics.OnCollision += Physics_OnCollision;
     }
     public void AILoop() {
         ChassisMovement.Value += AIManager.AIDeltaFrames;
