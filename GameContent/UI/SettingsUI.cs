@@ -13,17 +13,7 @@ using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI;
 
-/// <summary>
-/// The settings window: one panel with Audio / Video / Gameplay / Controls tabs along the top, a description bar for whatever
-/// the mouse is over, and the pages themselves (<see cref="VolumeUI"/>, <see cref="GraphicsUI"/>, <see cref="GameplayUI"/>,
-/// <see cref="ControlsUI"/>).
-/// </summary>
-/// <remarks>
-/// <para>Click a tab (or the arrows beside them, or press Q / E) to switch pages. The window remembers the last page.</para>
-/// <para>Each page is a <see cref="SettingsPage"/>: it owns its rows and builds them with <see cref="SettingsPage.Row"/>,
-/// <see cref="SettingsPage.Slider"/>, <see cref="SettingsPage.Button"/> and <see cref="SettingsPage.Header"/>.
-/// Layout is in 1920x1080 units and scaled with <c>ToResolution</c>, like the rest of the UI.</para>
-/// </remarks>
+/// <summary>The settings window.</summary>
 public static class SettingsUI {
     public static readonly SettingsPage Audio = new("Audio",
         "Music, sound effect and ambient volume.",

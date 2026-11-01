@@ -129,11 +129,11 @@ public static class GraphicsUI {
         ApplyBtn = Page.Button(DisplayX, RowY(5), ColumnW, "Apply",
             "Switches to the selected window mode and resolution.", ApplyDisplay, () => HasPendingDisplay, highlight: false);
         ResetBtn = Page.Button(DisplayX, RowY(6), ColumnW, "Reset to Defaults",
-            "Puts every option on this page back to its default (the display mode still needs Apply).", ResetToDefaults);
+            "Puts every option on this page back to its default.", ResetToDefaults);
 
         // dynamic lighting
-        LightingBtn = Row(LightingX, RowY(0), "Dynamic Lighting",
-            "Real-time sun, shadows, lamps and light beams. Turn it off for the original look (and the best performance).",
+        LightingBtn = Row(LightingX, RowY(0), "Lighting System",
+            "Real-time sun, lights, and shadows. Leave disabled for the original look.",
             () => GameUI.OnOff(DynLightSettings.Current.Enabled) + (LightingSystem.IsAvailable || !DynLightSettings.Current.Enabled ? "" : " (unavailable)"),
             _ => {
                 DynLightSettings.Current.Enabled = !DynLightSettings.Current.Enabled;
@@ -181,13 +181,13 @@ public static class GraphicsUI {
             enabled: LightingOn);
 
         RoomShadowsBtn = Row(LightingX, RowY(6), "Room Shadows",
-            "The room's walls, windows and furniture block the sun, so it only comes in through the windows. Off = the sun shines through the walls.",
+            "Whether the room scene itself casts shadows.",
             () => GameUI.OnOff(DynLightSettings.Current.RoomShadows),
             _ => { DynLightSettings.Current.RoomShadows = !DynLightSettings.Current.RoomShadows; ApplyLighting(); },
             enabled: () => LightingOn() && DynLightSettings.Current.SunShadows != ShadowQuality.Off);
 
         TimeOfDayBtn = Row(LightingX, RowY(7), "Time of Day",
-            "The time of day in the room. Day/Night Cycle runs a clock: the sun moves and the colors change minute by minute.",
+            "The time of day in the room.",
             () => DynLightSettings.Current.TimeOfDay == Preset.DayCycle
                 ? $"Day/Night Cycle ({LightingPresets.HourText})"
                 : DynLightSettings.Current.TimeOfDay.ToString().SplitByCamel(),
@@ -195,35 +195,35 @@ public static class GraphicsUI {
             enabled: LightingOn);
 
         DayLengthBtn = Row(LightingX, RowY(8), "Day Length",
-            "How long a full day takes in the Day/Night Cycle, in real time.",
+            "How long a full day takes in the Day/Night Cycle.",
             () => DynLightSettings.Current.DayLengthMinutes >= 24f * 60f - 1f ? "Real Time (24 hours)" : $"{DynLightSettings.Current.DayLengthMinutes:0.#} minutes",
             dir => { DynLightSettings.Current.DayLengthMinutes = GameUI.Cycle(_dayLengths, GameUI.NearestOf(_dayLengths, DynLightSettings.Current.DayLengthMinutes), dir); ApplyLighting(); },
             enabled: () => LightingOn() && DynLightSettings.Current.TimeOfDay == Preset.DayCycle);
 
         GameplayLightsBtn = Row(LightingX, RowY(9), "Gameplay Lights",
-            "Whether to have lights for gameplay ",
+            "Whether to have lights for gameplay elements.",
             () => GameUI.OnOff(DynLightSettings.Current.GameplayLights),
             _ => { DynLightSettings.Current.GameplayLights = !DynLightSettings.Current.GameplayLights; ApplyLighting(); },
             enabled: LightingOn);
 
         // graphics quality
         MSAABtn = Row(QualityX, RowY(0), "Anti-Aliasing",
-            "Smoothes jagged edges on 3D models (multisample anti-aliasing). Higher levels cost more GPU time.",
+            "Smoothes jagged edges on 3D models.",
             () => TankGame.Settings.Graphics.MSAASamples <= 0 ? "Off" : $"MSAA {TankGame.Settings.Graphics.MSAASamples}x",
             dir => TankGame.Settings.Graphics.MSAASamples = GameUI.Cycle(GraphicsSettings.MSAAOptions, TankGame.Settings.Graphics.MSAASamples, dir));
 
         PPLButton = Row(QualityX, RowY(1), lang.Settings.PerPxLight ?? "Per-Pixel Lighting",
-            lang.Settings.PerPxLightDesc ?? "Lights every pixel instead of every vertex. Smoother lighting on models.",
+            lang.Settings.PerPxLightDesc ?? "Increases visual quality of mesh lighting.",
             () => GameUI.OnOff(TankGame.Settings.Graphics.PerPixelLighting),
             _ => TankGame.Settings.Graphics.PerPixelLighting = !TankGame.Settings.Graphics.PerPixelLighting);
 
         RainyWindowsBtn = Row(QualityX, RowY(2), "Rainy Windows",
-            "Rain beads, drips and fog on the room's windows during thunderstorms.",
+            "Whether the windows of the room will contain a rainy look. If playing in standard orthographic view, turn this option off.",
             () => GameUI.OnOff(TankGame.Settings.Graphics.RainyWindows),
             _ => { TankGame.Settings.Graphics.RainyWindows = !TankGame.Settings.Graphics.RainyWindows; GraphicsSettings.ApplyEffects(); });
 
         RainStrengthBtn = Row(QualityX, RowY(3), "Rain Strength",
-            "How much water gathers on the windows during thunderstorms.",
+            "The overall intensity of the rain.",
             () => _rainStrengthNames[Array.IndexOf(GraphicsSettings.RainStrengthOptions, GameUI.NearestOf(GraphicsSettings.RainStrengthOptions, TankGame.Settings.Graphics.RainStrength))],
             dir => {
                 TankGame.Settings.Graphics.RainStrength = GameUI.Cycle(GraphicsSettings.RainStrengthOptions,
@@ -238,7 +238,7 @@ public static class GraphicsUI {
             _ => { TankGame.Settings.Graphics.TankBlobShadows = !TankGame.Settings.Graphics.TankBlobShadows; GraphicsSettings.ApplyEffects(); });
 
         MenuBlurBtn = Row(QualityX, RowY(5), "Menu Blur",
-            "Blurs the battle behind the main menu.",
+            "If enabled, applies a blur to the scene behind the main menu.",
             () => GameUI.OnOff(TankGame.Settings.Graphics.MenuBlur),
             _ => TankGame.Settings.Graphics.MenuBlur = !TankGame.Settings.Graphics.MenuBlur);
     }

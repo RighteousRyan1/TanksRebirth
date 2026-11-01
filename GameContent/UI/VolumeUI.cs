@@ -24,15 +24,15 @@ public static class VolumeUI {
         Page.Header("Volume", x);
 
         MusicVolume = Page.Slider(x, SettingsUI.RowY(0), lang.Settings.MusicVolume ?? "Music",
-            "Volume of the menu, level editor and mission music.",
+            "Volume of music tracks.",
             () => TankGame.Settings.Audio.MusicVolume, v => TankGame.Settings.Audio.MusicVolume = v, new GameConfig().Audio.MusicVolume);
 
         EffectsVolume = Page.Slider(x, SettingsUI.RowY(1), lang.Settings.EffectsVolume ?? "Sound Effects",
-            "Volume of shots, explosions, mines, tanks and menu sounds.",
+            "Volume of gameplay and interface sound effects.",
             () => TankGame.Settings.Audio.EffectsVolume, v => TankGame.Settings.Audio.EffectsVolume = v, new GameConfig().Audio.EffectsVolume);
 
         AmbientVolume = Page.Slider(x, SettingsUI.RowY(2), lang.Settings.AmbientVolume ?? "Ambient",
-            "Volume of the weather: rain, thunder and the snowy wind.",
+            "Volume of various ambient sounds",
             () => TankGame.Settings.Audio.AmbientVolume, v => TankGame.Settings.Audio.AmbientVolume = v, new GameConfig().Audio.AmbientVolume);
 
         Page.Button(x, SettingsUI.RowY(4), SettingsUI.ColumnW, "Reset to Defaults",
