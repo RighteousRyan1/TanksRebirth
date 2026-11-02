@@ -186,23 +186,25 @@ public partial struct VanillaAISystem {
         // is / 2 necessary?
         // i think so for now. once i figure out how to get the queue to work with random movments, it will look crisp 
         Owner.DesiredChassisRotation += randomTurn / 2;
+        // PivotQueue.Enqueue(MathUtils.DirectionOf(Owner.ChassisRotation + randomTurn));
     }
-   
+
     /// <summary>Attempts to dequeue from <see cref="PivotQueue"/> and split it into <see cref="AIParameters.MaxQueuedMovements"/> smaller turns.</summary>
     /// <returns>Whether or not the attempt was successful.</returns>
     public readonly bool TryGenerateSubQueue() {
         if (PivotQueue.Count == 0) return false;
         if (SubPivotQueue.Count > 0) return false;
-        // grab from the top of the queue
-        var pivot = PivotQueue.Dequeue(); //PivotQueue[0];
-        var desiredCuts = Owner.Parameters.MaxQueuedMovements;
 
-        for (int i = 0; i < desiredCuts; i++) {
-            //SubPivotQueue.Add(Vector2.UnitY.RotatedBy(MathHelper.PiOver2 * i));
-            SubPivotQueue.Enqueue(MathUtils.Slerp2D(MathUtils.DirectionOf(Owner.ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
-        }
-        // drop the first element since this works as a queue under the hood
-        // PivotQueue.RemoveAt(0);
+        var pivot = PivotQueue.Dequeue();
+        var cuts = Owner.Parameters.MaxQueuedMovements;
+
+        float start = Owner.ChassisRotation;
+
+        // ensure the turn is always the shortest way
+        float delta = MathHelper.WrapAngle(MathUtils.RotationOf(pivot) - start);
+
+        for (int i = 0; i < cuts; i++)
+            SubPivotQueue.Enqueue(MathUtils.DirectionOf(start + delta * (i + 1) / cuts));
 
         return true;
     }

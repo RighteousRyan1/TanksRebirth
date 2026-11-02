@@ -47,9 +47,9 @@ public static class GameResources {
             return (T)result;
         }
 
-        var loaded = manager.Load<T>(name);
+        var loaded = manager!.Load<T>(name);
 
-        // lets the dynamic lighting system see this model's draws (no visual change on its own)
+        // lets the dynamic lighting system see this model's draws
         if (loaded is Model model)
             LightingSystem.Instrument(model);
 

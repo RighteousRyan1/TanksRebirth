@@ -34,6 +34,8 @@ public class GameHandler {
     //
     // public const int MAX_PARTICLES = 15000; // removed for now
 
+    public delegate void PreLightingEndFrame();
+    public static event PreLightingEndFrame OnPreLighting;
     public delegate void PostRender();
     public static event PostRender? OnPostRender;
     public delegate void PostUpdate();
@@ -45,6 +47,9 @@ public class GameHandler {
     public static byte ActiveTankCount;
     public static byte ActiveAITankCount;
     public static byte ActivePlayerTankCount;
+
+    // this stuff should seriously just be part of something like EntityPool
+    // so each board is dynamic and has their own entity... pool... which would allow for me to move the scene rather than the skybox
     public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
     public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
     public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
@@ -269,7 +274,8 @@ public class GameHandler {
             Particles.RenderParticles(spriteBatch);
         }
 
-        // shadows + lights, multiplied onto the world drawn so far. everything below is UI and stays unlit.
+        // shadows + lights, multiplied onto the world drawn so far
+        OnPreLighting?.Invoke();
         LightingSystem.EndFrame(TankGame.GameFrameBuffer);
 
         foreach (var player in AllPlayerTanks)

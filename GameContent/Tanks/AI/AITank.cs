@@ -146,19 +146,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (Modifiers.IsOn(Modifiers.MONOCHROME)) tier = Modifiers.MonochromeValue;
         if (Modifiers.IsOn(Modifiers.MASTER))     tier = Modifiers.VanillaToMasterModeConversions[tier];
 
-        // NearbyDangers = [];
-
         AiTankType = tier;
-        /*Behaviors = new AITimer[4];
-
-        for (int i = 0; i < Behaviors.Length; i++)
-            Behaviors[i] = new();
-
-        // behaviors are definitely stupid, do something about them later
-        Behaviors[0].Label = "TankChassisMovement";
-        Behaviors[1].Label = "TankTurretMovement";
-        Behaviors[2].Label = "TankShellFire";
-        Behaviors[3].Label = "TankMinePlacement";*/
 
         DrawParams.LightPower = TankDrawParams.AI_AMB_MUL;
 
@@ -480,7 +468,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         };
     }
     /// <summary>Sets various meta-data things about this <see cref="AITank"/>.
-    /// <br></br>Sets <see cref="TargetTank"/>, <see cref="NearbyDangers"/>, and <see cref="ClosestDanger"/>.</summary>
     public void HandleTankMetaData() {
         TanksNearMineAwareness.Clear();
         BlocksNear.Clear();
@@ -539,38 +526,23 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                     effect.Texture = DrawParamsTank.ShadowTexture;
                     effect.Alpha = DrawParamsTank.ShadowAlpha;
                 }
-                    mesh.Draw();
-                    continue;
-                }
-
-                /*if (mesh.Name is "Cannon" or "Chassis") {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
-                }
-                else if (mesh.Name is "Cloak" or "Jewel") {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras");
-                }
-                else if (mesh.Name is "Skulls") {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
-                }*/
-                // ^ old testing stuff
-
-            if (UsesCustomModel) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = world;
-                    effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Proj;
-                    effect.TextureEnabled = true;
-                    effect.Texture = DrawParamsTank.TankTexture;
-                    effect.Alpha = DrawParamsTank.TankAlpha;
-                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower,
-                        DrawParams.UsePhong, DrawParams.LightDirection);
-                    mesh.Draw();
-                }
+                mesh.Draw();
+                continue;
             }
-            else {
-                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Proj,
-                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, teamColor: TeamColor(mesh));
+
+            /*if (mesh.Name is "Cannon" or "Chassis") {
+                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
             }
+            else if (mesh.Name is "Cloak" or "Jewel") {
+                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras");
+            }
+            else if (mesh.Name is "Skulls") {
+                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
+            }*/
+            // ^ old testing stuff
+
+            GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Proj,
+                DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, teamColor: TeamColor(mesh));
         }
     }
     public void DrawAwarenessCircle(BasicEffect effect, float awareness, Color color, Vector2? posOverride = null) {
