@@ -539,38 +539,23 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                     effect.Texture = DrawParamsTank.ShadowTexture;
                     effect.Alpha = DrawParamsTank.ShadowAlpha;
                 }
-                    mesh.Draw();
-                    continue;
-                }
-
-                /*if (mesh.Name is "Cannon" or "Chassis") {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
-                }
-                else if (mesh.Name is "Cloak" or "Jewel") {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras");
-                }
-                else if (mesh.Name is "Skulls") {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
-                }*/
-                // ^ old testing stuff
-
-            if (UsesCustomModel) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = world;
-                    effect.View = DrawParams.View;
-                    effect.Projection = DrawParams.Proj;
-                    effect.TextureEnabled = true;
-                    effect.Texture = DrawParamsTank.TankTexture;
-                    effect.Alpha = DrawParamsTank.TankAlpha;
-                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower,
-                        DrawParams.UsePhong, DrawParams.LightDirection);
-                    mesh.Draw();
-                }
+                mesh.Draw();
+                continue;
             }
-            else {
-                GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Proj,
-                    DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, teamColor: TeamColor(mesh));
+
+            /*if (mesh.Name is "Cannon" or "Chassis") {
+                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
             }
+            else if (mesh.Name is "Cloak" or "Jewel") {
+                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras");
+            }
+            else if (mesh.Name is "Skulls") {
+                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
+            }*/
+            // ^ old testing stuff
+
+            GameShaders.DrawTankMesh(mesh, world, DrawParams.View, DrawParams.Proj,
+                DrawParamsTank.TankTexture, DrawParamsTank.TankAlpha, teamColor: TeamColor(mesh));
         }
     }
     public void DrawAwarenessCircle(BasicEffect effect, float awareness, Color color, Vector2? posOverride = null) {

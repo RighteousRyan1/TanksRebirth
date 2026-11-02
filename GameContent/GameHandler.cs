@@ -34,6 +34,8 @@ public class GameHandler {
     //
     // public const int MAX_PARTICLES = 15000; // removed for now
 
+    public delegate void PreLightingEndFrame();
+    public static event PreLightingEndFrame OnPreLighting;
     public delegate void PostRender();
     public static event PostRender? OnPostRender;
     public delegate void PostUpdate();
@@ -269,7 +271,8 @@ public class GameHandler {
             Particles.RenderParticles(spriteBatch);
         }
 
-        // shadows + lights, multiplied onto the world drawn so far. everything below is UI and stays unlit.
+        // shadows + lights, multiplied onto the world drawn so far
+        OnPreLighting?.Invoke();
         LightingSystem.EndFrame(TankGame.GameFrameBuffer);
 
         foreach (var player in AllPlayerTanks)
