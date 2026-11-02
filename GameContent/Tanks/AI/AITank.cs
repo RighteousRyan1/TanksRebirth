@@ -146,19 +146,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (Modifiers.IsOn(Modifiers.MONOCHROME)) tier = Modifiers.MonochromeValue;
         if (Modifiers.IsOn(Modifiers.MASTER))     tier = Modifiers.VanillaToMasterModeConversions[tier];
 
-        // NearbyDangers = [];
-
         AiTankType = tier;
-        /*Behaviors = new AITimer[4];
-
-        for (int i = 0; i < Behaviors.Length; i++)
-            Behaviors[i] = new();
-
-        // behaviors are definitely stupid, do something about them later
-        Behaviors[0].Label = "TankChassisMovement";
-        Behaviors[1].Label = "TankTurretMovement";
-        Behaviors[2].Label = "TankShellFire";
-        Behaviors[3].Label = "TankMinePlacement";*/
 
         DrawParams.LightPower = TankDrawParams.AI_AMB_MUL;
 
@@ -480,7 +468,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         };
     }
     /// <summary>Sets various meta-data things about this <see cref="AITank"/>.
-    /// <br></br>Sets <see cref="TargetTank"/>, <see cref="NearbyDangers"/>, and <see cref="ClosestDanger"/>.</summary>
     public void HandleTankMetaData() {
         TanksNearMineAwareness.Clear();
         BlocksNear.Clear();

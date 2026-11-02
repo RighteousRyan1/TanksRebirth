@@ -47,6 +47,9 @@ public class GameHandler {
     public static byte ActiveTankCount;
     public static byte ActiveAITankCount;
     public static byte ActivePlayerTankCount;
+
+    // this stuff should seriously just be part of something like EntityPool
+    // so each board is dynamic and has their own entity... pool... which would allow for me to move the scene rather than the skybox
     public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
     public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
     public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];

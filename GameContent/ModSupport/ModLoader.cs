@@ -249,6 +249,9 @@ public static class ModLoader {
         ModModifiers = [];
         // for when the unloading process is done.
         ModRegistry.singletonMap.Clear();
+        ModRegistry.idToModTank.Clear();
+        ModRegistry.idToModShell.Clear();
+        ModRegistry.idToModBlock.Clear();
         _loadedAlcs.Clear();
         ResetContentDictionaries();
         ModTank.unloadOffset = 0;
