@@ -1,18 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using tainicom.Aether.Physics2D.Collision;
-using TanksRebirth.Graphics;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils {
+    public const float VERY_SMALL = 1e-6f;
     public const float DEGS_TO_RADS = MathF.PI / 180f;
     public const float RADS_TO_DEGS = 180f / MathF.PI;
 
@@ -27,7 +23,7 @@ public static class MathUtils {
     // gets the outward directional vector of a position
     public static Vector3 Outward(Vector3 from) {
         var flat = new Vector3(from.X, 0f, from.Z);
-        return flat.LengthSquared() > float.Epsilon ? Vector3.Normalize(flat) : Vector3.Zero;
+        return flat.LengthSquared() > VERY_SMALL ? Vector3.Normalize(flat) : Vector3.Zero;
     }
     // maybe should have a Random parameter
     public static Vector3 RandomDirection() {
@@ -42,7 +38,7 @@ public static class MathUtils {
         var d = RandomDirection();
         var along = Vector3.Dot(d, axis);
         var side = d - axis * along;
-        if (side.LengthSquared() < 1e-6f)
+        if (side.LengthSquared() < VERY_SMALL)
             return axis;
         side.Normalize();
         var angle = MathF.Acos(MathHelper.Clamp(along, -1f, 1f)) * spread / MathHelper.Pi;
@@ -436,4 +432,11 @@ public static class MathUtils {
 
         return BezierDestructive3D(t, copy);
     }
+    /// <summary>Normalizes the vector, or returns <paramref name="fallback"/> if it has no length.</summary>
+    public static Vector2 NormalizeOrDefault(this Vector2 vector, Vector2 fallback = default) {
+        var length = vector.Length();
+        return length > VERY_SMALL ? vector / length : fallback;
+    }
+    /// <summary>The vector rotated 90 degrees counter-clockwise.</summary>
+    public static Vector2 Perpendicular(this Vector2 vector) => new(-vector.Y, vector.X);
 }

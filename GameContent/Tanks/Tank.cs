@@ -47,6 +47,8 @@ public abstract class Tank(bool ignoresRegister) {
         public const float AI_AMB_MUL = 0.9f;
     }
 
+    public const float SPEED_SCALING = 0.55f;
+
     public static bool ShowTeamVisuals = false;
 
     protected Color? TeamColor(ModelMesh mesh) => ShowTeamVisuals && Team != TeamID.NoTeam && mesh.Name == "Chassis" && TeamID.TeamColors.TryGetValue(Team, out var color) ? color : null;
@@ -512,7 +514,7 @@ public abstract class Tank(bool ignoresRegister) {
         KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaFrames);
 
         // magical multiplication number to maintain values like 1.8 max speed with the original game
-        Physics.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
+        Physics.LinearVelocity = (Velocity * SPEED_SCALING + KnockbackVelocity) / UNITS_PER_METER;
 
         // try to make positive. i hate game
         DrawParams.World = Matrix.CreateScale(DrawParams.Scaling)
@@ -902,7 +904,6 @@ public abstract class Tank(bool ignoresRegister) {
     const float TREAD_HALF_WIDTH = 8f;
     // a number representing the max distance before distance is tossed out
     const float TREAD_TELEPORT_DIST = 40f; 
-    const float TREAD_MIN_MOVE_SQ = 1e-6f;
     const int TREAD_MAX_PER_FRAME = 8;
     const float TREAD_SOUND_INTERVAL = 4f;
 
@@ -951,7 +952,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         var vsq = Velocity.LengthSquared();
         bool driving = vsq > MIN_DRIVE;
-        float moved = driving && distSq > TREAD_MIN_MOVE_SQ ? MathF.Sqrt(distSq) : 0f;
+        float moved = driving && distSq > MathUtils.VERY_SMALL ? MathF.Sqrt(distSq) : 0f;
         float turned = MathF.Abs(dRot) * TREAD_HALF_WIDTH * scale;
         float travelled = moved + turned;
 

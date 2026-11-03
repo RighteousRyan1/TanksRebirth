@@ -84,39 +84,44 @@ public record struct Mission {
     /// </summary>
     /// <param name="mission">The mission instance to load.</param>
     public static void LoadDirectly(Mission mission) {
-        SceneManager.CleanupEntities();
-        EditorTile.ResetSquares();
-        SceneManager.CleanupScene();
-        for (int i = 0; i < mission.Tanks.Length; i++) {
-            var tnk = mission.Tanks[i];
-            tnk.Rotation = tnk.Rotation; // Use setter for magical purposes.
+        try {
+            SceneManager.CleanupEntities();
+            EditorTile.ResetSquares();
+            SceneManager.CleanupScene();
+            for (int i = 0; i < mission.Tanks.Length; i++) {
+                var tnk = mission.Tanks[i];
+                tnk.Rotation = tnk.Rotation; // Use setter for magical purposes.
 
-            var tank = tnk.GetTank();
+                var tank = tnk.GetTank();
 
-            var placement = EditorTile.GetFromClosest(tank.Position3D);
+                var placement = EditorTile.GetFromClosest(tank.Position3D);
 
-            if (placement is not null) {
-                placement.TankId = tank.WorldId;
-                placement.HasBlock = false;
-                tank.Position = placement.Position.FlattenZ();
+                if (placement is not null) {
+                    placement.TankId = tank.WorldId;
+                    placement.HasBlock = false;
+                    tank.Position = placement.Position.FlattenZ();
+                }
+
+                tank.ChassisRotation = MathF.Round(tnk.Rotation, 5);
+                tank.DesiredChassisRotation = tank.ChassisRotation;
+                tank.TurretRotation = tank.ChassisRotation;
+                if (tank is AITank aiTank)
+                    aiTank.TargetTurretRotation = tank.TurretRotation;
             }
+            for (int i = 0; i < mission.Blocks.Length; i++) {
+                var blockr = mission.Blocks[i];
 
-            tank.ChassisRotation = MathF.Round(tnk.Rotation, 5);
-            tank.DesiredChassisRotation = tank.ChassisRotation;
-            tank.TurretRotation = tank.ChassisRotation;
-            if (tank is AITank aiTank)
-                aiTank.TargetTurretRotation = tank.TurretRotation;
+                var block = blockr.GetBlock();
+
+                var placement = EditorTile.GetFromClosest(block.Position3D);
+                if (placement is not null) {
+                    placement.BlockId = block.Id;
+                    placement.HasBlock = true;
+                }
+            }
         }
-        for (int i = 0; i < mission.Blocks.Length; i++) {
-            var blockr = mission.Blocks[i];
-
-            var block = blockr.GetBlock();
-
-            var placement = EditorTile.GetFromClosest(block.Position3D);
-            if (placement is not null) {
-                placement.BlockId = block.Id;
-                placement.HasBlock = true;
-            }
+        catch {
+            LevelEditorUI.Alert("Failed to load mission fully.");
         }
     }
 

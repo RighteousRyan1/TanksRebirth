@@ -38,10 +38,10 @@ public class AIParameters {
     /// <summary>Determines how much this tank will move in attempt to get closer to its target. 
     /// <br></br>Values reach absurdity under -1 or above 1. Word 21.</summary>
     public float AggressivenessBias { get; set; }
-    /// <summary>Acts as the maximum amount of queued "movements" this tank needs to take before it can move randomly. Word 22.</summary>
+    /// <summary>The number of recent movement history slots available to average into movements. Word 22.</summary>
     // note: all tanks use this value at 4
-    public int MaxQueuedMovements { get; set; } = 4;
-    /// <summary>How far from this tank that it is aware of obstacles and navigates around them. Word 28.</summary>
+    public int MaxMoveHistory { get; set; } = 4;
+    /// <summary>How many frames of forward prediction this tank uses to navigate around obstacles. Word 28.</summary>
     public uint ObstacleAwarenessMovement { get; set; }
     /// <summary>How inaccurate (in radians) this tank is trying to aim at its target. Word 29.</summary>
     public float AimOffset { get; set; }

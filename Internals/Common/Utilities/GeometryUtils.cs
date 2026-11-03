@@ -5,10 +5,56 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using TanksRebirth.Internals.Common.Framework.Collisions;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class GeometryUtils {
+    // could probably put this in Collision
+    /// <summary>Whether a circle overlaps an axis-aligned rectangle. <paramref name="normal"/> is the axis-aligned face normal to push the circle out along.</summary>
+    public static bool CircleIntersectsRect(Vector2 center, float radius, Vector2 min, Vector2 max, out Vector2 normal) {
+        normal = Vector2.Zero;
+
+        var diff = center - Vector2.Clamp(center, min, max);
+        if (diff.LengthSquared() >= radius * radius) return false;
+
+        if (diff != Vector2.Zero) {
+            // corners count as the face they lean on most
+            normal = MathF.Abs(diff.X) > MathF.Abs(diff.Y) ? new(MathF.Sign(diff.X), 0) : new(0, MathF.Sign(diff.Y));
+            return true;
+        }
+        // the center is inside, so leave through the nearest face
+        var toMin = center - min;
+        var toMax = max - center;
+        var nearest = MathF.Min(MathF.Min(toMin.X, toMax.X), MathF.Min(toMin.Y, toMax.Y));
+
+        normal = nearest == toMin.X ? -Vector2.UnitX : nearest == toMax.X ? Vector2.UnitX : nearest == toMin.Y ? -Vector2.UnitY : Vector2.UnitY;
+        return true;
+    }
+    public static bool CircleIntersectsRect(Circle circle, Vector2 min, Vector2 max, out Vector2 normal) {
+        normal = Vector2.Zero;
+
+        var center = circle.Center;
+        var radius = circle.Radius;
+
+        // switch to circle.Intersects()? Although Rectangle only supports integers
+
+        var diff = center - Vector2.Clamp(center, min, max);
+        if (diff.LengthSquared() >= radius * radius) return false;
+
+        if (diff != Vector2.Zero) {
+            // corners count as the face they lean on most
+            normal = MathF.Abs(diff.X) > MathF.Abs(diff.Y) ? new(MathF.Sign(diff.X), 0) : new(0, MathF.Sign(diff.Y));
+            return true;
+        }
+        // the center is inside, so leave through the nearest face
+        var toMin = center - min;
+        var toMax = max - center;
+        var nearest = MathF.Min(MathF.Min(toMin.X, toMax.X), MathF.Min(toMin.Y, toMax.Y));
+
+        normal = nearest == toMin.X ? -Vector2.UnitX : nearest == toMax.X ? Vector2.UnitX : nearest == toMin.Y ? -Vector2.UnitY : Vector2.UnitY;
+        return true;
+    }
 
     public static T[] Shift<T>(ref T[] array, int index, int amount) {
         // extend the array by amount if we're out of bounds, then shift every element past index by amount

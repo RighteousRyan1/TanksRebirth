@@ -91,7 +91,7 @@ public partial struct VanillaAISystem {
         ObstacleAwarenessMineReal = 3 * Owner.Parameters.ObstacleAwarenessMine;
 
         var dist = ObstacleAwarenessMineReal / 2;
-        var dirs = Owner.RayCastCardinals(dist, (fixture, point, normal, fraction) => {
+        Owner.RayCastCardinals(dist, (fixture, point, normal, fraction) => {
             if (fixture.Body.Tag is Block b) {
                 if (!nearDestructible)
                     nearDestructible = b.Properties.IsDestructible;
@@ -103,75 +103,6 @@ public partial struct VanillaAISystem {
             // this wizardry goes beyond me
         }, Owner.ChassisRotation - MathHelper.Pi);
 
-        int goodDirsCount = 0;
-        for (int i = 0; i < dirs.Length; i++) {
-            if (dirs[i].Direction != CollisionDirection.None) {
-                goodDirsCount++;
-            }
-        }
-
-        if (goodDirsCount == 0) return;
-
-        // Check for mines contamination
-        // This loop is O(4 * Mines), usually small.
-        bool isMineLayOk = false;
-        var validIndex = -1;
-
-        for (int i = 0; i < dirs.Length; i++) {
-            if (dirs[i].Direction == CollisionDirection.None) continue;
-
-            var pos = dirs[i].Vec * dist;
-            bool contaminated = false;
-
-            for (int j = 0; j < Mine.AllMines.Length; j++) {
-                var mine = Mine.AllMines[j];
-                if (mine is null) continue;
-
-                if (GameUtils.TanksDistance(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.TanksUnits(70)) {
-                    contaminated = true;
-                    break;
-                }
-            }
-
-            if (!contaminated) {
-                isMineLayOk = true;
-                validIndex = i; // Just pick the last valid one for now or random logic below
-            }
-            else {
-                dirs[i].Direction = CollisionDirection.None;
-                goodDirsCount--;
-            }
-        }
-
-        /*var goodDirs = dirs.Where(x => x.Direction != CollisionDirection.None).ToArray();
-
-        for (int i = 0; i < goodDirs.Length; i++) {
-            var pos = goodDirs[i].Vec * dist;
-            for (int j = 0; j < Mine.AllMines.Length; j++) {
-                var mine = Mine.AllMines[j];
-                if (mine is null) continue;
-
-                // check against radius. ensures the tank doesn't move towards an already laid mine
-                // 70 is the magic number for the default mine radius, multiplied by the scalar
-                if (GameUtils.TanksDistance(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.TanksUnits(70)) {
-                    // Console.WriteLine("Direction " + dirs[i].Direction + " is contaminated");
-                    goodDirs[i].Direction = CollisionDirection.None;
-                }
-            }
-        }*/
-
-        /*Console.WriteLine();
-        Console.WriteLine($"Opportunity: " +
-            $"\nIsOk:             {isMineLayOk}" +
-            $"\nDirsNoObstacle:   {string.Join(", ", goodDirs.Select(x => x.Direction))}" +
-            $"\nNearDestructible: {nearDestructible}" +
-            $"\nNewOpportunity:   {CurrentRandomMineLay}");*/
-
-        //Console.WriteLine(isMineLayOk ? $"Mine-lay is ok! ({string.Join(", ", dirs.Where(x => x.Direction != CollisionDirection.None).Select(x => x.Direction))})" : "Mine-lay is not ok.");
-
-        // don't lay a mine if the checks fail
-        if (!isMineLayOk) return;
-
         // SmartMineLaying was removed in favor
         // attempt via an opportunity to lay a mine
         var random = Client.ClientRandom.NextFloat(0, 1);
@@ -181,19 +112,10 @@ public partial struct VanillaAISystem {
 
         if (!randomSuccess) return;
 
-        Owner.LayMine();
+        // original: the mine is only laid if an escape direction exists (Tanks_CPUTankFleeMineDirFind)
+        if (!CanEscapeOwnMine()) return;
 
-        // Pick a random valid direction
-        int skips = Client.ClientRandom.Next(0, goodDirsCount);
-        for (int i = 0; i < dirs.Length; i++) {
-            if (dirs[i].Direction != CollisionDirection.None) {
-                if (skips == 0) {
-                    Owner.DesiredChassisRotation = MathUtils.RotationOf(dirs[i].Vec);
-                    break;
-                }
-                skips--;
-            }
-        }
+        Owner.LayMine();
     }
     // TODO: make view distance, and make tanks in path public
     /// <summary>Updates meta-data related to aiming and shooting. The tank will not fire if <see cref="DoAttack"/> is false, but meta-data will still update.</summary>
@@ -309,7 +231,7 @@ public partial struct VanillaAISystem {
         }
         // tanks wont shoot when fleeing from a mine
         // could move these conditions upwards...
-        if (ClosestDanger is Mine && Owner.Parameters.CantShootWhileFleeing)
+        if (AttackPrevented)
             return;
 
         if (!DoAttack) return;

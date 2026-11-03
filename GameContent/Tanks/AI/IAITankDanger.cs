@@ -7,5 +7,7 @@ namespace TanksRebirth.GameContent.Tanks.AI;
 /// </summary>
 public interface IAITankDanger {
     Vector2 Position { get; set; }
+    // maybe add velocity? but then there would be a pointless Velocity field for things that don't need it UHGHADISHBIDAH
+    Tank? Owner { get; set; }
     int Team { get; }
 }

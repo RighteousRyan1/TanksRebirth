@@ -82,7 +82,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     public static Shell[] AllShells { get; } = new Shell[MAX_SHELLS];
 
     /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
-    public Tank? Owner;
+    public Tank? Owner { get; set; }
     public ModShell? ModdedData { get; internal set; }
 
     public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, Tank.TNK_DMG_COLL_Y, 0);

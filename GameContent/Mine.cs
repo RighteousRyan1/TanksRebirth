@@ -40,7 +40,7 @@ public sealed class Mine : IAITankDanger {
     public const int MAX_MINES = 50;
     public static Mine[] AllMines { get; } = new Mine[MAX_MINES];
 
-    public Tank? Owner;
+    public Tank? Owner { get; set; }
 
     Vector2 _oldPosition;
     public Vector2 Position { get; set; }
@@ -268,7 +268,7 @@ public sealed class Mine : IAITankDanger {
                 DebugManager.DrawBoundingBox(HitBox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
 
-        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",
+        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime:F0}/{DetonateTimeMax:F1}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",
             MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, 20), 1, centered: true);
 
         // this is horrendous but it looks better

@@ -651,7 +651,45 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
             }
 
-            DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2, Color.Black);
+            var floor = Vector3.Up * 0.3f;
+            var origin = Position.ExpandZ() + floor;
+            var view = CameraGlobals.GameView;
+            var proj = CameraGlobals.GameProjection;
+
+            // direction history, newest first
+            if (vais._history is not null) {
+                var averaged = Math.Clamp(Parameters.MaxMoveHistory, 1, VanillaAISystem.HISTORY_SLOTS);
+                for (int i = 0; i < vais._history.Length; i++)
+                    DrawUtils.DrawLine(origin, origin + vais._history[i].ExpandZ() * 40f, i < averaged ? Color.Blue : Color.LightBlue, view, proj);
+
+                // wall sweep 
+                var sweepRadius = GameUtils.TanksUnits(GameUtils.WALL_SWEEP_RADIUS);
+                for (int f = 1; f < (int)Parameters.ObstacleAwarenessMovement; f += 2) {
+                    var point = Position + vais._history[0] * Properties.MaxSpeed * SPEED_SCALING * f;
+                    var touches = GameUtils.TouchesWall(point, out _);
+
+                    DrawUtils.DrawCircle(point.ExpandZ() + floor, Vector3.Up, sweepRadius, touches ? Color.Red : Color.Green, view, proj);
+                    if (touches) break;
+                }
+            }
+            // the heading the history actually averaged into
+            DrawUtils.DrawLine(origin, origin + MathUtils.DirectionOf(DesiredChassisRotation).ExpandZ() * 60f, Color.White, view, proj);
+
+            // everything it's currently reacting to. orange = shell, red = mine / explosion / custom danger
+            for (int i = 0; i < vais.NearbyDangers.Count; i++) {
+                var danger = vais.NearbyDangers[i];
+                if (danger is null) continue;
+
+                DrawUtils.DrawLine(origin, danger.Position.ExpandZ() + floor, danger is Shell ? Color.Orange : Color.Red, view, proj);
+            }
+
+            // which branch of DoMovement it's in
+            var mode = vais.EscapingOwnMine ? "OwnMineEscape" : vais.NearbyDangers.Count > 0 ? "Dodging" : "Meander";
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
+                $"{mode} | dangers: {vais.NearbyDangers.Count} | no-shoot: {vais.AttackPrevented}",
+                MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, (realI + 1) * 20),
+                Color.White, Color.Black, Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
+
             // DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2 * Speed, Color.Magenta, forwardOffset: ChassisRotation - DesiredChassisRotation);
 
             drawInfo.Clear();
