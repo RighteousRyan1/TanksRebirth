@@ -10,6 +10,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Changes
 
 - The tank AI system is now more accurate to the original (again)
+    - Movement and shooting logic has been improved largely
     - I want to spend time next update perfectly fine-tuning the shooting logic (and hopefully optimizing it)
 
 # Changes Important for Modders
