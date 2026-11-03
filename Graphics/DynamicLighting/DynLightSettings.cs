@@ -38,14 +38,14 @@ public struct DynLightSettings() {
 
     /// <summary>Dynamic lighting on or off. Disabled frees all performance decreases and frees the video memory.</summary>
     public bool Enabled { get; set; } = false;
-    /// <summary>Time of day (or Blackout / DayCycle). Off is better expressed with <see cref="Enabled"/>.</summary>
-    public Preset TimeOfDay { get; set; } = Preset.MidAfternoon;
+    /// <summary>Lighting preset. Ignores off because <see cref="Enabled"/> drives that.</summary>
+    public Preset TimeOfDay { get; set; } = Preset.Faithful;
     /// <summary>Real minutes for one 24 hour day when <see cref="TimeOfDay"/> is DayCycle.</summary>
     public float DayLengthMinutes { get; set; } = 8f;
-    /// <summary>Lights on shells, mines and explosions (headlights are part of the night presets).</summary>
+    /// <summary>Lights on shells, mines, explosions, etc.</summary>
     public bool GameplayLights { get; set; } = true;
-    /// <summary>The room's walls, windows and furniture block the sun (sun patches through the windows). Off = the sun shines through the room.</summary>
-    public bool RoomShadows { get; set; } = true;
+    /// <summary>Whether the room's walls, windows and furniture block the sun.</summary>
+    public bool RoomShadows { get; set; } = false; // default to false because some people won't expect this to be a setting
 
     // lighting quality
 
@@ -148,9 +148,7 @@ public struct DynLightSettings() {
         return q;
     }
 
-    /// <summary>
-    /// Pushes these settings into the lighting system.
-    /// </summary>
+    /// <summary>Pushes these settings into the lighting system.</summary>
     public readonly void Apply(bool force = false) {
         var wasEnabled = LightingSystem.Enabled;
         LightingSystem.Enabled = Enabled;
@@ -170,5 +168,5 @@ public struct DynLightSettings() {
     }
 
     /// <summary>A copy, so a menu can edit a candidate and only <see cref="Apply"/> it on "Apply" / "OK".</summary>
-    public DynLightSettings Clone() => (DynLightSettings)MemberwiseClone();
+    public readonly DynLightSettings Clone() => (DynLightSettings)MemberwiseClone();
 }

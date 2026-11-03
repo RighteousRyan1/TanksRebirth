@@ -23,6 +23,8 @@ public static class LightingPresets {
         Blackout,
         /// <summary>The sun and moon move across the sky minute by minute and the colors follow. See <see cref="DayLengthSeconds"/>.</summary>
         DayCycle,
+        /// <summary>The game's own unlit look (everything at its normal color) with the sun's shadows on top. Last in the list so saved settings keep their meaning.</summary>
+        Faithful,
     }
 
     public static Preset Current { get; private set; } = Preset.Off;
@@ -189,6 +191,12 @@ public static class LightingPresets {
         shaftColor: new Color(120, 150, 255), shaftDensity: 0.12f, dynamicBrightness: 1f)
         with { TableLamp = 0.8f, DeskLamp = 0.9f, ClockLight = 3.5f, FloorLamp = 1f, Background = 0.3f, Headlights = 1f };
 
+    // looks close enough to the original game. room shadows botches it
+    public static TimeOfDay Faithful = Day(sky: Color.White, ground: Color.White, ambient: 0.6f,
+        sunFrom: new Vector3(-250f, 1485f, -50f), sunTo: Vector3.Zero,
+        sunColor: Color.White, sunIntensity: 0.42f, wrap: 0f,
+        shaftColor: Color.White, shaftDensity: 0f, dynamicBrightness: 0.5f);
+
     public static TimeOfDay Blackout = new() {
         Sky = new Color(26, 30, 48), Ground = new Color(14, 14, 20), Ambient = 0.45f,
         SunDirection = Vector3.Down, ShaftAnisotropy = 0.3f, ShaftMarch = 1400f, ShadowRadius = 560f,
@@ -207,6 +215,7 @@ public static class LightingPresets {
         Preset.Dusk => Dusk,
         Preset.Midnight => Midnight,
         Preset.Blackout => Blackout,
+        Preset.Faithful => Faithful,
         _ => null,
     };
 
