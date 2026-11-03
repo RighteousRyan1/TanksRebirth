@@ -4,7 +4,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Additions
 
-...
+- Added "Faithful" lighting preset. It won't look proper with 'Room Shadows' on
+- The game now saves your last used multiplayer username/IP/port
 
 # Changes
 
