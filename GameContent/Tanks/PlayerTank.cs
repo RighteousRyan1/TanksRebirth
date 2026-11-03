@@ -553,15 +553,12 @@ public class PlayerTank : Tank {
 
     // this should probably be voided lol
     void DrawShootPath() {
-        const int MAX_PATH_UNITS = 10000;
+        const int MAX_PATH_FRAMES = 2000;
 
         // data
         var whitePixel = TextureGlobals.Pixels[Color.White];
         var pathDir = MathUtils.DirectionOf(TurretRotation);
-        var pathPos = Position + pathDir * 18;
-        pathDir *= Properties.ShellSpeed;
-
-        var pathRicochetCount = 0;
+        var sim = ShellSim.From(this, Position + pathDir * 18, pathDir);
         TanksSpotted = [];
 
         // maybe no linq...
@@ -574,7 +571,7 @@ public class PlayerTank : Tank {
         Span<int> cornerSteps = stackalloc int[Properties.RicochetCount + 2];
         int cornersCount = 0;
 
-        corners[cornersCount] = pathPos;
+        corners[cornersCount] = sim.Position;
         cornerSteps[cornersCount] = 0;
         cornersCount++;
 
@@ -582,75 +579,26 @@ public class PlayerTank : Tank {
 
         const float tankHitRadiusSq = TNK_WIDTH * 4;
 
-        var dummyPos = Vector2.Zero;
-
-        for (int i = 0; i < MAX_PATH_UNITS; i++) {
+        for (int i = 0; i < MAX_PATH_FRAMES; i++) {
             currentStep++;
 
-            // 2a. BOUNDS CHECK
-            bool hitBound = false;
-            if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
-                pathDir.X *= -1;
-                hitBound = true;
-            }
-            if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
-                pathDir.Y *= -1;
-                hitBound = true;
+            var result = sim.Step(c => c.Properties.IsSolid, out _);
+
+            // add bounce point
+            if (result == ShellSimResult.Ricochet && cornersCount < corners.Length) {
+                corners[cornersCount] = sim.Position;
+                cornerSteps[cornersCount] = i;
+                cornersCount++;
             }
 
-            if (hitBound) {
-                pathRicochetCount++;
-                // Add bounce point
-                if (cornersCount < corners.Length) {
-                    corners[cornersCount] = pathPos;
-                    cornerSteps[cornersCount] = i;
-                    cornersCount++;
-                }
-            }
-
-            // block coll
-            if (pathRicochetCount <= Properties.RicochetCount) {
-                var pathHitbox = new Rectangle((int)pathPos.X - Shell.COLL_RECT_DIM / 2, (int)pathPos.Y - Shell.COLL_RECT_DIM / 2, Shell.COLL_RECT_DIM, Shell.COLL_RECT_DIM);
-
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.Properties.IsSolid);
-
-                if (corner) break;
-
-                if (block != null && block.Properties.AllowShotPathBounce) {
-                    bool bounced = false;
-                    switch (dir) {
-                        case CollisionDirection.Up:
-                        case CollisionDirection.Down:
-                            pathDir.Y *= -1;
-                            bounced = true;
-                            break;
-                        case CollisionDirection.Left:
-                        case CollisionDirection.Right:
-                            pathDir.X *= -1;
-                            bounced = true;
-                            break;
-                    }
-
-                    if (bounced) {
-                        pathRicochetCount += block.Properties.PathBounceCount;
-
-                        if (cornersCount < corners.Length) {
-                            corners[cornersCount] = pathPos;
-                            cornerSteps[cornersCount] = i;
-                            cornersCount++;
-                        }
-                    }
-                }
-            }
-
-            if (pathRicochetCount > Properties.RicochetCount) break;
+            if (result == ShellSimResult.Destroyed) break;
 
             // tank coll
             Tank targetTank = null;
             for (int t = 0; t < activeTanks.Length; t++) {
                 var tnk = activeTanks[t];
                 // Use DistanceSquared to avoid Sqrt calls
-                if (Vector2.DistanceSquared(tnk.Position, pathPos) <= tankHitRadiusSq) {
+                if (Vector2.DistanceSquared(tnk.Position, sim.Position) <= tankHitRadiusSq) {
                     targetTank = tnk;
                     break;
                 }
@@ -660,19 +608,17 @@ public class PlayerTank : Tank {
                 TanksSpotted = [targetTank];
 
                 if (cornersCount < corners.Length) {
-                    corners[cornersCount] = pathPos;
+                    corners[cornersCount] = sim.Position;
                     cornerSteps[cornersCount] = i;
                     cornersCount++;
                 }
                 break;
             }
-
-            pathPos += pathDir;
         }
 
         // Add the very last position if we didn't crash into a tank
         if (TanksSpotted.Length == 0 && cornersCount < corners.Length) {
-            corners[cornersCount] = pathPos;
+            corners[cornersCount] = sim.Position;
             cornerSteps[cornersCount] = currentStep;
             cornersCount++;
         }

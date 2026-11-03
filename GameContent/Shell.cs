@@ -273,7 +273,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         ShootSound?.Instance?.Stop();
     }
     /// <summary>How much of <see cref="Velocity"/> a shell moves each tick.</summary>
-    const float MOVE_SCALE = 0.62f;
+    public const float MOVE_SCALE = 0.62f;
     public void Update() {
         if (!CampaignGlobals.InMission && !MainMenuUI.IsActive) return;
 
