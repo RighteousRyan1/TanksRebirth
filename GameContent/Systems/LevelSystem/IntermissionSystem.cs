@@ -472,8 +472,8 @@ public static class IntermissionSystem {
                 1f,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
             DrawUtils.DrawTextureWithShadow(spriteBatch, tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One,
-                brighterPlayerColor, Vector2.One * 1.5f, 1f, Anchor.Center,
-                shadowDistScale: 1f, shadowAlpha: 0.5f);
+                brighterPlayerColor, new Vector2(1.5f).ToResolution(), 1f, Anchor.Center,
+                shadowDistScale: 1f.ToResolutionF(), shadowAlpha: 0.5f);
         }
 
         oldBlack = BlackAlpha;
@@ -508,10 +508,12 @@ public static class IntermissionSystem {
 
         // draw the little golden lines across the plaid stripe
         var wp = TextureGlobals.Pixels[Color.White];
+        var orig = new Vector2(0, wp.Size().Y * 0.5f);
+        var scl = new Vector2(WindowUtils.WindowWidth, 15.ToResolutionY());
         spriteBatch.Draw(wp, new Vector2(0, lineOffset), null,
-            Color.Goldenrod * 1f, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
+            Color.Goldenrod * 1f, 0f, orig, scl, default, default);
         spriteBatch.Draw(wp, new Vector2(0, lineOffset + 420.ToResolutionY()), null,
-            Color.Goldenrod * 1f, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
+            Color.Goldenrod * 1f, 0f, orig, scl, default, default);
 
         // calculate total enemy tanks (remaining)
         int mafs1 = Campaign.CurrentTrackedSpawns.Count(p => p.Item2);
