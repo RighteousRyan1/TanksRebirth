@@ -597,7 +597,7 @@ public class PlayerTank : Tank {
             Tank targetTank = null;
             for (int t = 0; t < activeTanks.Length; t++) {
                 var tnk = activeTanks[t];
-                // Use DistanceSquared to avoid Sqrt calls
+
                 if (Vector2.DistanceSquared(tnk.Position, sim.Position) <= tankHitRadiusSq) {
                     targetTank = tnk;
                     break;
@@ -616,7 +616,7 @@ public class PlayerTank : Tank {
             }
         }
 
-        // Add the very last position if we didn't crash into a tank
+        // adds the very last position if it didn't hit a tank
         if (TanksSpotted.Length == 0 && cornersCount < corners.Length) {
             corners[cornersCount] = sim.Position;
             cornerSteps[cornersCount] = currentStep;
@@ -640,7 +640,6 @@ public class PlayerTank : Tank {
             var startScreen = ProjectAtTankHeight(startWorld);
             var endScreen = ProjectAtTankHeight(endWorld);
 
-            // We need to know how many "simulation steps" this segment took to match your animation style
             int stepsInSegment = cornerSteps[i + 1] - cornerSteps[i];
             if (stepsInSegment <= 0) continue;
 
@@ -650,7 +649,8 @@ public class PlayerTank : Tank {
 
                 int globalI = cornerSteps[i] + step;
 
-                var off = MathF.Abs(MathF.Sin(globalI * MathF.PI / 5 - RuntimeData.RunTime * 0.3f));
+                // 0.21f = MAGICAL FUCKING NUMBER. this also looks absurd at higher shell speeds
+                var off = MathF.Abs(MathF.Sin(globalI * MathF.PI / 5 - RuntimeData.RunTime * Properties.ShellSpeed * 0.21f));
                 var rgbColor = ColorUtils.HsvToRgb(RuntimeData.UpdateCount + globalI % 255 / 255f * 360, 1, 1);
                 var scale = Vector2.One * 4 * off;
 
