@@ -248,7 +248,7 @@ public partial class ParticleManager {
             light.Color = Color.Orange;
             light.Intensity = 20f;
             light.Range = 75f;
-            light.CastsShadows = true;
+            light.CastsShadows = LightManager.CreateShadowsRule;
 
             plight.UpdateCallback += (a) => {
                 light.Intensity -= 0.5f * RuntimeData.DeltaFrames;

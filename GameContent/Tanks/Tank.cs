@@ -788,7 +788,7 @@ public abstract class Tank(bool ignoresRegister) {
             light.Intensity = 5;
             light.Color = Color.Orange;
             light.Range = 25f;
-            light.CastsShadows = false;
+            light.CastsShadows = false; // doesn't look good with casted shadows ngl, so always false
 
             plight.UpdateCallback += (a) => {
                 plight.Position = TurretPosition3D;

@@ -639,7 +639,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                     light.Color = Color.Orange;
                     light.Intensity = 1f;
                     light.Range = 50f;
-                    light.CastsShadows = true;
+                    light.CastsShadows = LightManager.CreateShadowsRule;
 
                     // ParticleManager.Animate(plight, lifetime, )
                     plight.UpdateCallback += (a) => {

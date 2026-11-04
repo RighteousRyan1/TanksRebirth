@@ -9,8 +9,7 @@ public enum LightingQualityLevel {
     Medium,
     High,
     Ultra,
-
-    Custom,
+    Custom
 }
 
 /// <summary>Quality of one shadow feature.</summary>
@@ -19,7 +18,7 @@ public enum ShadowQuality {
     Low,
     Medium,
     High,
-    Ultra,
+    Ultra
 }
 
 /// <summary>Quality of an effect that is either cheap or expensive.</summary>
@@ -27,7 +26,7 @@ public enum EffectQuality {
     Off,
     Low,
     Medium,
-    High,
+    High
 }
 
 public struct DynLightSettings() {
@@ -53,8 +52,8 @@ public struct DynLightSettings() {
     public LightingQualityLevel QualityLevel { get; set; } = LightingQualityLevel.High;
     /// <summary>Sun and moon shadows.</summary>
     public ShadowQuality SunShadows { get; set; } = ShadowQuality.High;
-    /// <summary>Shadows from lamps, headlights and explosions.</summary>
-    public ShadowQuality LampShadows { get; set; } = ShadowQuality.High;
+    /// <summary>Shadows quality from local lights.</summary>
+    public ShadowQuality LocalShadows { get; set; } = ShadowQuality.High;
     /// <summary>Volumetric sun beams.</summary>
     public EffectQuality LightShafts { get; set; } = EffectQuality.Medium;
     /// <summary>How many lights can be on screen at once.</summary>
@@ -66,25 +65,25 @@ public struct DynLightSettings() {
         switch (level) {
             case LightingQualityLevel.Low:
                 SunShadows = ShadowQuality.Low;
-                LampShadows = ShadowQuality.Low;
+                LocalShadows = ShadowQuality.Low;
                 LightShafts = EffectQuality.Off;
                 LightCount = EffectQuality.Low;
                 break;
             case LightingQualityLevel.Medium:
                 SunShadows = ShadowQuality.Medium;
-                LampShadows = ShadowQuality.Medium;
+                LocalShadows = ShadowQuality.Medium;
                 LightShafts = EffectQuality.Low;
                 LightCount = EffectQuality.Medium;
                 break;
             case LightingQualityLevel.High:
                 SunShadows = ShadowQuality.High;
-                LampShadows = ShadowQuality.High;
+                LocalShadows = ShadowQuality.High;
                 LightShafts = EffectQuality.Medium;
                 LightCount = EffectQuality.High;
                 break;
             case LightingQualityLevel.Ultra:
                 SunShadows = ShadowQuality.Ultra;
-                LampShadows = ShadowQuality.Ultra;
+                LocalShadows = ShadowQuality.Ultra;
                 LightShafts = EffectQuality.High;
                 LightCount = EffectQuality.High;
                 break;
@@ -96,7 +95,7 @@ public struct DynLightSettings() {
         foreach (var level in new[] { LightingQualityLevel.Low, LightingQualityLevel.Medium, LightingQualityLevel.High, LightingQualityLevel.Ultra }) {
             var preset = new DynLightSettings();
             preset.SetQualityLevel(level);
-            if (preset.SunShadows == SunShadows && preset.LampShadows == LampShadows &&
+            if (preset.SunShadows == SunShadows && preset.LocalShadows == LocalShadows &&
                 preset.LightShafts == LightShafts && preset.LightCount == LightCount) {
                 QualityLevel = level;
                 return;
@@ -121,7 +120,7 @@ public struct DynLightSettings() {
         };
 
         // lamps: how many get shadows, how sharp, how smooth
-        (q.MaxShadowedPointLights, q.MaxShadowedSpotLights, q.ShadowAtlasSize, q.SoftLocalShadows) = LampShadows switch {
+        (q.MaxShadowedPointLights, q.MaxShadowedSpotLights, q.ShadowAtlasSize, q.SoftLocalShadows) = LocalShadows switch {
             ShadowQuality.Off => (0, 0, 2048, false),
             // low is quite cheap, medium is still pretty cheap, high is slightly cheap, ultra is maxed out
             ShadowQuality.Low => (2, 2, 2048, false),

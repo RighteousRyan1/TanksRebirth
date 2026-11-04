@@ -158,8 +158,8 @@ public static class GraphicsUI {
 
         LampShadowsBtn = Row(LightingX, RowY(3), lang.Settings.LightShadows,
             lang.Settings.LightShadowsDesc,
-            () => QualityName(DynLightSettings.Current.LampShadows),
-            dir => { DynLightSettings.Current.LampShadows = GameUI.Cycle(Enum.GetValues<ShadowQuality>(), DynLightSettings.Current.LampShadows, dir); ApplyLighting(true); },
+            () => QualityName(DynLightSettings.Current.LocalShadows),
+            dir => { DynLightSettings.Current.LocalShadows = GameUI.Cycle(Enum.GetValues<ShadowQuality>(), DynLightSettings.Current.LocalShadows, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
         LightShaftsBtn = Row(LightingX, RowY(4), lang.Settings.LightShafts,

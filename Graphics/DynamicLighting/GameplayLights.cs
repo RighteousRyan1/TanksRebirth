@@ -75,7 +75,7 @@ public static class GameplayLights {
         LightingSystem.AddFrameLight(head);
     }
 
-    public static void AddShellLight(Vector3 position, Color color) {
+    public static void AddShellLight(Vector3 position, Color color, bool shadow = false) {
         var light = NextPoint();
         light.Position = position;
         light.Color = color;
@@ -87,7 +87,7 @@ public static class GameplayLights {
         LightingSystem.AddFrameLight(light);
     }
 
-    public static void AddMineLight(Mine mine) {
+    public static void AddMineLight(Mine mine, bool shadow = false) {
         var light = NextPoint();
         light.Position = mine.Position3D + new Vector3(0f, 9f, 0f);
         light.Color = new Color(255, 40, 30);
@@ -95,12 +95,12 @@ public static class GameplayLights {
         light.Intensity = 1f;
         light.Range = 55f;
         light.Wrap = 0.5f;
-        light.CastsShadows = false;
+        light.CastsShadows = true;
         light.Priority = 1;
         LightingSystem.AddFrameLight(light);
     }
 
-    public static void AddExplosionLight(Vector3 position, float radius, float life) {
+    public static void AddExplosionLight(Vector3 position, float radius, float life, bool shadow = false) {
         if (life <= 0f) return;
 
         var light = NextPoint();
@@ -114,7 +114,7 @@ public static class GameplayLights {
         LightingSystem.AddFrameLight(light);
     }
 
-    public static void AddLantern(Vector3 position, float time, bool isLocalPlayer) {
+    public static void AddLantern(Vector3 position, float time, bool isLocalPlayer, bool shadow = false) {
         // i keep having to ask ai how to make a good flickering effect :cry:
         var flicker = 0.9f + 0.06f * MathF.Sin(time * 2.1f) + 0.03f * MathF.Sin(time * 7.7f + 1.3f) + 0.02f * MathF.Sin(time * 17.3f + 4.1f);
         var light = NextPoint();
