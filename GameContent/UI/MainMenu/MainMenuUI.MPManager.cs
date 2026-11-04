@@ -277,11 +277,11 @@ public static partial class MainMenuUI {
     public static void DrawMPMenu(GameTime gameTime) {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (Server.ConnectedClients is null) {
+        /*if (Server.ConnectedClients is null) {
             Server.ConnectedClients = new Client[4];
             NetPlay.ServerName = "ServerName";
             for (int i = 0; i < 4; i++) Server.ConnectedClients[i] = new(i, "Client" + i);
-        }
+        }*/
 
         _mpOpenProgress += dt;
         _mpOpenProgress = MathHelper.Clamp(_mpOpenProgress, 0f, 1f);

@@ -227,6 +227,8 @@ public static class LightManager {
     static void CollectLights() {
         GameplayLights.BeginFrame();
 
+
+
         var anySortOfTankLighting = LightingPresets.HeadlightsEnabled || _lantern;
         if (anySortOfTankLighting) {
             var lights = LightingPresets.HeadlightsEnabled;
@@ -247,7 +249,7 @@ public static class LightManager {
                 if (shell is null) continue;
                 if (!shell.Properties.Visuals.HasFlag(VisualFlags.Flaming)) continue;
 
-                var color = Color.Orange;
+                var color = shell.Properties.FlameColor;
                 GameplayLights.AddShellLight(shell.Position3D - Vector3.Normalize(shell.Velocity3D) * 20f, color);
             }
         }

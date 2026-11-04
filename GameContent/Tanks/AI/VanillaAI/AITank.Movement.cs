@@ -71,7 +71,7 @@ public partial struct VanillaAISystem {
             sum += _history[i];
 
         if (sum != Vector2.Zero)
-            Owner.DesiredChassisRotation = MathUtils.RotationOf(Vector2.Normalize(sum));
+            Owner.DesiredChassisRotation = MathUtils.RotationOf(sum.NormalizeOrDefault());
     }
 
     readonly void PushHistory(Vector2 direction) {

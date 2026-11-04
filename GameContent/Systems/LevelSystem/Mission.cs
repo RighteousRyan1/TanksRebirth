@@ -160,9 +160,15 @@ public record struct Mission {
         }
 
         using var stream = File.Open(path, FileMode.Open, FileAccess.Read);
+        return Read(stream);
+    }
+    public static Mission Load(string path) {
+        if (!File.Exists(path)) {
+            ChatSystem.SendMessage($"Mission not found in file system. Aborting.", Color.Red);
+            return default;
+        }
 
-        // ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Magenta);
-
+        using var stream = File.Open(path, FileMode.Open, FileAccess.Read);
         return Read(stream);
     }
 

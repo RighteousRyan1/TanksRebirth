@@ -61,6 +61,7 @@ public class TankGame : Game {
 
     public static bool IsCrashInfoVisible;
     bool _wasActive;
+    internal static bool viewFrameSimple;
     internal static bool gameUiDraw = true;
     internal static bool miceForceDrawOverride = true;
     public static bool MouseUIHover;
@@ -1014,6 +1015,19 @@ public class TankGame : Game {
         var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults && gameUiDraw;
         if (shouldSeeInfo) {
             GameSceneUI.DrawAll();
+        }
+
+        if (viewFrameSimple) {
+            // so much processing.............. for one fps draw.
+            // this is a shit metric.
+            var data = $"FPS: {RuntimeData.RenderFPS:F0}\n" +
+                FormattableString.Invariant($"Time: {RuntimeData.RenderTime.TotalMilliseconds:F2}ms");
+            var pos = WindowUtils.WindowBottomRight;
+            var ms = Anchor.BottomRight.GetAnchor(FontGlobals.RebirthFont.MeasureString(data));
+            //var pxReadPos = new Point((int)pos.X - 10, (int)pos.Y - 10);
+            //var px = GameFrameBuffer.GetPixel(pxReadPos.X, pxReadPos.Y);
+            // var c = ColorUtils.Invert(px);
+            SpriteRenderer.DrawString(FontGlobals.RebirthFont, data, pos, Color.Gray, scale: Vector2.One, origin: ms);
         }
 
         // i really wish i didn't have to draw this here.

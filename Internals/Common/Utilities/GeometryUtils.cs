@@ -55,22 +55,6 @@ public static class GeometryUtils {
         normal = nearest == toMin.X ? -Vector2.UnitX : nearest == toMax.X ? Vector2.UnitX : nearest == toMin.Y ? -Vector2.UnitY : Vector2.UnitY;
         return true;
     }
-
-    public static T[] Shift<T>(ref T[] array, int index, int amount) {
-        // extend the array by amount if we're out of bounds, then shift every element past index by amount
-        if (index + amount > array.Length)
-        {
-            var newArray = new T[index + amount];
-            array.CopyTo(newArray, 0);
-            array = newArray;
-        }
-        for (int i = index; i < array.Length; i++)
-        {
-            if (i >= index)
-                array[i] = array[i + amount];
-        }
-        return array;
-    }
     // sigh no work
 
     public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time) => source + velocity * time;

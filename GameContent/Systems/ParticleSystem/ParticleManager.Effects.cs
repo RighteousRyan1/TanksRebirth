@@ -242,14 +242,18 @@ public partial class ParticleManager {
             });
         }
 
-        // this honestly might be shit...
-        var light = new PointLight(position, Color.Orange, 20f, 100f, true) { Priority = 1 };
         float lifetime = 60f;
-        var plight = GameplayLights.CreateTempLight(GameHandler.Particles, position, light, lifetime);
-        // ParticleManager.Animate(plight, lifetime, )
-        plight.UpdateCallback += (a) => {
-            light.Intensity -= 0.5f * RuntimeData.DeltaFrames;
-        };
+        if (GameplayLights.CreateTempLight<PointLight>(GameHandler.Particles, position, lifetime, out var light, out var plight)) {
+            light.Priority = 1;
+            light.Color = Color.Orange;
+            light.Intensity = 20f;
+            light.Range = 75f;
+            light.CastsShadows = true;
+
+            plight.UpdateCallback += (a) => {
+                light.Intensity -= 0.5f * RuntimeData.DeltaFrames;
+            };
+        }
     }
 
     public void MakeShellImpact(Vector3 position, bool addFlames = true) {
@@ -303,10 +307,10 @@ public partial class ParticleManager {
 
     static readonly (float, float)[] _rockAlpha = [(0f, 1f), (0.84f, 1f), (0.95f, 0f)];
 
-    /// <summary>Rocks flying off a destroyed block. <paramref name="position"/> is on the ground under the block.</summary>
-    public void MakeBlockBreak(Vector3 position) {
+    /// <summary>Rocks flying off a destroyed block.</summary>
+    public void MakeBlockBreak(Block block) {
         // magical ahh numbers (part 500)
-        var center = position + new Vector3(0f, 15.8f, 0f);
+        var center = block.Position3D + new Vector3(0f, 15.8f, 0f);
         var texture = Tex("misc/tank_rock_light");
         for (int i = 0; i < 15; i++) {
             // the first few are the big ones
@@ -321,7 +325,8 @@ public partial class ParticleManager {
             var spin = Rand.NextFloat(-1f, 1f);
 
             var rock = MakeOrthoParticle(center + start * 10f, texture, false);
-            rock.Color = new Color(235, 177, 136);
+            // this is arguably pretty expensive for such a simple task.
+            rock.Color = ColorUtils.GetAverageColor(block.Texture); // new Color(235, 177, 136);
             rock.Scale = MathUtils.SizeToScale(texture, size);
             Animate(rock, 60f * Rand.NextFloat(0.75f, 1f), (p, t) => {
                 p.Position += velocity * momentum * RuntimeData.DeltaFrames;

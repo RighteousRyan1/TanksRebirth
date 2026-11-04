@@ -21,20 +21,16 @@ public static class LightingPresets {
         Dusk,
         Midnight,
         Blackout,
-        /// <summary>The sun and moon move across the sky minute by minute and the colors follow. See <see cref="DayLengthSeconds"/>.</summary>
         DayCycle,
-        /// <summary>The game's own unlit look (everything at its normal color) with the sun's shadows on top. Last in the list so saved settings keep their meaning.</summary>
         Faithful,
     }
 
     public static Preset Current { get; private set; } = Preset.Off;
 
-    /// <summary>Raised after a different preset is applied (also by F7 and the /lighting command), so a settings menu can follow along.</summary>
     public static event Action<Preset>? PresetChanged;
 
-    /// <summary>Whether the current preset wants headlights on the player tanks.</summary>
-    public static bool HeadlightsEnabled { get; private set; }
-    /// <summary>Multiplier for gameplay lights (shells, mines, explosions, headlights).</summary>
+    public static bool HeadlightsEnabled { get; set; }
+    /// <summary>Multiplier for gameplay lights.</summary>
     public static float DynamicBrightness { get; private set; } = 1f;
 
     public delegate void LookFilter(ref TimeOfDay time);

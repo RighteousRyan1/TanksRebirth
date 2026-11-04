@@ -318,7 +318,7 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-    public static void SendMessage(string text, Color color, string sender) {
+    public static void SendMessage(string text, Color color) {
         if (!IsConnected())
             return;
         NetDataWriter message = new();
@@ -326,7 +326,6 @@ public class Client {
 
         message.Put(text);
         message.Put(color);
-        message.Put(sender);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }

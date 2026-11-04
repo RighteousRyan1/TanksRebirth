@@ -2,14 +2,15 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Tanks;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Internals.Common;
 
 namespace TanksRebirth.GameContent.Systems.PingSystem;
 
@@ -39,7 +40,10 @@ public static class PingMenu {
     static int _pickedPingId;
     public static void DrawPingHUD() {
         if (InputUtils.MouseMiddle && !InputUtils.OldMouseMiddle) {
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), _pickedPingId, NetPlay.GetMyClientId(), Client.IsConnected());
+            var pingPos = CameraGlobals.IsUsingFirstPersonCamera
+                ? GetFirstPersonPingPosition() : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
+
+            IngamePing.CreateFromTankSender(pingPos, _pickedPingId, NetPlay.GetMyClientId(), Client.IsConnected());
         }
 
         _pickedPingId = Math.Abs(InputUtils.DeltaScrollWheel) % 7;
@@ -88,10 +92,22 @@ public static class PingMenu {
             if (_uiOpacity < 0.1f) _uiOpacity = 0.1f;
         }
     }
+    static Vector3 GetFirstPersonPingPosition() {
+        const float MAX_DISTANCE = 3000f;
+        var ray = RayUtils.GetScreenRay(WindowUtils.WindowCenter);
+
+        // xz coords
+        var flat = new Vector2(ray.Direction.X, ray.Direction.Z);
+        float flatLength = flat.Length();
+
+        if (flatLength < MathUtils.VERY_SMALL)
+            return new(ray.Position.X, 0f, ray.Position.Z);
+
+        var start = new Vector2(ray.Position.X, ray.Position.Z);
+        var end = start + flat / flatLength * MAX_DISTANCE;
+
+        var hit = Tank.RayCast(start, end, f => f.Body.Tag == PlayerTank.ClientTank) ?? end;
+
+        return new Vector3(hit.X, 0, hit.Y);
+    }
 }
-    // i dont think a radial would be optimal. Scroll wheel would even be better
-    //public static Radial RadialMenu = new(2, new Circle());
-
-    //private static int _curPingId;
-
-    // todo: finish impl

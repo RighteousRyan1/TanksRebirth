@@ -630,6 +630,8 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 [(nameof(Parameters.TankAwarenessShoot), Parameters.TankAwarenessShoot, true)] = Color.Blue,
                 [(nameof(Parameters.TankAwarenessMine), Parameters.TankAwarenessMine, false)] = Color.Cyan,
 
+                [(nameof(Parameters.ObstacleAwarenessMovement), Parameters.ObstacleAwarenessMovement, false)] = Color.Magenta,
+
                 [(nameof(BlocksNear), BlocksNear.Count, false)] = Color.Orange,
                 [(nameof(TanksNearMineAwareness), TanksNearMineAwareness.Count, false)] = Color.IndianRed,
             };
@@ -646,7 +648,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, realI * 20);
                 DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
-                    $"{info.Key.Name}: {info.Key.Value} ({GameUtils.TanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
+                    $"{info.Key.Name}: {info.Key.Value}" /*({GameUtils.TanksUnits(info.Key.Value)})"*/, pos, info.Value, Color.White,
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
                 DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
             }
@@ -663,9 +665,11 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                     DrawUtils.DrawLine(origin, origin + vais._history[i].ExpandZ() * 40f, i < averaged ? Color.Blue : Color.LightBlue, view, proj);
 
                 // wall sweep 
+                // Parameters.ObstacleAwarenessMovement = (uint)MathHelper.Clamp(MouseUtils.Test.X * 100, 0, 100);
+                // ChatSystem.SendMessage(Parameters.ObstacleAwarenessMovement);
                 var sweepRadius = GameUtils.TanksUnits(GameUtils.WALL_SWEEP_RADIUS);
-                for (int f = 1; f < (int)Parameters.ObstacleAwarenessMovement; f += 2) {
-                    var point = Position + vais._history[0] * Properties.MaxSpeed * SPEED_SCALING * f;
+                for (int i = 1; i < (int)Parameters.ObstacleAwarenessMovement; i += 2) {
+                    var point = Position + vais._history[0] * Properties.MaxSpeed * SPEED_SCALING * i;
                     var touches = GameUtils.TouchesWall(point, out _);
 
                     DrawUtils.DrawCircle(point.ExpandZ() + floor, Vector3.Up, sweepRadius, touches ? Color.Red : Color.Green, view, proj);
@@ -728,90 +732,5 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             return;
 
         Extras.Armor?.Render();
-    }
-
-    static readonly object _rayCastLock = new();
-
-    // if raycasting based on radii, divide what is input to distance by two
-    /// <summary>Performs a raycast to check for blocking objects, with respect to <see cref="Tank.ChassisRotation"/>.</summary>
-    /// <param name="distance">The distance ahead of the tank, in world units, not physics units.</param>
-    /// <param name="offset">The angle offset for the check.</param>
-    /// <param name="callback">Callback data to do custom logic with the raycast result.</param>
-    /// <returns>Whether or not the ray had an intersection.</returns>
-    public bool RaycastAheadOfTank(float distance, float offset = 0f, RayCastReportFixtureDelegate? callback = null) {
-        bool isPathBlocked = false;
-
-        // the tank by default faces down, so positive Y.
-        var dir = MathUtils.DirectionOf(ChassisRotation + offset);
-
-        // switch to using game units if necessary?
-        var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
-        var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
-
-        // exceptions thrown here, "Stack is empty", assuming race conditions? (and sometimes nullreference?)
-        lock (_rayCastLock) {
-            CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
-                callback?.Invoke(fixture, point, normal, fraction);
-
-                if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
-                    isPathBlocked = true;
-                }
-
-                return fraction;
-                // divide by 2 because it's a radius, i think
-            }, Physics.Position, endpoint);
-        }
-        return isPathBlocked;
-    }
-    /// <summary>Performs a raycast in all 4 cardinal directions of the tank (rotation-agnostic).</summary>
-    /// <param name="distance">The length of the raycast.</param>
-    /// <param name="callback">Code-callback for performing special actions based on the raycast.</param>
-    /// <param name="offset">The angle offset.</param>
-    /// <param name="ignoreDirs">Which directions to not cast a ray towards.</param>
-    /// <returns>A direction with the corresponding direction vector.</returns>
-    public (CollisionDirection Direction, Vector2 Vec)[] RayCastCardinals(float distance, RayCastReportFixtureDelegate? callback = null, float offset = 0f, params CollisionDirection[] ignoreDirs) {
-        // directions denoted by their real directions are good directions
-        var goodDirs = new (CollisionDirection, Vector2)[4];
-
-        for (int i = 0; i < 4; i++) {
-            // add 1 because we don't want "None"
-            var collDir = (CollisionDirection)(i + 1);
-            if (ignoreDirs.Contains(collDir))
-                continue;
-
-            // start raycast going down (positive Y axis)
-            var dir = Vector2.UnitY.RotatedBy(i * MathHelper.PiOver2 + offset);
-            goodDirs[i] = (collDir, dir);
-
-            // Value_ToWiiTanksUnits...?
-            var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
-            var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
-
-            lock (_rayCastLock) {
-                // check in the 4 cardinal directions if mine-laying is ok.
-                CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
-                    callback?.Invoke(fixture, point, normal, fraction);
-
-                    if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
-                        // Console.WriteLine("hit along ray: " + fraction + "(" + collDir + ")");
-                        goodDirs[i] = (CollisionDirection.None, Vector2.Zero);
-                    }
-                    else {
-                        //Console.WriteLine($"ignoring... not implemented. ({fixture.Body.Tag})");
-                        return -1f;
-                    }
-                    //Console.WriteLine("Hit fixture: " + fixture.Body.Tag);
-                    //Console.WriteLine("At point: " + point);
-                    //Console.WriteLine("With normal: " + normal);
-                    //Console.WriteLine("Fraction along ray: " + fraction);
-                    // Console.WriteLine();
-
-                    return fraction;
-                    // divide by 2 because it's a radius, j think
-                }, Physics.Position, endpoint);
-            }
-        }
-
-        return goodDirs;
     }
 }

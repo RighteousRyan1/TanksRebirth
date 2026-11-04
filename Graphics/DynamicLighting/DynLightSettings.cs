@@ -158,10 +158,12 @@ public struct DynLightSettings() {
             LightingSystem.Unload();
 
         LightingPresets.DayLengthSeconds = MathF.Max(0.1f, DayLengthMinutes) * 60f;
+        LightingPresets.HeadlightsEnabled = GameplayLights;
         LightManager.ShellLights = GameplayLights;
         LightManager.MineLights = GameplayLights;
         LightManager.ExplosionLights = GameplayLights;
         LightManager.RoomCastsShadows = RoomShadows;
+        
 
         if (force || LightingPresets.Current != TimeOfDay)
             LightManager.Apply(TimeOfDay);

@@ -63,11 +63,16 @@ public static class RayUtils {
 
         return usedRay;
     }
+    public static Ray GetMouseToWorldRay() => GetScreenRay(MouseUtils.MousePosition);
+    public static Ray GetScreenRay(Vector2 screenCoords) {
+        var near = MatrixUtils.ConvertScreenToWorld(new Vector3(screenCoords, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        var far = MatrixUtils.ConvertScreenToWorld(new Vector3(screenCoords, 1), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        return new Ray(near, Vector3.Normalize(far - near));
+    }
 
-    public static Ray GetMouseToWorldRay() {
-        var nearPlane = MatrixUtils.ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
-        var farPlane = MatrixUtils.ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
-
-        return new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
+    public static Vector3 GetWorldPosition(Vector2 screenCoords, float offset = 0f) {
+        var ray = GetScreenRay(screenCoords);
+        float? distance = ray.Intersects(new Plane(Vector3.UnitY, offset));
+        return distance.HasValue ? ray.Position + ray.Direction * distance.Value : new();
     }
 }

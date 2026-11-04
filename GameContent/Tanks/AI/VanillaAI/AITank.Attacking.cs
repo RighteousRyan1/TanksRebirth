@@ -357,7 +357,7 @@ public partial struct VanillaAISystem {
         public float EndRadius;
         public Vector2 Direction;
     }*/
-    public List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
+    public readonly List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
             bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
         // upper bound on frames simulated. the original caps at 3 segments of 250 frames.
         const int MAX_PATH_FRAMES = 1000;

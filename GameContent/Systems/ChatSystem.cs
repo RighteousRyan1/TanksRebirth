@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -35,7 +35,10 @@ public sealed record ChatSystem {
     const int PADDING_BASE = 8;
     const int MESSAGE_OFFSET_BASE = 20;
 
-
+    // in seconds, not ticks
+    public const float LIFETIME_MAX = 4f;
+    public static string[] RecentPlayerMsg = new string[4];
+    public static float[] RecentPlayerMsgLifetime = new float[4];
     public static List<ChatMessage> ChatMessages = [];
     public static int UnreadMessageCount;
     public static bool IsOpen;
@@ -43,13 +46,13 @@ public sealed record ChatSystem {
     public static string CurTyping = string.Empty;
     public static bool ActiveHandle;
     public static bool ChatBoxHover;
-    public static Texture2D ChatAlert;
+    public static Texture2D? ChatAlert;
 
     static Vector2 _openOrigin = new(8, 8);
 
     static float _openProgress = 0f;
-    static Color _backgroundColor = new(20, 20, 20); // Dark sleek background
-    static Color _borderColor = new(60, 60, 60);
+    public static readonly Color BackgroundColor = new(20, 20, 20);
+    public static readonly Color BorderColor = new(60, 60, 60);
 
     // events
     public delegate void OnMessageAddedDelegate(string message);
@@ -92,7 +95,7 @@ public sealed record ChatSystem {
                         int endTag = text.IndexOf(']', endHex);
                         if (endTag != -1) {
                             // Extract content inside tag
-                            string content = text.Substring(endHex + 1, endTag - (endHex + 1));
+                            string content = text[(endHex + 1)..endTag];
 
                             // converts hex to a color
                             var tagColor = new Color(
@@ -132,7 +135,7 @@ public sealed record ChatSystem {
         if (sender is not null) {
             SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect);
             if (Client.IsConnected() && !netSend)
-                Client.SendMessage(message, color, sender);
+                Client.SendMessage(message, color);
         }
 
         // split message by newlines
@@ -156,7 +159,7 @@ public sealed record ChatSystem {
         SendMessage(contents, Color.White, sender, netSend);
     }
 
-    private static string WrapText(SpriteFontBase font, string text, float maxLineWidth, float scale = 1f) {
+    static string WrapText(SpriteFontBase font, string text, float maxLineWidth, float scale = 1f) {
         if (string.IsNullOrEmpty(text)) return "";
 
         string[] words = text.Split(' ');
@@ -179,7 +182,7 @@ public sealed record ChatSystem {
         return sb.ToString();
     }
 
-    private static List<List<TextSection>> WrapColoredText(List<TextSection> sections, SpriteFontBase font, float maxLineWidth, float scale) {
+    static List<List<TextSection>> WrapColoredText(List<TextSection> sections, SpriteFontBase font, float maxLineWidth, float scale) {
         var lines = new List<List<TextSection>>();
         var currentLine = new List<TextSection>();
         float currentLineWidth = 0f;
@@ -215,6 +218,27 @@ public sealed record ChatSystem {
     public static void DrawMessages() {
         var sb = TankGame.SpriteRenderer;
 
+        // spritebatch abuse lol
+        sb.Begin();
+        // draw recent messages
+        for (int i = 0; i < RecentPlayerMsg.Length; i++) {
+            var tank = GameHandler.AllPlayerTanks[i];
+
+            // allow dead players to still send messages
+            if (tank is null) continue;
+
+            var msg = RecentPlayerMsg[i];
+            if (msg is null) continue;
+
+            var screenPos = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 25, 0), tank.DrawParams.World, tank.DrawParams.View, tank.DrawParams.Proj);
+            var scale = DrawUtils.StringSizeProportional(msg.Length, 10, 0.5f, 0.2f);
+            DrawUtils.DrawStringWithBorderAndShadow(sb, FontGlobals.RebirthFontLarge,
+                screenPos, Vector2.One, msg, PlayerID.PlayerTankColorsBright[i], Color.White, new Vector2(scale).ToResolution(),
+                RecentPlayerMsgLifetime[i] / LIFETIME_MAX, Anchor.BottomCenter, 0.5f, 0.5f, 1f);
+            RecentPlayerMsgLifetime[i] -= RuntimeData.DeltaTime;
+        }
+        sb.End();
+
         if (_openProgress <= 0f && !IsOpen) {
             sb.Begin();
             DrawUnreadNotification(sb);
@@ -247,9 +271,9 @@ public sealed record ChatSystem {
 
         void DrawPanel(Rectangle rect, bool hover) {
             // bg of box
-            sb.Draw(TextureGlobals.Pixels[Color.White], rect, _backgroundColor * 0.85f * smoothOpen);
+            sb.Draw(TextureGlobals.Pixels[Color.White], rect, BackgroundColor * 0.85f * smoothOpen);
 
-            var border = hover ? Color.CornflowerBlue : _borderColor;
+            var border = hover ? Color.CornflowerBlue : BorderColor;
 
             DrawUtils.DrawBox(rect, border * smoothOpen, 3);
         }

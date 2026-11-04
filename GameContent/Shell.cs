@@ -633,15 +633,19 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                     // sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.PerspectiveCamera.Position);
                 }
 
-                var light = new PointLight(Position3D, Color.Orange, 1f, 50f, true) {
-                    Priority = 1
-                };
                 float lifetime = 20f;
-                var plight = GameplayLights.CreateTempLight(GameHandler.Particles, Position3D, light, lifetime);
-                // ParticleManager.Animate(plight, lifetime, )
-                plight.UpdateCallback += (a) => {
-                    light.Intensity -= 0.05f * RuntimeData.DeltaFrames;
-                };
+                if (GameplayLights.CreateTempLight<PointLight>(GameHandler.Particles, Position3D, lifetime, out var light, out var plight)) {
+                    light.Priority = 1;
+                    light.Color = Color.Orange;
+                    light.Intensity = 1f;
+                    light.Range = 50f;
+                    light.CastsShadows = true;
+
+                    // ParticleManager.Animate(plight, lifetime, )
+                    plight.UpdateCallback += (a) => {
+                        light.Intensity -= 0.05f * RuntimeData.DeltaFrames;
+                    };
+                }
 
                 GameHandler.Particles.MakeShellImpact(Position3D);
             }
