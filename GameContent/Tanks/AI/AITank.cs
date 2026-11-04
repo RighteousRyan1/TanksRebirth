@@ -667,10 +667,10 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 // wall sweep 
                 // Parameters.ObstacleAwarenessMovement = (uint)MathHelper.Clamp(MouseUtils.Test.X * 100, 0, 100);
                 // ChatSystem.SendMessage(Parameters.ObstacleAwarenessMovement);
-                var sweepRadius = GameUtils.TanksUnits(GameUtils.WALL_SWEEP_RADIUS);
+                var sweepRadius = GameUtils.TanksUnits(Parameters.SweepScanRadius);
                 for (int i = 1; i < (int)Parameters.ObstacleAwarenessMovement; i += 2) {
                     var point = Position + vais._history[0] * Properties.MaxSpeed * SPEED_SCALING * i;
-                    var touches = GameUtils.TouchesWall(point, out _);
+                    var touches = GameUtils.TouchesWall(point, out _, Parameters.SweepScanRadius);
 
                     DrawUtils.DrawCircle(point.ExpandZ() + floor, Vector3.Up, sweepRadius, touches ? Color.Red : Color.Green, view, proj);
                     if (touches) break;
@@ -698,7 +698,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             drawInfo.Clear();
 
-            vais.GetTanksInPath(MathUtils.DirectionOf(TurretRotation), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+            vais.GetTanksInPath(MathUtils.DirectionOf(TurretRotation), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * SHELL_SPAWN_DISTANCE, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
             if (Parameters.PredictsPositions && TargetTank is not null)
                 calculation = Position.DistanceTo(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);

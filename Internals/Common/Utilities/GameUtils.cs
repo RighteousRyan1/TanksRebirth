@@ -70,13 +70,13 @@ public static class GameUtils {
         public Vector2 Normal;
     }
     // the original game's circle radius for wall checks. for now, constant
-    public const float WALL_SWEEP_RADIUS = 16f;
+    public const float WALL_SWEEP_DEF_RADIUS = 16f;
 
     /// <summary>Whether a wall-sweep circle at <paramref name="position"/> touches a solid block or the arena bounds.</summary>
-    public static bool TouchesWall(Vector2 position, out Vector2 normal) {
+    public static bool TouchesWall(Vector2 position, out Vector2 normal, float scanRadius = WALL_SWEEP_DEF_RADIUS) {
         normal = Vector2.Zero;
         var hit = false;
-        var radius = TanksUnits(WALL_SWEEP_RADIUS);
+        var radius = TanksUnits(scanRadius);
         var half = new Vector2(Block.SIDE_LENGTH / 2f);
 
         // two loops here lowkey disgusts me
@@ -103,10 +103,10 @@ public static class GameUtils {
     /// <summary>Moves a circle along <paramref name="direction"/> and checks for walls on frames 1, 3, 5... below <paramref name="numFrames"/>.</summary>
     /// <param name="speedPerFrame">How far the circle moves each frame.</param>
     /// <param name="stop">Whether to stop at the first contact instead of summing normals all the way.</param>
-    public static WallSweep SweepForWalls(Vector2 start, Vector2 direction, float speedPerFrame, int numFrames, bool stop = true) {
+    public static WallSweep SweepForWalls(Vector2 start, Vector2 direction, float speedPerFrame, int numFrames, float scanRadius = WALL_SWEEP_DEF_RADIUS, bool stop = true) {
         var sweep = new WallSweep();
         for (int frame = 1; frame < numFrames; frame += 2) {
-            if (!TouchesWall(start + direction * speedPerFrame * frame, out var normal)) continue;
+            if (!TouchesWall(start + direction * speedPerFrame * frame, out var normal, scanRadius)) continue;
 
             if (!sweep.Hit) {
                 sweep.Hit = true;

@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using TanksRebirth.Internals.Common.Utilities;
 
 
 namespace TanksRebirth.GameContent.Tanks.AI;
@@ -68,6 +69,10 @@ public class AIParameters {
     // ### SEPARATION BETWEEN ORIGINAL PARAMETERS AND REBIRTH-EXCLUSIVE PARAMETERS ###
 
 
+    /// <summary>At each step of a forwards scan, scan this many units around that step in a circle for an obstacle.</summary>
+    /// <remarks>Smaller values will make the tank more prone to enter tight spaces, larger values will make it desire more open areas.<para></para>
+    /// This value is always 16 in the original game.</remarks>
+    public float SweepScanRadius { get; set; } = GameUtils.WALL_SWEEP_DEF_RADIUS;
     /// <summary>How long this <see cref="AITank"/> remembers that an <see cref="TankProperties.Invisible"/> tank acted for. This affects how long it will target the invisible tank after an action.
     /// <br></br>This parameter is measured in ticks, so 60 (default) = 1 second.</summary>
     public uint Rememberance { get; set; } = 60;

@@ -457,7 +457,7 @@ public static class LightingPresets {
             SetLampShades(room, glowing);
 
         LightingSystem.BackgroundLight = time.Background;
-        HeadlightsEnabled = time.Headlights > 0.5f;
+        HeadlightsEnabled = time.Headlights > 0.5f && TankGame.Settings.Lighting.GameplayLights;
         DynamicBrightness = time.DynamicBrightness;
     }
 

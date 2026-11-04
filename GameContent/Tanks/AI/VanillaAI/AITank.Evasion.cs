@@ -10,7 +10,7 @@ public partial struct VanillaAISystem {
     bool _nearOwnMine;
     // the original stops escaping its own mine once it is this far from it
     // this is the same as WALL_SWEEP_RADIUS. idk if i should keep the same or whatever
-    const float OWN_MINE_CLEAR_RADIUS = GameUtils.WALL_SWEEP_RADIUS;
+    const float OWN_MINE_CLEAR_RADIUS = GameUtils.WALL_SWEEP_DEF_RADIUS;
     public volatile List<IAITankDanger> NearbyDangers;
     public IAITankDanger? ClosestDanger;
 

@@ -89,7 +89,7 @@ public partial struct VanillaAISystem {
         direction = direction.NormalizeOrDefault(_history[0]);
 
         // ObstacleAwarenessMovement is a number of frames here, not a distance
-        var sweep = GameUtils.SweepForWalls(Owner.Position, direction, SpeedPerFrame, (int)Owner.Parameters.ObstacleAwarenessMovement);
+        var sweep = GameUtils.SweepForWalls(Owner.Position, direction, SpeedPerFrame, (int)Owner.Parameters.ObstacleAwarenessMovement, scanRadius: Owner.Parameters.SweepScanRadius);
         if (sweep.Hit)
             direction = (direction + sweep.Normal).NormalizeOrDefault(direction);
 
@@ -164,7 +164,7 @@ public partial struct VanillaAISystem {
         var farthestIndex = -1;
 
         for (int i = 0; i < directions.Length; i++) {
-            var sweep = GameUtils.SweepForWalls(Owner.Position, directions[i], SpeedPerFrame, frames);
+            var sweep = GameUtils.SweepForWalls(Owner.Position, directions[i], SpeedPerFrame, frames, scanRadius: Owner.Parameters.SweepScanRadius);
 
             // a direction with nothing in the way is taken right away
             if (!sweep.Hit) {

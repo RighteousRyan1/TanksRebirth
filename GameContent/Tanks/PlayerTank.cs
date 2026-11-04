@@ -558,7 +558,7 @@ public class PlayerTank : Tank {
         // data
         var whitePixel = TextureGlobals.Pixels[Color.White];
         var pathDir = MathUtils.DirectionOf(TurretRotation);
-        var sim = ShellSim.From(this, Position + pathDir * 18, pathDir);
+        var sim = ShellSim.From(this, Position + pathDir * SHELL_SPAWN_DISTANCE, pathDir);
         TanksSpotted = [];
 
         // maybe no linq...

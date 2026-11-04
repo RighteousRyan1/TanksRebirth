@@ -33,14 +33,39 @@ public struct ShellSim(Vector2 position, Vector2 velocity, int ricochets) {
         => new(position, direction.NormalizeOrDefault() * owner.Properties.ShellSpeed, owner.Properties.RicochetCount);
 
     // reuse collision code or actually use collision code? :think:
-    /// <summary>Moves one frame. <paramref name="collides"/> picks which blocks the shell reacts to. <paramref name="block"/> is the block touched this step, if any.</summary>
+    // this code is only "close enough" and doesn't actually fully work. i need to see what's going on
+    /// <summary>Moves one frame, checking collisions every <see cref="Shell.SUBSTEP_LENGTH"/>.</summary>
+    /// <param name="collides">Picks which blocks the shell reacts to.</param>
+    /// <param name="block">The block the sim collided with, if applicable.</param>
     public ShellSimResult Step(Func<Block, bool> collides, out Block? block) {
         var result = ShellSimResult.None;
         block = null;
 
-        var step = Velocity * Shell.MOVE_SCALE;
-        Position += step;
-        Distance += step.Length();
+        int substeps = Shell.NumSubsteps((Velocity * Shell.MOVE_SCALE).Length());
+        for (int i = 0; i < substeps; i++) {
+            // velocity can change between substeps (ricochets), so move by the current one
+            var sub = Velocity * Shell.MOVE_SCALE / substeps;
+            Position += sub;
+            Distance += sub.Length();
+
+            var subResult = Collide(collides, out var subBlock);
+            if (subBlock is not null) block = subBlock;
+
+            if (subResult == ShellSimResult.Destroyed) {
+                result = subResult;
+                break;
+            }
+            if (subResult == ShellSimResult.Ricochet) result = subResult;
+        }
+
+        LifeTime++;
+        return result;
+    }
+
+    /// <summary>The bounds and block checks of one substep.</summary>
+    ShellSimResult Collide(Func<Block, bool> collides, out Block? block) {
+        var result = ShellSimResult.None;
+        block = null;
 
         if (Position.X < GameScene.MIN_X) {
             Position.X = GameScene.MIN_X;
@@ -65,8 +90,6 @@ public struct ShellSim(Vector2 position, Vector2 velocity, int ricochets) {
         var hitbox = new Rectangle((int)Position.X - Shell.COLL_RECT_DIM / 2, (int)Position.Y - Shell.COLL_RECT_DIM / 2, Shell.COLL_RECT_DIM, Shell.COLL_RECT_DIM);
         var dummy = Vector2.Zero;
         Collision.HandleCollisionSimple_ForBlocks(hitbox, Velocity, ref dummy, out var dir, out block, out bool corner, false, collides);
-
-        LifeTime++;
 
         if (corner) return ShellSimResult.Destroyed;
         if (block is null || block.Type == BlockID.Teleporter || !block.Properties.AllowShotPathBounce) return result;

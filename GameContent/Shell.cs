@@ -46,9 +46,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         public float Radius;
         public float Speed;
         public float Cooldown;
-
         public Vector2 Target;
-
         public bool HeatSeeks;
     }
 
@@ -96,6 +94,20 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     public float Rotation;
 
     public Vector2 Position { get; set; }
+
+    // movement and block collisions run on a fixed 60 Hz tick (see Update), the same tick ShellSim uses, so a shot
+    // plays out identically at any framerate. RenderPosition blends between ticks so it still looks smooth.
+    const float MAX_TICKS_PER_UPDATE = 4f;
+
+    // this stuff is temporary in Shell because i really want shot trajectories to work flawlessly.
+    // in a perfect world (china) this will be integrated across the board so everything runs at 60 but renders at the monitor refresh rate
+    float _accum = 1f;
+    float _ticks, _tickProgress;
+    bool _started;
+    Vector2 _tickStartPosition;
+    /// <summary>Where the shell is drawn. It trails <see cref="Position"/> by up to a tick so it moves smoothly at any framerate.</summary>
+    public Vector2 RenderPosition => Vector2.Lerp(_tickStartPosition, Position, _tickProgress);
+    public Vector3 RenderPosition3D => RenderPosition.ExpandZ() + new Vector3(0, Tank.TNK_DMG_COLL_Y, 0);
     public Vector2 Velocity;
 
     public BasicDrawParams DrawParams = new();
@@ -242,7 +254,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     /// <param name="playSpawnSound">If <see langword="true"/>, <see cref="ShootSound"/> will be assigned to, and played.</param>
     /// <returns>The created <see cref="Shell"/>, or <see langword="null"/> if there are already <see cref="MAX_SHELLS"/> shells.</returns>
     public static Shell? Create(Vector2 position, Vector2 velocity, int type, Tank? owner, int ricochets = 0, bool playSpawnSound = true) {
-        var shell = TankGame.ThreadAgnostic<Shell?>(() => {
+        var shell = TankGame.ThreadAgnostic(() => {
             if (Array.IndexOf(AllShells, null) < 0)
                 return null;
 
@@ -274,80 +286,37 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     }
     /// <summary>How much of <see cref="Velocity"/> a shell moves each tick.</summary>
     public const float MOVE_SCALE = 0.62f;
+    /// <summary>The longest distance a shell travels between collision checks. It is just under the shell's collision box width, so a corner can't slip between two checks.</summary>
+    public const float SUBSTEP_LENGTH = 1f;
+
+    /// <summary>How many collision checks a move of <paramref name="distance"/> units gets.</summary>
+    public static int NumSubsteps(float distance) => Math.Max(1, (int)MathF.Ceiling(distance / SUBSTEP_LENGTH));
     public void Update() {
         if (!CampaignGlobals.InMission && !MainMenuUI.IsActive) return;
 
         Hitbox = new(Position3D, HitSphereSize);
 
-        Rotation = MathUtils.RotationOf(Velocity);
-        Position += Velocity * MOVE_SCALE * RuntimeData.DeltaFrames;
+        // instructor sets position so thats the "first update"
+        if (!_started) {
+            _started = true;
+            _tickStartPosition = Position;
+        }
+
+        // movement and block collisions run on a fixed tick, the same one ShellSim.Step uses
+        _accum = MathF.Min(_accum + RuntimeData.DeltaFrames, MAX_TICKS_PER_UPDATE);
+        while (_accum >= 1f && !IsDestroyed) {
+            _accum -= 1f;
+            _tickStartPosition = Position;
+            Tick();
+        }
+        _tickProgress = _accum;
+
         DrawParams.World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
-                * Matrix.CreateTranslation(Position3D);
-
-        //if (TrailSound != null) {
-        //if (CameraGlobals.IsUsingFirstPresonCamera)
-        //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.PerspectiveCamera.Position);
-        //}
-
-        // hopefully fixes the ricochet issue. a bit longer code but should hopefully do the trick
-        if (Position.X is < GameScene.MIN_X) {
-            Position = new(GameScene.MIN_X, Position.Y);
-            Ricochet(Vector2.UnitX);
-
-            ModdedData?.OnRicochet(null);
-            OnRicochet?.Invoke(this, null);
-        }
-        else if (Position.X is > GameScene.MAX_X) {
-            Position = new(GameScene.MAX_X, Position.Y);
-            Ricochet(Vector2.UnitX);
-
-            ModdedData?.OnRicochet(null);
-            OnRicochet?.Invoke(this, null);
-        }
-
-        if (Position.Y is < GameScene.MIN_Z) {
-            Position = new(Position.X, GameScene.MIN_Z);
-            Ricochet(Vector2.UnitY);
-
-            OnRicochet?.Invoke(this, null);
-            ModdedData?.OnRicochet(null);
-        }
-        else if (Position.Y is > GameScene.MAX_Z) {
-            Position = new(Position.X, GameScene.MAX_Z);
-            Ricochet(Vector2.UnitY);
-
-            OnRicochet?.Invoke(this, null);
-            ModdedData?.OnRicochet(null);
-        }
-
-        var dummy = Vector2.Zero;
-
-        Collision.HandleCollisionSimple_ForBlocks(CollHitbox, Velocity, ref dummy, out var dir, out var block,
-            out bool corner, false, (c) => c.Properties.IsSolid);
-
-        if (corner)
-            Destroy(DestructionContext.WithObstacle);
-        switch (dir) {
-            case CollisionDirection.Up:
-            case CollisionDirection.Down:
-                Ricochet(Vector2.UnitY);
-                block.ModdedData?.OnRicochet(this);
-                ModdedData?.OnRicochet(block);
-                OnRicochet?.Invoke(this, null);
-                break;
-            case CollisionDirection.Left:
-            case CollisionDirection.Right:
-                // TODO: fix this pls
-                Ricochet(Vector2.UnitX);
-                block.ModdedData?.OnRicochet(this);
-                ModdedData?.OnRicochet(block);
-                OnRicochet?.Invoke(this, null);
-                break;
-        }
+                * Matrix.CreateTranslation(RenderPosition3D);
 
         LifeTime += RuntimeData.DeltaFrames;
 
-        while (LifeTime > Properties.Homing.Cooldown) { // Use loop to reduce nesting smh.
+        while (LifeTime > Properties.Homing.Cooldown) {
             if (Owner == null)
                 break;
 
@@ -399,17 +368,86 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         CheckCollisions();
 
+        // todo: make customizable?
         if (Properties.Visuals.HasFlag(VisualFlags.SmokePuff))
-            RenderSmokeParticle();
+            Smoke();
 
         if (Properties.Visuals.HasFlag(VisualFlags.SmokeTrail))
-            RenderLeaveTrail();
+            Trail();
 
         if (Properties.Visuals.HasFlag(VisualFlags.Flaming))
-            RenderFlamingParticle();
+            Flame();
 
         ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
+    }
+    /// <summary>One 60 Hz step of movement, wall ricochets and block collisions. Keep in sync with <see cref="ShellSim.Step"/>.</summary>
+    void Tick() {
+        Rotation = MathUtils.RotationOf(Velocity);
+
+        int substeps = NumSubsteps((Velocity * MOVE_SCALE).Length());
+        for (int i = 0; i < substeps && !IsDestroyed; i++) {
+            // velocity can change between substeps (ricochets), so move by the current one
+            Position += Velocity * MOVE_SCALE / substeps;
+
+            // hopefully fixes the ricochet issue. a bit longer code but should hopefully do the trick
+            if (Position.X is < GameScene.MIN_X) {
+                Position = new(GameScene.MIN_X, Position.Y);
+                Ricochet(Vector2.UnitX);
+
+                ModdedData?.OnRicochet(null);
+                OnRicochet?.Invoke(this, null);
+            }
+            else if (Position.X is > GameScene.MAX_X) {
+                Position = new(GameScene.MAX_X, Position.Y);
+                Ricochet(Vector2.UnitX);
+
+                ModdedData?.OnRicochet(null);
+                OnRicochet?.Invoke(this, null);
+            }
+
+            if (Position.Y is < GameScene.MIN_Z) {
+                Position = new(Position.X, GameScene.MIN_Z);
+                Ricochet(Vector2.UnitY);
+
+                OnRicochet?.Invoke(this, null);
+                ModdedData?.OnRicochet(null);
+            }
+            else if (Position.Y is > GameScene.MAX_Z) {
+                Position = new(Position.X, GameScene.MAX_Z);
+                Ricochet(Vector2.UnitY);
+
+                OnRicochet?.Invoke(this, null);
+                ModdedData?.OnRicochet(null);
+            }
+
+            var dummy = Vector2.Zero;
+
+            Collision.HandleCollisionSimple_ForBlocks(CollHitbox, Velocity, ref dummy, out var dir, out var block,
+                out bool corner, false, (c) => c.Properties.IsSolid);
+
+            if (corner)
+                Destroy(DestructionContext.WithObstacle);
+            switch (dir) {
+                case CollisionDirection.Up:
+                case CollisionDirection.Down:
+                    Ricochet(Vector2.UnitY);
+                    block.ModdedData?.OnRicochet(this);
+                    ModdedData?.OnRicochet(block);
+                    OnRicochet?.Invoke(this, null);
+                    break;
+                case CollisionDirection.Left:
+                case CollisionDirection.Right:
+                    // TODO: fix this pls
+                    Ricochet(Vector2.UnitX);
+                    block.ModdedData?.OnRicochet(this);
+                    ModdedData?.OnRicochet(block);
+                    OnRicochet?.Invoke(this, null);
+                    break;
+            }
+        }
+
+        _ticks++;
     }
     #region Particles
     
@@ -417,7 +455,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     // just tracks substeps in a given time interval
     int TimesElapsed(float interval) => (int)(LifeTime / interval) - (int)((LifeTime - RuntimeData.DeltaFrames) / interval);
 
-    void RenderSmokeParticle() {
+    void Smoke() {
         if (Velocity == Vector2.Zero) return;
 
         // rockets leave smaller puffs more often
@@ -430,17 +468,17 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         // more than one if the frame took longer than the interval, spaced out along the way the shell came
         int count = TimesElapsed(interval);
         for (int i = 0; i < count; i++)
-            GameHandler.Particles.MakeShellSmoke(Position3D - direction * 4.2f - Velocity.ExpandZ() * (MOVE_SCALE * i * interval), direction, Properties.SmokeColor, rocket);
+            GameHandler.Particles.MakeShellSmoke(RenderPosition3D - direction * 4.2f - Velocity.ExpandZ() * (MOVE_SCALE * i * interval), direction, Properties.SmokeColor, rocket);
     }
 
     ShellTrail? _trail;
-    void RenderLeaveTrail() {
+    void Trail() {
         // _oldPosition and Position are *not* the same during method call.
 
-        _trail ??= ShellTrail.Start(Properties.TrailColor, Client.ClientRandom.NextFloat(0, MathHelper.TwoPi));
-        _trail.Emit(Position3D - MathUtils.DirectionOf(Rotation).ExpandZ() * 5);
+        _trail ??= Systems.ParticleSystem.ShellTrail.Start(Properties.TrailColor, Client.ClientRandom.NextFloat(0, MathHelper.TwoPi));
+        _trail.Emit(RenderPosition3D - MathUtils.DirectionOf(Rotation).ExpandZ() * 5);
     }
-    void RenderFlamingParticle() {
+    void Flame() {
         int count = TimesElapsed(1f);
         for (int i = 0; i < count; i++)
             GameHandler.Particles.MakeShellFlame(this);
@@ -469,7 +507,8 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
             return;
         }
 
-        if (LifeTime < TOO_SHORT_LIFETIME) {
+        // counted in ticks, like ShellSim.LifeTime
+        if (_ticks < TOO_SHORT_LIFETIME) {
             Destroy(DestructionContext.WithObstacle);
             return;
         }

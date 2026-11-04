@@ -23,6 +23,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Changes Important for Modders
 
 - Word 22 (MaxQueuedMovements) has been renamed to `MaxMoveHistory` to better fit its actual use
+- New custom AI parameter: `SweepScanRadius`, read the XML docs
 
 # Fixes
 

@@ -58,6 +58,8 @@ public abstract class Tank(bool ignoresRegister) {
     public const float TNK_WIDTH = 25;
     public const float TNK_HEIGHT = 25;
     public const float TNK_DMG_COLL_Y = 11.0f;
+    /// <summary>How far in front of the tank (along the turret) a shell spawns. Shot paths start here too.</summary>
+    public const float SHELL_SPAWN_DISTANCE = 20f;
 
     #region TexPack
 
@@ -767,7 +769,7 @@ public abstract class Tank(bool ignoresRegister) {
             shell.Properties.Homing = Properties.ShellHoming;
 
             var direction = MathUtils.DirectionOf(TurretRotation + newAngle);
-            shell.Position = Position + direction * 20;
+            shell.Position = Position + direction * SHELL_SPAWN_DISTANCE;
             shell.Velocity = direction * Properties.ShellSpeed;
             shell.RicochetsRemaining = Properties.RicochetCount;
 
@@ -777,7 +779,7 @@ public abstract class Tank(bool ignoresRegister) {
     public void DoShootParticles() {
         // same spot and direction the shells come out of in ShootSpread
         var direction = MathUtils.DirectionOf(TurretRotation);
-        var muzzle = Position + direction * 20;
+        var muzzle = Position + direction * SHELL_SPAWN_DISTANCE;
         var muzzle3d = new Vector3(muzzle.X, TurretPosition3D.Y, muzzle.Y);
         GameHandler.Particles.MakeMuzzleFlash(muzzle3d, direction.ExpandZ());
 

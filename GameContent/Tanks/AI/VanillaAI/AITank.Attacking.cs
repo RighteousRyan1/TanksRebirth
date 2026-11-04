@@ -140,14 +140,14 @@ public partial struct VanillaAISystem {
 
         var turretDir = MathUtils.DirectionOf(Owner.TurretRotation);
         if (Owner.Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(turretDir, out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
+            tanksDef = GetTanksInPath(turretDir, out var ricP, out var tnkCol, offset: Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
             if (ricP.Length > 0 && GameUtils.TanksDistance(ricP[^1], Owner.Position) < 150f)
                 tooCloseToExplosiveShell = true;
         }
         else {
             tanksDef = GetTanksInPath(
                 turretDir,
-                out var ricP, out var tnkCol, offset: Vector2.UnitY * 20,
+                out var ricP, out var tnkCol, offset: Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE,
                 missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
 
             if (tanksDef.Count != Owner.TanksSpotted.Length)
