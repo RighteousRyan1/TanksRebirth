@@ -7,11 +7,16 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Tanks.AI.VanillaAI;
 public partial struct VanillaAISystem {
-    public bool IsInDanger;
+    bool _nearOwnMine;
+    // the original stops escaping its own mine once it is this far from it
+    // this is the same as WALL_SWEEP_RADIUS. idk if i should keep the same or whatever
+    const float OWN_MINE_CLEAR_RADIUS = GameUtils.WALL_SWEEP_DEF_RADIUS;
     public volatile List<IAITankDanger> NearbyDangers;
     public IAITankDanger? ClosestDanger;
 
     readonly List<IAITankDanger> _evasionDangersBuffer = [];
+
+    // not 100% sure this does as intended anymore
     /// <summary>Makes this <see cref="AITank"/> profusely avoid the given location.</summary>
     public void Avoid(Vector2 location) {
         IsSurviving = true;
@@ -23,20 +28,24 @@ public partial struct VanillaAISystem {
     /// <summary>Gets a list of dangerous objects near the <see cref="AITank"/>.</summary>
     public List<IAITankDanger> GetEvasionData() {
         _evasionDangersBuffer.Clear();
+        _nearOwnMine = false;
 
         var dangers = AITank.DangerSnapshot;
         for (int i = 0; i < dangers.Length; i++) {
             var danger = dangers[i];
-            var isHostile = !Owner.IsOnSameTeamAs(danger.Team);
+            var isOwner = danger.Owner == Owner;
+            var isHostile = !isOwner && !Owner.IsOnSameTeamAs(danger.Team);
 
             // mines and explosions should be treated differently and specially
             if (danger is Mine || danger is Explosion) {
-                var isCloseEnough = GameUtils.TanksDistance(Owner.Position, danger.Position) <=
+                var distance = GameUtils.TanksDistance(Owner.Position, danger.Position);
+                var isCloseEnough = distance <=
                     (isHostile ? Owner.Parameters.AwarenessHostileMine : Owner.Parameters.AwarenessFriendlyMine);
 
                 if (isCloseEnough) {
                     _evasionDangersBuffer.Add(danger);
-                    IsSurviving = true;
+
+                    if (isOwner && danger is Mine && distance <= OWN_MINE_CLEAR_RADIUS) _nearOwnMine = true;
                 }
             }
             else if (danger is Shell shell) {
@@ -44,45 +53,13 @@ public partial struct VanillaAISystem {
                 // already accounts for hostility via the above ^
                 if (isHeadingTowards) {
                     _evasionDangersBuffer.Add(danger);
-                    IsSurviving = true;
                 }
             }
             // non-vanilla sources of danger
             else {
                 _evasionDangersBuffer.Add(danger);
-                IsSurviving = true;
             }
         }
         return _evasionDangersBuffer;
-    }
-    // this might need to be redone completely because different dangers have difernernejakswklfsadkolf dasjkl fsadjklsaf dkjhlsfda jhknas dfjhkbsadf jhkbsadf jhkfsa djkhsa fd
-    [Obsolete("This method is outdated and may not work as expected. Use GetEvasionData() instead.")]
-    public bool TryGetDangerNear(float distance, out List<IAITankDanger> dangersNear, out IAITankDanger? dClosest) {
-        IAITankDanger? closest = null;
-        dangersNear = [];
-
-        Span<IAITankDanger> dangers = AITank.DangerSnapshot;
-
-        ref var dangersSearchSpace = ref MemoryMarshal.GetReference(dangers);
-
-        for (var i = 0; i < dangers.Length; i++) {
-            var currentDanger = Unsafe.Add(ref dangersSearchSpace, i);
-
-            if (currentDanger is null) continue;
-
-            var distanceToDanger = GameUtils.TanksDistance(Owner.Position, currentDanger.Position);
-
-            if (!(distanceToDanger < distance)) continue;
-
-            dangersNear.Add(currentDanger);
-
-            if (closest == null || distanceToDanger <
-                GameUtils.TanksDistance(Owner.Position, closest.Position)) {
-                closest = currentDanger;
-            }
-        }
-
-        dClosest = closest;
-        return closest != null;
     }
 }

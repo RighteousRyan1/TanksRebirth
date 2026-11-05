@@ -73,18 +73,11 @@ public class GameConfig {
 
     // idk what category this should go under
     public LangCode Language = LangCode.English;
-
-
-    // public MultiplayerInfo MultiplayerInfo { get; set; } = default;
+    public MultiplayerInfo MultiplayerInfo = default;
 }
 
-// you know... this will get saved at some point.
-public struct MultiplayerInfo {
-    public string Username { get; set; } = "";
-
-    public string LastUsedIp { get; set; } = "";
-
-    public string LastUsedPassword { get; set; } = "";
-
-    public MultiplayerInfo() { }
+public struct MultiplayerInfo() {
+    public string Username { get; set; } = string.Empty;
+    public string LastUsedIp { get; set; } = string.Empty;
+    public int LastUsedPort { get; set; } = 5040;
 }

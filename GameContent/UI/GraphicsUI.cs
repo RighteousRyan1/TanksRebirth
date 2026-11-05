@@ -66,7 +66,7 @@ public static class GraphicsUI {
     static readonly WindowKind[] _windowKinds = [WindowKind.Windowed, WindowKind.FullscreenBorderless, WindowKind.Fullscreen];
     static readonly Preset[] _timesOfDay = [
         Preset.Sunrise, Preset.LateMorning, Preset.Midday, Preset.MidAfternoon, Preset.LateAfternoon,
-        Preset.GoldenHour, Preset.Evening, Preset.Dusk, Preset.Midnight, Preset.Blackout, Preset.DayCycle,
+        Preset.GoldenHour, Preset.Evening, Preset.Dusk, Preset.Midnight, Preset.Blackout, Preset.DayCycle, Preset.Faithful,
     ];
     static readonly float[] _dayLengths = [2f, 5f, 8f, 15f, 30f, 60f, 24f * 60f];
 
@@ -158,8 +158,8 @@ public static class GraphicsUI {
 
         LampShadowsBtn = Row(LightingX, RowY(3), lang.Settings.LightShadows,
             lang.Settings.LightShadowsDesc,
-            () => QualityName(DynLightSettings.Current.LampShadows),
-            dir => { DynLightSettings.Current.LampShadows = GameUI.Cycle(Enum.GetValues<ShadowQuality>(), DynLightSettings.Current.LampShadows, dir); ApplyLighting(true); },
+            () => QualityName(DynLightSettings.Current.LocalShadows),
+            dir => { DynLightSettings.Current.LocalShadows = GameUI.Cycle(Enum.GetValues<ShadowQuality>(), DynLightSettings.Current.LocalShadows, dir); ApplyLighting(true); },
             enabled: LightingOn);
 
         LightShaftsBtn = Row(LightingX, RowY(4), lang.Settings.LightShafts,

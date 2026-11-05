@@ -1295,7 +1295,7 @@ public static class LightingSystem {
         var angle = spot?.OuterAngle ?? 0f;
         var changed = state.OwnerChanged
             || Vector3.DistanceSquared(state.Position, light.Position) > 0.01f
-            || Vector3.DistanceSquared(state.Direction, direction) > 1e-6f
+            || Vector3.DistanceSquared(state.Direction, direction) > MathUtils.VERY_SMALL
             || state.Range != light.Range || state.Angle != angle;
         if (!changed && _frameIndex - state.LastRendered < interval) {
             stats.CachedShadowMaps++;
@@ -1410,7 +1410,7 @@ public static class LightingSystem {
 
     static void SetCameraParameters() {
         var inverseView = Matrix.Invert(_cameraView);
-        var isOrtho = MathF.Abs(_cameraProjection.M44 - 1f) < 1e-4f && MathF.Abs(_cameraProjection.M34) < 1e-6f;
+        var isOrtho = MathF.Abs(_cameraProjection.M44 - 1f) < 1e-4f && MathF.Abs(_cameraProjection.M34) < MathUtils.VERY_SMALL;
         _pCameraPosition?.SetValue(inverseView.Translation);
         _pCameraForward?.SetValue(SafeNormalize(inverseView.Forward, Vector3.Forward));
         _pCameraIsOrtho?.SetValue(isOrtho ? 1f : 0f);
@@ -1660,7 +1660,7 @@ public static class LightingSystem {
 
     static Vector3 SafeNormalize(Vector3 v, Vector3 fallback) {
         var length = v.Length();
-        return length > 1e-6f ? v / length : fallback;
+        return length > MathUtils.VERY_SMALL ? v / length : fallback;
     }
 
     /// <summary>

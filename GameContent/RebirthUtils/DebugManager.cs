@@ -249,6 +249,11 @@ public static class DebugManager {
     }
     // static JackOLantern jol;
     public static void UpdateDebug() {
+
+        // fps/frame display
+        if (InputUtils.KeyJustPressed(Keys.F10))
+            TankGame.viewFrameSimple = !TankGame.viewFrameSimple;
+
         if (!GameLauncher.IsConsoleAllocated) return;
 
         if (InputUtils.KeyJustPressed(Keys.RightControl)) {

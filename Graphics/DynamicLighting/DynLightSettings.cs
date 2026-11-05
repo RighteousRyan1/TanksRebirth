@@ -9,8 +9,7 @@ public enum LightingQualityLevel {
     Medium,
     High,
     Ultra,
-
-    Custom,
+    Custom
 }
 
 /// <summary>Quality of one shadow feature.</summary>
@@ -19,7 +18,7 @@ public enum ShadowQuality {
     Low,
     Medium,
     High,
-    Ultra,
+    Ultra
 }
 
 /// <summary>Quality of an effect that is either cheap or expensive.</summary>
@@ -27,7 +26,7 @@ public enum EffectQuality {
     Off,
     Low,
     Medium,
-    High,
+    High
 }
 
 public struct DynLightSettings() {
@@ -38,14 +37,14 @@ public struct DynLightSettings() {
 
     /// <summary>Dynamic lighting on or off. Disabled frees all performance decreases and frees the video memory.</summary>
     public bool Enabled { get; set; } = false;
-    /// <summary>Time of day (or Blackout / DayCycle). Off is better expressed with <see cref="Enabled"/>.</summary>
-    public Preset TimeOfDay { get; set; } = Preset.MidAfternoon;
+    /// <summary>Lighting preset. Ignores off because <see cref="Enabled"/> drives that.</summary>
+    public Preset TimeOfDay { get; set; } = Preset.Faithful;
     /// <summary>Real minutes for one 24 hour day when <see cref="TimeOfDay"/> is DayCycle.</summary>
     public float DayLengthMinutes { get; set; } = 8f;
-    /// <summary>Lights on shells, mines and explosions (headlights are part of the night presets).</summary>
+    /// <summary>Lights on shells, mines, explosions, etc.</summary>
     public bool GameplayLights { get; set; } = true;
-    /// <summary>The room's walls, windows and furniture block the sun (sun patches through the windows). Off = the sun shines through the room.</summary>
-    public bool RoomShadows { get; set; } = true;
+    /// <summary>Whether the room's walls, windows and furniture block the sun.</summary>
+    public bool RoomShadows { get; set; } = false; // default to false because some people won't expect this to be a setting
 
     // lighting quality
 
@@ -53,8 +52,8 @@ public struct DynLightSettings() {
     public LightingQualityLevel QualityLevel { get; set; } = LightingQualityLevel.High;
     /// <summary>Sun and moon shadows.</summary>
     public ShadowQuality SunShadows { get; set; } = ShadowQuality.High;
-    /// <summary>Shadows from lamps, headlights and explosions.</summary>
-    public ShadowQuality LampShadows { get; set; } = ShadowQuality.High;
+    /// <summary>Shadows quality from local lights.</summary>
+    public ShadowQuality LocalShadows { get; set; } = ShadowQuality.High;
     /// <summary>Volumetric sun beams.</summary>
     public EffectQuality LightShafts { get; set; } = EffectQuality.Medium;
     /// <summary>How many lights can be on screen at once.</summary>
@@ -66,25 +65,25 @@ public struct DynLightSettings() {
         switch (level) {
             case LightingQualityLevel.Low:
                 SunShadows = ShadowQuality.Low;
-                LampShadows = ShadowQuality.Low;
+                LocalShadows = ShadowQuality.Low;
                 LightShafts = EffectQuality.Off;
                 LightCount = EffectQuality.Low;
                 break;
             case LightingQualityLevel.Medium:
                 SunShadows = ShadowQuality.Medium;
-                LampShadows = ShadowQuality.Medium;
+                LocalShadows = ShadowQuality.Medium;
                 LightShafts = EffectQuality.Low;
                 LightCount = EffectQuality.Medium;
                 break;
             case LightingQualityLevel.High:
                 SunShadows = ShadowQuality.High;
-                LampShadows = ShadowQuality.High;
+                LocalShadows = ShadowQuality.High;
                 LightShafts = EffectQuality.Medium;
                 LightCount = EffectQuality.High;
                 break;
             case LightingQualityLevel.Ultra:
                 SunShadows = ShadowQuality.Ultra;
-                LampShadows = ShadowQuality.Ultra;
+                LocalShadows = ShadowQuality.Ultra;
                 LightShafts = EffectQuality.High;
                 LightCount = EffectQuality.High;
                 break;
@@ -96,7 +95,7 @@ public struct DynLightSettings() {
         foreach (var level in new[] { LightingQualityLevel.Low, LightingQualityLevel.Medium, LightingQualityLevel.High, LightingQualityLevel.Ultra }) {
             var preset = new DynLightSettings();
             preset.SetQualityLevel(level);
-            if (preset.SunShadows == SunShadows && preset.LampShadows == LampShadows &&
+            if (preset.SunShadows == SunShadows && preset.LocalShadows == LocalShadows &&
                 preset.LightShafts == LightShafts && preset.LightCount == LightCount) {
                 QualityLevel = level;
                 return;
@@ -121,7 +120,7 @@ public struct DynLightSettings() {
         };
 
         // lamps: how many get shadows, how sharp, how smooth
-        (q.MaxShadowedPointLights, q.MaxShadowedSpotLights, q.ShadowAtlasSize, q.SoftLocalShadows) = LampShadows switch {
+        (q.MaxShadowedPointLights, q.MaxShadowedSpotLights, q.ShadowAtlasSize, q.SoftLocalShadows) = LocalShadows switch {
             ShadowQuality.Off => (0, 0, 2048, false),
             // low is quite cheap, medium is still pretty cheap, high is slightly cheap, ultra is maxed out
             ShadowQuality.Low => (2, 2, 2048, false),
@@ -148,9 +147,7 @@ public struct DynLightSettings() {
         return q;
     }
 
-    /// <summary>
-    /// Pushes these settings into the lighting system.
-    /// </summary>
+    /// <summary>Pushes these settings into the lighting system.</summary>
     public readonly void Apply(bool force = false) {
         var wasEnabled = LightingSystem.Enabled;
         LightingSystem.Enabled = Enabled;
@@ -164,11 +161,12 @@ public struct DynLightSettings() {
         LightManager.MineLights = GameplayLights;
         LightManager.ExplosionLights = GameplayLights;
         LightManager.RoomCastsShadows = RoomShadows;
+        
 
         if (force || LightingPresets.Current != TimeOfDay)
             LightManager.Apply(TimeOfDay);
     }
 
     /// <summary>A copy, so a menu can edit a candidate and only <see cref="Apply"/> it on "Apply" / "OK".</summary>
-    public DynLightSettings Clone() => (DynLightSettings)MemberwiseClone();
+    public readonly DynLightSettings Clone() => (DynLightSettings)MemberwiseClone();
 }

@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
@@ -195,7 +196,7 @@ public sealed class ShellTrail {
             var after = PointAt(Math.Min(i + 1, count - 1)).Position;
             var tangent = after - before;
             tangent.Y = 0f;
-            if (tangent.LengthSquared() > 1e-6f)
+            if (tangent.LengthSquared() > MathUtils.VERY_SMALL)
                 lastTangent = Vector3.Normalize(tangent);
             tangent = lastTangent;
             var side = new Vector3(tangent.Z, 0f, -tangent.X);

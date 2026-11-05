@@ -17,7 +17,7 @@ public class Explosion : IAITankDanger {
     public static event PostUpdateDelegate? OnPostUpdate;
 
     /// <summary>The "owner" of this explosion.</summary>
-    public Tank? Owner;
+    public Tank? Owner { get; set; }
 
     // 500 -> 80
     public const int EXPLOSIONS_MAX = 80;

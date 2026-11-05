@@ -73,7 +73,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileShell = 40;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = 0.03f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 30;
                 aiParams.AimOffset = MathHelper.ToRadians(40);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -97,7 +97,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileShell = 40;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = -0.1f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 30;
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
                 aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
@@ -126,7 +126,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileMine = 160;
                 aiParams.AwarenessHostileShell = 40;
                 aiParams.CantShootWhileFleeing = true;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 30;
                 aiParams.AimOffset = MathHelper.ToRadians(40);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -156,7 +156,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileShell = 40;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = 0.2f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 50;
                 aiParams.AimOffset = MathHelper.ToRadians(40);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -187,7 +187,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileShell = 60;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = 0.1f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 50;
                 aiParams.AimOffset = MathHelper.ToRadians(40);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -232,7 +232,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileShell = 40;
                 aiParams.CantShootWhileFleeing = false;
                 aiParams.AggressivenessBias = 0.1f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 50;
                 aiParams.AimOffset = MathHelper.ToRadians(40);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -263,7 +263,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileShell = 100;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = 0.2f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 50;
                 aiParams.AimOffset = MathHelper.ToRadians(5);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -286,7 +286,7 @@ public static class AIManager {
             case TankID.Bronze:
                 aiParams.ObstacleAwarenessMine = 200; // 2
                 aiParams.TankAwarenessMine = 100; // 6
-                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.MaxMoveHistory = 4; // 22
                 aiParams.ObstacleAwarenessMovement = 30; // 28
                 aiParams.AimOffset = MathHelper.ToRadians(0); // 29
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
@@ -315,7 +315,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileMine = 100; // 18
                 aiParams.AwarenessHostileShell = 100; // 19
                 aiParams.CantShootWhileFleeing = true; // 20
-                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.MaxMoveHistory = 4; // 22
                 aiParams.ObstacleAwarenessMovement = 100; // 28
                 aiParams.AimOffset = MathHelper.ToRadians(60); // 29
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
@@ -344,7 +344,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileMine = 40; // 18
                 aiParams.AwarenessHostileShell = 70; // 19
                 aiParams.CantShootWhileFleeing = false; // 20
-                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.MaxMoveHistory = 4; // 22
                 aiParams.ObstacleAwarenessMovement = 60; // 28
                 aiParams.AimOffset = MathHelper.ToRadians(10); // 29
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
@@ -367,7 +367,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileMine = 0;
                 aiParams.AwarenessHostileShell = 50;
                 aiParams.AggressivenessBias = 0.3f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 20;
                 aiParams.AimOffset = MathHelper.ToRadians(3);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -399,7 +399,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileMine = 140; // 18
                 aiParams.AwarenessHostileShell = 80; // 19
                 aiParams.CantShootWhileFleeing = true; // 20
-                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.MaxMoveHistory = 4; // 22
                 aiParams.ObstacleAwarenessMovement = 30; // 28
                 aiParams.AimOffset = MathHelper.ToRadians(20); // 29
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
@@ -430,7 +430,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileShell = 100;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = 0.03f;
-                aiParams.MaxQueuedMovements = 4;
+                aiParams.MaxMoveHistory = 4;
                 aiParams.ObstacleAwarenessMovement = 35;
                 aiParams.AimOffset = MathHelper.ToRadians(60);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
@@ -447,7 +447,7 @@ public static class AIManager {
             case TankID.Emerald:
                 aiParams.ObstacleAwarenessMine = 100; // 2
                 aiParams.TankAwarenessMine = 100; // 6
-                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.MaxMoveHistory = 4; // 22
                 aiParams.ObstacleAwarenessMovement = 50; // 28
                 aiParams.AimOffset = MathHelper.ToRadians(80); // 29
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
@@ -476,7 +476,7 @@ public static class AIManager {
                 aiParams.AwarenessFriendlyShell = 100; // 17
                 aiParams.AwarenessHostileMine = 120; // 18
                 aiParams.AwarenessHostileShell = 80; // 19
-                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.MaxMoveHistory = 4; // 22
                 aiParams.ObstacleAwarenessMovement = 50; // 28
                 aiParams.AimOffset = MathHelper.ToRadians(40); // 29
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
@@ -507,7 +507,7 @@ public static class AIManager {
                 aiParams.AwarenessHostileMine = 140; // 18
                 aiParams.AwarenessHostileShell = 70; // 19
                 aiParams.CantShootWhileFleeing = true; // 20
-                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.MaxMoveHistory = 4; // 22
                 aiParams.ObstacleAwarenessMovement = 75; // 28
                 aiParams.AimOffset = MathHelper.ToRadians(20); // 29
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 

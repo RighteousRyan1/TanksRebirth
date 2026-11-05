@@ -24,6 +24,8 @@ public static class LightManager {
     public static bool ExplosionLights = true;
     public static bool MineLights = true;
 
+    public static bool CreateShadowsRule => TankGame.Settings.Lighting.LocalShadows >= ShadowQuality.High && TankGame.Settings.Lighting.LightCount >= EffectQuality.Medium;
+
     /// <summary>Lets the room cast sun shadows.</summary>
     public static bool RoomCastsShadows {
         get => _roomCastsShadows;
@@ -227,6 +229,8 @@ public static class LightManager {
     static void CollectLights() {
         GameplayLights.BeginFrame();
 
+        var rule = CreateShadowsRule;
+
         var anySortOfTankLighting = LightingPresets.HeadlightsEnabled || _lantern;
         if (anySortOfTankLighting) {
             var lights = LightingPresets.HeadlightsEnabled;
@@ -237,7 +241,7 @@ public static class LightManager {
                 if (_lantern) {
                     // RuntimeData.RunTime produces weird results
                     var time = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
-                    GameplayLights.AddLantern(tank.Position3D + new Vector3(0, LanternHeight, 0), time + tank.PlayerId * 1.7f, tank == PlayerTank.ClientTank);
+                    GameplayLights.AddLantern(tank.Position3D + new Vector3(0, LanternHeight, 0), time + tank.PlayerId * 1.7f, tank == PlayerTank.ClientTank, rule);
                 }
             }
         }
@@ -247,8 +251,8 @@ public static class LightManager {
                 if (shell is null) continue;
                 if (!shell.Properties.Visuals.HasFlag(VisualFlags.Flaming)) continue;
 
-                var color = Color.Orange;
-                GameplayLights.AddShellLight(shell.Position3D - Vector3.Normalize(shell.Velocity3D) * 20f, color);
+                var color = shell.Properties.FlameColor;
+                GameplayLights.AddShellLight(shell.Position3D - Vector3.Normalize(shell.Velocity3D) * 20f, color, rule);
             }
         }
 
@@ -258,7 +262,7 @@ public static class LightManager {
                 if (!mine.RedTick) continue;
 
                 // only creates a light when flashing red
-                GameplayLights.AddMineLight(mine);
+                GameplayLights.AddMineLight(mine, rule);
             }
         }
 
@@ -267,7 +271,7 @@ public static class LightManager {
                 if (explosion is null)
                     continue;
                 var life = 1f - explosion.LifeTime / MathF.Max(explosion.LingerDuration, 1f);
-                GameplayLights.AddExplosionLight(explosion.Position3D, explosion.MaxScale * Explosion.MAGIC_EXPLOSION_NUMBER, life);
+                GameplayLights.AddExplosionLight(explosion.Position3D, explosion.MaxScale * Explosion.MAGIC_EXPLOSION_NUMBER, life, rule);
             }
         }
     }

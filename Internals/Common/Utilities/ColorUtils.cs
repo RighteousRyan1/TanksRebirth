@@ -181,4 +181,10 @@ public static class ColorUtils {
     }
     /// <summary>Converts normalized RGB to RGB.</summary>
     public static Color ToColor(this Vector3 vec) => new((int)Math.Round(vec.X * 255), (int)Math.Round(vec.Y * 255), (int)Math.Round(vec.Z * 255));
+
+    public static Color GetPixel(this Texture2D tex, int x, int y) {
+        var pixel = new Color[1];
+        tex.GetData(0, new Rectangle(x, y, 1, 1), pixel, 0, 1);
+        return pixel[0];
+    }
 }

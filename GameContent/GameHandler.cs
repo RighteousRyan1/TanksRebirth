@@ -1,5 +1,7 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Linq;
 using TanksRebirth.Achievements;
@@ -18,6 +20,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.DynamicLighting;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -31,8 +34,6 @@ public class GameHandler {
 
     public const int MAX_AI_TANKS = 60;
     public const int MAX_PLAYERS = 4;
-    //
-    // public const int MAX_PARTICLES = 15000; // removed for now
 
     public delegate void PreLightingEndFrame();
     public static event PreLightingEndFrame OnPreLighting;

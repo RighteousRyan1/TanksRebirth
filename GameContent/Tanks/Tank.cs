@@ -1,27 +1,28 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Utilities;
-using System.Linq;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using tainicom.Aether.Physics2D.Dynamics;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Cosmetics;
-using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.Net;
-using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.Graphics.Drawing;
-using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Tanks.AI;
-using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Drawing;
+using TanksRebirth.Graphics.DynamicLighting;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Tanks;
 public abstract class Tank(bool ignoresRegister) {
@@ -47,6 +48,8 @@ public abstract class Tank(bool ignoresRegister) {
         public const float AI_AMB_MUL = 0.9f;
     }
 
+    public const float SPEED_SCALING = 0.55f;
+
     public static bool ShowTeamVisuals = false;
 
     protected Color? TeamColor(ModelMesh mesh) => ShowTeamVisuals && Team != TeamID.NoTeam && mesh.Name == "Chassis" && TeamID.TeamColors.TryGetValue(Team, out var color) ? color : null;
@@ -55,6 +58,8 @@ public abstract class Tank(bool ignoresRegister) {
     public const float TNK_WIDTH = 25;
     public const float TNK_HEIGHT = 25;
     public const float TNK_DMG_COLL_Y = 11.0f;
+    /// <summary>How far in front of the tank (along the turret) a shell spawns. Shot paths start here too.</summary>
+    public const float SHELL_SPAWN_DISTANCE = 20f;
 
     #region TexPack
 
@@ -512,7 +517,7 @@ public abstract class Tank(bool ignoresRegister) {
         KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaFrames);
 
         // magical multiplication number to maintain values like 1.8 max speed with the original game
-        Physics.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
+        Physics.LinearVelocity = (Velocity * SPEED_SCALING + KnockbackVelocity) / UNITS_PER_METER;
 
         // try to make positive. i hate game
         DrawParams.World = Matrix.CreateScale(DrawParams.Scaling)
@@ -703,7 +708,8 @@ public abstract class Tank(bool ignoresRegister) {
 
         TankGame.MainThreadTasks.Enqueue(DoShootParticles);
 
-        var force = (Position - TurretPosition) * Properties.Recoil;
+        // normalize?
+        var force = Vector2.Normalize(Position - TurretPosition) * Properties.Recoil;
         KnockbackVelocity = force / UNITS_PER_METER;
 
         if (!fxOnly) {
@@ -763,7 +769,7 @@ public abstract class Tank(bool ignoresRegister) {
             shell.Properties.Homing = Properties.ShellHoming;
 
             var direction = MathUtils.DirectionOf(TurretRotation + newAngle);
-            shell.Position = Position + direction * 20;
+            shell.Position = Position + direction * SHELL_SPAWN_DISTANCE;
             shell.Velocity = direction * Properties.ShellSpeed;
             shell.RicochetsRemaining = Properties.RicochetCount;
 
@@ -773,8 +779,24 @@ public abstract class Tank(bool ignoresRegister) {
     public void DoShootParticles() {
         // same spot and direction the shells come out of in ShootSpread
         var direction = MathUtils.DirectionOf(TurretRotation);
-        var muzzle = Position + direction * 20;
-        GameHandler.Particles.MakeMuzzleFlash(new Vector3(muzzle.X, TurretPosition3D.Y, muzzle.Y), direction.ExpandZ());
+        var muzzle = Position + direction * SHELL_SPAWN_DISTANCE;
+        var muzzle3d = new Vector3(muzzle.X, TurretPosition3D.Y, muzzle.Y);
+        GameHandler.Particles.MakeMuzzleFlash(muzzle3d, direction.ExpandZ());
+
+        // should this go in MakeMuzzleFlash or stay out?
+        float lifetime = 30f;
+        if (GameplayLights.CreateTempLight<PointLight>(GameHandler.Particles, TurretPosition3D, lifetime, out var light, out var plight)) {
+            light.Priority = 1;
+            light.Intensity = 5;
+            light.Color = Color.Orange;
+            light.Range = 25f;
+            light.CastsShadows = false; // doesn't look good with casted shadows ngl, so always false
+
+            plight.UpdateCallback += (a) => {
+                plight.Position = TurretPosition3D;
+                light.Intensity -= 0.25f * RuntimeData.DeltaFrames;
+            };
+        }
     }
 
     /// <summary>Make this <see cref="Tank"/> lay a <see cref="Mine"/>.</summary>
@@ -902,7 +924,6 @@ public abstract class Tank(bool ignoresRegister) {
     const float TREAD_HALF_WIDTH = 8f;
     // a number representing the max distance before distance is tossed out
     const float TREAD_TELEPORT_DIST = 40f; 
-    const float TREAD_MIN_MOVE_SQ = 1e-6f;
     const int TREAD_MAX_PER_FRAME = 8;
     const float TREAD_SOUND_INTERVAL = 4f;
 
@@ -951,7 +972,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         var vsq = Velocity.LengthSquared();
         bool driving = vsq > MIN_DRIVE;
-        float moved = driving && distSq > TREAD_MIN_MOVE_SQ ? MathF.Sqrt(distSq) : 0f;
+        float moved = driving && distSq > MathUtils.VERY_SMALL ? MathF.Sqrt(distSq) : 0f;
         float turned = MathF.Abs(dRot) * TREAD_HALF_WIDTH * scale;
         float travelled = moved + turned;
 
@@ -1012,5 +1033,103 @@ public abstract class Tank(bool ignoresRegister) {
         DrawParamsTank.Model!.Root.Transform = DrawParams.World;
 
         DrawParamsTank.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+    }
+
+    // PHYSICS STUFF, FOR NOW.
+    static readonly object _rayCastLock = new();
+    /// <summary>Casts a ray through the physics world (in world units). Returns where it first hits something, or null.</summary>
+    public static Vector2? RayCast(Vector2 start, Vector2 end, Func<Fixture, bool>? ignore = null) {
+        Vector2? closest = null;
+        lock (_rayCastLock) {
+            CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
+                if (ignore?.Invoke(fixture) == true) return -1f;
+                closest = point * UNITS_PER_METER;
+                return fraction; // clips the ray, so the last hit reported is the closest
+            }, start / UNITS_PER_METER, end / UNITS_PER_METER);
+        }
+        return closest;
+    }
+
+    // if raycasting based on radii, divide what is input to distance by two
+    /// <summary>Performs a raycast to check for blocking objects, with respect to <see cref="Tank.ChassisRotation"/>.</summary>
+    /// <param name="distance">The distance ahead of the tank, in world units, not physics units.</param>
+    /// <param name="offset">The angle offset for the check.</param>
+    /// <param name="callback">Callback data to do custom logic with the raycast result.</param>
+    /// <returns>Whether or not the ray had an intersection.</returns>
+    public bool RaycastAheadOfTank(float distance, float offset = 0f, RayCastReportFixtureDelegate? callback = null) {
+        bool isPathBlocked = false;
+
+        // the tank by default faces down, so positive Y.
+        var dir = MathUtils.DirectionOf(ChassisRotation + offset);
+
+        // switch to using game units if necessary?
+        var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
+        var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
+
+        // exceptions thrown here, "Stack is empty", assuming race conditions? (and sometimes nullreference?)
+        lock (_rayCastLock) {
+            CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
+                callback?.Invoke(fixture, point, normal, fraction);
+
+                if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
+                    isPathBlocked = true;
+                }
+
+                return fraction;
+                // divide by 2 because it's a radius, i think
+            }, Physics.Position, endpoint);
+        }
+        return isPathBlocked;
+    }
+    /// <summary>Performs a raycast in all 4 cardinal directions of the tank (rotation-agnostic).</summary>
+    /// <param name="distance">The length of the raycast.</param>
+    /// <param name="callback">Code-callback for performing special actions based on the raycast.</param>
+    /// <param name="offset">The angle offset.</param>
+    /// <param name="ignoreDirs">Which directions to not cast a ray towards.</param>
+    /// <returns>A direction with the corresponding direction vector.</returns>
+    public (CollisionDirection Direction, Vector2 Vec)[] RayCastCardinals(float distance, RayCastReportFixtureDelegate? callback = null, float offset = 0f, params CollisionDirection[] ignoreDirs) {
+        // directions denoted by their real directions are good directions
+        var goodDirs = new (CollisionDirection, Vector2)[4];
+
+        for (int i = 0; i < 4; i++) {
+            // add 1 because we don't want "None"
+            var collDir = (CollisionDirection)(i + 1);
+            if (ignoreDirs.Contains(collDir))
+                continue;
+
+            // start raycast going down (positive Y axis)
+            var dir = Vector2.UnitY.RotatedBy(i * MathHelper.PiOver2 + offset);
+            goodDirs[i] = (collDir, dir);
+
+            // Value_ToWiiTanksUnits...?
+            var gameUnits = GameUtils.TanksUnits(TNK_WIDTH + distance);
+            var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
+
+            lock (_rayCastLock) {
+                // check in the 4 cardinal directions if mine-laying is ok.
+                CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
+                    callback?.Invoke(fixture, point, normal, fraction);
+
+                    if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
+                        // Console.WriteLine("hit along ray: " + fraction + "(" + collDir + ")");
+                        goodDirs[i] = (CollisionDirection.None, Vector2.Zero);
+                    }
+                    else {
+                        //Console.WriteLine($"ignoring... not implemented. ({fixture.Body.Tag})");
+                        return -1f;
+                    }
+                    //Console.WriteLine("Hit fixture: " + fixture.Body.Tag);
+                    //Console.WriteLine("At point: " + point);
+                    //Console.WriteLine("With normal: " + normal);
+                    //Console.WriteLine("Fraction along ray: " + fraction);
+                    // Console.WriteLine();
+
+                    return fraction;
+                    // divide by 2 because it's a radius, j think
+                }, Physics.Position, endpoint);
+            }
+        }
+
+        return goodDirs;
     }
 }

@@ -1,135 +1,74 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <PublishReadyToRun>false</PublishReadyToRun>
-    <TieredCompilation>false</TieredCompilation>
-    <AssemblyVersion>1.9</AssemblyVersion>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Nullable>enable</Nullable>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Icon.ico</ApplicationIcon>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Icon.ico" />
-    <None Remove="Icon.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Icon.ico" />
-    <EmbeddedResource Include="Icon.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <MonoGameContentReference Include="Content\Content.mgcb" />
-  </ItemGroup>
-  <ItemGroup>
-    <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Aether.Physics2D.MG" Version="1.6.1" />
-    <PackageReference Include="FontStashSharp.MonoGame" Version="1.2.8" />
-    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
-    <PackageReference Include="LiteNetLib" Version="0.9.5.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="5.6.0" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4.1" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4.1" />
-    <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="StbVorbisSharp" Version="1.22.4" />
-    <PackageReference Include="System.Management" Version="9.0.0" />
-    <PackageReference Include="TextCopy" Version="6.1.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="DiscordRPC">
-      <HintPath>deps\DiscordRPC.dll</HintPath>
-    </Reference>
-    <Reference Include="MeltySynth">
-      <HintPath>deps\MeltySynth.dll</HintPath>
-    </Reference>
-    <Reference Include="Octokit">
-      <HintPath>deps\Octokit.dll</HintPath>
-    </Reference>
-    <Reference Include="Steamworks.NET">
-      <HintPath>deps\Steamworks.NET.dll</HintPath>
-    </Reference>
-    <Reference Include="WiimoteLib">
-      <HintPath>deps\WiimoteLib.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <!--Copy the contents of this folders to the output directory, for reference, https://stackoverflow.com/questions/44374074/ -->
-    <Content Include="Content/Assets/fonts/*.*;&#xD;&#xA;Content/Assets/music/**/*.*;&#xD;&#xA;Content/Assets/sounds/**/*.*;&#xD;&#xA;Content/Assets/fanfares/**/*.*;&#xD;&#xA;Content/Assets/mainmenu/**/*.*;&#xD;&#xA;Content/Assets/textures/**/*.*;&#xD;&#xA;Content/Assets/*.png;&#xD;&#xA;Content/Assets/models/logo/**/*.png;&#xD;&#xA;Content/Assets/models/scene/**/*.png;&#xD;&#xA;Content/Assets/models/rebirth_tanks/**/*.png;&#xD;&#xA;Content/Assets/cosmetics/**/*.png;&#xD;&#xA;Content/Assets/christmas/**/*.png;&#xD;&#xA;Content/Assets/halloween/**/*.png;&#xD;&#xA;Content/Assets/models/cosmetics/*.png;">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <None Update="Localization\credits.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\de_DE.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\de_DE.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\en_US.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\en_US.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\es_ES.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\es_ES.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\fr_FR.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\fr_FR.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\ja_JP.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\ja_JP.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\pl_PL.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\pl_PL.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\pt_BR.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\pt_BR.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\ru_RU.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\ru_RU.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\sv_SV.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\sv_SV.loc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="steam_api64.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="steam_appid.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<PublishReadyToRun>false</PublishReadyToRun>
+		<TieredCompilation>false</TieredCompilation>
+		<AssemblyVersion>1.9.1</AssemblyVersion>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<Nullable>enable</Nullable>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<ApplicationIcon>Icon.ico</ApplicationIcon>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<MonoGameContentReference Include="Content\Content.mgcb" />
+		<TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Aether.Physics2D.MG" Version="1.6.1" />
+		<PackageReference Include="FontStashSharp.MonoGame" Version="1.2.8" />
+		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
+		<PackageReference Include="LiteNetLib" Version="0.9.5.2" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="5.6.0" />
+		<PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4.1" />
+		<PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4.1" />
+		<PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="StbVorbisSharp" Version="1.22.4" />
+		<PackageReference Include="System.Management" Version="9.0.0" />
+		<PackageReference Include="TextCopy" Version="6.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="DiscordRPC" HintPath="deps\DiscordRPC.dll" />
+		<Reference Include="MeltySynth" HintPath="deps\MeltySynth.dll" />
+		<Reference Include="Octokit" HintPath="deps\Octokit.dll" />
+		<Reference Include="Steamworks.NET" HintPath="deps\Steamworks.NET.dll" />
+		<Reference Include="WiimoteLib" HintPath="deps\WiimoteLib.dll" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="Icon.ico;Icon.bmp" />
+		<EmbeddedResource Include="Icon.ico;Icon.bmp" />
+	</ItemGroup>
+
+	<!-- Copied to output directory -->
+	<ItemGroup>
+		<Content Include="
+        Content/Assets/fonts/*.*;
+        Content/Assets/music/**/*.*;
+        Content/Assets/sounds/**/*.*;
+        Content/Assets/fanfares/**/*.*;
+        Content/Assets/mainmenu/**/*.*;
+        Content/Assets/textures/**/*.*;
+        Content/Assets/*.png;
+        Content/Assets/models/logo/**/*.png;
+        Content/Assets/models/scene/**/*.png;
+        Content/Assets/models/rebirth_tanks/**/*.png;
+        Content/Assets/models/cosmetics/*.png;
+        Content/Assets/cosmetics/**/*.png;
+        Content/Assets/christmas/**/*.png;
+        Content/Assets/halloween/**/*.png;
+		Content/MenuMissions/*.mission"
+			CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Localization\credits.txt;Localization\*.json" CopyToOutputDirectory="PreserveNewest" />
+		<None Update="Localization\*.loc;steam_api64.dll;steam_appid.txt" CopyToOutputDirectory="Always" />
+	</ItemGroup>
 </Project>

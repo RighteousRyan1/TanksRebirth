@@ -13,6 +13,7 @@ using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.UI;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
@@ -81,7 +82,7 @@ public static partial class MainMenuUI {
         return () => _panelPosition + new Vector2(padding, _panelHeaderHeight / 4);
     }
 
-    private static Func<Vector2> GetNextButtonPosition(dynamic previousButton, float padding) {
+    private static Func<Vector2> GetNextButtonPosition(UIElement previousButton, float padding) {
         return () => previousButton.Position + new Vector2(previousButton.Size.X + padding, 0);
     }
 
@@ -89,29 +90,34 @@ public static partial class MainMenuUI {
         var uiColor = Color.LightGray;
         var padding = 10f.ToResolutionX();
         var buttonSize = GetButtonSize(padding);
+
+        var data = TankGame.Settings.MultiplayerInfo;
         
         UsernameInput = new(font, uiColor, 1f, 15) {
             IsVisible = false,
-            DefaultString = "Username"
+            DefaultString = "Username",
+            Text = data.Username
         };
         UsernameInput.SetDimensions(GetFirstButtonPosition(padding), buttonSize);
 
         IPInput = new(font, uiColor, 1f, 15) {
             IsVisible = false,
-            DefaultString = "Server IP address"
+            DefaultString = "Server IP address",
+            Text = data.LastUsedIp
         };
         IPInput.SetDimensions(GetNextButtonPosition(UsernameInput, padding), buttonSize);
 
         PortInput = new(font, uiColor, 1f, 5) {
             IsVisible = false,
-            DefaultString = "Server Port"
+            DefaultString = "Server Port",
+            Text = data.LastUsedPort == 0 ? string.Empty : data.LastUsedPort.ToString()
         };
         PortInput.SetDimensions(GetNextButtonPosition(IPInput, padding), buttonSize);
 
         PasswordInput = new(font, uiColor, 1f, 10) {
             IsVisible = false,
             DefaultString = "Server Password",
-            Tooltip = "Empty = none"
+            Tooltip = "Empty = No Password"
         };
         PasswordInput.SetDimensions(GetNextButtonPosition(PortInput, padding), buttonSize);
         DisconnectButton = new("Disconnect", font, uiColor, 1f) {
@@ -132,7 +138,7 @@ public static partial class MainMenuUI {
 
         ConnectToServerButton = new(TankGame.GameLanguage.Menu.ConnectToServer, font, uiColor) {
             IsVisible = false,
-            Tooltip = "Connect to the written IP and Port in the form of ip:port"
+            Tooltip = "Connect to the written IP and Port"
         };
         ConnectToServerButton.SetDimensions(GetNextButtonPosition(ServerNameInput, padding), buttonSize);
         ConnectToServerButton.OnLeftClick = (uiButton) => {
@@ -152,14 +158,24 @@ public static partial class MainMenuUI {
                 return;
             }
 
-            if (int.TryParse(PortInput.GetRealText(), out var port)) {
+            var validPort = int.TryParse(PortInput.GetRealText(), out var port);
+
+            if (!validPort) {
+                SoundPlayer.SoundError();
+                ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+                return;
+            }
+            else {
                 Client.CreateClient(UsernameInput.GetRealText());
                 Client.AttemptConnectionTo(IPInput.GetRealText(), port, PasswordInput.GetRealText());
             }
-            else {
-                SoundPlayer.SoundError();
-                ChatSystem.SendMessage("That is not a valid port.", Color.Red);
-            }
+
+            // la diddy da
+            TankGame.Settings.MultiplayerInfo = new() {
+                Username = UsernameInput.GetRealText(),
+                LastUsedIp = IPInput.GetRealText(),
+                LastUsedPort = port
+            };
         };
 
         CreateServerButton = new(TankGame.GameLanguage.Menu.CreateServer, font, Color.WhiteSmoke) {
@@ -185,8 +201,14 @@ public static partial class MainMenuUI {
                 ChatSystem.SendMessage("The IP address is not valid.", Color.Red);
                 return;
             }
+            var validPort = int.TryParse(PortInput.GetRealText(), out var port);
 
-            if (int.TryParse(PortInput.GetRealText(), out var port)) {
+            if (!validPort) {
+                SoundPlayer.SoundError();
+                ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+                return;
+            }
+            else {
                 Server.CreateServer();
 
                 NetPlay.ServerName = ServerNameInput.GetRealText() == string.Empty ? "Unnamed" : ServerNameInput.GetRealText();
@@ -199,10 +221,12 @@ public static partial class MainMenuUI {
 
                 StartMPGameButton.IsVisible = true;
             }
-            else {
-                SoundPlayer.SoundError();
-                ChatSystem.SendMessage("That is not a valid port.", Color.Red);
-            }
+
+            TankGame.Settings.MultiplayerInfo = new() {
+                Username = UsernameInput.GetRealText(),
+                LastUsedIp = IPInput.GetRealText(),
+                LastUsedPort = port
+            };
 
         };
         StartMPGameButton = new(TankGame.GameLanguage.Menu.Play, font, uiColor) {
@@ -253,11 +277,11 @@ public static partial class MainMenuUI {
     public static void DrawMPMenu(GameTime gameTime) {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (Server.ConnectedClients is null) {
+        /*if (Server.ConnectedClients is null) {
             Server.ConnectedClients = new Client[4];
             NetPlay.ServerName = "ServerName";
             for (int i = 0; i < 4; i++) Server.ConnectedClients[i] = new(i, "Client" + i);
-        }
+        }*/
 
         _mpOpenProgress += dt;
         _mpOpenProgress = MathHelper.Clamp(_mpOpenProgress, 0f, 1f);

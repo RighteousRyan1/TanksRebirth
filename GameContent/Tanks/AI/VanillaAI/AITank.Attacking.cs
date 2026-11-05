@@ -91,7 +91,7 @@ public partial struct VanillaAISystem {
         ObstacleAwarenessMineReal = 3 * Owner.Parameters.ObstacleAwarenessMine;
 
         var dist = ObstacleAwarenessMineReal / 2;
-        var dirs = Owner.RayCastCardinals(dist, (fixture, point, normal, fraction) => {
+        Owner.RayCastCardinals(dist, (fixture, point, normal, fraction) => {
             if (fixture.Body.Tag is Block b) {
                 if (!nearDestructible)
                     nearDestructible = b.Properties.IsDestructible;
@@ -103,75 +103,6 @@ public partial struct VanillaAISystem {
             // this wizardry goes beyond me
         }, Owner.ChassisRotation - MathHelper.Pi);
 
-        int goodDirsCount = 0;
-        for (int i = 0; i < dirs.Length; i++) {
-            if (dirs[i].Direction != CollisionDirection.None) {
-                goodDirsCount++;
-            }
-        }
-
-        if (goodDirsCount == 0) return;
-
-        // Check for mines contamination
-        // This loop is O(4 * Mines), usually small.
-        bool isMineLayOk = false;
-        var validIndex = -1;
-
-        for (int i = 0; i < dirs.Length; i++) {
-            if (dirs[i].Direction == CollisionDirection.None) continue;
-
-            var pos = dirs[i].Vec * dist;
-            bool contaminated = false;
-
-            for (int j = 0; j < Mine.AllMines.Length; j++) {
-                var mine = Mine.AllMines[j];
-                if (mine is null) continue;
-
-                if (GameUtils.TanksDistance(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.TanksUnits(70)) {
-                    contaminated = true;
-                    break;
-                }
-            }
-
-            if (!contaminated) {
-                isMineLayOk = true;
-                validIndex = i; // Just pick the last valid one for now or random logic below
-            }
-            else {
-                dirs[i].Direction = CollisionDirection.None;
-                goodDirsCount--;
-            }
-        }
-
-        /*var goodDirs = dirs.Where(x => x.Direction != CollisionDirection.None).ToArray();
-
-        for (int i = 0; i < goodDirs.Length; i++) {
-            var pos = goodDirs[i].Vec * dist;
-            for (int j = 0; j < Mine.AllMines.Length; j++) {
-                var mine = Mine.AllMines[j];
-                if (mine is null) continue;
-
-                // check against radius. ensures the tank doesn't move towards an already laid mine
-                // 70 is the magic number for the default mine radius, multiplied by the scalar
-                if (GameUtils.TanksDistance(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.TanksUnits(70)) {
-                    // Console.WriteLine("Direction " + dirs[i].Direction + " is contaminated");
-                    goodDirs[i].Direction = CollisionDirection.None;
-                }
-            }
-        }*/
-
-        /*Console.WriteLine();
-        Console.WriteLine($"Opportunity: " +
-            $"\nIsOk:             {isMineLayOk}" +
-            $"\nDirsNoObstacle:   {string.Join(", ", goodDirs.Select(x => x.Direction))}" +
-            $"\nNearDestructible: {nearDestructible}" +
-            $"\nNewOpportunity:   {CurrentRandomMineLay}");*/
-
-        //Console.WriteLine(isMineLayOk ? $"Mine-lay is ok! ({string.Join(", ", dirs.Where(x => x.Direction != CollisionDirection.None).Select(x => x.Direction))})" : "Mine-lay is not ok.");
-
-        // don't lay a mine if the checks fail
-        if (!isMineLayOk) return;
-
         // SmartMineLaying was removed in favor
         // attempt via an opportunity to lay a mine
         var random = Client.ClientRandom.NextFloat(0, 1);
@@ -181,19 +112,10 @@ public partial struct VanillaAISystem {
 
         if (!randomSuccess) return;
 
-        Owner.LayMine();
+        // original: the mine is only laid if an escape direction exists (Tanks_CPUTankFleeMineDirFind)
+        if (!CanEscapeOwnMine()) return;
 
-        // Pick a random valid direction
-        int skips = Client.ClientRandom.Next(0, goodDirsCount);
-        for (int i = 0; i < dirs.Length; i++) {
-            if (dirs[i].Direction != CollisionDirection.None) {
-                if (skips == 0) {
-                    Owner.DesiredChassisRotation = MathUtils.RotationOf(dirs[i].Vec);
-                    break;
-                }
-                skips--;
-            }
-        }
+        Owner.LayMine();
     }
     // TODO: make view distance, and make tanks in path public
     /// <summary>Updates meta-data related to aiming and shooting. The tank will not fire if <see cref="DoAttack"/> is false, but meta-data will still update.</summary>
@@ -218,14 +140,14 @@ public partial struct VanillaAISystem {
 
         var turretDir = MathUtils.DirectionOf(Owner.TurretRotation);
         if (Owner.Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(turretDir, out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
+            tanksDef = GetTanksInPath(turretDir, out var ricP, out var tnkCol, offset: Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
             if (ricP.Length > 0 && GameUtils.TanksDistance(ricP[^1], Owner.Position) < 150f)
                 tooCloseToExplosiveShell = true;
         }
         else {
             tanksDef = GetTanksInPath(
                 turretDir,
-                out var ricP, out var tnkCol, offset: Vector2.UnitY * 20,
+                out var ricP, out var tnkCol, offset: Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE,
                 missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
 
             if (tanksDef.Count != Owner.TanksSpotted.Length)
@@ -309,7 +231,7 @@ public partial struct VanillaAISystem {
         }
         // tanks wont shoot when fleeing from a mine
         // could move these conditions upwards...
-        if (ClosestDanger is Mine && Owner.Parameters.CantShootWhileFleeing)
+        if (AttackPrevented)
             return;
 
         if (!DoAttack) return;
@@ -435,10 +357,12 @@ public partial struct VanillaAISystem {
         public float EndRadius;
         public Vector2 Direction;
     }*/
-    public List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
+    public readonly List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
             bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
-        const int MAX_PATH_UNITS = 1000;
-        const int PATH_UNIT_LENGTH = 8;
+        // upper bound on frames simulated. the original caps at 3 segments of 250 frames.
+        const int MAX_PATH_FRAMES = 1000;
+        // a step used to be 8 units. kept so DetectionForgiveness* still means the same thing.
+        const float FORGIVENESS_UNIT = 8f;
 
         _tanksInPathBuffer.Clear();
         _ricochetPointsBuffer.Clear();
@@ -448,116 +372,39 @@ public partial struct VanillaAISystem {
 
         var whitePixel = TextureGlobals.Pixels[Color.White];
 
-        Vector2 pathPos = Owner.Position + offset.RotatedBy(Owner.TurretRotation);
-        pathDir *= PATH_UNIT_LENGTH;
-
-        int ricochetCount = 0;
-        int uninterruptedIterations = 0;
+        var sim = ShellSim.From(Owner, Owner.Position + offset.RotatedBy(Owner.TurretRotation), pathDir);
 
         bool teleported = false;
-        int tpTriggerIndex = -1;
-        Vector2 teleportedTo = Vector2.Zero;
+        Vector2? teleportTo = null;
 
-        var pathHitbox = new Rectangle() {
-            Width = Shell.COLL_RECT_DIM,
-            Height = Shell.COLL_RECT_DIM
-        };
-
-        // TODO: find out why marine tanks don't shoot in shotguns mode
-        // -> by that same coin, fix shot paths not drawing
-
-        for (int i = 0; i < MAX_PATH_UNITS; i++) {
-            uninterruptedIterations++;
-
-            // World bounds check
-            if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
-                _ricochetPointsBuffer.Add(pathPos);
-                pathDir.X *= -1;
-                ricochetCount++;
-                if (doBounceReset) uninterruptedIterations = 0;
-            }
-            else if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
-                _ricochetPointsBuffer.Add(pathPos);
-                pathDir.Y *= -1;
-                ricochetCount++;
-                if (doBounceReset) uninterruptedIterations = 0;
-            }
-
-            // setup hitbox
-            // path used to be XY - 5, WH = 8
-            pathHitbox.X = (int)pathPos.X - Shell.COLL_RECT_DIM / 2;
-            pathHitbox.Y = (int)pathPos.Y - Shell.COLL_RECT_DIM / 2;
-
-            Vector2 dummy = Vector2.Zero;
-            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummy, out var dir, out var block, out bool corner, false, pattern);
-            if (corner) break;
-
-            if (block is not null) {
-                if (block.Type == BlockID.Teleporter && !teleported) {
-                    var dest = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
-                    if (dest is not null) {
-                        teleported = true;
-                        teleportedTo = dest.Position;
-                        tpTriggerIndex = i + 1;
-                    }
-                }
-                else if (block.Properties.AllowShotPathBounce) {
-                    _ricochetPointsBuffer.Add(pathPos);
-                    ricochetCount += block.Properties.PathBounceCount;
-
-                    switch (dir) {
-                        case CollisionDirection.Up:
-                        case CollisionDirection.Down:
-                            pathDir.Y *= -1;
-                            break;
-                        case CollisionDirection.Left:
-                        case CollisionDirection.Right:
-                            pathDir.X *= -1;
-                            break;
-                    }
-
-                    if (doBounceReset) uninterruptedIterations = 0;
-                }
-            }
-
+        for (int i = 0; i < MAX_PATH_FRAMES; i++) {
             // delay teleport until next frame
-            if (teleported && i == tpTriggerIndex) {
-                pathPos = teleportedTo;
+            if (teleportTo is { } to) {
+                sim.Position = to;
+                teleportTo = null;
             }
-
-            // check destroy conditions
-            bool hitsInstant = i == 0 && Block.AllBlocks.Any(x => x != null && x.Hitbox.Intersects(pathHitbox) && pattern(x));
-            bool hitsTooEarly = i < (int)Owner.Properties.ShellSpeed / 2 && ricochetCount > 0;
-            bool ricochetLimitReached = ricochetCount > Owner.Properties.RicochetCount;
-
-            if (hitsInstant || hitsTooEarly || ricochetLimitReached)
-                break;
 
             // check tanks BEFORE moving
-            float realMiss = 1f + missDist * 2 * uninterruptedIterations;
+            float realMiss = 1f + missDist * 2 * (sim.Distance / FORGIVENESS_UNIT);
 
-            // 11 = y offset of shells traveling
-            // var pathSphere = new BoundingSphere(new Vector3(pathPos.X, 11, pathPos.Y), realMiss);
-
-            var pos3d = new Vector3(pathPos.X, 11, pathPos.Y);
+            var pos3d = new Vector3(sim.Position.X, 11, sim.Position.Y);
             foreach (var enemy in GameHandler.AllTanks) {
                 if (enemy is null || enemy.IsDestroyed || _tanksInPathBuffer.Contains(enemy)) continue;
 
                 var hurtboxMiddle = (enemy.Hurtbox.Max + enemy.Hurtbox.Min) * 0.5f;
 
                 // 5 is just an eensy weensy magical number.
-                if (i > 5 && Vector3.DistanceSquared(pos3d, hurtboxMiddle) < realMiss * realMiss/*enemy.Hurtbox.Intersects(pathSphere)*/ /*GameUtils.TanksDistance(enemy.Position, pathPos) <= realMiss*/) {
-                    var pathAngle = pathDir.ToRotation();
-                    var toEnemy = pathPos.DirectionTo(enemy.Position).ToRotation();
+                if (i > 5 && Vector3.DistanceSquared(pos3d, hurtboxMiddle) < realMiss * realMiss) {
+                    var pathAngle = sim.Velocity.ToRotation();
+                    var toEnemy = sim.Position.DirectionTo(enemy.Position).ToRotation();
 
                     if (MathUtils.AbsoluteAngleBetween(pathAngle, toEnemy) >= MathHelper.PiOver2)
                         _tanksInPathBuffer.Add(enemy);
                 }
 
                 // this used to be a circle check, but it was probably overkill? we'll see
-                var closeEnough = GameUtils.TanksDistance(enemy.Position, pathPos) <= 8f; // realMiss;
-                if (closeEnough) {
-                    _tankPointsBuffer.Add(pathPos);
+                if (GameUtils.TanksDistance(enemy.Position, sim.Position) <= 8f) {
+                    _tankPointsBuffer.Add(sim.Position);
                     _tanksInPathBuffer.Add(enemy);
                 }
             }
@@ -566,7 +413,7 @@ public partial struct VanillaAISystem {
             if (draw) {
                 var screenPos = MatrixUtils.ConvertWorldToScreen(
                   Vector3.Zero,
-                  Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y),
+                  Matrix.CreateTranslation(sim.Position.X, 11, sim.Position.Y),
                   CameraGlobals.GameView,
                   CameraGlobals.GameProjection
                 );
@@ -584,7 +431,21 @@ public partial struct VanillaAISystem {
                 );
             }
 
-            pathPos += pathDir;
+            var result = sim.Step(pattern, out var block);
+
+            if (block is { Type: BlockID.Teleporter } && !teleported) {
+                var dest = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
+                if (dest is not null) {
+                    teleported = true;
+                    teleportTo = dest.Position;
+                }
+            }
+
+            if (result == ShellSimResult.Destroyed) break;
+            if (result == ShellSimResult.Ricochet) {
+                _ricochetPointsBuffer.Add(sim.Position);
+                if (doBounceReset) sim.Distance = 0f;
+            }
         }
 
         tankCollPoints = [.. _tankPointsBuffer];

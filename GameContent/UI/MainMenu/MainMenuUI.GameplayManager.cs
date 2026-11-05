@@ -44,48 +44,31 @@ public static partial class MainMenuUI {
         SceneManager.CleanupScene();
         Theme.Stop();
     }
-    static bool _failedFetch;
-    private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true) {
-        if (_failedFetch && _cachedMissions.Count == 0) return;
-
+    static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true) {
         // something here or after here is causing players' games to crash
-        try {
-            if (_firstTime) {
-                _firstTime = false;
-                var attempt = 1;
+        if (_firstTime) {
+            var initPath = Path.Combine("Content", "MenuMissions");
+            for (int i = 1; ; i++) {
+                var path = Path.Combine(initPath, $"Menu{i}.mission");
+                var exists = File.Exists(path);
+                if (!exists) break;
 
-            tryAgain:
-                var linkTry = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{attempt}.mission?raw=true";
-                var bytes = WebUtils.DownloadWebFile(linkTry, out var name1, out var status);
-
-                if (status == System.Net.HttpStatusCode.OK) {
-                    using var stream1 = new MemoryStream(bytes);
-
-                    _cachedMissions.Add(Mission.Read(stream1));
-                    attempt++;
-                    goto tryAgain;
-                }
-                else {
-                    TankGame.ClientLog.Write($"Unable to fetch map data via the internet (at map={attempt}). Status: {status}", RebirthLogLevel.Warn);
-                    _failedFetch = true;
-                    return;
-                }
+                _cachedMissions.Add(Mission.Load(path));
             }
-
-            var rand = Client.ClientRandom.Next(1, _cachedMissions.Count);
-
-            var mission = _cachedMissions[rand];
-
-            if (autoSetup) {
-                CampaignGlobals.LoadedCampaign.LoadMission(mission);
-                CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
-            }
-            if (loadForMenu)
-                curMenuMission = mission;
+            TankGame.ClientLog.Write($"Loaded {_cachedMissions.Count} missions from MenuMissions.", RebirthLogLevel.Info);
         }
-        catch {
-            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", RebirthLogLevel.Warn);
+
+        // now actually load a template
+        var rand = Client.ClientRandom.Next(1, _cachedMissions.Count);
+
+        var mission = _cachedMissions[rand];
+
+        if (autoSetup) {
+            CampaignGlobals.LoadedCampaign.LoadMission(mission);
+            CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
         }
+        if (loadForMenu)
+            curMenuMission = mission;
     }
 
 }

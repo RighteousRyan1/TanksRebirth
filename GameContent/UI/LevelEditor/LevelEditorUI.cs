@@ -403,36 +403,7 @@ public static partial class LevelEditorUI {
             var res = Dialog.FileOpen("mission,campaign,bin", TankGame.SaveDirectory);
             if (res.Path == null || !res.IsOk) return;
 
-            try {
-                var ext = Path.GetExtension(res.Path);
-
-                if (ext == ".mission") {
-                    //GameProperties.LoadedCampaign.LoadMission(Mission.Register(res.Path, null));
-                    //GameProperties.LoadedCampaign.SetupLoadedMission(true);
-                    Mission.LoadDirectly(Mission.Load(res.Path, null));
-                    //_loadedCampaign = null;
-                }
-                else if (ext == ".campaign") {
-                    loadedCampaign = Campaign.Load(res.Path);
-                    loadedCampaign.LoadMission(0);
-                    loadedCampaign.SetupLoadedMission(true);
-                    MissionName.Text = loadedCampaign.CachedMissions[0].Name;
-                    SetupMissionsBar(loadedCampaign);
-                    _missionButtons[0].Color = Color.SkyBlue;
-                    CampaignStartingLives.Text = loadedCampaign.MetaData.StartingLives.ToString();
-                }
-                else if (ext == ".bin") {
-                    var map = new WiiMap(res.Path);
-                    ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
-
-                    WiiMap.ApplyToGameWorld(map);
-                }
-
-                ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);
-            } catch (Exception e) when (!Debugger.IsAttached) {
-                ChatSystem.SendMessage("Failed to load.", Color.Red);
-                ChatSystem.SendMessage(e.Message, Color.Red);
-            }
+            FileTryOpen(res.Path);
         };
         LoadLevel.Tooltip = TankGame.GameLanguage.LevelEdit.LoadMissionFlavor;
         InitializeSaveMenu();
@@ -453,7 +424,48 @@ public static partial class LevelEditorUI {
         }
         OpenPeripherals();
         IsEditing = true;
+        TankGame.Instance.Window.FileDrop += OpenFile;
     }
+
+    static void FileTryOpen(string path) {
+        try {
+            var ext = Path.GetExtension(path);
+
+            if (ext == ".mission") {
+                Mission.LoadDirectly(Mission.Load(path, null));
+            }
+            else if (ext == ".campaign") {
+                loadedCampaign = Campaign.Load(path);
+                loadedCampaign.LoadMission(0);
+                loadedCampaign.SetupLoadedMission(true);
+                MissionName.Text = loadedCampaign.CachedMissions[0].Name;
+                SetupMissionsBar(loadedCampaign);
+                _missionButtons[0].Color = Color.SkyBlue;
+                CampaignStartingLives.Text = loadedCampaign.MetaData.StartingLives.ToString();
+            }
+            else if (ext == ".bin") {
+                var map = new WiiMap(path);
+                ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
+
+                WiiMap.ApplyToGameWorld(map);
+            }
+
+            ChatSystem.SendMessage($"Loaded '{Path.GetFileName(path)}'.", Color.White);
+        } catch (Exception e) when (!Debugger.IsAttached) {
+            ChatSystem.SendMessage("Failed to load.", Color.Red);
+            ChatSystem.SendMessage(e.Message, Color.Red);
+        }
+    }
+    static void OpenFile(object? sender, FileDropEventArgs e) {
+        // dont wanna handle more than one file for now.
+        if (e.Files.Length > 1) {
+            Alert("One level at a time.");
+            return;
+        }
+
+        FileTryOpen(e.Files[0]);
+    }
+
     public static void OpenForce() {
         IsActive = true;
         CameraGlobals.OverheadView = true;
@@ -488,6 +500,7 @@ public static partial class LevelEditorUI {
                 Name = "No Name"
             };
             SetupMissionsBar(loadedCampaign);
+            TankGame.Instance.Window.FileDrop -= OpenFile;
         }
         EditorTile.ResetSquares();
     }

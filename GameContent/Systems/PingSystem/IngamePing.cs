@@ -6,6 +6,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -34,6 +35,8 @@ public class IngamePing {
     public int Owner { get; private set; }
     public Color Color { get; set; }
     public static float MaxLifeTime = 60 * 10; // * seconds. 15 seconds was far too long imo
+
+    public static EasingFunction AnimEasing = EasingFunction.InOutSine;
 
     public Tank? TrackedTank;
 
@@ -120,11 +123,11 @@ public class IngamePing {
     }
 
     public void Render() {  
-        var easing = EasingFunction.InOutSine;
-        var fullEase = Easings.ComputeEase(easing, _scaleEase);
+        var fullEase = Easings.ComputeEase(AnimEasing, _scaleEase);
+        var world = Matrix.CreateScale(fullEase * 20f, fullEase * 20, fullEase * 30) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(Position);
         foreach (ModelMesh mesh in _model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = Matrix.CreateScale(fullEase * 20f, fullEase * 20, fullEase * 30) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(Position);
+                effect.World = world;
                 effect.View = CameraGlobals.GameView;
                 effect.Projection = CameraGlobals.GameProjection;
 
@@ -140,6 +143,8 @@ public class IngamePing {
                 effect.SpecularColor = Color.ToVector3();
                 effect.FogColor = Color.ToVector3();
             }
+            // mdksamkfmsaklf masklf ds
+            LightingSystem.Submit(mesh, world, CameraGlobals.GameView, CameraGlobals.GameProjection);
             mesh.Draw();
         }
         var matProj = MatrixUtils.ConvertWorldToScreen(Position + new Vector3(0, fullEase * 2 * 30, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);

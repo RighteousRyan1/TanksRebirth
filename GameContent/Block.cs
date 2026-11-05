@@ -296,7 +296,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         OnDestroy?.Invoke(this);
         Remove();
     }
-    public void DestructParticles() => GameHandler.Particles.MakeBlockBreak(Position3D);
+    public void DestructParticles() => GameHandler.Particles.MakeBlockBreak(this);
 
     public static float GetOffsetY(int stack, bool canStack) {
         // offset *= scale / BLOCK_DEF_SCALING;

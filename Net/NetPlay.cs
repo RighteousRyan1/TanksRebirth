@@ -257,9 +257,11 @@ public static class NetPlay {
             case PacketID.ChatMessage:
                 string msg = reader.GetString();
                 Color color = reader.GetColor();
-                string sender = reader.GetString();
+                var slot_p = reader.GetInt();
 
-                ChatSystem.SendMessage(msg, color, sender, true);
+                ChatSystem.RecentPlayerMsg[slot_p] = msg;
+                ChatSystem.RecentPlayerMsgLifetime[slot_p] = ChatSystem.LIFETIME_MAX;
+                ChatSystem.SendMessage(msg, color, Server.ConnectedClients![slot_p]?.Name ?? string.Empty, true);
                 break;
             case PacketID.TankDamage:
                 var hurtTankId = reader.GetInt();
@@ -500,11 +502,12 @@ public static class NetPlay {
             case PacketID.ChatMessage:
                 string msg = reader.GetString();
                 Color color = reader.GetColor();
-                string sender = reader.GetString();
+
+                if (!PeerMap.TryGetValue(peer.Id, out var slot_p)) break;
 
                 message.Put(msg);
                 message.Put(color);
-                message.Put(sender);
+                message.Put(slot_p);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
