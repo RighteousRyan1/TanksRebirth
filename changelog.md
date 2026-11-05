@@ -28,6 +28,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Fixes
 
 - Fixed bug where connecting clients into multiplayer saw extra dummy clients
+- Shell physics should now no longer differ across framerates OR different clients
+    - So with this, ghost shells should no longer exist, ever
 
 # TODO
 
