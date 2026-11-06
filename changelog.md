@@ -15,7 +15,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Fixes
 
-...
+- Fix some desync and animation issues in online multiplayer
 
 # TODO
 
