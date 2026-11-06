@@ -47,6 +47,8 @@ public static class IntermissionSystem {
     public static float BannerAlpha = 1f;
     public static float BonusBannerAlpha;
     public static bool ShouldDrawBonusBanner;
+    /// <summary>Set from the host's decision in <see cref="InitializeCountdowns"/>, so every client plays the bonus life animation (and gets the life), not only the host.</summary>
+    public static bool BonusLifePending;
 
     public static float Alpha;
     public static float ColorMultiplierForBorders = 0.35f;
@@ -247,19 +249,17 @@ public static class IntermissionSystem {
             ShouldFadeIn = true;
             SceneManager.CleanupScene();
 
-            // ShouldDrawBanner indicates there wasn't a bonus life to be had
-            if (ShouldDrawBanner) {
-                PlayOpeningFanfare();
-
-                ReplayTextAnimations();
-            }
-            // ensures it isnt the first load. hacky asf but whatever
-            // how can i de-hackify this?
-            else if (PlayerTank.KillCounts[0] > 0) {
+            if (BonusLifePending) {
+                BonusLifePending = false;
                 _forceBonusDrawToHeight = false;
                 ShouldDrawBonusBanner = true;
                 BonusLifeAnimator?.Restart();
                 BonusLifeAnimator?.Run();
+            }
+            else if (ShouldDrawBanner) {
+                PlayOpeningFanfare();
+
+                ReplayTextAnimations();
             }
         }
         // happens in the middle of full opaque-ness
@@ -306,6 +306,11 @@ public static class IntermissionSystem {
     }
 
     public static void InitializeCountdowns(bool oneUp = false) {
+        // a bonus life hides the mission banner until the bonus animation has played, on every machine
+        BonusLifePending = oneUp;
+        if (oneUp)
+            ShouldDrawBanner = false;
+
         // 10 seconds to complete the entire thing (14 if one up)
         // at 3 seconds in, the opening fanfare plays (but for some reason i gotta use 4 in this.)
         // at 220 frames left (3.66 seconds), the snare drums begin, and the scene is visible

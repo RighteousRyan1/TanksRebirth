@@ -50,6 +50,8 @@ public class IngamePing {
     }
 
     IngamePing(Vector3 position, int pingType, Color color, int owner) {
+        Owner = owner;
+
         foreach (var ping in AllIngamePings) {
             if (ping == null) continue;
 
@@ -95,16 +97,17 @@ public class IngamePing {
                 p.Alpha = 1f;
             }
 
-            if (_delete) {
-                AllIngamePings[Id] = null;
+            if (_delete)
                 p.Destroy();
-            }
         };
 
         AllIngamePings[Id] = this;
     }
 
     public void Update() {
+        if (_delete && AllIngamePings[Id] == this)
+            AllIngamePings[Id] = null;
+
         _lifeTime += RuntimeData.DeltaFrames;
 
         var easeSpeed = 0.05f;
