@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
@@ -144,7 +145,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         // maybe move this stuff to events within Modifiers.cs
         if (Modifiers.IsOn(Modifiers.BUMP))       tier++;
         if (Modifiers.IsOn(Modifiers.MONOCHROME)) tier = Modifiers.MonochromeValue;
-        if (Modifiers.IsOn(Modifiers.MASTER))     tier = Modifiers.VanillaToMasterModeConversions[tier];
+        if (Modifiers.IsOn(Modifiers.MASTER))     if (Modifiers.VanillaToMasterModeConversions.TryGetValue(tier, out int value)) tier = value;
 
         AiTankType = tier;
 
@@ -199,10 +200,9 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         properties.DestructionColor = TankDestructionColors[AiTankType];
 
         // initialize these so we don't divide by zero in modulus operations
-
-        CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
-        CurrentRandomMineLay = Client.ClientRandom.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
-        CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
+        CurrentRandomMove = PRNG.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
+        CurrentRandomMineLay = PRNG.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
+        CurrentRandomShoot = PRNG.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
 
         // unfortunately these are just miserable
         if (Modifiers.IsOn(Modifiers.EXTRA_CALCS))
@@ -282,9 +282,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         // might not account for level testing via the level editor?
         OnDestroy?.Invoke();
 
-        const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
-        SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, position: Position3D);
-
         TankDeathMark.Create(this, TankDeathMark.CheckColor.White);
 
         base.Destroy(context, netSend);
@@ -336,6 +333,11 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             // TODO: nonono, not yet. cosmetics are NOT ready
             // KeyDropLogic(PlayerID.PlayerTankColors[p.PlayerId]);
+        }
+        // only play sfx if in single player (and a player exists) or a player was the cause of death.
+        if (context.Source is PlayerTank || (!Client.IsConnected() && PlayerTank.ClientTank is not null)) {
+            const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
+            SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, position: Position3D);
         }
 
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))
@@ -652,6 +654,9 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
                 DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
             }
+
+            if (TargetTank is not null)
+                DrawUtils.DrawArrow(Position3D, Position3D + (TargetTank.Position3D - Position3D) * 0.9f, Color.Red, DrawParams.View, DrawParams.Proj);
 
             var floor = Vector3.Up * 0.3f;
             var origin = Position.ExpandZ() + floor;

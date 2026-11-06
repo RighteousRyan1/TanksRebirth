@@ -648,69 +648,78 @@ public class TankGame : Game {
             ReportError(e);
         }
     }
+
+    static int _numUpdates = 1;
+    public static int numberUpdates = 1;
     // FIXME: this method is a clusterfuck
     protected override void Update(GameTime gameTime) {
         try {
-            // resets every frame regardless of state
-            MouseUIHover = false;
+            numberUpdates = 1;
 
-            if (GameUI.Paused) MouseUIHover = true;
-            IngameConsole.Update(gameTime);
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Tab)) numberUpdates = 4;
 
-            /*if (Debugger.IsAttached) {
-                SteamworksUtils.SetSteamStatus("balls", "inspector");
-                SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
+            for (int i = 0; i < numberUpdates; i++) {
+                // resets every frame regardless of state
+                MouseUIHover = false;
 
-            }*/
-            /*if (InputUtils.KeyJustPressed(Keys.F11)) {
-                for (int i = 0; i < TankID.Collection.Count; i++) {
-                    var parameters = AIManager.GetAIParameters(i);
-                    var properties = AIManager.GetAITankProperties(i);
+                if (GameUI.Paused) MouseUIHover = true;
+                IngameConsole.Update(gameTime);
 
-                    var json = JsonSerializer.Serialize(
-                        new {
-                            Parameters = parameters,
-                            Properties = properties
-                        },
-                        new JsonSerializerOptions { WriteIndented = true, IncludeFields = true });
+                /*if (Debugger.IsAttached) {
+                    SteamworksUtils.SetSteamStatus("balls", "inspector");
+                    SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
 
-                    Directory.CreateDirectory("ai_params");
-                    File.WriteAllText("ai_params/tank_" + TankID.Collection.GetKey(i) + ".json", json);
+                }*/
+                /*if (InputUtils.KeyJustPressed(Keys.F11)) {
+                    for (int i = 0; i < TankID.Collection.Count; i++) {
+                        var parameters = AIManager.GetAIParameters(i);
+                        var properties = AIManager.GetAITankProperties(i);
+
+                        var json = JsonSerializer.Serialize(
+                            new {
+                                Parameters = parameters,
+                                Properties = properties
+                            },
+                            new JsonSerializerOptions { WriteIndented = true, IncludeFields = true });
+
+                        Directory.CreateDirectory("ai_params");
+                        File.WriteAllText("ai_params/tank_" + TankID.Collection.GetKey(i) + ".json", json);
+                    }
+                }*/
+
+                MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
+                MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
+
+                // mouse/cursor IsActive logic was here before. place back if it breaks somehow
+
+                // ensures player mouse is controlled properly... could be hacky?
+                // if (Client.IsConnected()) PlayerTank.KbPlayer = NetPlay.CurrentClient.Id;
+                if (Client.IsConnected())
+                    PlayerTank.KbPlayer = -2;
+
+                if (PlayerTank.KbPlayer > -1) {
+                    var numMice = InputUtils.NumConnectedInputs;
+                    // fallback if the mouse of the player being controlled by KBM is nonexistent
+                    if (numMice - 1 < PlayerTank.KbPlayer) {
+                        PlayerTank.KbPlayer = InputUtils.NumGamepadsConnected;
+                    }
+                    PlayerMice[PlayerTank.KbPlayer].Position = MouseUtils.MousePosition;
                 }
-            }*/
-
-            MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
-            MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
-
-            // mouse/cursor IsActive logic was here before. place back if it breaks somehow
-
-            // ensures player mouse is controlled properly... could be hacky?
-            // if (Client.IsConnected()) PlayerTank.KbPlayer = NetPlay.CurrentClient.Id;
-            if (Client.IsConnected())
-                PlayerTank.KbPlayer = -2;
-
-            if (PlayerTank.KbPlayer > -1) {
-                var numMice = InputUtils.NumConnectedInputs;
-                // fallback if the mouse of the player being controlled by KBM is nonexistent
-                if (numMice - 1 < PlayerTank.KbPlayer) {
-                    PlayerTank.KbPlayer = InputUtils.NumGamepadsConnected;
+                // more hacks, more hacks. but it works
+                else if (MainMenuUI.IsActive || PlayerTank.KbPlayer < -1 || GameUI.Paused) {
+                    var myClient = NetPlay.GetMyClientId();
+                    PlayerMice[0].Position = MouseUtils.MousePosition;
+                    PlayerMice[0].MouseColor = PlayerID.PlayerTankColors[myClient];
+                    PlayerMice[0].TrailColor = PlayerID.PlayerTankColorsBright[myClient];
                 }
-                PlayerMice[PlayerTank.KbPlayer].Position = MouseUtils.MousePosition;
-            }
-            // more hacks, more hacks. but it works
-            else if (MainMenuUI.IsActive || PlayerTank.KbPlayer < -1 || GameUI.Paused) {
-                var myClient = NetPlay.GetMyClientId();
-                PlayerMice[0].Position = MouseUtils.MousePosition;
-                PlayerMice[0].MouseColor = PlayerID.PlayerTankColors[myClient];
-                PlayerMice[0].TrailColor = PlayerID.PlayerTankColorsBright[myClient];
-            }
 
-            HandleLogic(gameTime);
+                HandleLogic(gameTime);
 
-            // runs everything queued so far. tasks queued while these run wait for the next frame
-            int queuedTasks = MainThreadTasks.Count;
-            while (queuedTasks-- > 0 && MainThreadTasks.TryDequeue(out var action))
-                action.Invoke();
+                // runs everything queued so far. tasks queued while these run wait for the next frame
+                int queuedTasks = MainThreadTasks.Count;
+                while (queuedTasks-- > 0 && MainThreadTasks.TryDequeue(out var action))
+                    action.Invoke();
+            }
 
         } catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e, false, false);

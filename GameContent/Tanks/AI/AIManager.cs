@@ -1039,7 +1039,7 @@ public static class AIManager {
     public static void ProcessAISection1() {
         long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds) / TankGame.numberUpdates;
             Thread.Sleep(sleepTime);
             StepAIClock(ref lastTimestamp);
 
@@ -1062,7 +1062,8 @@ public static class AIManager {
     public static void ProcessAISection2() {
         long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds) / TankGame.numberUpdates;
+            
             Thread.Sleep(sleepTime);
             StepAIClock(ref lastTimestamp);
 
@@ -1085,7 +1086,7 @@ public static class AIManager {
     public static void ProcessAISection3() {
         long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds) / TankGame.numberUpdates;
             Thread.Sleep(sleepTime);
             StepAIClock(ref lastTimestamp);
 

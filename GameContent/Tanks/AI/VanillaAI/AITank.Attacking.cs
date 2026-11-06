@@ -8,6 +8,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
@@ -34,8 +35,6 @@ public partial struct VanillaAISystem {
     readonly List<Vector2> _tankPointsBuffer = [];
     /// <summary>Updates turret directions/targets and updates tanks in the shoot path.</summary>
     public void HandleTurret() {
-        //TargetTurretRotation %= MathHelper.TwoPi;
-        //TurretRotation %= MathHelper.TwoPi;
         Owner.TargetTurretRotation = Owner.TargetTurretRotation.WrapTauAngle();
         Owner.TurretRotation = MathUtils.TurnTowards(Owner.TurretRotation, Owner.TargetTurretRotation, Owner.Parameters.TurretSpeed * TurretRotationMultiplier * AIManager.AIDeltaFrames);
 
@@ -53,27 +52,16 @@ public partial struct VanillaAISystem {
         UpdateAim();
 
         if (!TurretMovement.TimerSatisfies(Owner.Parameters.TurretMovementTimer)) return;
-        // if (!Behaviors[1].IsModOf(Parameters.TurretMovementTimer)) return;
 
         var targTurrRot = MathUtils.RotationOf(Owner.AimTarget - Owner.Position);
-        Owner.TargetTurretRotation = targTurrRot + Client.ClientRandom.NextFloat(-Owner.Parameters.AimOffset, Owner.Parameters.AimOffset);
+        Owner.TargetTurretRotation = targTurrRot + PRNG.NextFloat(-Owner.Parameters.AimOffset, Owner.Parameters.AimOffset);
     }
-    /// <summary>Attempts to lay a mine based on various conditions and environmental factors.</summary>
-    /// <remarks>This method evaluates multiple conditions to determine whether a mine can be laid, including:
-    /// <list type="bullet"> <item>Whether the tank is capable of laying mines.</item> <item>Whether the mine limit has
-    /// been reached.</item> <item>Proximity to friendly tanks to avoid friendly fire.</item> <item>Presence of
-    /// destructible obstacles nearby, which may influence the chance of laying a mine.</item> <item>Availability of
-    /// safe directions to lay a mine, avoiding existing mines and obstacles.</item> </list> If all conditions are met,
-    /// a mine is laid, and the tank selects a direction to flee.</remarks>
     public void TryMineLay() {
         // don't even bother if the tank can't lay mines
-        // if (!Behaviors[3].IsModOf(CurrentRandomMineLay)) return;
         if (!MinePlace.TimerSatisfies(Owner.CurrentRandomMineLay)) return;
 
-        // set our new random window, this gets set
-        // Behaviors[3].Value = 0;
         MinePlace.Value = 0;
-        Owner.CurrentRandomMineLay = Client.ClientRandom.Next(Owner.Parameters.RandomTimerMinMine, Owner.Parameters.RandomTimerMaxMine);
+        Owner.CurrentRandomMineLay = PRNG.Next(Owner.Parameters.RandomTimerMinMine, Owner.Parameters.RandomTimerMaxMine);
 
         if (Owner.Properties.MineLimit <= 0) return;
         if (IsSurviving) return;
@@ -90,13 +78,12 @@ public partial struct VanillaAISystem {
         // call me the wizard of oz
         ObstacleAwarenessMineReal = 3 * Owner.Parameters.ObstacleAwarenessMine;
 
+        // this could probably not be a raycast but instead just a distance check
         var dist = ObstacleAwarenessMineReal / 2;
         Owner.RayCastCardinals(dist, (fixture, point, normal, fraction) => {
             if (fixture.Body.Tag is Block b) {
                 if (!nearDestructible)
                     nearDestructible = b.Properties.IsDestructible;
-
-                // b.Stack = (byte)Client.ClientRandom.Next(1, 8);
             }
             return fraction;
 
@@ -105,7 +92,7 @@ public partial struct VanillaAISystem {
 
         // SmartMineLaying was removed in favor
         // attempt via an opportunity to lay a mine
-        var random = Client.ClientRandom.NextFloat(0, 1);
+        var random = PRNG.NextFloat();
 
         // change chance based on whether or not the tank is near a destructible obstacle
         var randomSuccess = random <= (nearDestructible ? Owner.Parameters.ChanceMineLayNearBreakables : Owner.Parameters.ChanceMineLay);
@@ -238,7 +225,7 @@ public partial struct VanillaAISystem {
         if (!ShellFire.TimerSatisfies(Owner.CurrentRandomShoot)) return;
         // if (!Behaviors[2].IsModOf(CurrentRandomShoot)) return;
 
-        Owner.CurrentRandomShoot = Client.ClientRandom.Next(Owner.Parameters.RandomTimerMinShoot, Owner.Parameters.RandomTimerMaxShoot);
+        Owner.CurrentRandomShoot = PRNG.Next(Owner.Parameters.RandomTimerMinShoot, Owner.Parameters.RandomTimerMaxShoot);
         // Behaviors[2].Value = 0;
         ShellFire.Value = 0;
         // Console.WriteLine(TanksSpotted.Length);

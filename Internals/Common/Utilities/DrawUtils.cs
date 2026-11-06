@@ -467,18 +467,18 @@ public static class DrawUtils {
 
         var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right));
         var up = Vector3.Cross(side, direction);
-        DrawUtils.DrawLine(tip, center + side * radius, color, view, projection);
-        DrawUtils.DrawLine(tip, center - side * radius, color, view, projection);
-        DrawUtils.DrawLine(tip, center + up * radius, color, view, projection);
-        DrawUtils.DrawLine(tip, center - up * radius, color, view, projection);
+        DrawLine(tip, center + side * radius, color, view, projection);
+        DrawLine(tip, center - side * radius, color, view, projection);
+        DrawLine(tip, center + up * radius, color, view, projection);
+        DrawLine(tip, center - up * radius, color, view, projection);
     }
     public static void DrawArrow(Vector3 start, Vector3 end, Color color, Matrix view, Matrix projection) {
-        DrawUtils.DrawLine(start, end, color, view, projection);
+        DrawLine(start, end, color, view, projection);
 
         var direction = Vector3.Normalize(end - start);
         var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right)) * 15f;
-        DrawUtils.DrawLine(end, end - direction * 30f + side, color, view, projection);
-        DrawUtils.DrawLine(end, end - direction * 30f - side, color, view, projection);
+        DrawLine(end, end - direction * 30f + side, color, view, projection);
+        DrawLine(end, end - direction * 30f - side, color, view, projection);
         DrawBoundingSphere(new BoundingSphere(start, 6f), color, view, projection, segments: 16);
     }
 
