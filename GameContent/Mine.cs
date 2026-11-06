@@ -199,9 +199,7 @@ public sealed class Mine : IAITankDanger {
             DetonateTime -= RuntimeData.DeltaFrames;
 
             if (DetonateTime < TICKS_OF_FLASHING) {
-                if (DetonateTime % 3.5f <= RuntimeData.DeltaFrames) {
-                    RedTick = !RedTick;
-                }
+                RedTick = (int)(DetonateTime / 3.5f) % 2 == 0;
                 if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f, position: Position3D);
                 }
