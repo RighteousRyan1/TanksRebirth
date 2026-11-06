@@ -11,7 +11,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Changes Important for Modders
 
-...
+- Slight changes to mine behavior
 
 # Fixes
 
