@@ -457,6 +457,8 @@ public static class LightingPresets {
             SetLampShades(room, glowing);
 
         LightingSystem.BackgroundLight = time.Background;
+
+        // there's certainly a reason to prevent these from being visible on modes like thunder mode n stuff....
         HeadlightsEnabled = time.Headlights > 0.5f && TankGame.Settings.Lighting.GameplayLights;
         DynamicBrightness = time.DynamicBrightness;
     }
