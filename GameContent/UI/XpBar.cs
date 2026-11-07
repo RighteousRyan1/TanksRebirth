@@ -28,7 +28,7 @@ public class XpBar {
     public Color FillColor;
     public Color GainedColor;
 
-    public Anchor Alignment;
+    public Anchor Alignment = Anchor.Center;
 
     // Added a timer to drive the glowing pulse animation
     private float _glowTimer;
@@ -78,7 +78,6 @@ public class XpBar {
     // also when leveling up make it go to end and then go to supposed xp value
     public void Draw(SpriteBatch sb) {
         var text = $"Level: {Level} | {MathF.Floor(Value / MaxValue * 100)}%";
-        Alignment = Anchor.Center;
         // draw empty xp (text)
         DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFont, text, Position - (Vector2.UnitY * 20).ToResolution(), Color.White, Color.Black, new Vector2(0.6f).ToResolution(),
             0f, Alignment, borderThickness: 0.5f);

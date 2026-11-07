@@ -24,9 +24,8 @@ public static class GameSceneUI {
 
         if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
             var xpBar = GameHandler.ExpBar;
-            xpBar.Position = new(WindowUtils.WindowWidth / 2, 50);
+            xpBar.Position = new(WindowUtils.WindowWidth / 2, 50.ToResolutionY());
             xpBar.Scale = new(600, 20);
-            xpBar.Alignment = Anchor.LeftCenter;
             xpBar.FillColor = Color.Green;
             xpBar.EmptyColor = Color.Red;
             xpBar.GainedColor = Color.Lime;

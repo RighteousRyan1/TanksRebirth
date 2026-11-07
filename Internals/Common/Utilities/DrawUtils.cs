@@ -482,12 +482,35 @@ public static class DrawUtils {
         DrawBoundingSphere(new BoundingSphere(start, 6f), color, view, projection, segments: 16);
     }
 
-    public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {
-        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
+    public static void DrawStripe(SpriteBatch spriteBatch, Color color, Vector2 offset, Vector2 fit, float alpha) {
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/patterndiamond");
 
-        var scaling = new Vector2(3.25f, 3f);
+        var scaling = new Vector2(2, 2.4f).ToResolution();
+        var tSz = tex.Size() * scaling;
 
-        spriteBatch.Draw(tex, new Vector2(-12 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
-        spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
+        // +1 so it actually fits without cutting off early
+        int maxI = (int)(fit.X / tSz.X) + 1;
+        int maxJ = (int)(fit.Y / tSz.Y) + 1;
+        for (int j = 0; j < maxJ; j++) {
+            for (int i = 0; i < maxI; i++) {
+                var pos = new Vector2(-tSz.X / 2 + offset.X + (i * tSz.X), offset.Y + (j * tSz.Y));
+                spriteBatch.Draw(tex,
+                    pos, null, color * alpha, 0f, 
+                    Vector2.Zero, scaling, default, default);
+            }
+        }
+
+        // i got this by mathing 1080 * 0.18 - 1080 * 0.16 (what the old offset was)
+        // similar magic for the other values
+        var lineOffset = 21.6f.ToResolutionY();
+
+        // draw the little golden lines across the plaid stripe
+        var wp = TextureGlobals.Pixels[Color.White];
+        var orig = new Vector2(0, wp.Size().Y * 0.5f);
+        var scl = new Vector2(fit.X, 15.ToResolutionY());
+        spriteBatch.Draw(wp, new Vector2(0, lineOffset), null,
+            Color.Goldenrod, 0f, orig, scl, default, default);
+        spriteBatch.Draw(wp, new Vector2(0, fit.Y - lineOffset), null,
+            Color.Goldenrod, 0f, orig, scl, default, default);
     }
 }
