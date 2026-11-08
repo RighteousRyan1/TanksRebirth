@@ -648,7 +648,7 @@ public static class IntermissionSystem {
                 var bannerPos = WindowUtils.WindowBottomLeft * 0.16f;
                 DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BannerBuffer, bannerPos, Vector2.UnitY, Color.White,
                     Vector2.One, BannerAlpha * Alpha, Anchor.TopLeft, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
-                spriteBatch.Draw(BannerBuffer, WindowUtils.WindowBottomLeft * 0.16f, Color.White * Alpha * BonusBannerAlpha);
+                // spriteBatch.Draw(BannerBuffer, WindowUtils.WindowBottomLeft * 0.16f, Color.White * Alpha * BonusBannerAlpha);
             }
 
             // render the bonus life banner now

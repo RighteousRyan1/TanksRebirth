@@ -69,7 +69,10 @@ public class GameHandler {
         AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
         ExpBar = new() {
-            Level = (ushort)TankGame.SaveFile.ExpLevel
+            Level = (ushort)TankGame.SaveFile.ExpLevel,
+            FillColor = Color.Green,
+            EmptyColor = Color.Red,
+            GainedColor = Color.Lime
         };
         ExpBar.Value = TankGame.SaveFile.ExpLevel - ExpBar.Level;
         ExpBar.ApproachValue = ExpBar.Value;

@@ -25,10 +25,7 @@ public static class GameSceneUI {
         if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
             var xpBar = GameHandler.ExpBar;
             xpBar.Position = new(WindowUtils.WindowWidth / 2, 50.ToResolutionY());
-            xpBar.Scale = new(600, 20);
-            xpBar.FillColor = Color.Green;
-            xpBar.EmptyColor = Color.Red;
-            xpBar.GainedColor = Color.Lime;
+            xpBar.Scale = new Vector2(600, 20).ToResolution();
             xpBar.Draw(TankGame.SpriteRenderer);
         }
 
@@ -69,15 +66,15 @@ public static class GameSceneUI {
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
             Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(2f).ToResolution(), 
-            alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
+            alpha, Anchor.Center, shadowDistScale: 0.5f.ToResolutionF(), shadowAlpha: 0.5f);
 
         DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
             Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale * infoScaling).ToResolution(),
-            1f, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 10);
+            1f, Anchor.BottomRight, shadowDistScale: 1.5f.ToResolutionF(), origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 10);
 
         DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
             Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale).ToResolution(),
-            alpha, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
+            alpha, Anchor.BottomRight, shadowDistScale: 1.5f.ToResolutionF(), origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
     }
 
     // helpers
