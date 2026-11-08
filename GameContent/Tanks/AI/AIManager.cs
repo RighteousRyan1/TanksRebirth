@@ -52,7 +52,7 @@ public static class AIManager {
             #region VanillaTanks
 
             case TankID.Brown:
-                aiParams.DetectionForgivenessHostile = 1.6f;
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(22); // was 1.6 in the old step units. same width, now a cone half-angle
                 aiParams.AimOffset = MathHelper.ToRadians(170);
                 aiParams.RandomTimerMaxShoot = 45;
                 aiParams.RandomTimerMinShoot = 30;
@@ -525,7 +525,7 @@ public static class AIManager {
             #endregion 
         }
 
-        AIParameterDefaults.TryAdd(tankType, aiParams);
+        AIParameterDefaults.TryAdd(tankType, aiParams.Clone());
         return aiParams;
     }
     public static TankProperties GetAITankProperties(int tankType) {
@@ -886,7 +886,7 @@ public static class AIManager {
                 #endregion
         }
 
-        AIPropertyDefaults.TryAdd(tankType, properties);
+        AIPropertyDefaults.TryAdd(tankType, properties.Clone());
         return properties;
     }
     /// <summary>

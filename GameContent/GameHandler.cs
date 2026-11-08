@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using TanksRebirth.Achievements;
@@ -72,14 +73,11 @@ public class GameHandler {
             Level = (ushort)TankGame.SaveFile.ExpLevel,
             FillColor = Color.Green,
             EmptyColor = Color.Red,
-            GainedColor = Color.Lime
+            GainedColor = Color.Lime,
+            Scale = new Vector2(600, 20)
         };
         ExpBar.Value = TankGame.SaveFile.ExpLevel - ExpBar.Level;
         ExpBar.ApproachValue = ExpBar.Value;
-
-        ExpBar.Alignment = Anchor.LeftCenter;
-        ExpBar.FillColor = Color.Lime;
-        ExpBar.EmptyColor = Color.Red;
 
         CosmeticsUI.Initialize();
     }

@@ -389,6 +389,8 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
         OnPostRender?.Invoke(this);
     }
 
+    /// <summary>The other teleporter sharing this block's <see cref="TpLink"/>, if there is one.</summary>
+    public Block? GetLinkedTeleporter() => AllBlocks.FirstOrDefault(bl => bl != null && bl != this && bl.Type == Type && bl.TpLink == TpLink);
     public void OnUpdate() {
         Hitbox = new((int)(Position.X - SIDE_LENGTH / 2 + 1), (int)(Position.Y - SIDE_LENGTH / 2), (int)SIDE_LENGTH - 1, (int)SIDE_LENGTH);
         _offset = new();
@@ -401,11 +403,7 @@ public class Block : IGameObject, IHasModContent<ModBlock> {
                 if (--_tankCooldowns[tnk.WorldId] > 0) continue;
                 if (Vector2.Distance(tnk.Position, Position) >= SIDE_LENGTH) continue;
 
-                var otherTp = AllBlocks.FirstOrDefault(bl => 
-                    bl != null && 
-                    bl != this && 
-                    bl.Type == Type && 
-                    bl.TpLink == TpLink);
+                var otherTp = GetLinkedTeleporter();
 
                 if (otherTp is null) continue;
 

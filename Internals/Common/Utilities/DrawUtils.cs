@@ -443,6 +443,25 @@ public static class DrawUtils {
         }
     }
 
+    /// <summary>Draws a flat cone on the floor.</summary>
+    public static void DrawCone(Vector2 apex, Vector2 direction, float range, float halfAngle, Color color, Matrix view, Matrix projection, int segments = 8) {
+        if (halfAngle <= 0f) return;
+
+        var floor = Vector3.Up * 0.3f;
+        Span<Vector2> arc = stackalloc Vector2[segments + 1];
+        GeometryUtils.GetConeArc(apex, direction, halfAngle, range, arc);
+
+        Span<Vector3> rim = stackalloc Vector3[arc.Length];
+        for (int i = 0; i < arc.Length; i++)
+            rim[i] = arc[i].ExpandZ() + floor;
+        var tip = apex.ExpandZ() + floor;
+
+        DrawLine(tip, rim[0], color, view, projection);
+        for (int i = 1; i < rim.Length; i++)
+            DrawLine(rim[i - 1], rim[i], color, view, projection);
+        DrawLine(rim[^1], tip, color, view, projection);
+    }
+
     /// <summary>Draws a circle of <paramref name="radius"/> around <paramref name="axis"/>.</summary>
     public static void DrawCircle(Vector3 center, Vector3 axis, float radius, Color color, Matrix view, Matrix projection, int segments = 16) {
         var side = Vector3.Normalize(Vector3.Cross(axis, MathF.Abs(axis.Y) < 0.99f ? Vector3.Up : Vector3.Right));

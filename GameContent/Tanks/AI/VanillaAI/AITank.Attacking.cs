@@ -6,6 +6,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common;
@@ -13,6 +14,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Tanks.AI.VanillaAI;
+
 public partial struct VanillaAISystem {
     bool _predicts;
     bool _isSeeking;
@@ -31,12 +33,14 @@ public partial struct VanillaAISystem {
     public Vector2[] ShotPathTankCollPoints { get; private set; } = [];
 
     readonly List<Tank> _tanksInPathBuffer = [];
+    readonly List<ShotSegment> _segments = [];
     readonly List<Vector2> _ricochetPointsBuffer = [];
     readonly List<Vector2> _tankPointsBuffer = [];
     /// <summary>Updates turret directions/targets and updates tanks in the shoot path.</summary>
     public void HandleTurret() {
         Owner.TargetTurretRotation = Owner.TargetTurretRotation.WrapTauAngle();
         Owner.TurretRotation = MathUtils.TurnTowards(Owner.TurretRotation, Owner.TargetTurretRotation, Owner.Parameters.TurretSpeed * TurretRotationMultiplier * AIManager.AIDeltaFrames);
+        TurretRotationMultiplier = 1f;
 
         // update things prior to timer check
         if (Owner.TargetTank is null) return;
@@ -50,6 +54,8 @@ public partial struct VanillaAISystem {
         }
 
         UpdateAim();
+
+        if (_isSeeking) return;
 
         if (!TurretMovement.TimerSatisfies(Owner.Parameters.TurretMovementTimer)) return;
 
@@ -123,28 +129,38 @@ public partial struct VanillaAISystem {
         // stop doing expensive checks if the tank can't even shoot anyway
         if (friendliesNearby) return;
 
-        List<Tank> tanksDef;
-
         var turretDir = MathUtils.DirectionOf(Owner.TurretRotation);
-        if (Owner.Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(turretDir, out var ricP, out var tnkCol, offset: Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
-            if (ricP.Length > 0 && GameUtils.TanksDistance(ricP[^1], Owner.Position) < 150f)
+        var shellOffset = Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE;
+        bool explosive = Owner.Properties.ShellType == ShellID.Explosive;
+
+        // explosive shells blow up destructible blocks, so they don't count as the end of the path
+        Func<Block, bool>? pattern = explosive
+            ? x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter
+            : null;
+
+        // the original's shot check: scan up to 3 straight segments, then test each cone against them
+        _tanksInPathBuffer.Clear();
+        var pathValid = ShotPath.Trace(Owner, Owner.Position + shellOffset.RotatedBy(Owner.TurretRotation), turretDir, _segments, pattern);
+        var cones = pathValid ? ScanShotCones() : default;
+
+        if (explosive) {
+            // last ricochet point = where the final segment starts
+            // ...arbitrary ahh number.
+            if (_segments.Count > 1 && GameUtils.TanksDistance(_segments[^1].Start, Owner.Position) < 150f)
                 tooCloseToExplosiveShell = true;
         }
         else {
-            tanksDef = GetTanksInPath(
-                turretDir,
-                out var ricP, out var tnkCol, offset: Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE,
-                missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
-
-            if (tanksDef.Count != Owner.TanksSpotted.Length)
-                Owner.TanksSpotted = [.. tanksDef]; // unavoidable alloc if size changes, but cheaper than constant realloc
+            if (_tanksInPathBuffer.Count != Owner.TanksSpotted.Length)
+                Owner.TanksSpotted = [.. _tanksInPathBuffer]; // unavoidable alloc if size changes, but cheaper than constant realloc
             else
-                tanksDef.CopyTo(Owner.TanksSpotted);
+                _tanksInPathBuffer.CopyTo(Owner.TanksSpotted);
 
-            ShotPathRicochetPoints = ricP;
-            ShotPathTankCollPoints = tnkCol;
+            ShotPathRicochetPoints = GetRicochetPoints();
+            ShotPathTankCollPoints = [];
         }
+
+        // only set if the prediction below overrides the normal path
+        List<Tank>? predictedPath = null;
         if (Owner.Parameters.PredictsPositions) {
             if (Owner.TargetTank is not null) {
                 float t = GeometryUtils.QuadraticCoeff(Owner.TurretPosition, Owner.TargetTank.Position, Owner.TargetTank.Velocity, Owner.Properties.ShellSpeed);
@@ -153,12 +169,12 @@ public partial struct VanillaAISystem {
 
                 float rot = MathUtils.RotationOf(Owner.TurretPosition.DirectionTo(GeometryUtils.PredictFuturePosition(Owner.TargetTank.Position, Owner.TargetTank.Velocity, t)));
 
-                tanksDef = GetTanksInPath(
+                predictedPath = GetTanksInPath(
                 Vector2.Normalize(Owner.TurretPosition.DirectionTo(Owner.TargetTank.Position)),
-                out var ricP, out var tnkCol, offset: Vector2.Zero,
+                out _, out _, offset: Vector2.Zero,
                 missDist: Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
 
-                if (tanksDef.Contains(Owner.TargetTank)) {
+                if (predictedPath.Contains(Owner.TargetTank)) {
                     _predicts = true;
                     Owner.TargetTurretRotation = rot;
                 }
@@ -171,24 +187,27 @@ public partial struct VanillaAISystem {
         //var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
         //var findsFriendly = tanksDef.Any(tnk => tnk is not null && tnk.Team == Team && tnk.Team != TeamID.NoTeam);
 
-        bool findsEnemy = false;
-        bool findsSelf = false;
-        bool findsFriendly = false;
+        bool findsEnemy = cones.Hostile;
+        bool findsSelf = cones.Self;
+        bool findsFriendly = cones.Friendly;
 
-        for (int i = 0; i < tanksDef.Count; i++) {
-            var tnk = tanksDef[i];
-            if (tnk == null) continue;
-            if (!tnk.IsOnSameTeamAs(Owner.Team) && tnk != Owner) findsEnemy = true;
-            if (tnk == Owner) findsSelf = true;
-            if (tnk.IsOnSameTeamAs(Owner.Team)) findsFriendly = true;
+        // predicting tanks aim off the turret's line, so the normal cones don't apply to them
+        if (predictedPath is not null) {
+            findsEnemy = false;
+            for (int i = 0; i < predictedPath.Count; i++) {
+                var tnk = predictedPath[i];
+                if (tnk != null && !tnk.IsOnSameTeamAs(Owner.Team) && tnk != Owner) findsEnemy = true;
+            }
         }
 
         if (findsEnemy && !tooCloseToExplosiveShell)
             Owner.SeesTarget = true;
 
         if (Owner.Parameters.SmartRicochets) {
-            //if (!seeks)
-            SeekRotation = (SeekRotation - Owner.Parameters.TurretSpeed * 0.25f * AIManager.AIDeltaFrames).WrapTauAngle();
+            if (!_isSeeking)
+                SeekRotation = (SeekRotation - Owner.Parameters.TurretSpeed * AIManager.AIDeltaFrames).WrapTauAngle();
+            else
+                TurretRotationMultiplier = 3f;
             var canShoot = !(Owner.CurShootCooldown > 0 || Owner.OwnedShellCount >= Owner.Properties.ShellLimit);
             if (canShoot) {
                 var tanks = GetTanksInPath(MathUtils.DirectionOf(SeekRotation), out var ricP, out var tnkCol, false, default, Owner.Parameters.DetectionForgivenessHostile, doBounceReset: Owner.Parameters.BounceReset);
@@ -203,17 +222,15 @@ public partial struct VanillaAISystem {
                     }
                 }
 
-                // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
-                // var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TeamID.NoTeam));
-                // ChatSystem.SendMessage($"{findsEnemy2} {findsFriendly2} | seek: {seeks}", Color.White);
-                if (findsEnemy2/* && !findsFriendly2*/) {
+                var own = Owner;
+                var badShot = tanks.Any(tnk => tnk == own || tnk.IsOnSameTeamAs(own.Team));
+                if (findsEnemy2 && !_isSeeking && !badShot) {
                     _isSeeking = true;
-                    TurretRotationMultiplier = 3f;
                     Owner.TargetTurretRotation = SeekRotation;
                 }
             }
 
-            if (Owner.TurretRotation == Owner.TargetTurretRotation || !canShoot)
+            if (_isSeeking && MathUtils.AbsoluteAngleBetween(Owner.TurretRotation, Owner.TargetTurretRotation) < MathUtils.VERY_SMALL)
                 _isSeeking = false;
         }
         // tanks wont shoot when fleeing from a mine
@@ -314,7 +331,7 @@ public partial struct VanillaAISystem {
         if (t < 0f) t = 0f;
 
         // if t = valid, aim at the perfect interception point
-        // if t < 0, the shell is unhittable (moving away too fast), so fallback to its current position
+        // if t < 0, the shell is unhittable, so fallback to its current position
         Vector2 aimTarget = t > 0f
             ? GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, t)
             : shell.Position;
@@ -335,21 +352,80 @@ public partial struct VanillaAISystem {
         }
     }
 
+    /// <summary>Which of the three cones found a tank on the shot path.</summary>
+    public readonly record struct ShotCones(bool Self, bool Friendly, bool Hostile);
 
-    // let's just... keep this hidden for now.
-    /*struct PathSegment {
-        public Vector2 Start;
-        public Vector2 End;
-        public float StartRadius;
-        public float EndRadius;
-        public Vector2 Direction;
-    }*/
+    readonly Vector2[] GetRicochetPoints() {
+        if (_segments.Count < 2) return [];
+        var points = new Vector2[_segments.Count - 1];
+        for (int i = 0; i < points.Length; i++) points[i] = _segments[i + 1].Start;
+        return points;
+    }
+
+    // whether the position is in the cone of any segment from firstSegment on
+    readonly bool HitsPath(Vector2 position, int firstSegment, float coneAngle) {
+        for (int i = firstSegment; i < _segments.Count; i++) {
+            var seg = _segments[i];
+            if (GeometryUtils.InCone(position, seg.Start, seg.Direction, coneAngle, seg.Length)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Tests every tank against <see cref="_segments"/> with the three detection cones.
+    /// </summary>
+    readonly ShotCones ScanShotCones() {
+        bool self = false, friendly = false, hostile = false;
+        var p = Owner.Parameters;
+
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is null || tank.IsDestroyed) continue;
+
+            // updates each flag if necessary
+            bool found;
+            if (tank == Owner)
+                self |= found = HitsPath(tank.Position, 1, p.DetectionForgivenessSelf);
+            else if (tank.IsOnSameTeamAs(Owner.Team))
+                friendly |= found = HitsPath(tank.Position, 0, p.DetectionForgivenessFriendly);
+            else
+                hostile |= found = HitsPath(tank.Position, 0, p.DetectionForgivenessHostile);
+
+            if (found) _tanksInPathBuffer.Add(tank);
+        }
+        return new(self, friendly, hostile);
+    }
+
+    readonly List<ShotSegment> _drawSegments = [];
+    /// <summary>Draws shot path segments.</summary>
+    public readonly void DrawShotCones(Matrix view, Matrix proj) {
+        var p = Owner.Parameters;
+        var floor = Vector3.Up * 0.3f;
+
+        // it's simply visual overstimulation at 4 or more rays so i dont want to hurt people
+        var tooManySegments = _segments.Count > 3;
+
+        lock (_segments) {
+            _drawSegments.Clear();
+            _drawSegments.AddRange(_segments);
+        }
+        for (int i = 0; i < _drawSegments.Count; i++) {
+            var seg = _drawSegments[i];
+            DrawUtils.DrawLine(seg.Start.ExpandZ() + floor, seg.End.ExpandZ() + floor, Color.Black, view, proj);
+
+            if (!tooManySegments) {
+                DrawUtils.DrawCone(seg.Start, seg.Direction, seg.Length, p.DetectionForgivenessHostile, Color.Red, view, proj);
+                // not gonna draw the friendly radius since it is LARGELY the same. it also just lowkey dyes the shot cone lol
+                // DrawUtils.DrawCone(seg.Start, seg.Direction, seg.Length, p.DetectionForgivenessFriendly, Color.LimeGreen, view, proj, fill);
+                if (i > 0)
+                    DrawUtils.DrawCone(seg.Start, seg.Direction, seg.Length, p.DetectionForgivenessSelf, Color.Cyan, view, proj);
+            }
+        }
+    }
     public readonly List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
             bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
-        // upper bound on frames simulated. the original caps at 3 segments of 250 frames.
+        // upper bound on frames simulated
         const int MAX_PATH_FRAMES = 1000;
-        // a step used to be 8 units. kept so DetectionForgiveness* still means the same thing.
-        const float FORGIVENESS_UNIT = 8f;
+        const float FORGIVENESS = 8f;
 
         _tanksInPathBuffer.Clear();
         _ricochetPointsBuffer.Clear();
@@ -361,18 +437,19 @@ public partial struct VanillaAISystem {
 
         var sim = ShellSim.From(Owner, Owner.Position + offset.RotatedBy(Owner.TurretRotation), pathDir);
 
-        bool teleported = false;
-        Vector2? teleportTo = null;
+        // probably gonna leave teleporter shot path stuff out cuz its far too complicated for me rn
+        //bool teleported = false;
+        //Vector2? teleportTo = null;
 
         for (int i = 0; i < MAX_PATH_FRAMES; i++) {
-            // delay teleport until next frame
-            if (teleportTo is { } to) {
-                sim.Position = to;
-                teleportTo = null;
-            }
+            // delays teleport until next frame
+            //if (teleportTo is { } to) {
+            //    sim.Position = to;
+            //    teleportTo = null;
+            //}
 
             // check tanks BEFORE moving
-            float realMiss = 1f + missDist * 2 * (sim.Distance / FORGIVENESS_UNIT);
+            float realMiss = 1f + missDist * 2 * (sim.Distance / FORGIVENESS);
 
             var pos3d = new Vector3(sim.Position.X, 11, sim.Position.Y);
             foreach (var enemy in GameHandler.AllTanks) {
@@ -420,13 +497,13 @@ public partial struct VanillaAISystem {
 
             var result = sim.Step(pattern, out var block);
 
-            if (block is { Type: BlockID.Teleporter } && !teleported) {
-                var dest = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
+            /*if (block is { Type: BlockID.Teleporter } && !teleported) {
+                var dest = block.GetLinkedTeleporter();
                 if (dest is not null) {
                     teleported = true;
                     teleportTo = dest.Position;
                 }
-            }
+            }*/
 
             if (result == ShellSimResult.Destroyed) break;
             if (result == ShellSimResult.Ricochet) {
@@ -439,245 +516,4 @@ public partial struct VanillaAISystem {
         ricochetPoints = [.. _ricochetPointsBuffer];
         return _tanksInPathBuffer;
     }
-    /*List<Owner> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
-        bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool>? pattern = null, bool doBounceReset = true) {
-        const int MAX_PATH_UNITS = 1000;
-        const int PATH_UNIT_LENGTH = 8;
-
-        _tanksInPathBuffer.Clear();
-        _ricochetPointsBuffer.Clear();
-        _tankPointsBuffer.Clear();
-
-        pattern ??= c => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
-
-        Vector2 pathPos = Position + offset.RotatedBy(-TurretRotation);
-        pathDir.Y *= -1;
-
-        // normalize to accurately calculate future normals
-        Vector2 normalizedDir = Vector2.Normalize(pathDir);
-        pathDir = normalizedDir * PATH_UNIT_LENGTH;
-
-        int ricochetCount = 0;
-        int uninterruptedIterations = 0;
-
-        bool teleported = false;
-        int tpTriggerIndex = -1;
-        Vector2 teleportedTo = Vector2.Zero;
-
-        var pathHitbox = new Rectangle() {
-            Width = Shell.COLL_RECT_DIM,
-            Height = Shell.COLL_RECT_DIM
-        };
-
-        List<PathSegment> segments = [];
-        Vector2 currentSegStart = pathPos;
-        float currentSegStartRadius = 1f;
-
-        for (int i = 0; i < MAX_PATH_UNITS; i++) {
-            uninterruptedIterations++;
-            float currentRadius = 1f + missDist * 2 * uninterruptedIterations;
-            bool segmentBroken = false;
-
-            if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
-                _ricochetPointsBuffer.Add(pathPos);
-                pathDir.X *= -1;
-                ricochetCount++;
-                segmentBroken = true;
-            }
-            else if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
-                _ricochetPointsBuffer.Add(pathPos);
-                pathDir.Y *= -1;
-                ricochetCount++;
-                segmentBroken = true;
-            }
-
-            pathHitbox.X = (int)pathPos.X - Shell.COLL_RECT_DIM / 2;
-            pathHitbox.Y = (int)pathPos.Y - Shell.COLL_RECT_DIM / 2;
-
-            Vector2 dummy = Vector2.Zero;
-            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummy, out var dir, out var block, out bool corner, false, pattern);
-
-            if (corner) break;
-
-            if (block is not null) {
-                if (block.Type == BlockID.Teleporter && !teleported) {
-                    var dest = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
-                    if (dest is not null) {
-                        teleported = true;
-                        teleportedTo = dest.Position;
-                        tpTriggerIndex = i + 1;
-                        segmentBroken = true;
-                    }
-                }
-                else if (block.Properties.AllowShotPathBounce) {
-                    _ricochetPointsBuffer.Add(pathPos);
-                    ricochetCount += block.Properties.PathBounceCount;
-
-                    switch (dir) {
-                        case CollisionDirection.Up:
-                        case CollisionDirection.Down:
-                            pathDir.Y *= -1;
-                            break;
-                        case CollisionDirection.Left:
-                        case CollisionDirection.Right:
-                            pathDir.X *= -1;
-                            break;
-                    }
-                    segmentBroken = true;
-                }
-            }
-
-            // if bounce or tp, seal segment
-            if (segmentBroken) {
-                segments.Add(new PathSegment {
-                    Start = currentSegStart,
-                    End = pathPos,
-                    StartRadius = currentSegStartRadius,
-                    EndRadius = currentRadius,
-                    Direction = normalizedDir
-                });
-
-                if (doBounceReset) uninterruptedIterations = 0;
-
-                normalizedDir = Vector2.Normalize(pathDir);
-                currentSegStart = teleported && i == tpTriggerIndex ? teleportedTo : pathPos;
-                currentSegStartRadius = 1f + missDist * 2 * uninterruptedIterations;
-            }
-
-            if (teleported && i == tpTriggerIndex) pathPos = teleportedTo;
-
-            bool hitsInstant = i == 0 && Block.AllBlocks.Any(x => x != null && x.Hitbox.Intersects(pathHitbox) && pattern(x));
-            bool hitsTooEarly = i < (int)Properties.ShellSpeed / 2 && ricochetCount > 0;
-            bool ricochetLimitReached = ricochetCount > Properties.RicochetCount;
-
-            if (hitsInstant || hitsTooEarly || ricochetLimitReached) break;
-
-            pathPos += pathDir;
-        }
-
-        // seal final segment
-        segments.Add(new PathSegment {
-            Start = currentSegStart,
-            End = pathPos,
-            StartRadius = currentSegStartRadius,
-            EndRadius = 1f + missDist * 2 * uninterruptedIterations,
-            Direction = normalizedDir
-        });
-
-        // triangle fan detection
-        foreach (var enemy in GameHandler.AllTanks) {
-            // MUST check 'enemy == this' so the tank doesn't detect its own barrel!
-            if (enemy is null || enemy.IsDestroyed || enemy == this || _tanksInPathBuffer.Contains(enemy)) continue;
-
-            // should probably just convert ts to a method...
-            foreach (var seg in segments) {
-                // closest point from the segment to the tank
-                var AP = enemy.Position - seg.Start;
-                var AB = seg.End - seg.Start;
-                float magAB2 = AB.LengthSquared();
-
-                if (magAB2 == 0) continue;
-
-                // t is the normalized distance along the segment
-                float t = Vector2.Dot(AP, AB) / magAB2;
-
-                if (t < 0f || t > 1f) continue;
-
-                var closestPoint = seg.Start + AB * t;
-
-                // exact cone radius at this point
-                float tRadius = MathHelper.Lerp(seg.StartRadius, seg.EndRadius, t);
-
-                float shellRadius = Shell.COLL_RECT_DIM / 2f;
-                float enemyRadius = TNK_WIDTH / 2f;
-                float trueDetectionRadius = tRadius + shellRadius + enemyRadius;
-
-                if (Vector2.DistanceSquared(enemy.Position, closestPoint) <= trueDetectionRadius * trueDetectionRadius) {
-                    if (IsSpaceClear(closestPoint, enemy.Position)) {
-                        _tanksInPathBuffer.Add(enemy);
-                        _tankPointsBuffer.Add(closestPoint);
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (draw && segments.Count > 0) {
-            DrawPathPolygon(segments);
-        }
-
-        tankCollPoints = [.. _tankPointsBuffer];
-        ricochetPoints = [.. _ricochetPointsBuffer];
-        return _tanksInPathBuffer;
-
-        // this implementation is... kind of problematic.
-        bool IsSpaceClear(Vector2 pathPoint, Vector2 targetCenter) {
-            Vector2 dir = targetCenter - pathPoint;
-            float dist = dir.Length();
-            if (dist <= 0) return true;
-            dir /= dist;
-
-            float stepSize = Shell.COLL_RECT_DIM / 2f;
-            Rectangle rect = new(0, 0, Shell.COLL_RECT_DIM, Shell.COLL_RECT_DIM);
-            var blocks = Block.AllBlocks;
-
-            for (float d = 0; d < dist; d += stepSize) {
-                Vector2 pos = pathPoint + dir * d;
-                rect.X = (int)pos.X - Shell.COLL_RECT_DIM / 2;
-                rect.Y = (int)pos.Y - Shell.COLL_RECT_DIM / 2;
-
-                for (int i = 0; i < blocks.Length; i++) {
-                    var b = blocks[i];
-                    if (b != null && pattern!(b) && b.Hitbox.Intersects(rect))
-                        return false; // A block is between the path and the tank
-                }
-            }
-            return true;
-        }
-    }*/
-
-
-    // probably gonna move this into Owner...
-    /*void DrawPathPolygon(List<PathSegment> segments) {
-        List<VertexPositionColor> vertices = [];
-        Color pathColor = Color.Red * 0.2f;
-
-
-        // a little bit higher to prevent z fighting
-        // maybe keep slightly offset based on tank id?
-        float heightY = 11.5f + (AITankId * 0.01f);
-
-        foreach (var seg in segments) {
-            // left and right perpendicular vectors
-            Vector2 normal = new(-seg.Direction.Y, seg.Direction.X);
-
-            // Convert expanding 2D cone limits to 3D world vertices
-            Vector3 backLeft = new(seg.Start.X - normal.X * seg.StartRadius, heightY, seg.Start.Y - normal.Y * seg.StartRadius);
-            Vector3 backRight = new(seg.Start.X + normal.X * seg.StartRadius, heightY, seg.Start.Y + normal.Y * seg.StartRadius);
-            Vector3 frontLeft = new(seg.End.X - normal.X * seg.EndRadius, heightY, seg.End.Y - normal.Y * seg.EndRadius);
-            Vector3 frontRight = new(seg.End.X + normal.X * seg.EndRadius, heightY, seg.End.Y + normal.Y * seg.EndRadius);
-
-            // triangle 1
-            vertices.Add(new(backLeft, pathColor));
-            vertices.Add(new(backRight, pathColor));
-            vertices.Add(new(frontLeft, pathColor));
-
-            // triangle 2
-            vertices.Add(new(backRight, pathColor));
-            vertices.Add(new(frontRight, pathColor));
-            vertices.Add(new(frontLeft, pathColor));
-        }
-
-        var effect = TankBasicEffectHandler;
-        effect.World = Matrix.Identity;
-        effect.View = CameraGlobals.GameView;
-        effect.Proj = CameraGlobals.GameProjection;
-        effect.VertexColorEnabled = true;
-        effect.TextureEnabled = false;
-
-        foreach (var pass in effect.CurrentTechnique.Passes) {
-            pass.Apply();
-            TankGame.Instance.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices.ToArray(), 0, vertices.Count / 3);
-        }
-    }*/
 }

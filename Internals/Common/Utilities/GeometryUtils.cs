@@ -57,6 +57,19 @@ public static class GeometryUtils {
     }
     // sigh no work
 
+    /// <summary>Whether a point is within a given cone.</summary>
+    public static bool InCone(Vector2 point, Vector2 apex, Vector2 direction, float angle, float range) {
+        var toPoint = point - apex;
+        var dist = toPoint.Length();
+        if (dist > range) return false;
+        if (dist < MathUtils.VERY_SMALL) return true;
+        return Vector2.Dot(toPoint / dist, direction) > MathF.Cos(angle);
+    }
+    /// <summary>Fills <paramref name="arc"/> with evenly spaced points on the far edge of a cone, from -<paramref name="halfAngle"/> to +<paramref name="halfAngle"/>.</summary>
+    public static void GetConeArc(Vector2 apex, Vector2 direction, float halfAngle, float range, Span<Vector2> arc) {
+        for (int i = 0; i < arc.Length; i++)
+            arc[i] = apex + direction.RotatedBy(MathHelper.Lerp(-halfAngle, halfAngle, i / (float)(arc.Length - 1))) * range;
+    }
     public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time) => source + velocity * time;
     /// <summary>Returns the quadratic coefficient of an anonymous parabola.</summary>
     public static float QuadraticCoeff(Vector2 position, Vector2 targetPosition, Vector2 targetVelocity, float sourceSpeed) {

@@ -25,7 +25,6 @@ public static class GameSceneUI {
         if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
             var xpBar = GameHandler.ExpBar;
             xpBar.Position = new(WindowUtils.WindowWidth / 2, 50.ToResolutionY());
-            xpBar.Scale = new Vector2(600, 20).ToResolution();
             xpBar.Draw(TankGame.SpriteRenderer);
         }
 
@@ -62,7 +61,8 @@ public static class GameSceneUI {
         var tanksRemaining = $"× {AIManager.CountAll()}";
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
-            Vector2.UnitY, IntermissionSystem.BannerColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
+            Vector2.UnitY, IntermissionSystem.BannerColor, Vector2.One.ToResolution(), alpha, Anchor.Center, 
+            shadowDistScale: 0.5f.ToResolutionF(), shadowAlpha: 0.5f);
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
             Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(2f).ToResolution(), 
@@ -70,11 +70,11 @@ public static class GameSceneUI {
 
         DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
             Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale * infoScaling).ToResolution(),
-            1f, Anchor.BottomRight, shadowDistScale: 1.5f.ToResolutionF(), origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 10);
+            1f, Anchor.BottomRight, shadowDistScale: 1f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 10);
 
         DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
             Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale).ToResolution(),
-            alpha, Anchor.BottomRight, shadowDistScale: 1.5f.ToResolutionF(), origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
+            alpha, Anchor.BottomRight, shadowDistScale: 1f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
     }
 
     // helpers
@@ -89,63 +89,66 @@ public static class GameSceneUI {
         var inner = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard_inner");
         var outer = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard_outer");
 
-        var pertrusionReal = flipSide ? WindowUtils.WindowWidth - pertrusion : pertrusion;
-        var outerPadding = flipSide ? WindowUtils.WindowWidth - pertrusion : 0;
+        var pertrusionPx = pertrusion.ToResolutionX();
+        var yReal = y;
 
-        scale = scale.ToResolutionY();
+        var pertrusionReal = flipSide ? WindowUtils.WindowWidth - pertrusionPx : pertrusionPx;
+        var outerPadding = flipSide ? WindowUtils.WindowWidth - pertrusionPx : 0;
 
-        var pertrusionScaling = new Vector2(pertrusion, scale);
+        var pertrusionScaling = new Vector2(pertrusion, scale).ToResolution();
+        var panelScale = new Vector2(scale).ToResolution();
 
+        // draw inner part? cant remember this code lol
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, outer,
-    new Vector2(outerPadding, y),
-    shadowDir: Vector2.UnitY,
-    color: brighterColor,
-    scale: pertrusionScaling,
-    alpha: 0.9f,
-    Anchor.LeftCenter,
-    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
-    rotation: 0f,
-    shadowAlpha: 0.5f, shadowDistScale: 0.5f, 
-    srcRect: new(outer.Width - trim, 0, trim, outer.Height));
+            new Vector2(outerPadding, yReal),
+            shadowDir: Vector2.UnitY,
+            color: brighterColor,
+            scale: pertrusionScaling,
+            alpha: 0.9f,
+            Anchor.LeftCenter,
+            flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
+            rotation: 0f,
+            shadowAlpha: 0.5f, shadowDistScale: 0.5f,
+            srcRect: new(outer.Width - trim, 0, trim, outer.Height));
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, inner,
-    new Vector2(outerPadding, y),
-    shadowDir: Vector2.UnitY,
-    color: Color.White,
-    scale: pertrusionScaling,
-    alpha: 0.9f,
-    Anchor.LeftCenter,
-    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
-    rotation: 0f,
-    shadowAlpha: 0f, shadowDistScale: 0.5f, 
-    srcRect: new(inner.Width - trim, 0, trim, inner.Height));
+            new Vector2(outerPadding, yReal),
+            shadowDir: Vector2.UnitY,
+            color: Color.White,
+            scale: pertrusionScaling,
+            alpha: 0.9f,
+            Anchor.LeftCenter,
+            flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
+            rotation: 0f,
+            shadowAlpha: 0f, shadowDistScale: 0.5f,
+            srcRect: new(inner.Width - trim, 0, trim, inner.Height));
 
         // draw the actual score thingy
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, outer,
-    new Vector2(pertrusionReal, y),
-    shadowDir: Vector2.UnitY,
-    color: brighterColor,
-    scale: new Vector2(scale),
-    alpha: 0.9f,
-    flipSide ? Anchor.RightCenter : Anchor.LeftCenter,
-    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
-    shadowAlpha: 0.5f, shadowDistScale: 0.5f);
-        
-        DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, inner,
-    new Vector2(pertrusionReal, y),
-    shadowDir: Vector2.UnitY,
-    color: Color.White,
-    scale: new Vector2(scale),
-    alpha: 0.9f,
-    flipSide ? Anchor.RightCenter : Anchor.LeftCenter,
-    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
-    shadowAlpha: 0f, shadowDistScale: 0.5f);
+            new Vector2(pertrusionReal, yReal),
+            shadowDir: Vector2.UnitY,
+            color: brighterColor,
+            scale: panelScale,
+            alpha: 0.9f,
+            flipSide ? Anchor.RightCenter : Anchor.LeftCenter,
+            flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
+            shadowAlpha: 0.5f, shadowDistScale: 0.5f);
 
-        DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, 
-            // draws the text on the right side of the screen
-            new Vector2(flipSide ? pertrusionReal + 10 : pertrusionReal - 10,
-            y - 7f * scale),
-            Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.375f * scale), 1f, shadowAlpha: 0.5f);
+        DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, inner,
+            new Vector2(pertrusionReal, yReal),
+            shadowDir: Vector2.UnitY,
+            color: Color.White,
+            scale: panelScale,
+            alpha: 0.9f,
+            flipSide ? Anchor.RightCenter : Anchor.LeftCenter,
+            flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
+            shadowAlpha: 0f, shadowDistScale: 0.5f);
+
+        var textOffset = new Vector2(flipSide ? 10 : -10, -7f * scale).ToResolution();
+
+        DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge,
+            new Vector2(pertrusionReal, yReal) + textOffset,
+            Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.375f * scale).ToResolution(), 1f, shadowAlpha: 0.5f);
     }
 }

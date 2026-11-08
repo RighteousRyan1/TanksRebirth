@@ -424,5 +424,5 @@ public record Modifiers {
     public const string THUNDER               = "thnd";
     public const string POV                   = "pov";
     public const string LANTERN               = "lant";
-    public const string FLIP = "flip";
+    public const string FLIP                  = "flip";
 }

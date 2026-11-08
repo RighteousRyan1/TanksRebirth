@@ -351,18 +351,19 @@ public abstract class Tank(bool ignoresRegister) {
 
         SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f, position: Position3D);
 
-        var lp1 = GameHandler.Particles.MakeParticle(Position3D,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+        var lptex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle");
+        var lp1 = GameHandler.Particles.MakeParticle(Position3D, lptex);
 
         var color = new Color(0, 200, 255, 181);
 
+        // lp1.Scale = new Vector3()
         lp1.Alpha = 1f;
         lp1.IsIn2DSpace = true;
         lp1.Color = color;
 
         lp1.UpdateCallback = (lp) => {
             lp1.Position = Position3D;
-            lp1.TextureScale = new(5);
+            lp1.TextureScale = new Vector2(5).ToResolution();
 
             if (lp1.LifeTime > 75) {
                 lp1.Alpha -= 0.02f * RuntimeData.DeltaFrames;
@@ -373,8 +374,7 @@ public abstract class Tank(bool ignoresRegister) {
                 lp1.Destroy();
         };
 
-        var lp2 = GameHandler.Particles.MakeParticle(Position3D,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+        var lp2 = GameHandler.Particles.MakeParticle(Position3D, lptex);
 
         lp2.Alpha = 1f;
         lp2.IsIn2DSpace = true;
@@ -383,7 +383,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         lp2.UpdateCallback = (lp) => {
             lp2.Position = Position3D;
-            lp2.TextureScale = new(15);
+            lp2.TextureScale = new Vector2(15).ToResolution();
 
             if (lp2.LifeTime > 40) {
                 lp2.Alpha -= 0.025f * RuntimeData.DeltaFrames;
@@ -401,13 +401,9 @@ public abstract class Tank(bool ignoresRegister) {
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
             lpSmoke.Color = color;
-
             var velocity = Vector2.UnitY.RotatedBy(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
-
             lpSmoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
             lpSmoke.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
-
             lpSmoke.Scale = new(0.75f);
 
             lpSmoke.UpdateCallback = (elp) => {

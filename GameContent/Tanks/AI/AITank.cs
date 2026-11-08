@@ -703,7 +703,8 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             drawInfo.Clear();
 
-            vais.GetTanksInPath(MathUtils.DirectionOf(TurretRotation), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * SHELL_SPAWN_DISTANCE, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+            // the segments + cones the tank actually uses to decide whether to shoot
+            vais.DrawShotCones(view, proj);
 
             if (Parameters.PredictsPositions && TargetTank is not null)
                 calculation = Position.DistanceTo(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
