@@ -635,108 +635,106 @@ public static class ModLoader {
         return property;
     }
 
-    // okay this is refactored but idk if it's good enough
+    // matches the modifiers window: wooden frame, white pill title, grey section card and dark info bar
     public static void DrawModLoading() {
         var renderer = TankGame.SpriteRenderer;
         var font = FontGlobals.RebirthFont;
-        var fontLarge = FontGlobals.RebirthFontLarge;
+        var hasError = Error != string.Empty;
 
         // dims the background to make the loading ui more apparent
-        renderer.Draw(
-            TextureGlobals.Pixels[Color.Black],
-            new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
-            Color.Black * 0.6f
+        ModifierDraw.Fill(renderer, new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight), Color.Black * 0.6f);
+
+        var panelSize = new Vector2(760, 384).ToResolution();
+        var panel = new Rectangle(
+            (int)(WindowUtils.WindowWidth / 2f - panelSize.X / 2f),
+            (int)(WindowUtils.WindowHeight / 2f - panelSize.Y / 2f),
+            (int)panelSize.X,
+            (int)panelSize.Y
         );
 
-        // panel drawing parameters
-        // yes they're hardcoded. deal with it.
-        var center = new Vector2(WindowUtils.WindowWidth / 2f, WindowUtils.WindowHeight / 2f);
-        var panelWidth = 700.ToResolutionX();
-        var panelHeight = 350.ToResolutionY();
-        var panelRect = new Rectangle(
-            (int)(center.X - panelWidth / 2),
-            (int)(center.Y - panelHeight / 2),
-            (int)panelWidth,
-            (int)panelHeight
-        );
+        // positions inside the panel are in the same 1920x1080 space the modifiers window uses
+        Rectangle Area(float x, float y, float width, float height) {
+            var position = new Vector2(x, y).ToResolution();
+            var size = new Vector2(width, height).ToResolution();
+            return new Rectangle(panel.X + (int)position.X, panel.Y + (int)position.Y, (int)size.X, (int)size.Y);
+        }
 
-        // panel shadow
-        renderer.Draw(TextureGlobals.Pixels[Color.Black], panelRect.GetOffset(10, 10), Color.Black * 0.5f);
+        ModifierDraw.Shadow(renderer, panel, 8f, 14f, 0.5f);
+        ModifierDraw.Frame(renderer, panel);
 
-        // panel
-        renderer.Draw(TextureGlobals.Pixels[Color.Gray], panelRect, new Color(30, 30, 35));
-
-        // panel accent
-        var accentHeight = 6.ToResolutionY();
-        renderer.Draw(
-            TextureGlobals.Pixels[Color.White],
-            new Rectangle(panelRect.X, panelRect.Y, panelRect.Width, (int)accentHeight),
-            Color.Goldenrod
-        );
-
-        // text drawing
-        var titleText = "MOD INITIALIZATION";
-        var titleScale = new Vector2(0.6f).ToResolution();
-        var titleSize = fontLarge.MeasureString(titleText) * titleScale;
-        var titlePos = new Vector2(center.X, panelRect.Y + 60.ToResolutionY());
-
-        // title shadow
-        renderer.DrawString(fontLarge, titleText, titlePos + new Vector2(2), Color.Black * 0.5f, titleScale, 0f, GameUtils.GetAnchor(Anchor.Center, titleSize / titleScale), 1f, 0f);
-        renderer.DrawString(fontLarge, titleText, titlePos, Color.White, titleScale, 0f, GameUtils.GetAnchor(Anchor.Center, titleSize / titleScale), 1f, 0f);
-
-        // current status
-        var statusText = Error != string.Empty ? $"ERROR: {Error}" : $"{Status}: {ModBeingLoaded}...";
-        var statusScale = new Vector2(0.9f).ToResolution();
-        var contentScale = statusScale * 0.5f;
-        var currentContentLoading = _loadingContent != null ? _loadingContent.ContentKey : string.Empty;
-        var cmclSize = font.MeasureString(currentContentLoading) * contentScale;
-        var statusSize = font.MeasureString(statusText) * statusScale;
-
-        // make it "pulse" slightly using sine wave
-        var pulse = (float)Math.Sin(RuntimeData.RunTime / 20f) * 0.1f + 0.9f;
-        var statusColor = Error != string.Empty ? Color.Red : Color.LightGray * pulse;
-
-        renderer.DrawString(font, statusText, center - new Vector2(0, 20.ToResolutionY()), statusColor, statusScale, 0f, GameUtils.GetAnchor(Anchor.Center, statusSize / statusScale), 1f, 0f);
-
-        renderer.DrawString(font, currentContentLoading, center, statusColor, contentScale, 0f, GameUtils.GetAnchor(Anchor.Center, cmclSize / contentScale), 1f, 0f);
-
-        // progress bar
-
-        var barWidth = panelWidth * 0.8f;
-        var barHeight = 30.ToResolutionY();
-        var barRect = new Rectangle(
-            (int)(center.X - barWidth / 2),
-            (int)(center.Y + 40.ToResolutionY()),
-            (int)barWidth,
-            (int)barHeight
-        );
-
-        // bar border
-        var borderRect = barRect;
-        borderRect.Inflate(2, 2);
-        renderer.Draw(TextureGlobals.Pixels[Color.White], borderRect, Color.Gray);
-
-        // bar track
-        renderer.Draw(TextureGlobals.Pixels[Color.Black], barRect, Color.Black);
-
-        // bar fill
-        float ratio = ActionsNeeded == 0 ? 0 : (float)ActionsComplete / ActionsNeeded;
-        var fillWidth = (int)(barWidth * ratio);
-        var fillRect = new Rectangle(barRect.X, barRect.Y, fillWidth, barRect.Height);
-
-        // fill color, made to match accent
-        renderer.Draw(TextureGlobals.Pixels[Color.White], fillRect, Color.Goldenrod);
-
-        // gloss effect
-        renderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(fillRect.X, fillRect.Y, fillRect.Width, fillRect.Height / 2), Color.White * 0.3f);
+        // title pill, and how many mods are done
+        var title = "Loading Mods";
+        var titleScale = ModifierColors.Scale(0.95f);
+        var titleSize = font.MeasureString(title);
+        var pill = Area(28, 24, 0, 54);
+        pill.Width = (int)(titleSize.X * titleScale.X + 56f.ToResolutionX());
+        ModifierDraw.PillButton(renderer, pill, false, 1f);
+        renderer.DrawString(font, title, pill.Center.ToVector2(), ModifierColors.Ink, titleScale, 0f, titleSize / 2f);
 
         var divisor = AreCompilesAllowed ? 2 : 1;
-        // progress text
-        var percentText = $"{ratio * 100:0}% ({ActionsComplete / divisor}/{ActionsNeeded / divisor})";
-        var percentScale = new Vector2(0.75f).ToResolution();
-        var percentSize = font.MeasureString(percentText) * percentScale;
-        var percentPos = new Vector2(center.X, barRect.Bottom + 15.ToResolutionY());
+        DrawUtils.DrawStringWithBorder(renderer, font, $"{ActionsComplete / divisor} / {ActionsNeeded / divisor} mods",
+            new Vector2(panel.Right - 28f.ToResolutionX(), pill.Center.Y), Color.White, Color.Black, ModifierColors.Scale(0.75f), 0f, Anchor.RightCenter, 1f);
 
-        renderer.DrawString(font, percentText, percentPos, Color.Gray, percentScale, 0f, GameUtils.GetAnchor(Anchor.Center, percentSize / percentScale), 1f, 0f);
+        // section card: the mod being loaded on the left, what is happening to it on the right
+        var section = Area(28, 96, 704, 190);
+        var header = section with { Height = (int)48f.ToResolutionY() };
+        ModifierDraw.Section(renderer, header, section);
+
+        var pulse = MathF.Sin(RuntimeData.RunTime / 20f) * 0.1f + 0.9f;
+        var headerText = ModBeingLoaded != string.Empty ? ModBeingLoaded : Status.ToString();
+        var headerScale = ModifierColors.Scale(0.85f);
+        var headerSize = font.MeasureString(headerText);
+        var statusText = hasError ? "Error" : Status.ToString();
+        var statusScale = ModifierColors.Scale(0.6f);
+        var statusSize = font.MeasureString(statusText);
+        var statusRight = header.Right - 16f.ToResolutionX();
+
+        // shrink a long mod name instead of running it into the status
+        var headerRoom = statusRight - statusSize.X * statusScale.X - header.X - 32f.ToResolutionX();
+        headerScale *= MathF.Min(1f, headerRoom / MathF.Max(1f, headerSize.X * headerScale.X));
+
+        renderer.DrawString(font, headerText, new Vector2(header.X + 16f.ToResolutionX(), header.Center.Y), ModifierColors.Ink, headerScale, 0f,
+            new Vector2(0f, headerSize.Y / 2f));
+        renderer.DrawString(font, statusText, new Vector2(statusRight, header.Center.Y), hasError ? Color.Firebrick : ModifierDraw.Fade(ModifierColors.OnDark, pulse),
+            statusScale, 0f, new Vector2(statusSize.X, statusSize.Y / 2f));
+
+        // what is being loaded right now
+        var contentRow = Area(28, 148, 704, 40);
+        var content = _loadingContent != null ? _loadingContent.ContentKey : "Preparing to load mods...";
+        var contentScale = ModifierColors.Scale(0.6f);
+        var contentSize = font.MeasureString(content);
+        contentScale *= MathF.Min(1f, (section.Width - 40f.ToResolutionX()) / MathF.Max(1f, contentSize.X * contentScale.X));
+        DrawUtils.DrawStringWithBorder(renderer, font, content, contentRow.Center.ToVector2(), Color.White, Color.Black, contentScale, 0f, Anchor.Center, 1f);
+
+        // progress bar, drawn like the toggles in the modifiers window
+        var track = Area(60, 200, 640, 30);
+        var edge = ModifierDraw.Px(2f);
+        var outline = track;
+        outline.Inflate(edge, edge);
+        ModifierDraw.Fill(renderer, outline, Color.Black);
+        ModifierDraw.Fill(renderer, track, new Color(34, 34, 34));
+
+        float ratio = ActionsNeeded == 0 ? 0 : (float)ActionsComplete / ActionsNeeded;
+        var fill = track with { Width = (int)(track.Width * ratio) };
+        if (fill.Width > 0) {
+            ModifierDraw.Gradient(renderer, fill, hasError ? new Color(214, 64, 64) : ModifierColors.On, hasError ? new Color(140, 30, 30) : ModifierColors.OnDark);
+            // ModifierDraw.Fill(renderer, fill with { Height = fill.Height / 2 }, ModifierDraw.Fade(Color.White, 0.22f));
+        }
+
+        var percentRow = Area(28, 238, 704, 40);
+        DrawUtils.DrawStringWithBorder(renderer, font, $"{ratio * 100:0}%", percentRow.Center.ToVector2(), Color.White, Color.Black,
+            ModifierColors.Scale(0.65f), 0f, Anchor.Center, 1f);
+
+        // info bar along the bottom
+        var footer = Area(28, 302, 704, 58);
+        ModifierDraw.DarkBar(renderer, footer);
+
+        var message = hasError ? $"ERROR: {Error}"
+            : AreCompilesAllowed ? "Mods are being compiled."
+            : "Mods are loading.";
+        var messageScale = ModifierColors.Scale(0.6f);
+        var messageSize = font.MeasureString(message);
+        messageScale *= MathF.Min(1f, (footer.Width - 48f.ToResolutionX()) / MathF.Max(1f, messageSize.X * messageScale.X));
+        renderer.DrawString(font, message, footer.Center.ToVector2(), hasError ? new Color(255, 96, 96) : Color.White, messageScale, 0f, messageSize / 2f);
     }
 }
