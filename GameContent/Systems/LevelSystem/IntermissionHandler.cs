@@ -133,8 +133,9 @@ public static class IntermissionHandler {
             MissionEndContext endContext;
 
             // a win only counts if someone is still alive
-            if (victory && !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed))
-                victory = false;
+            // i must remind myself... why is this code here?
+            //if (victory && !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed))
+            //    victory = false;
 
             if (victory) {
                 restartTime = DEF_INTERMISSION_TIME;

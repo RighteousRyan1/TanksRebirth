@@ -11,6 +11,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Changes
 
 - Allow for many smaller resolution scales, intended for fullscreen use
+- Disallow egregious XP farming (thank you Ausyellow for reminding me)
+- FFA mode now ends if all player tanks that spawned have died
 
 # Changes Important for Modders
 

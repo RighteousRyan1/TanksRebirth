@@ -157,6 +157,10 @@ public class TankGame : Game {
 
         GameDirectory = Directory.GetCurrentDirectory();
 
+        // for .targets use
+        Environment.SetEnvironmentVariable("TANKSREBIRTH_DIR", GameDirectory, EnvironmentVariableTarget.User);    // for IDEs
+        Environment.SetEnvironmentVariable("TANKSREBIRTH_DIR", GameDirectory, EnvironmentVariableTarget.Process); // for in-game compile
+
         // logging speaks for itself
         Task.Run(() => {
             try {

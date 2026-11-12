@@ -318,17 +318,19 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         // pretty sure != null isn't necessary because if Source is null it can't convert
         // it knows the owner is not me but increments my kill count anyway
         if (context.Source is PlayerTank p) {
-            var myId = NetPlay.GetMyClientId();
-
             if (Client.IsConnected()) {
+                var myId = NetPlay.GetMyClientId();
                 bool isMe = p.PlayerId == myId;
-                if (isMe)
+                if (isMe) {
                     PlayerTank.KillCounts[myId]++;
+                    GiveXP();
+                }
             }
             else {
                 PlayerTank.KillCounts[p.PlayerId]++;
-
                 TankGame.SaveFile.TotalKills++;
+
+                GiveXP();
             }
 
             // TODO: nonono, not yet. cosmetics are NOT ready
@@ -343,7 +345,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))
             TankGame.SaveFile.TankKills[AiTankType] = ++value;
 
-        GiveXP();
         // check if player id matches client id, if so, increment that player's kill count, then sync to the server
         // TODO: convert TankHurtContext into a struct and use it here
         // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine

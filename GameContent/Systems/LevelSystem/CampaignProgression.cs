@@ -6,7 +6,6 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.Net;
 
-
 namespace TanksRebirth.GameContent.Systems.LevelSystem; 
 public static class CampaignProgression {
     /// <summary>
@@ -42,8 +41,14 @@ public static class CampaignProgression {
 
         if (teamSet.Count == 1) {
             finalTeam = teamSet.First();
+
+            // checks if all players that were spawned at the start are dead
+            var allNonNullPlrs = GameHandler.AllPlayerTanks.Where(t => t != null);
+            var numNonNullPlrs = allNonNullPlrs.Count();
+            var wereThereAnyPlayers = numNonNullPlrs > 0;
+            var noPlayers = wereThereAnyPlayers && allNonNullPlrs.All(t => t.IsDestroyed);
             if (finalTeam == TeamID.NoTeam)
-                return aliveTankCount <= 1;
+                return aliveTankCount <= 1 || noPlayers;
             return true;
         }
 
