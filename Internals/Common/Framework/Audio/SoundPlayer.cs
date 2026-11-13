@@ -92,17 +92,17 @@ public static class SoundPlayer
 
         return sfx;
     }
-    public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f, float maxVolume = 1f, bool playNew = false, float panOverride = 0f, float pitchOverride = 0f,
+    public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f, float maxVolume = 1f, float panOverride = 0f, float pitchOverride = 0f,
         Vector3? position = null, float minDist = DEFAULT_MIN_DISTANCE, float maxDist = DEFAULT_MAX_DISTANCE, bool orthographicFade = false) {
-        volume *= context switch {
+        /*volume *= context switch {
             SoundContext.Music => MusicVolume,
             SoundContext.Effect => EffectsVolume,
             SoundContext.Ambient => AmbientVolume,
             _ => throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!"),
-        };
+        };*/
         //if (playNew) {
             PlaySoundInstance(fromSound.Path, context, volume, maxVolume, panOverride, pitchOverride, position: position, minDist: minDist, maxDist: maxDist, orthographicFade: orthographicFade);
-            return;
+            // return;
         //}
     }
 

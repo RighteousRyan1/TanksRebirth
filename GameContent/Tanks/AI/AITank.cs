@@ -252,15 +252,14 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     }
     public List<Tank> TanksNearMineAwareness = [];
     public List<Tank> TanksNearShootAwareness = [];
-    public List<Block> BlocksNear = [];
     public override void Update() {
         // why did j not do this sooner?
         ModdedData?.PreUpdate();
         base.Update();
         ModdedData?.PostUpdate();
     }
-    public override void Shoot(bool fxOnly = false, bool netSend = true) {
-        base.Shoot(fxOnly, netSend);
+    public override void Shoot(bool netSend = true) {
+        base.Shoot(netSend);
 
         // only called once
         ModdedData?.Fire();
@@ -473,7 +472,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     /// <summary>Sets various meta-data things about this <see cref="AITank"/>.
     public void HandleTankMetaData() {
         TanksNearMineAwareness.Clear();
-        BlocksNear.Clear();
 
         if (TankAI is not VanillaAISystem vais) return;
 
@@ -633,9 +631,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 [(nameof(Parameters.TankAwarenessShoot), Parameters.TankAwarenessShoot, true)] = Color.Blue,
                 [(nameof(Parameters.TankAwarenessMine), Parameters.TankAwarenessMine, false)] = Color.Cyan,
 
-                [(nameof(Parameters.ObstacleAwarenessMovement), Parameters.ObstacleAwarenessMovement, false)] = Color.Magenta,
-
-                [(nameof(BlocksNear), BlocksNear.Count, false)] = Color.Orange,
                 [(nameof(TanksNearMineAwareness), TanksNearMineAwareness.Count, false)] = Color.IndianRed,
             };
 
@@ -713,27 +708,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             if (Parameters.SmartRicochets)
                 vais.GetTanksInPath(MathUtils.DirectionOf(vais.SeekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
         }
-        /*if (DebugManager.DebugLevel == DebugManager.Id.TankData && !Properties.Stationary) {
-            // magical numbers too lazy, look at update method to define
-            IsObstacleInWay(AiParams.ObstacleAwarenessMovement / 2, Vector2.UnitY.RotatedBy(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Proj), 6, centered: true);
-            foreach (var pt in refPoints)
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.ReflectionPoint.X, 0, pt.ReflectionPoint.Y), View, Proj), 6, centered: true);
-
-
-            //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Proj), 6, centered: true);
-        }*/
-
-        /*if (Properties.Stationary) return;
-
-        Parameters.RandomTimerMinMove = 60;
-        Parameters.RandomTimerMaxMove = 60;
-
-        for (int i = 0; i < SubPivotQueue.Count; i++) {
-            var dir = SubPivotQueue.ElementAt(i);
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{MathHelper.ToDegrees(dir.ToRotation())}",
-                WindowUtils.WindowTop + new Vector2(20, i * 20), Color.Black, Color.White, Vector2.One, 0f, Anchor.TopCenter, 0.5f);
-        }*/
 
         if (Properties.Invisible)
             return;

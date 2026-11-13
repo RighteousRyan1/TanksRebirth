@@ -449,8 +449,8 @@ public abstract class Tank(bool ignoresRegister) {
 
         foreach (var cos in Props.ToList())
             AddCosmetic(cos);
-            //if (cos is Prop2D cos2d)
-            //    AddProp2D(cos2d);
+        //if (cos is Prop2D cos2d)
+        //    AddProp2D(cos2d);
 
         if (Modifiers.IsOn(Modifiers.TRIPLE_BOUNCE))
             Properties.RicochetCount *= 3;
@@ -693,8 +693,9 @@ public abstract class Tank(bool ignoresRegister) {
         fp.Position += new Vector3(0, 0.15f, 0);
     }
 
+    // I did remove bool fxOnly so if anything breaks i blame no one but myself.
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
-    public virtual void Shoot(bool fxOnly = false, bool netSend = true) {
+    public virtual void Shoot(bool netSend = true) {
         if (!MainMenuUI.IsActive && !CampaignGlobals.InMission || !Properties.HasTurret) return;
 
         if (CurShootCooldown > 0) return;
@@ -708,23 +709,21 @@ public abstract class Tank(bool ignoresRegister) {
         var force = Vector2.Normalize(Position - TurretPosition) * Properties.Recoil;
         KnockbackVelocity = force / UNITS_PER_METER;
 
-        if (!fxOnly) {
-            foreach (var shell in ShootSpread()) {
-                OnShoot?.Invoke(this, shell);
+        foreach (var shell in ShootSpread()) {
+            OnShoot?.Invoke(this, shell);
 
-                // shitcode...
-                if (this is AITank ai)
-                    ai.ModdedData?.Shoot(shell);
+            // shitcode...
+            if (this is AITank ai)
+                ai.ModdedData?.Shoot(shell);
 
-                // this might be shitcode...
-                if (netSend) {
-                    if (this is PlayerTank pt) {
-                        if (NetPlay.IsClientMatched(pt.PlayerId))
-                            Client.SyncShellFire(shell);
-                    }
-                    else
+            // this might be shitcode...
+            if (netSend) {
+                if (this is PlayerTank pt) {
+                    if (NetPlay.IsClientMatched(pt.PlayerId))
                         Client.SyncShellFire(shell);
                 }
+                else
+                    Client.SyncShellFire(shell);
             }
         }
 
@@ -990,10 +989,9 @@ public abstract class Tank(bool ignoresRegister) {
                 if (_treadSoundTimer <= 0f) {
                     _treadSoundTimer = MathF.Max(_treadSoundTimer + TREAD_SOUND_INTERVAL, 0f);
 
-                    var sfx = SoundPlayer.PlaySoundInstance(
+                    SoundPlayer.PlaySoundInstance(
                         TreadSounds[Client.ClientRandom.Next(TreadSounds.Length)],
                         SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.MovePitch, position: Position3D);
-                    sfx.Instance.Pitch = Properties.MovePitch;
                 }
             }
         }

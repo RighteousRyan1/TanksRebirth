@@ -21,6 +21,8 @@ public static class AIManager {
     const float MPITCH_MEDHIGH =  1 / 12f;
     const float MPITCH_MEDLOW  = -1 / 6f;
     const float MPITCH_LOW     = -1 / 3f;
+
+    public static readonly List<int> RandomBendShiftTanks = [TankID.Marine, TankID.Pink, TankID.Yellow, TankID.Green];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
     public static Dictionary<int, AIParameters> AIParameterDefaults = [];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
@@ -52,7 +54,7 @@ public static class AIManager {
             #region VanillaTanks
 
             case TankID.Brown:
-                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(22); // was 1.6 in the old step units. same width, now a cone half-angle
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // was 1.6 in the old step units. same width, now a cone half-angle
                 aiParams.AimOffset = MathHelper.ToRadians(170);
                 aiParams.RandomTimerMaxShoot = 45;
                 aiParams.RandomTimerMinShoot = 30;
