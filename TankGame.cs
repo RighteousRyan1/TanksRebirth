@@ -161,6 +161,13 @@ public class TankGame : Game {
         Environment.SetEnvironmentVariable("TANKSREBIRTH_DIR", GameDirectory, EnvironmentVariableTarget.User);    // for IDEs
         Environment.SetEnvironmentVariable("TANKSREBIRTH_DIR", GameDirectory, EnvironmentVariableTarget.Process); // for in-game compile
 
+        var madeTargets = ModLoader.TryMakeTargetsFile();
+
+        if (madeTargets)
+            ClientLog.Write("Created new TanksRebirth.targets file.", RebirthLogLevel.Info);
+        else
+            ClientLog.Write("TanksRebirth.targets already exists, skipping.", RebirthLogLevel.Info);
+
         // logging speaks for itself
         Task.Run(() => {
             try {

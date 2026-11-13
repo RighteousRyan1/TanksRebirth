@@ -353,7 +353,7 @@ public static class LightingPresets {
         if (!DayCyclePaused)
             Hour = RoomScene.HourFractional;
 
-        if (!TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)) Hour++;
+        // if (!TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)) Hour++;
             //else if (DayLengthSeconds > 0f)
             //    Hour = _hour + elapsedSeconds / DayLengthSeconds * 24f;
         ApplyTimeOfDay(SampleDay(_hour), room);
@@ -398,7 +398,7 @@ public static class LightingPresets {
 
         if (preset == Preset.DayCycle) {
             Hour = RoomScene.HourFractional;
-            if (!TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)) Hour++;
+            // if (!TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)) Hour++;
             ApplyTimeOfDay(SampleDay(_hour), room);
             return;
         }
@@ -445,7 +445,8 @@ public static class LightingPresets {
 
         // room lamps fade in and out
         var lights = LightingSystem.Lights;
-        lights.Clear();
+        foreach (var lamp in RoomLamps)
+            lights.Remove(lamp);
         TableLamp.Intensity = time.TableLamp;
         DeskLamp.Intensity = time.DeskLamp;
         ClockLight.Intensity = time.ClockLight;

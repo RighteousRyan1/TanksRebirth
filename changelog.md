@@ -16,6 +16,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - FFA mode now ends if all player tanks that spawned have died
 - Slightly updated the look of the XP bar
 - Largely updated the look of the loading mods / mods user interfaces
+- Day cycle lighting mode now matches your real time
 
 # Changes Important for Modders
 

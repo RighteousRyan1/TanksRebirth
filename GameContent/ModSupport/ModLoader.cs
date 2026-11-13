@@ -117,6 +117,30 @@ public static class ModLoader {
     public static string Error = string.Empty;
     /// <summary>What kind of compilation is performed- Debug or Release.</summary>
     public static string LoadType = string.Empty;
+
+    /// <summary>
+    /// Returns if the targets file was created or not.
+    /// </summary>
+    public static bool TryMakeTargetsFile() {
+        var path = Path.Combine(ModsPath, "TanksRebirth.targets");
+        if (File.Exists(path)) return false;
+
+        // long string or idiot
+        var txt = "<Project>\r\n  " +
+            "<PropertyGroup>\r\n    " +
+            "<!-- TANKSREBIRTH_DIR comes from the environment. If it's missing, assume the game sits next to the Mods folder (very unlikely, but w/e) -->\r\n    " +
+            "<TanksRebirthDir Condition=\"'$(TANKSREBIRTH_DIR)' != ''\">$([MSBuild]::EnsureTrailingSlash('$(TANKSREBIRTH_DIR)'))</TanksRebirthDir>\r\n    " +
+            "<TanksRebirthDir Condition=\"'$(TanksRebirthDir)' == ''\">$(MSBuildThisFileDirectory)..\\</TanksRebirthDir>\r\n\r\n    " +
+            "<!-- prevents SDK copying the game's files into every mod's output -->\r\n    " +
+            "<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>\r\n    " +
+            "<GenerateDependencyFile>false</GenerateDependencyFile>\r\n  " +
+            "</PropertyGroup>\r\n\r\n  <ItemGroup>\r\n    " +
+            "<Reference Include=\"$(TanksRebirthDir)*.dll\" Exclude=\"$(TanksRebirthDir)steam_api64.dll\">\r\n      " +
+            "<Private>false</Private>\r\n    </Reference>\r\n  </ItemGroup>\r\n</Project>";
+
+        File.WriteAllText(path, txt);
+        return true;
+    }
     public static bool CheckIfCompilesAreAllowed() {
         if (!RuntimeData.IsWindows) {
             TankGame.ClientLog.Write("Auto-compilation disallowed. Current OS is not Windows.", RebirthLogLevel.Warn);
