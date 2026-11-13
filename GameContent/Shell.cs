@@ -286,7 +286,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                         pitch = GameUtils.RandomBendShift(100);
                     }
                 }
-                SoundPlayer.PlaySoundInstance(s.ShootSound, SoundContext.Effect, volume: 1f, pitchOverride: pitch, position: s.Position3D);
+                SoundPlayer.PlaySoundInstance(s.ShootSound, SoundContext.Effect, volume: 0.75f, pitchOverride: pitch, position: s.Position3D);
             }
 
             return s;
@@ -527,10 +527,10 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         Velocity = Vector2.Reflect(Velocity, normal);
 
-        SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, pitchOverride: GameUtils.RandomSemitoneShift(2), position: Position3D);
+        SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 1f, pitchOverride: GameUtils.RandomSemitoneShift(2), position: Position3D);
 
         if (Properties.SuperRicochet)
-            SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f, pitchOverride: GameUtils.RandomSemitoneShift(2), position: Position3D);
+            SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.1f, pitchOverride: GameUtils.RandomSemitoneShift(2), position: Position3D);
 
         GameHandler.Particles.MakeShineSpot(Position3D, Color.Orange, 0.8f);
         Ricochets++;
