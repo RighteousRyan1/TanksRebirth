@@ -378,12 +378,13 @@ public static class GraphicsUI {
         }
     }
 
-    /// <summary>The monitor's modes (at least 1024x576), or a list of common sizes if the driver reports none.</summary>
+    /// <summary>Gets resolutions for the default adapter, or uses fallbacks.</summary>
     static Point[] FindResolutions() {
         var list = new List<Point>();
         try {
             foreach (var mode in GraphicsAdapter.DefaultAdapter.SupportedDisplayModes)
-                if (mode.Width >= 1024 && mode.Height >= 576)
+                // fuck this arbitrary restraint. let me play on 720x480!!!!
+                //if (mode.Width >= 1024 && mode.Height >= 576)
                     list.Add(new Point(mode.Width, mode.Height));
         }
         catch {
@@ -391,8 +392,8 @@ public static class GraphicsUI {
         }
         if (list.Count == 0)
             list.AddRange(_fallbackResolutions.Where(r => r.X <= DesktopSize.X && r.Y <= DesktopSize.Y));
-        // always offer the current one, even if it's odd (a resized window)
+        // always offer the current one, even if it's odd
         list.Add(new Point(TankGame.Settings.Display.ResWidth, TankGame.Settings.Display.ResHeight));
-        return list.Distinct().OrderBy(r => r.X).ThenBy(r => r.Y).ToArray();
+        return [.. list.Distinct().OrderBy(r => r.X).ThenBy(r => r.Y)];
     }
 }

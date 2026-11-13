@@ -1,7 +1,8 @@
 using Microsoft.Xna.Framework;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TanksRebirth.Enums;
@@ -14,16 +15,15 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Tanks;
 using TanksRebirth.GameContent.Tanks.AI;
-
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
+using TanksRebirth.Graphics.DynamicLighting;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
-using TanksRebirth.Graphics.DynamicLighting;
 
 namespace TanksRebirth.GameContent;
 
@@ -190,6 +190,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
             case ShellID.TrailedRocket:
                 DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
                 Properties.Visuals = VisualFlags.SmokeTrail | VisualFlags.Flaming;
+                Properties.SuperRicochet = true;
                 TrailSound = new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
                 TrailSound.Instance.IsLooped = true;
                 break;
@@ -272,7 +273,20 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
                     ShellID.Explosive => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
                     _ => throw new NotImplementedException($"Sound for the shell type {s.Type} is not implemented... yet."),
                 };
-                SoundPlayer.PlaySoundInstance(s.ShootSound, SoundContext.Effect, volume: 1f, pitchOverride: GameUtils.NaturalPitchShift, position: s.Position3D);
+
+                // according to rp_tank_sound, this is how things should go.
+                float pitch = 0f;
+                if (owner != null) {
+                    if (owner is AITank ai) {
+                        if (AIManager.RandomBendShiftTanks.Contains(ai.AiTankType))
+                            pitch = GameUtils.RandomBendShift(100);
+                    }
+                    // is a player tank
+                    else {
+                        pitch = GameUtils.RandomBendShift(100);
+                    }
+                }
+                SoundPlayer.PlaySoundInstance(s.ShootSound, SoundContext.Effect, volume: 0.75f, pitchOverride: pitch, position: s.Position3D);
             }
 
             return s;
@@ -381,7 +395,7 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
         ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
     }
-    /// <summary>One 60 Hz step of movement, wall ricochets and block collisions. Keep in sync with <see cref="ShellSim.Step"/>.</summary>
+    /// <summary>One 60 Hz step of movement.</summary>
     void Tick() {
         Rotation = MathUtils.RotationOf(Velocity);
 
@@ -500,8 +514,6 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
     public void Ricochet(Vector2 normal) {
         const string ricochetSound = "Assets/sounds/bullet_ricochet.ogg";
 
-        // ChatSystem.SendMessage("PENIS BIGGA @ " + DateTime.Now.Nanosecond, ColorUtils.DiscoPartyColor);
-
         if (RicochetsRemaining <= 0) {
             Destroy(DestructionContext.WithObstacle);
             return;
@@ -515,22 +527,10 @@ public class Shell : IAITankDanger, IHasModContent<ModShell> {
 
         Velocity = Vector2.Reflect(Velocity, normal);
 
+        SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 1f, pitchOverride: GameUtils.RandomSemitoneShift(2), position: Position3D);
 
-        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift, position: Position3D);
-
-        //bool fp = CameraGlobals.IsUsingFirstPresonCamera;
-        //if (fp)
-        //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.PerspectiveCamera.Position);
-
-        if (Owner is not null) {
-            if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
-                sound.Instance.Pitch = Client.ClientRandom.NextFloat(0.15f, 0.25f);
-                var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f, position: Position3D);
-                rocketRSound.Pitch -= 0.65f;
-                //if (fp)
-                //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.PerspectiveCamera.Position);
-            }
-        }
+        if (Properties.SuperRicochet)
+            SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.1f, pitchOverride: GameUtils.RandomSemitoneShift(2), position: Position3D);
 
         GameHandler.Particles.MakeShineSpot(Position3D, Color.Orange, 0.8f);
         Ricochets++;

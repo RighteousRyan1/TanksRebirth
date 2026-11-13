@@ -20,6 +20,9 @@ public enum Anchor {
 }
 public static class GameUtils {
     public static float NaturalPitchVariance = 0.1f;
+
+    public static float RandomSemitoneShift(int semitones) => Client.ClientRandom.Next(-semitones, semitones + 1) / 12f;
+    public static float RandomBendShift(int bend) => Client.ClientRandom.Next(-bend, bend + 1) / 127f * 2f / 12f;
     public static float NaturalPitchShift => Client.ClientRandom.NextFloat(-NaturalPitchVariance, NaturalPitchVariance);
     public static IAITankDanger? Closest(this IList<IAITankDanger> positions, Vector2 source) {
         if (positions == null || !positions.Any())

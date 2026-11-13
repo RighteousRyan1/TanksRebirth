@@ -235,7 +235,10 @@ public class GameConsole {
         }
 
         // splits command by whitespaces for arguments
-        var cmdSplit = input.Split(' ');
+        var cmdSplit = SplitArgs(input);
+
+        // put tokens between quotations as one arg
+        
         var cmdName = cmdSplit[0];
 
         // attempts to find a command to execute
@@ -282,7 +285,43 @@ public class GameConsole {
         }
     }
 
-    private void UpdateCommandSuggestions() {
+    static string[] SplitArgs(string input) {
+        var tokens = new List<string>();
+        var current = new StringBuilder();
+        var inQuotes = false;
+        var hasToken = false; // lets "" produce an empty argument instead of nothing
+
+        for (int i = 0; i < input.Length; i++) {
+            var c = input[i];
+
+            if (c == '\\' && inQuotes && i + 1 < input.Length && input[i + 1] == '"') {
+                current.Append('"');
+                i++;
+            }
+            else if (c == '"') {
+                inQuotes = !inQuotes;
+                hasToken = true;
+            }
+            else if (char.IsWhiteSpace(c) && !inQuotes) {
+                if (hasToken) {
+                    tokens.Add(current.ToString());
+                    current.Clear();
+                    hasToken = false;
+                }
+            }
+            else {
+                current.Append(c);
+                hasToken = true;
+            }
+        }
+
+        if (hasToken)
+            tokens.Add(current.ToString());
+
+        return [.. tokens];
+    }
+
+    void UpdateCommandSuggestions() {
         _currentSuggestions.Clear();
 
         if (string.IsNullOrWhiteSpace(_currentInput)) return;

@@ -443,6 +443,25 @@ public static class DrawUtils {
         }
     }
 
+    /// <summary>Draws a flat cone on the floor.</summary>
+    public static void DrawCone(Vector2 apex, Vector2 direction, float range, float halfAngle, Color color, Matrix view, Matrix projection, int segments = 8) {
+        if (halfAngle <= 0f) return;
+
+        var floor = Vector3.Up * 0.3f;
+        Span<Vector2> arc = stackalloc Vector2[segments + 1];
+        GeometryUtils.GetConeArc(apex, direction, halfAngle, range, arc);
+
+        Span<Vector3> rim = stackalloc Vector3[arc.Length];
+        for (int i = 0; i < arc.Length; i++)
+            rim[i] = arc[i].ExpandZ() + floor;
+        var tip = apex.ExpandZ() + floor;
+
+        DrawLine(tip, rim[0], color, view, projection);
+        for (int i = 1; i < rim.Length; i++)
+            DrawLine(rim[i - 1], rim[i], color, view, projection);
+        DrawLine(rim[^1], tip, color, view, projection);
+    }
+
     /// <summary>Draws a circle of <paramref name="radius"/> around <paramref name="axis"/>.</summary>
     public static void DrawCircle(Vector3 center, Vector3 axis, float radius, Color color, Matrix view, Matrix projection, int segments = 16) {
         var side = Vector3.Normalize(Vector3.Cross(axis, MathF.Abs(axis.Y) < 0.99f ? Vector3.Up : Vector3.Right));
@@ -467,27 +486,50 @@ public static class DrawUtils {
 
         var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right));
         var up = Vector3.Cross(side, direction);
-        DrawUtils.DrawLine(tip, center + side * radius, color, view, projection);
-        DrawUtils.DrawLine(tip, center - side * radius, color, view, projection);
-        DrawUtils.DrawLine(tip, center + up * radius, color, view, projection);
-        DrawUtils.DrawLine(tip, center - up * radius, color, view, projection);
+        DrawLine(tip, center + side * radius, color, view, projection);
+        DrawLine(tip, center - side * radius, color, view, projection);
+        DrawLine(tip, center + up * radius, color, view, projection);
+        DrawLine(tip, center - up * radius, color, view, projection);
     }
     public static void DrawArrow(Vector3 start, Vector3 end, Color color, Matrix view, Matrix projection) {
-        DrawUtils.DrawLine(start, end, color, view, projection);
+        DrawLine(start, end, color, view, projection);
 
         var direction = Vector3.Normalize(end - start);
         var side = Vector3.Normalize(Vector3.Cross(direction, MathF.Abs(direction.Y) < 0.99f ? Vector3.Up : Vector3.Right)) * 15f;
-        DrawUtils.DrawLine(end, end - direction * 30f + side, color, view, projection);
-        DrawUtils.DrawLine(end, end - direction * 30f - side, color, view, projection);
+        DrawLine(end, end - direction * 30f + side, color, view, projection);
+        DrawLine(end, end - direction * 30f - side, color, view, projection);
         DrawBoundingSphere(new BoundingSphere(start, 6f), color, view, projection, segments: 16);
     }
 
-    public static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha, float xOffset = 0f) {
-        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
+    public static void DrawStripe(SpriteBatch spriteBatch, Color color, Vector2 offset, Vector2 fit, float alpha) {
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/patterndiamond");
 
-        var scaling = new Vector2(3.25f, 3f);
+        var scaling = new Vector2(2, 2.4f).ToResolution();
+        var tSz = tex.Size() * scaling;
 
-        spriteBatch.Draw(tex, new Vector2(-12 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
-        spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2 + xOffset, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
+        // +1 so it actually fits without cutting off early
+        int maxI = (int)(fit.X / tSz.X) + 1;
+        int maxJ = (int)(fit.Y / tSz.Y) + 1;
+        for (int j = 0; j < maxJ; j++) {
+            for (int i = 0; i < maxI; i++) {
+                var pos = new Vector2(-tSz.X / 2 + offset.X + (i * tSz.X), offset.Y + (j * tSz.Y));
+                spriteBatch.Draw(tex,
+                    pos, null, color * alpha, 0f, 
+                    Vector2.Zero, scaling, default, default);
+            }
+        }
+
+        // i got this by mathing 1080 * 0.18 - 1080 * 0.16 (what the old offset was)
+        // similar magic for the other values
+        var lineOffset = 21.6f.ToResolutionY();
+
+        // draw the little golden lines across the plaid stripe
+        var wp = TextureGlobals.Pixels[Color.White];
+        var orig = new Vector2(0, wp.Size().Y * 0.5f);
+        var scl = new Vector2(fit.X, 15.ToResolutionY());
+        spriteBatch.Draw(wp, new Vector2(0, lineOffset), null,
+            Color.Goldenrod, 0f, orig, scl, default, default);
+        spriteBatch.Draw(wp, new Vector2(0, fit.Y - lineOffset), null,
+            Color.Goldenrod, 0f, orig, scl, default, default);
     }
 }

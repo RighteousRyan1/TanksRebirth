@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
@@ -50,7 +51,7 @@ public partial struct VanillaAISystem {
         NearbyDangers = GetEvasionData();
         ClosestDanger = NearbyDangers.Closest(Owner.Position);
 
-        Owner.CurrentRandomMove = Client.ClientRandom.Next(Owner.Parameters.RandomTimerMinMove, Owner.Parameters.RandomTimerMaxMove);
+        Owner.CurrentRandomMove = PRNG.Next(Owner.Parameters.RandomTimerMinMove, Owner.Parameters.RandomTimerMaxMove);
         ChassisMovement.Value = 0;
 
         // for what i know, does something where the tank only dodges and meanders when moving away from a mine IT laid.
@@ -93,7 +94,7 @@ public partial struct VanillaAISystem {
         if (sweep.Hit)
             direction = (direction + sweep.Normal).NormalizeOrDefault(direction);
 
-        var angle = Client.ClientRandom.NextFloat(-Owner.Parameters.MaxAngleRandomTurn, Owner.Parameters.MaxAngleRandomTurn);
+        var angle = PRNG.NextFloat(-Owner.Parameters.MaxAngleRandomTurn, Owner.Parameters.MaxAngleRandomTurn);
 
         PushHistory((direction + direction.Perpendicular() * MathF.Tan(angle)).NormalizeOrDefault(direction));
     }

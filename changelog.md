@@ -4,32 +4,31 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Additions
 
-- Added "Faithful" lighting preset. It won't look proper with 'Room Shadows' on
-- The game now saves your last used multiplayer username/IP/port
-- You can now drag and drop mission/campaign/bin files onto the level editor to open them
-- Added messages appearing above players' tanks when sent
-- You can now press F10 to view frame data in the bottom right
-- If dynamic lighting is enabled, lights now emit when tanks shoot
+- Added Tanks Rebirth's first official MOD, "Original Campaign"
+    - Has the same randomized missions/tanks as the original, even down to the RNG implementation
+    - You may view the mod's repository and guide for installation [here](link)
+- The level editor now remembers the last directory you saved to / loaded from
 
 # Changes
 
-- The tank AI system is now more accurate to the original (again)
-    - Movement and shooting logic has been improved largely
-    - I want to spend time next update perfectly fine-tuning the shooting logic (and hopefully optimizing it)
-- Menu missions are now stored locally instead of fetched from the internet
-- Pinging things in first person now casts a ping to the closest point in the direction faced
-- Blocks breaking now have the color averaged instead of a preset color
+- Allow for many smaller resolution scales, intended for fullscreen use
+- Disallow egregious XP farming (thank you Ausyellow for reminding me)
+- FFA mode now ends if all player tanks that spawned have died
+- Slightly updated the look of the XP bar
+- Largely updated the look of the loading mods / mods user interfaces
+- Day cycle lighting mode now matches your real time
+- Changed the Game Stats menu to look more like the other UI refreshes
 
 # Changes Important for Modders
 
-- Word 22 (MaxQueuedMovements) has been renamed to `MaxMoveHistory` to better fit its actual use
-- New custom AI parameter: `SweepScanRadius`, read the XML docs
+- Slight changes to mine behavior
+- Various UI changes
 
 # Fixes
 
-- Fixed bug where connecting clients into multiplayer saw extra dummy clients
-- Shell physics should now no longer differ across framerates OR different clients
-    - So with this, ghost shells should no longer exist, ever
+- Fix some desync and animation issues in online multiplayer
+- Various UI fixes
+- Improve some performance for AI tanks
 
 # TODO
 

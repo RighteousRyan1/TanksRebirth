@@ -46,12 +46,12 @@ public class AIParameters {
     public uint ObstacleAwarenessMovement { get; set; }
     /// <summary>How inaccurate (in radians) this tank is trying to aim at its target. Word 29.</summary>
     public float AimOffset { get; set; }
-    /// <summary>The minimum distance from the main shot calculation ray *this* <see cref="AITank"/> must be before it is allowed to fire. Word 31.</summary>
+    /// <summary>The angle of the cone used to check whether the <see cref="AITank"/> would hit itself. Only checked on the path after the first ricochet. Word 31.</summary>
     public float DetectionForgivenessSelf { get; set; }
-    /// <summary>The minimum distance from the main shot calculation ray ANY friendly <see cref="Tank"/> must be before it is allowed to fire. Word 32.</summary>
+    /// <summary>The angle in which firing is denied if a friendly tank is within this angle of the shot path. A friendly very close to the path is also caught regardless of angle. Word 32.</summary>
     public float DetectionForgivenessFriendly { get; set; }
-    /// <summary>The maximum distance from the main shot calculation ray an enemy must be before this <see cref="Tank"/> is allowed to fire.
-    /// <br></br>If the tank detects itself within <see cref="DetectionForgivenessSelf"/> or a friendly <see cref="Tank"/> in <see cref="DetectionForgivenessFriendly"/>,
+    /// <summary>The angle in which an enemy tank must be within the main shot path before it is allowed to fire.
+    /// <br></br>If the tank detects itself in the <see cref="DetectionForgivenessSelf"/> cone or a friendly in the <see cref="DetectionForgivenessFriendly"/> cone,
     /// this tank will still not fire. Word 33.</summary>
     public float DetectionForgivenessHostile { get; set; }
     /// <summary>The maximum amount of time before this <see cref="AITank"/> shoot a <see cref="Shell"/>. Word 35.</summary>

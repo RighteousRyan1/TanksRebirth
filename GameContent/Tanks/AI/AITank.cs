@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
 using TanksRebirth.Internals.Common.Utilities;
@@ -144,7 +145,7 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         // maybe move this stuff to events within Modifiers.cs
         if (Modifiers.IsOn(Modifiers.BUMP))       tier++;
         if (Modifiers.IsOn(Modifiers.MONOCHROME)) tier = Modifiers.MonochromeValue;
-        if (Modifiers.IsOn(Modifiers.MASTER))     tier = Modifiers.VanillaToMasterModeConversions[tier];
+        if (Modifiers.IsOn(Modifiers.MASTER))     if (Modifiers.VanillaToMasterModeConversions.TryGetValue(tier, out int value)) tier = value;
 
         AiTankType = tier;
 
@@ -199,10 +200,9 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         properties.DestructionColor = TankDestructionColors[AiTankType];
 
         // initialize these so we don't divide by zero in modulus operations
-
-        CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
-        CurrentRandomMineLay = Client.ClientRandom.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
-        CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
+        CurrentRandomMove = PRNG.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
+        CurrentRandomMineLay = PRNG.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
+        CurrentRandomShoot = PRNG.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
 
         // unfortunately these are just miserable
         if (Modifiers.IsOn(Modifiers.EXTRA_CALCS))
@@ -252,15 +252,14 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     }
     public List<Tank> TanksNearMineAwareness = [];
     public List<Tank> TanksNearShootAwareness = [];
-    public List<Block> BlocksNear = [];
     public override void Update() {
         // why did j not do this sooner?
         ModdedData?.PreUpdate();
         base.Update();
         ModdedData?.PostUpdate();
     }
-    public override void Shoot(bool fxOnly = false, bool netSend = true) {
-        base.Shoot(fxOnly, netSend);
+    public override void Shoot(bool netSend = true) {
+        base.Shoot(netSend);
 
         // only called once
         ModdedData?.Fire();
@@ -282,12 +281,15 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         // might not account for level testing via the level editor?
         OnDestroy?.Invoke();
 
-        const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
-        SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, position: Position3D);
-
         TankDeathMark.Create(this, TankDeathMark.CheckColor.White);
 
         base.Destroy(context, netSend);
+
+        // only play sfx if in single player (and a player exists) or a player was the cause of death.
+        if (context.Source is PlayerTank || (!Client.IsConnected() && PlayerTank.ClientTank is not null)) {
+            const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
+            SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 1f, position: Position3D);
+        }
 
         if (MainMenuUI.IsActive) return;
         if (LevelEditorUI.IsActive) return;
@@ -321,17 +323,19 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         // pretty sure != null isn't necessary because if Source is null it can't convert
         // it knows the owner is not me but increments my kill count anyway
         if (context.Source is PlayerTank p) {
-            var myId = NetPlay.GetMyClientId();
-
             if (Client.IsConnected()) {
+                var myId = NetPlay.GetMyClientId();
                 bool isMe = p.PlayerId == myId;
-                if (isMe)
+                if (isMe) {
                     PlayerTank.KillCounts[myId]++;
+                    GiveXP();
+                }
             }
             else {
                 PlayerTank.KillCounts[p.PlayerId]++;
-
                 TankGame.SaveFile.TotalKills++;
+
+                GiveXP();
             }
 
             // TODO: nonono, not yet. cosmetics are NOT ready
@@ -341,7 +345,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))
             TankGame.SaveFile.TankKills[AiTankType] = ++value;
 
-        GiveXP();
         // check if player id matches client id, if so, increment that player's kill count, then sync to the server
         // TODO: convert TankHurtContext into a struct and use it here
         // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
@@ -470,7 +473,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
     /// <summary>Sets various meta-data things about this <see cref="AITank"/>.
     public void HandleTankMetaData() {
         TanksNearMineAwareness.Clear();
-        BlocksNear.Clear();
 
         if (TankAI is not VanillaAISystem vais) return;
 
@@ -630,9 +632,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                 [(nameof(Parameters.TankAwarenessShoot), Parameters.TankAwarenessShoot, true)] = Color.Blue,
                 [(nameof(Parameters.TankAwarenessMine), Parameters.TankAwarenessMine, false)] = Color.Cyan,
 
-                [(nameof(Parameters.ObstacleAwarenessMovement), Parameters.ObstacleAwarenessMovement, false)] = Color.Magenta,
-
-                [(nameof(BlocksNear), BlocksNear.Count, false)] = Color.Orange,
                 [(nameof(TanksNearMineAwareness), TanksNearMineAwareness.Count, false)] = Color.IndianRed,
             };
 
@@ -652,6 +651,9 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
                 DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
             }
+
+            if (TargetTank is not null)
+                DrawUtils.DrawArrow(Position3D, Position3D + (TargetTank.Position3D - Position3D) * 0.9f, Color.Red, DrawParams.View, DrawParams.Proj);
 
             var floor = Vector3.Up * 0.3f;
             var origin = Position.ExpandZ() + floor;
@@ -698,7 +700,8 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             drawInfo.Clear();
 
-            vais.GetTanksInPath(MathUtils.DirectionOf(TurretRotation), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * SHELL_SPAWN_DISTANCE, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+            // the segments + cones the tank actually uses to decide whether to shoot
+            vais.DrawShotCones(view, proj);
 
             if (Parameters.PredictsPositions && TargetTank is not null)
                 calculation = Position.DistanceTo(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
@@ -706,27 +709,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
             if (Parameters.SmartRicochets)
                 vais.GetTanksInPath(MathUtils.DirectionOf(vais.SeekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
         }
-        /*if (DebugManager.DebugLevel == DebugManager.Id.TankData && !Properties.Stationary) {
-            // magical numbers too lazy, look at update method to define
-            IsObstacleInWay(AiParams.ObstacleAwarenessMovement / 2, Vector2.UnitY.RotatedBy(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Proj), 6, centered: true);
-            foreach (var pt in refPoints)
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.ReflectionPoint.X, 0, pt.ReflectionPoint.Y), View, Proj), 6, centered: true);
-
-
-            //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Proj), 6, centered: true);
-        }*/
-
-        /*if (Properties.Stationary) return;
-
-        Parameters.RandomTimerMinMove = 60;
-        Parameters.RandomTimerMaxMove = 60;
-
-        for (int i = 0; i < SubPivotQueue.Count; i++) {
-            var dir = SubPivotQueue.ElementAt(i);
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{MathHelper.ToDegrees(dir.ToRotation())}",
-                WindowUtils.WindowTop + new Vector2(20, i * 20), Color.Black, Color.White, Vector2.One, 0f, Anchor.TopCenter, 0.5f);
-        }*/
 
         if (Properties.Invisible)
             return;

@@ -95,7 +95,7 @@ public static class GameplayLights {
         light.Intensity = 1f;
         light.Range = 55f;
         light.Wrap = 0.5f;
-        light.CastsShadows = true;
+        light.CastsShadows = shadow;
         light.Priority = 1;
         LightingSystem.AddFrameLight(light);
     }
@@ -109,7 +109,7 @@ public static class GameplayLights {
         light.Intensity = 1.9f * MathF.Pow(MathHelper.Clamp(life, 0f, 1f), 1.5f) * MathF.Max(Brightness, 0.8f);
         light.Range = 80f + radius * 3f;
         light.Wrap = 0.2f;
-        light.CastsShadows = true;
+        light.CastsShadows = shadow;
         light.Priority = 9;
         LightingSystem.AddFrameLight(light);
     }
@@ -123,7 +123,7 @@ public static class GameplayLights {
         light.Intensity = 1.6f * flicker;
         light.Range = 100f * (0.97f + 0.03f * flicker);
         light.Wrap = 0.3f;
-        light.CastsShadows = true;
+        light.CastsShadows = shadow;
         light.Priority = isLocalPlayer ? 11 : 9;
         LightingSystem.AddFrameLight(light);
     }

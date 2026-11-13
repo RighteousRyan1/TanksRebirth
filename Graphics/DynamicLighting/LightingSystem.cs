@@ -1036,7 +1036,7 @@ public static class LightingSystem {
         // cascade that covers the board. if Room Shadows is off, it can save a considerable amount of frame time
         var depth = MathF.Max(10f, Sun.ShadowDepth);
         float texelWorld;
-        if (Sun.ShadowBounds is { } bounds)
+        if (Sun.CascadeHQ is { } bounds)
             _sunViewProjection = FitBoardCascade(bounds, dir, up, size, depth, out texelWorld, out depth);
         else {
             var radius = MathF.Max(1f, Sun.ShadowRadius);
@@ -1199,14 +1199,14 @@ public static class LightingSystem {
         stats.ShadowDraws++;
     }
 
-    /// <summary>Fits an orthographic sun projection tightly around <see cref="SunLight.RoomShadowBounds"/> (or everything drawn).</summary>
+    /// <summary>Fits an orthographic sun projection tightly around <see cref="SunLight.CascadeLQ"/> (or everything drawn).</summary>
     static bool TryFitRoomCascade(Vector3 dir, Vector3 up, out Matrix viewProjection, out float texelWorld, out float depth) {
         viewProjection = Matrix.Identity;
         texelWorld = 1f;
         depth = 1f;
 
         BoundingBox box;
-        if (Sun.RoomShadowBounds is { } bounds) {
+        if (Sun.CascadeLQ is { } bounds) {
             box = bounds;
         }
         else {

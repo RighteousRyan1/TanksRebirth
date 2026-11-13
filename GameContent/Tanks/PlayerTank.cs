@@ -386,9 +386,9 @@ public class PlayerTank : Tank {
         }
         base.Remove(nullifyMe);
     }
-    public override void Shoot(bool fxOnly, bool netSend = true) {
+    public override void Shoot(bool netSend = true) {
         PlayerStatistics.ShellsShot++;
-        base.Shoot(false);
+        base.Shoot();
     }
     public override void LayMine() {
         PlayerStatistics.MinesLaid++;

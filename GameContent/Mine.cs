@@ -42,6 +42,8 @@ public sealed class Mine : IAITankDanger {
 
     public Tank? Owner { get; set; }
 
+    bool _allowTrip;
+    bool _audioEnable;
     Vector2 _oldPosition;
     public Vector2 Position { get; set; }
 
@@ -91,6 +93,7 @@ public sealed class Mine : IAITankDanger {
     /// Is automatically set to <see cref="ExplosionRadius"/><c> * 0.8f</c></summary>
     public float MineReactRadius;
 
+    // trying to remember... pretty sure this just says it flicks red for 2 seconds?
     public const float TICKS_OF_FLASHING = 120;
 
     /// <summary>
@@ -198,21 +201,6 @@ public sealed class Mine : IAITankDanger {
         if (Server.NetManager != null || !Client.IsConnected()) {
             DetonateTime -= RuntimeData.DeltaFrames;
 
-            if (DetonateTime < TICKS_OF_FLASHING) {
-                if (DetonateTime % 3.5f <= RuntimeData.DeltaFrames) {
-                    RedTick = !RedTick;
-                }
-                if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f, position: Position3D);
-                }
-            }
-            if (Owner is not null && Owner is PlayerTank) {
-                if (DetonateTime < TICKS_OF_FLASHING - 5 && _oldDetonateTime > TICKS_OF_FLASHING - 5) {
-                    TickingNoise = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_tick.ogg", SoundContext.Effect, 0.7f, position: Position3D);
-                    TickingNoise.Instance.IsLooped = true;
-                }
-            }
-
             if (DetonateTime <= 0) {
                 Detonate();
                 return;
@@ -232,24 +220,59 @@ public sealed class Mine : IAITankDanger {
             // NOTE: this scope may be inconsistent over a server? check soon.
             if (DetonateTime > MineReactTime) {
                 bool tryDetonate = false;
-                foreach (var tank in GameHandler.AllTanks) {
-                    if (tank is null) continue;
-                    if (tank.IsDestroyed) continue;
-                    if (Owner is null) continue;
 
-                    var dist = GameUtils.TanksDistance(tank.Position, Position);
-                    if (dist > MineReactRadius) continue;
+                // disallow mine "reaction" until the owner has left the radius.
+                // after owner moves out of proximity, it then can react to ANY tank, even the owner
+                if (Owner is not null) {
+                    var dist = GameUtils.TanksDistance(Position, Owner.Position);
+                    if (dist > MineReactRadius && !_allowTrip) _allowTrip = true;
+                }
+                if (_allowTrip) {
+                    foreach (var tank in GameHandler.AllTanks) {
+                        if (tank is null) continue;
+                        if (tank.IsDestroyed) continue;
 
-                    // don't try any further, we don't want to explode if these conditions are true
-                    if (tank.WorldId == Owner!.WorldId || tank.IsOnSameTeamAs(Team)) {
-                        tryDetonate = false;
-                        break; // good check in case the tank is on NoTeam;
+                        var dist = GameUtils.TanksDistance(tank.Position, Position);
+                        if (dist > MineReactRadius) continue;
+
+                        // don't try any further, we don't want to explode if these conditions are true
+                        /*if (tank.WorldId == Owner!.WorldId || tank.IsOnSameTeamAs(Team)) {
+                            tryDetonate = false;
+                            break; // good check in case the tank is on NoTeam;
+                        }*/
+
+                        tryDetonate = true;
+                        break;
                     }
-
-                    tryDetonate = true;
                 }
                 if (tryDetonate)
                     DetonateTime = MineReactTime;
+            }
+        }
+
+        // handle noises. this is super long code for no good reason.
+        if (DetonateTime < TICKS_OF_FLASHING) {
+            RedTick = (int)(DetonateTime / 3.5f) % 2 == 0;
+
+            // only make ticking noise for self
+
+            var pTankCheck = Client.IsConnected() ? Owner == PlayerTank.ClientTank : Owner is PlayerTank;
+            if (_oldDetonateTime >= TICKS_OF_FLASHING && pTankCheck) {
+                _audioEnable = true;
+                SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f, position: Position3D);
+            }
+
+            // hacky but works for now.
+            if (DetonateTime <= TICKS_OF_FLASHING - 5 && _oldDetonateTime > TICKS_OF_FLASHING - 5 && _audioEnable) {
+                TickingNoise = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_tick.ogg", SoundContext.Effect, 0.7f, position: Position3D);
+                TickingNoise.Instance.IsLooped = true; // for some reason looping just... isn't working. wtf.
+            }
+            if (_audioEnable) {
+                var mod = DetonateTime % 5;
+                var oMod = _oldDetonateTime % 5;
+
+                if (oMod < 1 && mod > 1)
+                    TickingNoise?.Play();
             }
         }
 
@@ -268,8 +291,14 @@ public sealed class Mine : IAITankDanger {
                 DebugManager.DrawBoundingBox(HitBox, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
         }
 
-        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime:F0}/{DetonateTimeMax:F1}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}",
-            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, 20), 1, centered: true);
+        DebugManager.DrawDebugString(TankGame.SpriteRenderer,
+            FormattableString.Invariant($"""
+                DetonateTime/Max: {DetonateTime:F0}/{DetonateTimeMax:F0}
+                NearDestructibles: {IsNearDestructibles}
+                Id: {Id}
+
+                """),
+            MatrixUtils.ConvertWorldToScreen(new Vector3(0, 15, 0), DrawParams.World, DrawParams.View, DrawParams.Proj) - new Vector2(0, 20), 1, centered: true);
 
         // this is horrendous but it looks better
         // this is fucking horrible - ryan, 11/24/25

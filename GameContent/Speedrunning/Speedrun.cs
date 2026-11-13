@@ -57,8 +57,7 @@ public class Speedrun {
 
     /// <summary>Stores the name of the mission completed and the time it took to complete it both in TOTAL and BY-MISSION.</summary>
     public Dictionary<string, (TimeSpan TotalTime, TimeSpan MissionTime)> MissionTimes { get; set; } // total, mission only
-    internal Speedrun(string campaignName)
-    {
+    internal Speedrun(string campaignName) {
         CampaignName = campaignName;
         MissionTimes = [];
         Timer = new();
@@ -86,14 +85,19 @@ public class Speedrun {
 
             var len = CampaignGlobals.LoadedCampaign.CurrentMissionId + 2 > CampaignGlobals.LoadedCampaign.CachedMissions.Length ? CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1 : CampaignGlobals.LoadedCampaign.CurrentMissionId + 2;
 
-            var drawPos = new Vector2(5, WindowUtils.WindowHeight / 2);
-            spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"Time: {CurrentSpeedrun.Timer.Elapsed.StopwatchFormat()}", drawPos, Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-            for (int i = num; i <= len; i++) { // current.times.count originally
+            var font = FontGlobals.RebirthFont;
 
+            var drawPos = new Vector2(5, WindowUtils.WindowHeight / 2);
+            var txtScale = new Vector2(0.75f);
+            var timeText = $"Time: {CurrentSpeedrun.Timer.Elapsed.StopwatchFormat()}";
+            DrawUtils.DrawStringWithBorder(spriteBatch, font, timeText, drawPos, Color.White, Color.Black, txtScale, 0f, anchor: Anchor.TopLeft, borderThickness: 0.5f);
+            for (int i = num; i <= len; i++) { // current.times.count originally
                 var time = CurrentSpeedrun.MissionTimes.ElementAt(i);
+                var txt = $"{time.Key}: {time.Value.MissionTime.StopwatchFormat()}";
+                var curDp = new Vector2(drawPos.X, drawPos.Y + 20 + ((i - num) * 20));
                 // display mission name and time taken
-                spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"{time.Key}: {time.Value.MissionTime.StopwatchFormat()}", 
-                    new Vector2(drawPos.X, drawPos.Y + 15 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                DrawUtils.DrawStringWithBorder(spriteBatch, font, txt, curDp,
+                    Color.White, Color.Black, txtScale, 0f, anchor: Anchor.TopLeft, borderThickness: 0.5f);
             }
         }
     }

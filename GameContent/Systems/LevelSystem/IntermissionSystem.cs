@@ -47,6 +47,8 @@ public static class IntermissionSystem {
     public static float BannerAlpha = 1f;
     public static float BonusBannerAlpha;
     public static bool ShouldDrawBonusBanner;
+    /// <summary>Set from the host's decision in <see cref="InitializeCountdowns"/>, so every client plays the bonus life animation (and gets the life), not only the host.</summary>
+    public static bool BonusLifePending;
 
     public static float Alpha;
     public static float ColorMultiplierForBorders = 0.35f;
@@ -247,19 +249,17 @@ public static class IntermissionSystem {
             ShouldFadeIn = true;
             SceneManager.CleanupScene();
 
-            // ShouldDrawBanner indicates there wasn't a bonus life to be had
-            if (ShouldDrawBanner) {
-                PlayOpeningFanfare();
-
-                ReplayTextAnimations();
-            }
-            // ensures it isnt the first load. hacky asf but whatever
-            // how can i de-hackify this?
-            else if (PlayerTank.KillCounts[0] > 0) {
+            if (BonusLifePending) {
+                BonusLifePending = false;
                 _forceBonusDrawToHeight = false;
                 ShouldDrawBonusBanner = true;
                 BonusLifeAnimator?.Restart();
                 BonusLifeAnimator?.Run();
+            }
+            else if (ShouldDrawBanner) {
+                PlayOpeningFanfare();
+
+                ReplayTextAnimations();
             }
         }
         // happens in the middle of full opaque-ness
@@ -306,6 +306,11 @@ public static class IntermissionSystem {
     }
 
     public static void InitializeCountdowns(bool oneUp = false) {
+        // a bonus life hides the mission banner until the bonus animation has played, on every machine
+        BonusLifePending = oneUp;
+        if (oneUp)
+            ShouldDrawBanner = false;
+
         // 10 seconds to complete the entire thing (14 if one up)
         // at 3 seconds in, the opening fanfare plays (but for some reason i gotta use 4 in this.)
         // at 220 frames left (3.66 seconds), the snare drums begin, and the scene is visible
@@ -352,7 +357,7 @@ public static class IntermissionSystem {
     }
     public static void PrepareBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
         RenderGlobals.EnsureOK(ref BackgroundBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
-        RenderGlobals.EnsureOK(ref BannerBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
+        RenderGlobals.EnsureOK(ref BannerBuffer, device, WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.4f));
         RenderGlobals.EnsureOK(ref BonusBannerBuffer, device, /*(int)(WindowUtils.WindowWidth * 0.75f)*/ WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
         RenderGlobals.EnsureOK(ref BonusBannerTextBuffer, device, WindowUtils.WindowWidth / 3, (int)125.ToResolutionY());
 
@@ -492,28 +497,7 @@ public static class IntermissionSystem {
 
         spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
 
-        // why didn't i use this approach before? i'm kind of braindead sometimes.
-        // draws the plaid(?) banner across the screen
-        for (int i = 0; i < 6; i++) {
-            var off = 75f;
-            DrawUtils.DrawStripe(spriteBatch, BannerColor, (off * i).ToResolutionY(), 1f);
-        }
-
-        // i got this by mathing 1080 * 0.18 - 1080 * 0.16 (what the old offset was)
-        // similar magic for the other values
-        var lineOffset = 21.6f.ToResolutionY();
-        var textOffsetMissionName = 167.2f.ToResolutionY();
-        var textOffsetTanksLeft = 317.2f.ToResolutionY();
-        var textOffsetDetails = 72.2f.ToResolutionY();
-
-        // draw the little golden lines across the plaid stripe
-        var wp = TextureGlobals.Pixels[Color.White];
-        var orig = new Vector2(0, wp.Size().Y * 0.5f);
-        var scl = new Vector2(WindowUtils.WindowWidth, 15.ToResolutionY());
-        spriteBatch.Draw(wp, new Vector2(0, lineOffset), null,
-            Color.Goldenrod * 1f, 0f, orig, scl, default, default);
-        spriteBatch.Draw(wp, new Vector2(0, lineOffset + 420.ToResolutionY()), null,
-            Color.Goldenrod * 1f, 0f, orig, scl, default, default);
+        DrawUtils.DrawStripe(spriteBatch, BannerColor, Vector2.Zero, new Vector2(WindowUtils.WindowWidth, BannerBuffer.Height), 1f);
 
         // calculate total enemy tanks (remaining)
         int mafs1 = Campaign.CurrentTrackedSpawns.Count(p => p.Item2);
@@ -526,6 +510,9 @@ public static class IntermissionSystem {
         string missionName = CampaignGlobals.LoadedCampaign.LoadedMission.Name;
 
         // slight misalignment
+        var textOffsetMissionName = 150f.ToResolutionY();
+        var textOffsetTanksLeft = 300f.ToResolutionY();
+        var textOffsetDetails = 72f.ToResolutionY();
 
         // draw mission name, tanks remaining
         DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
@@ -661,7 +648,7 @@ public static class IntermissionSystem {
                 var bannerPos = WindowUtils.WindowBottomLeft * 0.16f;
                 DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BannerBuffer, bannerPos, Vector2.UnitY, Color.White,
                     Vector2.One, BannerAlpha * Alpha, Anchor.TopLeft, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
-                spriteBatch.Draw(BannerBuffer, WindowUtils.WindowBottomLeft * 0.16f, Color.White * Alpha * BonusBannerAlpha);
+                // spriteBatch.Draw(BannerBuffer, WindowUtils.WindowBottomLeft * 0.16f, Color.White * Alpha * BonusBannerAlpha);
             }
 
             // render the bonus life banner now

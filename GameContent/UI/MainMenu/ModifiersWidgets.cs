@@ -87,6 +87,48 @@ static class ModifierDraw {
         }
     }
 
+    /// <summary>The wooden backdrop with a dark edge and a faint highlight along the top and left.</summary>
+    public static void Frame(SpriteBatch spriteBatch, Rectangle area) {
+        DrawWood(spriteBatch, area, new Color(235, 235, 235));
+
+        var edge = Px(3f);
+        Outline(spriteBatch, area, edge, Color.Black * 0.85f);
+        Fill(spriteBatch, new Rectangle(area.X + edge, area.Y + edge, area.Width - edge * 2, 1), Fade(Color.White, 0.16f));
+        Fill(spriteBatch, new Rectangle(area.X + edge, area.Y + edge, 1, area.Height - edge * 2), Fade(Color.White, 0.1f));
+    }
+
+    /// <summary>A grey card with a white title strip (<paramref name="header"/>) along the top of <paramref name="section"/>.</summary>
+    public static void Section(SpriteBatch spriteBatch, Rectangle header, Rectangle section) {
+        var edge = Px(2f);
+        var body = new Rectangle(section.X, header.Bottom, section.Width, section.Bottom - header.Bottom);
+
+        Shadow(spriteBatch, section, 5f, 9f, 0.45f);
+        Gradient(spriteBatch, body, ModifierColors.PanelTop, ModifierColors.PanelBottom);
+        Gradient(spriteBatch, new Rectangle(body.X, body.Y, body.Width, Px(12f)), Color.Black * 0.3f, Color.Transparent);
+        Gradient(spriteBatch, header, Color.White, new Color(218, 218, 218));
+        Fill(spriteBatch, new Rectangle(header.X, header.Bottom - edge, header.Width, edge), Color.Black * 0.55f);
+        Outline(spriteBatch, section, edge, Color.Black * 0.7f);
+    }
+
+    /// <summary>A dark bar for hints and descriptions.</summary>
+    public static void DarkBar(SpriteBatch spriteBatch, Rectangle area) {
+        var edge = Px(2f);
+        Shadow(spriteBatch, area, 4f, 8f, 0.4f);
+        Gradient(spriteBatch, area, new Color(76, 76, 76), new Color(46, 46, 46));
+        Fill(spriteBatch, new Rectangle(area.X + edge, area.Y + edge, area.Width - edge * 2, 1), Fade(Color.White, 0.14f));
+        Outline(spriteBatch, area, edge, Color.Black * 0.7f);
+    }
+
+    /// <summary>A small square toggle. Dark when off and green when on, with <paramref name="amount"/> blending between the two.</summary>
+    public static void Swatch(SpriteBatch spriteBatch, Rectangle swatch, float amount, float dim) {
+        var border = Px(2f);
+        Fill(spriteBatch, swatch.GetOffset(border, border), Color.Black * (0.35f * dim));
+        Fill(spriteBatch, swatch, Color.Black * dim);
+
+        var inner = new Rectangle(swatch.X + border, swatch.Y + border, swatch.Width - border * 2, swatch.Height - border * 2);
+        Fill(spriteBatch, inner, Fade(Color.Lerp(new Color(34, 34, 34), ModifierColors.On, amount), dim));
+    }
+
     public static void Pill(SpriteBatch spriteBatch, Rectangle area, Color color)
         => DrawUtils.DrawNineSliced(spriteBatch, UIElement.UIPanelBackground, 12, area, color, Vector2.Zero);
 
@@ -106,15 +148,7 @@ static class ModifierDraw {
 public sealed class ModifiersFrame : UIElement {
     public ModifiersFrame() => IgnoreMouseInteractions = true;
 
-    public override void DrawSelf(SpriteBatch spriteBatch) {
-        var area = Hitbox;
-        ModifierDraw.DrawWood(spriteBatch, area, new Color(235, 235, 235));
-
-        var edge = ModifierDraw.Px(3f);
-        ModifierDraw.Outline(spriteBatch, area, edge, Color.Black * 0.85f);
-        ModifierDraw.Fill(spriteBatch, new Rectangle(area.X + edge, area.Y + edge, area.Width - edge * 2, 1), ModifierDraw.Fade(Color.White, 0.16f));
-        ModifierDraw.Fill(spriteBatch, new Rectangle(area.X + edge, area.Y + edge, 1, area.Height - edge * 2), ModifierDraw.Fade(Color.White, 0.1f));
-    }
+    public override void DrawSelf(SpriteBatch spriteBatch) => ModifierDraw.Frame(spriteBatch, Hitbox);
 }
 
 /// <summary>
@@ -194,14 +228,7 @@ public sealed class ModifierRow : UIElement {
             DrawPicker(spriteBatch, labelX + labelSize.X * scale.X, scale, active, hovered, editable);
     }
 
-    void DrawSwatch(SpriteBatch spriteBatch, Rectangle swatch, float dim) {
-        var border = ModifierDraw.Px(2f);
-        ModifierDraw.Fill(spriteBatch, swatch.GetOffset(border, border), Color.Black * (0.35f * dim));
-        ModifierDraw.Fill(spriteBatch, swatch, Color.Black * dim);
-
-        var inner = new Rectangle(swatch.X + border, swatch.Y + border, swatch.Width - border * 2, swatch.Height - border * 2);
-        ModifierDraw.Fill(spriteBatch, inner, ModifierDraw.Fade(Color.Lerp(new Color(34, 34, 34), ModifierColors.On, _switch), dim));
-    }
+    void DrawSwatch(SpriteBatch spriteBatch, Rectangle swatch, float dim) => ModifierDraw.Swatch(spriteBatch, swatch, _switch, dim);
 
     void DrawPicker(SpriteBatch spriteBatch, float labelRight, Vector2 scale, bool active, bool hovered, bool editable) {
         var font = FontGlobals.RebirthFont;
@@ -247,17 +274,9 @@ public sealed class ModifiersHeader : UIElement {
     }
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        var edge = ModifierDraw.Px(2f);
         var sectionBottom = Hitbox.Y + (int)(MainMenuUI.ModSlotStep.ToResolutionY() * (_rowsPerColumn + 1)) - ModifierDraw.Px(3f);
         var section = new Rectangle(Hitbox.X, Hitbox.Y, Hitbox.Width, sectionBottom - Hitbox.Y);
-        var body = new Rectangle(section.X, Hitbox.Bottom, section.Width, section.Bottom - Hitbox.Bottom);
-
-        ModifierDraw.Shadow(spriteBatch, section, 5f, 9f, 0.45f);
-        ModifierDraw.Gradient(spriteBatch, body, ModifierColors.PanelTop, ModifierColors.PanelBottom);
-        ModifierDraw.Gradient(spriteBatch, new Rectangle(body.X, body.Y, body.Width, ModifierDraw.Px(12f)), Color.Black * 0.3f, Color.Transparent);
-        ModifierDraw.Gradient(spriteBatch, Hitbox, Color.White, new Color(218, 218, 218));
-        ModifierDraw.Fill(spriteBatch, new Rectangle(Hitbox.X, Hitbox.Bottom - edge, Hitbox.Width, edge), Color.Black * 0.55f);
-        ModifierDraw.Outline(spriteBatch, section, edge, Color.Black * 0.7f);
+        ModifierDraw.Section(spriteBatch, Hitbox, section);
 
         int on = 0, total = 0;
         foreach (var definition in _definitions) {
@@ -386,11 +405,7 @@ public sealed class ModifiersDescriptionBar : UIElement {
     public ModifiersDescriptionBar() => IgnoreMouseInteractions = true;
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        var edge = ModifierDraw.Px(2f);
-        ModifierDraw.Shadow(spriteBatch, Hitbox, 4f, 8f, 0.4f);
-        ModifierDraw.Gradient(spriteBatch, Hitbox, new Color(76, 76, 76), new Color(46, 46, 46));
-        ModifierDraw.Fill(spriteBatch, new Rectangle(Hitbox.X + edge, Hitbox.Y + edge, Hitbox.Width - edge * 2, 1), ModifierDraw.Fade(Color.White, 0.14f));
-        ModifierDraw.Outline(spriteBatch, Hitbox, edge, Color.Black * 0.7f);
+        ModifierDraw.DarkBar(spriteBatch, Hitbox);
 
         var mouse = MouseUtils.MousePosition;
         ModifierRow? hovered = null;

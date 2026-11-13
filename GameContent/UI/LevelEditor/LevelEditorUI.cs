@@ -39,6 +39,7 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
  * 5) When in the level editor, the GC gains ~10MB per second. Find out why. (Collections are often)
  */
 public static partial class LevelEditorUI {
+    public static string LastSaveOrLoadPath = TankGame.SaveDirectory;
     public enum LevelEditState {
         LevelEditor,
         SavingThings,
@@ -400,7 +401,7 @@ public static partial class LevelEditorUI {
 
         LoadLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.575f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
         LoadLevel.OnLeftClick = (a) => {
-            var res = Dialog.FileOpen("mission,campaign,bin", TankGame.SaveDirectory);
+            var res = Dialog.FileOpen("mission,campaign,bin", LastSaveOrLoadPath);
             if (res.Path == null || !res.IsOk) return;
 
             FileTryOpen(res.Path);
@@ -451,6 +452,7 @@ public static partial class LevelEditorUI {
             }
 
             ChatSystem.SendMessage($"Loaded '{Path.GetFileName(path)}'.", Color.White);
+            LastSaveOrLoadPath = path;
         } catch (Exception e) when (!Debugger.IsAttached) {
             ChatSystem.SendMessage("Failed to load.", Color.Red);
             ChatSystem.SendMessage(e.Message, Color.Red);

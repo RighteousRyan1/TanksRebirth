@@ -132,13 +132,17 @@ public static class IntermissionHandler {
             int restartTime;
             MissionEndContext endContext;
 
+            // a win only counts if someone is still alive
+            // i must remind myself... why is this code here?
+            //if (victory && !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed))
+            //    victory = false;
+
             if (victory) {
                 restartTime = DEF_INTERMISSION_TIME;
 
-                if (isExtraLifeMission) {
+                // the banner is hidden by IntermissionSystem.InitializeCountdowns, so clients get it too
+                if (isExtraLifeMission)
                     restartTime += DEF_PLUSLIFE_TIME;
-                    IntermissionSystem.ShouldDrawBanner = false;
-                }
 
                 endContext = MissionEndContext.Win;
 

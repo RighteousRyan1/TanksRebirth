@@ -87,7 +87,7 @@ public class SunLight {
     /// When set, the sharp shadow map is fitted tightly around this box as seen from the sun instead 
     /// of using <see cref="ShadowCenter"/> / <see cref="ShadowRadius"/>.
     /// </summary>
-    public BoundingBox? ShadowBounds;
+    public BoundingBox? CascadeHQ;
 
     /// <summary>
     /// Renders a second, coarser shadow map that covers the whole scene (the room), so sunlight and shadows
@@ -97,7 +97,7 @@ public class SunLight {
     /// <summary>
     /// Area covered by the room shadow map. Leave null to fit it to everything drawn this frame.
     /// </summary>
-    public BoundingBox? RoomShadowBounds;
+    public BoundingBox? CascadeLQ;
 
     /// <summary>Volumetric light shafts (god rays) ray marched through the shadow map.</summary>
     public LightShafts Shafts = new();

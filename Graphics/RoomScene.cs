@@ -204,6 +204,7 @@ public static class RoomScene {
     public static float MinuteHandRotation;
     public static float PendulumRotation;
     public static int Hour, Minute, Second;
+    public static float HourFractional; // jus meant for external purposes
     static int _oldHour;
     static int _oldMin;
     /* q1 = seq1
@@ -217,19 +218,19 @@ public static class RoomScene {
             var timeBetweenSeqs = 3000;
             switch (quarter) {
                 case 1:
-                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
                     break;
                 case 2:
-                    SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+                    SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
                     await Task.Delay(timeBetweenSeqs);
-                    SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+                    SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
                     break;
                 case 3:
-                    SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+                    SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
                     await Task.Delay(timeBetweenSeqs);
-                    SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+                    SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
                     await Task.Delay(timeBetweenSeqs);
-                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+                    SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
                     break;
                 default:
                     // do hourly bro.
@@ -241,16 +242,16 @@ public static class RoomScene {
         if (hour == 0) hour += 12;
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+            SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
             await Task.Delay(timeBetweenSeqs);
-            SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+            SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
             await Task.Delay(timeBetweenSeqs);
-            SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+            SoundPlayer.PlaySoundInstance(ChimeS4, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
             await Task.Delay(timeBetweenSeqs);
-            SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+            SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
             for (int i = 0; i < hour; i++) {
                 await Task.Delay(timeBetweenSeqs);
-                SoundPlayer.PlaySoundInstance(ChimeHour, SoundContext.Effect, playNew: true, position: ClockAudioPosition, orthographicFade: true);
+                SoundPlayer.PlaySoundInstance(ChimeHour, SoundContext.Effect, position: ClockAudioPosition, orthographicFade: true);
             }
         });
     }
@@ -275,14 +276,15 @@ public static class RoomScene {
         // this is pretty magical, but it gives the room a good scale in comparison to the game scene.
         Scale = 10f;
 
-        Hour = TimeUtils.GetHourFromCircle(HourHandRotation);
-        Minute = TimeUtils.GetMinuteFromCircle(MinuteHandRotation);
-        Second = DateTime.Now.Second;
-
         SecondHandRotation = (float)Second / 60 * MathHelper.TwoPi;
         HourHandRotation = TimeUtils.InterpolateHourToDay(DateTime.Now);
         MinuteHandRotation = TimeUtils.InterpolateMinuteToHour(DateTime.Now);
         PendulumRotation = MathHelper.Pi / 32 * TimeUtils.SineForSecond(DateTime.Now, 0.5f);
+
+        Hour = TimeUtils.GetHourFromCircle(HourHandRotation);
+        HourFractional = (float)DateTime.Now.TimeOfDay.TotalHours;
+        Minute = TimeUtils.GetMinuteFromCircle(MinuteHandRotation);
+        Second = DateTime.Now.Second;
 
         // hacky way to prevent chiming on game boot. 
         if (RuntimeData.RunTime > 60f) {

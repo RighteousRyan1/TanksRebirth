@@ -57,8 +57,6 @@ public partial struct VanillaAISystem : IAISystem {
         ShellFire.Value       += AIManager.AIDeltaFrames;
         MinePlace.Value       += AIManager.AIDeltaFrames;
 
-        TurretRotationMultiplier = 1f;
-
         // Array.ForEach(Owner.Behaviors, x => x.Value += RuntimeData.DeltaFrames);
 
         // nearby friendlies checks

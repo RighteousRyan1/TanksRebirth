@@ -351,18 +351,19 @@ public abstract class Tank(bool ignoresRegister) {
 
         SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f, position: Position3D);
 
-        var lp1 = GameHandler.Particles.MakeParticle(Position3D,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+        var lptex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle");
+        var lp1 = GameHandler.Particles.MakeParticle(Position3D, lptex);
 
         var color = new Color(0, 200, 255, 181);
 
+        // lp1.Scale = new Vector3()
         lp1.Alpha = 1f;
         lp1.IsIn2DSpace = true;
         lp1.Color = color;
 
         lp1.UpdateCallback = (lp) => {
             lp1.Position = Position3D;
-            lp1.TextureScale = new(5);
+            lp1.TextureScale = new Vector2(5).ToResolution();
 
             if (lp1.LifeTime > 75) {
                 lp1.Alpha -= 0.02f * RuntimeData.DeltaFrames;
@@ -373,8 +374,7 @@ public abstract class Tank(bool ignoresRegister) {
                 lp1.Destroy();
         };
 
-        var lp2 = GameHandler.Particles.MakeParticle(Position3D,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+        var lp2 = GameHandler.Particles.MakeParticle(Position3D, lptex);
 
         lp2.Alpha = 1f;
         lp2.IsIn2DSpace = true;
@@ -383,7 +383,7 @@ public abstract class Tank(bool ignoresRegister) {
 
         lp2.UpdateCallback = (lp) => {
             lp2.Position = Position3D;
-            lp2.TextureScale = new(15);
+            lp2.TextureScale = new Vector2(15).ToResolution();
 
             if (lp2.LifeTime > 40) {
                 lp2.Alpha -= 0.025f * RuntimeData.DeltaFrames;
@@ -401,13 +401,9 @@ public abstract class Tank(bool ignoresRegister) {
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
             lpSmoke.Color = color;
-
             var velocity = Vector2.UnitY.RotatedBy(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
-
             lpSmoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
             lpSmoke.Billboard = CameraGlobals.IsUsingFirstPersonCamera;
-
             lpSmoke.Scale = new(0.75f);
 
             lpSmoke.UpdateCallback = (elp) => {
@@ -453,8 +449,8 @@ public abstract class Tank(bool ignoresRegister) {
 
         foreach (var cos in Props.ToList())
             AddCosmetic(cos);
-            //if (cos is Prop2D cos2d)
-            //    AddProp2D(cos2d);
+        //if (cos is Prop2D cos2d)
+        //    AddProp2D(cos2d);
 
         if (Modifiers.IsOn(Modifiers.TRIPLE_BOUNCE))
             Properties.RicochetCount *= 3;
@@ -670,7 +666,7 @@ public abstract class Tank(bool ignoresRegister) {
         IsDestroyed = true;
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
-        var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, position: Position3D);
+        var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 1f, position: Position3D);
 
         //if (CameraGlobals.IsUsingFirstPresonCamera)
         //    SoundUtils.CreateSpatialSound(destroy, Position3D, CameraGlobals.PerspectiveCamera.Position, 1.25f);
@@ -697,8 +693,9 @@ public abstract class Tank(bool ignoresRegister) {
         fp.Position += new Vector3(0, 0.15f, 0);
     }
 
+    // I did remove bool fxOnly so if anything breaks i blame no one but myself.
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
-    public virtual void Shoot(bool fxOnly = false, bool netSend = true) {
+    public virtual void Shoot(bool netSend = true) {
         if (!MainMenuUI.IsActive && !CampaignGlobals.InMission || !Properties.HasTurret) return;
 
         if (CurShootCooldown > 0) return;
@@ -712,23 +709,21 @@ public abstract class Tank(bool ignoresRegister) {
         var force = Vector2.Normalize(Position - TurretPosition) * Properties.Recoil;
         KnockbackVelocity = force / UNITS_PER_METER;
 
-        if (!fxOnly) {
-            foreach (var shell in ShootSpread()) {
-                OnShoot?.Invoke(this, shell);
+        foreach (var shell in ShootSpread()) {
+            OnShoot?.Invoke(this, shell);
 
-                // shitcode...
-                if (this is AITank ai)
-                    ai.ModdedData?.Shoot(shell);
+            // shitcode...
+            if (this is AITank ai)
+                ai.ModdedData?.Shoot(shell);
 
-                // this might be shitcode...
-                if (netSend) {
-                    if (this is PlayerTank pt) {
-                        if (NetPlay.IsClientMatched(pt.PlayerId))
-                            Client.SyncShellFire(shell);
-                    }
-                    else
+            // this might be shitcode...
+            if (netSend) {
+                if (this is PlayerTank pt) {
+                    if (NetPlay.IsClientMatched(pt.PlayerId))
                         Client.SyncShellFire(shell);
                 }
+                else
+                    Client.SyncShellFire(shell);
             }
         }
 
@@ -994,10 +989,9 @@ public abstract class Tank(bool ignoresRegister) {
                 if (_treadSoundTimer <= 0f) {
                     _treadSoundTimer = MathF.Max(_treadSoundTimer + TREAD_SOUND_INTERVAL, 0f);
 
-                    var sfx = SoundPlayer.PlaySoundInstance(
+                    SoundPlayer.PlaySoundInstance(
                         TreadSounds[Client.ClientRandom.Next(TreadSounds.Length)],
                         SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.MovePitch, position: Position3D);
-                    sfx.Instance.Pitch = Properties.MovePitch;
                 }
             }
         }

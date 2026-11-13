@@ -21,6 +21,8 @@ public static class AIManager {
     const float MPITCH_MEDHIGH =  1 / 12f;
     const float MPITCH_MEDLOW  = -1 / 6f;
     const float MPITCH_LOW     = -1 / 3f;
+
+    public static readonly List<int> RandomBendShiftTanks = [TankID.Marine, TankID.Pink, TankID.Yellow, TankID.Green];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
     public static Dictionary<int, AIParameters> AIParameterDefaults = [];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
@@ -52,7 +54,7 @@ public static class AIManager {
             #region VanillaTanks
 
             case TankID.Brown:
-                aiParams.DetectionForgivenessHostile = 1.6f;
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // was 1.6 in the old step units. same width, now a cone half-angle
                 aiParams.AimOffset = MathHelper.ToRadians(170);
                 aiParams.RandomTimerMaxShoot = 45;
                 aiParams.RandomTimerMinShoot = 30;
@@ -525,7 +527,7 @@ public static class AIManager {
             #endregion 
         }
 
-        AIParameterDefaults.TryAdd(tankType, aiParams);
+        AIParameterDefaults.TryAdd(tankType, aiParams.Clone());
         return aiParams;
     }
     public static TankProperties GetAITankProperties(int tankType) {
@@ -886,7 +888,7 @@ public static class AIManager {
                 #endregion
         }
 
-        AIPropertyDefaults.TryAdd(tankType, properties);
+        AIPropertyDefaults.TryAdd(tankType, properties.Clone());
         return properties;
     }
     /// <summary>
@@ -990,7 +992,6 @@ public static class AIManager {
         AIThread3.Start();
     }
     internal static void UpdateAITanks() {
-
         if (ModLoader.Status != LoadStatus.Complete)
             return;
 
@@ -1039,7 +1040,7 @@ public static class AIManager {
     public static void ProcessAISection1() {
         long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds) / TankGame.numberUpdates;
             Thread.Sleep(sleepTime);
             StepAIClock(ref lastTimestamp);
 
@@ -1062,7 +1063,8 @@ public static class AIManager {
     public static void ProcessAISection2() {
         long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds) / TankGame.numberUpdates;
+            
             Thread.Sleep(sleepTime);
             StepAIClock(ref lastTimestamp);
 
@@ -1085,7 +1087,7 @@ public static class AIManager {
     public static void ProcessAISection3() {
         long lastTimestamp = Stopwatch.GetTimestamp();
         while (RunThreads) {
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds) / TankGame.numberUpdates;
             Thread.Sleep(sleepTime);
             StepAIClock(ref lastTimestamp);
 

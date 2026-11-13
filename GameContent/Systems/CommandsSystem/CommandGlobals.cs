@@ -109,11 +109,10 @@ public static class CommandGlobals {
         [new CommandInput(name: "mod_toggle", description: "Toggles a specific mod on/off using the mod's internal name.")] = new CommandOutput(netSync: false, false, (args) => {
             var mod_find = args[0];
 
-            var modIndex = ModLoader.modNames.IndexOf(mod_find);
+            var modName = ModLoader.modNames.Find(x => x.Equals(mod_find, StringComparison.OrdinalIgnoreCase));
 
-            if (modIndex > -1) {
-                ModLoader.modEnablement[modIndex] = !ModLoader.modEnablement[modIndex];
-                TankGame.IngameConsole.Log($"Mod '{mod_find}': {ModLoader.modEnablement[modIndex]}", Color.Lime);
+            if (modName is not null) {
+                TankGame.IngameConsole.Log($"Mod '{modName}': {ModLoader.ToggleMod(modName)}", Color.Lime);
             } else {
                 TankGame.IngameConsole.Log($"There is no mod by the given name '{mod_find}'.", Color.Red);
             }
