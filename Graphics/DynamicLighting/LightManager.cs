@@ -118,7 +118,7 @@ public static class LightManager {
 
         UpdateModifierLooks();
 
-        LightingPresets.UpdateDayCycle(RuntimeData.DeltaTime, RoomScene.RoomSkyboxScene);
+        LightingPresets.UpdateDayCycle(RoomScene.RoomSkyboxScene);
     }
 
     // modifiers
