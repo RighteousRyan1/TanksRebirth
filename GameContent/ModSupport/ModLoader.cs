@@ -88,8 +88,13 @@ public static class ModLoader {
     // set within the mods menu, generally
     public static List<string> FirstLoadMods = [];
 
+    /// <summary>The names of every folder in the mods folder, enabled or not, and whether or not it contains a loadable mod.</summary>
     internal static List<string> modNames = [];
-    internal static List<bool> modEnablement = [];
+
+    /// <summary>The file within <see cref="ModsPath"/> that stores the names of the mods that should not be loaded.</summary>
+    public static string DisabledModsPath { get; } = Path.Combine(ModsPath, "disabled.json");
+    // compared case-insensitively since mod names are folder names
+    static HashSet<string> _disabledMods = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>A mod-agnostic list of modded tanks.</summary>
     public static ModTank[] ModTanks { get; private set; } = [];
     static List<ModTank> _modTanks = [];
@@ -106,6 +111,8 @@ public static class ModLoader {
     static List<ModModifier> _modModifiers = [];
 
     static bool _firstLoad = true;
+    /// <summary>Set when a mod fails to compile or load. Every mod is then unloaded for this session. <see cref="DisabledModsPath"/> is left alone.</summary>
+    static volatile bool _loadFailed;
     /// <summary>The error given from the mod-loading process.</summary>
     public static string Error = string.Empty;
     /// <summary>What kind of compilation is performed- Debug or Release.</summary>
@@ -157,8 +164,9 @@ public static class ModLoader {
             return false;
         }
     }
-    static void AttemptCompile(string modName) {
-        if (!AreCompilesAllowed) return;
+    /// <summary>Builds a mod. Returns false if it failed to build, with <see cref="Error"/> set.</summary>
+    static bool AttemptCompile(string modName) {
+        if (!AreCompilesAllowed) return true;
 
         Status = LoadStatus.Compiling;
         Process proc = new();
@@ -185,17 +193,66 @@ public static class ModLoader {
                 var errorLine = lines.FirstOrDefault(l => l.Contains("error", StringComparison.OrdinalIgnoreCase));
                 Error = errorLine ?? "Unknown Build Failure";
                 TankGame.ReportError(new Exception(Error));
+                return false;
             }
 
             proc.WaitForExit();
 
             ActionsComplete++;
+            return true;
         } catch (Exception e) {
             Error = e.Message;
             proc.Dispose();
             proc.Close();
+            return false;
         }
     }
+    /// <summary>Whether the mod named <paramref name="modName"/> will be loaded the next time mods are loaded.</summary>
+    public static bool IsModEnabled(string modName) => !_disabledMods.Contains(modName);
+
+    /// <summary>The path to the <c>.csproj</c> directly inside <paramref name="modFolder"/>, or null if there isn't one. A folder needs one to be a mod.</summary>
+    public static string? FindModProject(string modFolder) => Directory.GetFiles(modFolder, "*.csproj").FirstOrDefault();
+
+    /// <summary>Whether the folder named <paramref name="modName"/> has a <c>.csproj</c>, which is what makes it a mod.</summary>
+    public static bool HasModProject(string modName) => FindModProject(Path.Combine(ModsPath, modName)) is not null;
+
+    /// <summary>Enables or disables a mod for the next load, and saves the change to <see cref="DisabledModsPath"/>.</summary>
+    public static void SetModEnabled(string modName, bool enabled) {
+        var changed = enabled ? _disabledMods.Remove(modName) : _disabledMods.Add(modName);
+        if (changed)
+            SaveDisabledMods();
+    }
+
+    /// <summary>Flips whether a mod is enabled. Returns the new state.</summary>
+    public static bool ToggleMod(string modName) {
+        var enabled = !IsModEnabled(modName);
+        SetModEnabled(modName, enabled);
+        return enabled;
+    }
+
+    static void LoadDisabledMods() {
+        _disabledMods.Clear();
+
+        if (!File.Exists(DisabledModsPath)) return;
+
+        try {
+            var names = JsonSerializer.Deserialize<string[]>(File.ReadAllText(DisabledModsPath));
+            if (names is not null)
+                _disabledMods.UnionWith(names);
+        } catch (Exception e) {
+            TankGame.ClientLog.Write($"Could not read '{Path.GetFileName(DisabledModsPath)}': {e.Message}", RebirthLogLevel.Warn);
+        }
+    }
+
+    static void SaveDisabledMods() {
+        try {
+            Directory.CreateDirectory(ModsPath);
+            File.WriteAllText(DisabledModsPath, JsonSerializer.Serialize(_disabledMods.OrderBy(x => x).ToArray(), _indented));
+        } catch (Exception e) {
+            TankGame.ClientLog.Write($"Could not save '{Path.GetFileName(DisabledModsPath)}': {e.Message}", RebirthLogLevel.Warn);
+        }
+    }
+
     internal static void UnloadAll() {
         if (MainMenuUI.IsActive) {
             SceneManager.CleanupEntities();
@@ -344,6 +401,9 @@ public static class ModLoader {
 
         Directory.CreateDirectory(ModsPath);
 
+        LoadDisabledMods();
+        modNames.Clear();
+
         var folders = Directory.GetDirectories(ModsPath);
 
         if (folders.Length == 0) {
@@ -354,22 +414,23 @@ public static class ModLoader {
 
         IsLoadingMods = true;
         Error = string.Empty;
+        _loadFailed = false;
 
         // largely refactored from the old one
 
-        // thing that prevents accessing outside of array bounds..es?
-        int dummyLittleIThing = 0;
-        for (int i = 0; i < folders.Length; i++) {
-
-            var modFolder = folders[i];
+        foreach (var modFolder in folders) {
             var modName = new DirectoryInfo(modFolder).Name;
-            var proj = Path.Combine(modFolder, modName + ".csproj");
+            var proj = FindModProject(modFolder);
+
+            // every folder is listed in the mods menu, even ones that can't be loaded
+            modNames.Add(modName);
 
             // there's no csproj to run dotnet build on, skip (aka: not a mod)
-            if (!File.Exists(proj)) {
-                dummyLittleIThing--;
+            if (proj is null)
                 continue;
-            }
+
+            // the project decides the name of the dll, so it can differ from the folder's name
+            var projectName = Path.GetFileNameWithoutExtension(proj);
 
             // check .NET compatibility
             var lines = File.ReadAllLines(proj);
@@ -377,16 +438,16 @@ public static class ModLoader {
 
             // if incompatible, don't compile
             if (netVer != EXPECTED_NET_VERSION) {
-                Error = $"This mod does not match TanksRebirth's .NET version ({EXPECTED_NET_VERSION})";
+                Error = $"{modName} does not match TanksRebirth's .NET version ({EXPECTED_NET_VERSION})";
+                TankGame.ClientLog.Write(Error, RebirthLogLevel.Warn);
+                // nothing has been loaded yet, so there is nothing to unload
+                _loadingActions.Clear();
+                IsLoadingMods = false;
+                Status = LoadStatus.Complete;
                 return;
             }
 
-            if (!modNames.Contains(modName)) {
-                modNames.Add(modName);
-                modEnablement.Add(true);
-            }
-
-            if (!modEnablement[i + dummyLittleIThing]) {
+            if (!IsModEnabled(modName)) {
                 TankGame.ClientLog.Write($"Skipping mod {modName}", RebirthLogLevel.Info);
                 continue;
             }
@@ -398,10 +459,13 @@ public static class ModLoader {
                 try {
                     ModBeingLoaded = modName;
 
-                    AttemptCompile(modName);
+                    if (!AttemptCompile(modName)) {
+                        _loadFailed = true;
+                        return;
+                    }
 
                     Status = LoadStatus.Loading;
-                    string filepath = Path.Combine(modFolder, "bin", LoadType, EXPECTED_NET_VERSION, $"{modName}.dll");
+                    string filepath = Path.Combine(modFolder, "bin", LoadType, EXPECTED_NET_VERSION, $"{projectName}.dll");
                     string pdb = Path.ChangeExtension(filepath, ".pdb");
 
                     var alc = new AssemblyLoadContext(modName, isCollectible: true);
@@ -425,7 +489,7 @@ public static class ModLoader {
 
                     _loadedAlcs.Add(alc);
 
-                    var assembly = alc.Assemblies.First(x => x.GetName().Name == modName);
+                    var assembly = alc.Assemblies.First(x => x.GetName().Name == projectName);
                     var types = assembly.GetTypes();
                     var tanksModTypes = types.Where(t => t.IsSubclassOf(typeof(TanksMod)) && !t.IsAbstract).ToArray();
 
@@ -464,12 +528,22 @@ public static class ModLoader {
                 } catch (Exception e) {
                     TankGame.ReportError(e, true, true);
                     Error = e.Message;
-                    return;
+                    _loadFailed = true;
                 }
             });
         }
         Task.Run(() => {
-            _loadingActions.ForEach(x => x());
+            foreach (var action in _loadingActions) {
+                action();
+
+                // don't bother with the rest, they're all coming down anyway
+                if (_loadFailed) break;
+            }
+
+            if (_loadFailed) {
+                TankGame.ClientLog.Write($"A mod failed to compile or load ({Error}). Unloading every mod...", RebirthLogLevel.Warn);
+                UnloadAll();
+            }
 
             IsLoadingMods = false;
             ModBeingLoaded = string.Empty;

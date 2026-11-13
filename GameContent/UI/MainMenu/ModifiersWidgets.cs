@@ -119,6 +119,16 @@ static class ModifierDraw {
         Outline(spriteBatch, area, edge, Color.Black * 0.7f);
     }
 
+    /// <summary>A small square toggle. Dark when off and green when on, with <paramref name="amount"/> blending between the two.</summary>
+    public static void Swatch(SpriteBatch spriteBatch, Rectangle swatch, float amount, float dim) {
+        var border = Px(2f);
+        Fill(spriteBatch, swatch.GetOffset(border, border), Color.Black * (0.35f * dim));
+        Fill(spriteBatch, swatch, Color.Black * dim);
+
+        var inner = new Rectangle(swatch.X + border, swatch.Y + border, swatch.Width - border * 2, swatch.Height - border * 2);
+        Fill(spriteBatch, inner, Fade(Color.Lerp(new Color(34, 34, 34), ModifierColors.On, amount), dim));
+    }
+
     public static void Pill(SpriteBatch spriteBatch, Rectangle area, Color color)
         => DrawUtils.DrawNineSliced(spriteBatch, UIElement.UIPanelBackground, 12, area, color, Vector2.Zero);
 
@@ -218,14 +228,7 @@ public sealed class ModifierRow : UIElement {
             DrawPicker(spriteBatch, labelX + labelSize.X * scale.X, scale, active, hovered, editable);
     }
 
-    void DrawSwatch(SpriteBatch spriteBatch, Rectangle swatch, float dim) {
-        var border = ModifierDraw.Px(2f);
-        ModifierDraw.Fill(spriteBatch, swatch.GetOffset(border, border), Color.Black * (0.35f * dim));
-        ModifierDraw.Fill(spriteBatch, swatch, Color.Black * dim);
-
-        var inner = new Rectangle(swatch.X + border, swatch.Y + border, swatch.Width - border * 2, swatch.Height - border * 2);
-        ModifierDraw.Fill(spriteBatch, inner, ModifierDraw.Fade(Color.Lerp(new Color(34, 34, 34), ModifierColors.On, _switch), dim));
-    }
+    void DrawSwatch(SpriteBatch spriteBatch, Rectangle swatch, float dim) => ModifierDraw.Swatch(spriteBatch, swatch, _switch, dim);
 
     void DrawPicker(SpriteBatch spriteBatch, float labelRight, Vector2 scale, bool active, bool hovered, bool editable) {
         var font = FontGlobals.RebirthFont;

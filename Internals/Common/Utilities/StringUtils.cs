@@ -95,12 +95,34 @@ public static class StringUtils {
                 lineWidth += size.X + spaceWidth;
             }
             else {
-                if (sb.Length > 0) sb.Append("\n");
+                if (sb.Length > 0) sb.Append('\n');
                 sb.Append(word + " ");
                 lineWidth = size.X + spaceWidth;
             }
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Wraps <paramref name="text"/> to <paramref name="maxWidth"/>, then shrinks <paramref name="scale"/> until the wrapped text is no taller than <paramref name="maxHeight"/>.
+    /// </summary>
+    /// <param name="font">The font used to measure character dimensions.</param>
+    /// <param name="text">The string to be wrapped.</param>
+    /// <param name="maxWidth">The maximum pixel width allowed per line.</param>
+    /// <param name="maxHeight">The maximum pixel height of the wrapped text.</param>
+    /// <param name="scale">The scale the font is rendered at. Lowered if the text doesn't fit.</param>
+    /// <returns>The processed string containing newline characters.</returns>
+    public static string WrapToFit(SpriteFontBase font, string text, float maxWidth, float maxHeight, ref Vector2 scale) {
+        var wrapped = WrapText(font, text, maxWidth, scale.X);
+
+        for (int i = 0; i < 8; i++) {
+            var height = font.MeasureString(wrapped).Y * scale.Y;
+            if (height <= maxHeight) break;
+
+            scale *= MathF.Max(0.85f, maxHeight / height);
+            wrapped = WrapText(font, text, maxWidth, scale.X);
+        }
+        return wrapped;
     }
 
     public static string Format(Vector3 v) => $"({v.X:0.##}, {v.Y:0.##}, {v.Z:0.##})";

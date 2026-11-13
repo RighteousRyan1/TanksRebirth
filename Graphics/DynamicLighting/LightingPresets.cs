@@ -11,15 +11,11 @@ namespace TanksRebirth.Graphics.DynamicLighting;
 public static class LightingPresets {
     public enum Preset {
         Off,
-        Sunrise,
-        LateMorning,
-        Midday,
-        MidAfternoon,
-        LateAfternoon,
-        GoldenHour,
-        Evening,
-        Dusk,
+        Sunrise, LateMorning,
+        Midday, MidAfternoon, LateAfternoon,
+        GoldenHour, Evening, Dusk,
         Midnight,
+
         Blackout,
         DayCycle,
         Faithful,
@@ -247,6 +243,8 @@ public static class LightingPresets {
     /// <summary>Height of the sun above the horizon in degrees (negative at night).</summary>
     public static float SunElevation(float hour) => MathHelper.ToDegrees(MathF.Asin(SunPosition(hour).Y));
 
+    public static bool IsRealtime => DayLengthSeconds >= 24f * 3600f - 60f;
+
     static Vector3 SkyPosition(float hour, float declination, float noon) {
         var h = MathHelper.ToRadians((hour - noon) * 15f);     // hour angle
         var lat = MathHelper.ToRadians(Latitude);
@@ -320,7 +318,7 @@ public static class LightingPresets {
         return g[^1].Look;
     }
 
-    /// <summary>The lighting at any clock time (0 - 24), minute by minute.</summary>
+    /// <summary>The lighting at any clock time.</summary>
     public static TimeOfDay SampleDay(float hour) {
         hour = ((hour % 24f) + 24f) % 24f;
         var sunPos = SunPosition(hour);
@@ -328,12 +326,12 @@ public static class LightingPresets {
         var look = SampleSky(sunElevation);
 
         if (sunElevation > -4f) {
-            // the sun (its intensity is already 0 below the horizon)
+            // the sun
             look.SunDirection = -sunPos;
             return look;
         }
 
-        // the moon takes over once the sun is well down (both are dark at the switch, so there is no pop)
+        // the moon takes over once the sun is well down
         var moonPos = MoonPosition(hour);
         var moonElevation = MathHelper.ToDegrees(MathF.Asin(moonPos.Y));
         var fade = MathHelper.SmoothStep(-4f, -12f, sunElevation) * MathHelper.SmoothStep(0f, 10f, moonElevation);
@@ -350,11 +348,14 @@ public static class LightingPresets {
     }
 
     /// <summary>Advances the day cycle clock and updates the lighting. Call every update.</summary>
-    public static void UpdateDayCycle(float elapsedSeconds, Model? room = null) {
-        if (Current != Preset.DayCycle)
-            return;
-        if (!DayCyclePaused && DayLengthSeconds > 0f)
-            Hour = _hour + elapsedSeconds / DayLengthSeconds * 24f;
+    public static void UpdateDayCycle(Model? room = null) {
+        if (Current != Preset.DayCycle) return; 
+        if (!DayCyclePaused)
+            Hour = RoomScene.HourFractional;
+
+        if (!TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)) Hour++;
+            //else if (DayLengthSeconds > 0f)
+            //    Hour = _hour + elapsedSeconds / DayLengthSeconds * 24f;
         ApplyTimeOfDay(SampleDay(_hour), room);
     }
 
@@ -390,10 +391,14 @@ public static class LightingPresets {
         sun.ShadowDepth = 9000f;
         sun.CastsShadows = true;
         sun.RoomShadows = true;
-        sun.RoomShadowBounds = CascadeLQ;
-        sun.ShadowBounds = CascadeHQ;
+        // the entire room
+        sun.CascadeLQ = CascadeLQ;
+        // the game scene bounds
+        sun.CascadeHQ = CascadeHQ;
 
         if (preset == Preset.DayCycle) {
+            Hour = RoomScene.HourFractional;
+            if (!TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)) Hour++;
             ApplyTimeOfDay(SampleDay(_hour), room);
             return;
         }
@@ -401,7 +406,7 @@ public static class LightingPresets {
         if (GetTimeOfDay(preset) is TimeOfDay time)
             ApplyTimeOfDay(time, room);
         else {
-            // Off
+            // off
             LightingSystem.Lights.Clear();
             SetLampShades(room, false);
         }

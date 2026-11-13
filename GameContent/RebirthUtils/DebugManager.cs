@@ -173,7 +173,7 @@ public static class DebugManager {
         LoadMission = new("Load", FontGlobals.RebirthFont, Color.White, 0.5f);
         LoadMission.OnLeftClick = (l) => {
             if (RuntimeData.IsWindows && MissionName.IsEmpty()) {
-                var res = Dialog.FileOpen("mission", TankGame.SaveDirectory);
+                var res = Dialog.FileOpen("mission", LevelEditorUI.LastSaveOrLoadPath);
                 if (res.Path != null && res.IsOk) {
                     try {
                         CampaignGlobals.LoadedCampaign.LoadMission(Mission.Load(res.Path, null));
@@ -782,7 +782,7 @@ public static class DebugManager {
             var direction = Vector3.Normalize(sun.Direction);
             DrawUtils.DrawArrow(sun.ShadowCenter - direction * 300f, sun.ShadowCenter, sun.Color, view, projection);
         }
-        if (sun.ShadowBounds is BoundingBox shadowBounds)
+        if (sun.CascadeHQ is BoundingBox shadowBounds)
             DrawBoundingBox(shadowBounds, Color.Olive, view, projection);
         foreach (var blocker in LightingSystem.SunBlockers)
             DrawBoundingBox(blocker, Color.DimGray, view, projection);
