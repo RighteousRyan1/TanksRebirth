@@ -248,6 +248,8 @@ public static partial class MainMenuUI {
         if (MenuState == UIState.ModsMenu)
             UpdateModsMenu();
 
+        UpdateStatsMenu();
+
         // intermittent gameplay update, to keep fresh maps on the menu
         if (RuntimeData.RunTime % 60f < RuntimeData.DeltaFrames)
             UpdateGameplay();
@@ -281,9 +283,6 @@ public static partial class MainMenuUI {
                     break;
                 case UIState.Multiplayer:
                     DrawMPMenu(gameTime);
-                    break;
-                case UIState.StatsMenu:
-                    DrawStatsMenu(gameTime);
                     break;
                 case UIState.Credits:
                     DrawCredits(spriteBatch);

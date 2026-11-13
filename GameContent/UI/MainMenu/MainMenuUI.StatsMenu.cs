@@ -1,137 +1,96 @@
-using FontStashSharp;
 using Microsoft.Xna.Framework;
-using System.Linq;
-using TanksRebirth.GameContent.Globals;
+using System;
+using System.Collections.Generic;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Tanks.AI;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 public static partial class MainMenuUI {
-    static string[] _info;
-    static float _statsOpenProgress = 0f; // 0 to 1 for animation
-    static double _statsOpenTime = 0;
+    // layout, same panel and column positions as the settings window
+    internal const float StatsPanelX = 150, StatsPanelY = 30, StatsPanelW = 1620, StatsPanelH = 820;
+    internal const float StatsLeftX = 190, StatsRightX = 990, StatsColumnW = 740, StatsInnerRight = 1730;
+    internal const float StatsTitleY = 44, StatsTitleH = 54;
+    internal const float StatsSectionY = 114, StatsSectionH = 582;
+    internal const float StatsInfoY = 716, StatsInfoH = 100;
 
+    static readonly List<UIElement> _statsElements = [];
+
+    // clicks are handled while the UI is updating, so anything that removes elements waits until the next UpdateStatsMenu
+    static Action? _pendingStatsAction;
+
+    /// <summary>Builds the stats window from the save file as it is right now.</summary>
     public static void RequestStats() {
-        _statsOpenProgress = 0f;
-        _statsOpenTime = RuntimeData.RunTime;
+        DisposeStatsMenu();
 
-        _info = [
-            $"{TankGame.GameLanguage.GameStats.MissionsCompleted}: {TankGame.SaveFile.MissionsCompleted}",
-            $"{TankGame.GameLanguage.GameStats.CampaignsCompleted}: {TankGame.SaveFile.CampaignsCompleted}",
-            $"{TankGame.GameLanguage.GameStats.TankKillsTotal}: {TankGame.SaveFile.TotalKills}",
-            $"{TankGame.GameLanguage.GameStats.Deaths}: {TankGame.SaveFile.Deaths}",
-            $"{TankGame.GameLanguage.GameStats.Suicides}: {TankGame.SaveFile.Suicides}",
-            $"{TankGame.GameLanguage.GameStats.TankKillsTotalBullets}: {TankGame.SaveFile.BulletKills}",
-            $"{TankGame.GameLanguage.GameStats.TankKillsTotalBulletsBounced}: {TankGame.SaveFile.BounceKills}",
-            $"{TankGame.GameLanguage.GameStats.TankKillsTotalMines}: {TankGame.SaveFile.MineKills}",
-            $"{TankGame.GameLanguage.GameStats.TimePlayedTotal}: {TankGame.SaveFile.TimePlayed.TotalHours:0.0} hrs",
-            $"{TankGame.GameLanguage.GameStats.TimePlayedCurrent}: {TankGame.CurrentSessionTimer.Elapsed.TotalMinutes:0.0} mins"
+        var language = TankGame.GameLanguage.GameStats;
+        var save = TankGame.SaveFile;
+
+        // localize ts
+        IReadOnlyList<StatRow> general = [
+            new(language.MissionsCompleted, save.MissionsCompleted),
+            new(language.CampaignsCompleted, save.CampaignsCompleted),
+            new(language.TankKillsTotal, save.TotalKills),
+            new(language.Deaths, save.Deaths),
+            new(language.Suicides, save.Suicides),
+            new(language.TankKillsTotalBullets, save.BulletKills),
+            new(language.TankKillsTotalBulletsBounced, save.BounceKills),
+            new(language.TankKillsTotalMines, save.MineKills),
+            new(language.TimePlayedTotal, save.TimePlayed.TotalHours, "{0:0.0} hrs"),
+            new(language.TimePlayedCurrent, TankGame.CurrentSessionTimer.Elapsed.TotalMinutes, "{0:0.0} mins")
         ];
-    }
 
-    public static void DrawStatsMenu(GameTime gameTime) {
-        _statsOpenProgress += (float)gameTime.ElapsedGameTime.TotalSeconds * 0.5f;
-        if (_statsOpenProgress > 1f) _statsOpenProgress = 1f;
-
-        DrawStatsPanel();
-    }
-
-    // localized soon
-    static void DrawStatsPanel() {
-        var renderer = TankGame.SpriteRenderer;
-        var font = FontGlobals.RebirthFont;
-        var largeFont = FontGlobals.RebirthFontLarge;
-
-        float smoothProgress = Easings.OutExpo(_statsOpenProgress);
-        float slideOffset = (1f - smoothProgress) * 50f;
-
-        // dims the bg
-        renderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight), Color.Black * 0.7f * smoothProgress);
-
-        // main panel
-        var panelWidth = WindowUtils.WindowWidth * 0.85f;
-        var panelHeight = WindowUtils.WindowHeight * 0.8f;
-        var panelRect = new Rectangle(
-            (int)((WindowUtils.WindowWidth - panelWidth) / 2),
-            (int)((WindowUtils.WindowHeight - panelHeight) / 2 + slideOffset),
-            (int)panelWidth,
-            (int)panelHeight
-        );
-
-        // panel bg
-        DrawUtils.DrawBoxWithOutline(renderer, panelRect, new Color(20, 20, 25) * smoothProgress, Color.Gray * smoothProgress, 2);
-
-        // header
-        var headerText = "SERVICE RECORD";
-        var headerScale = new Vector2(.75f).ToResolution();
-        var headerSize = largeFont.MeasureString(headerText) * headerScale;
-        var headerPos = new Vector2(panelRect.Center.X, panelRect.Y + 30.ToResolutionY());
-
-        DrawUtils.DrawStringWithBorder(renderer, largeFont, headerText, headerPos, Color.Goldenrod * smoothProgress, Color.White * smoothProgress, headerScale, 0f, Anchor.Center);
-
-        // content columns
-        float colStartY = panelRect.Y + 100.ToResolutionY();
-        float leftColX = panelRect.X + panelWidth * 0.25f;
-        float rightColX = panelRect.X + panelWidth * 0.75f;
-
-        // localize... soon.
-        DrawUtils.DrawStringWithBorder(renderer, font, $"- General Statistics -", new Vector2(leftColX, colStartY), Color.LightGray * smoothProgress, Color.Black * smoothProgress, Vector2.One.ToResolution(), 0f, Anchor.Center);
-
-        float spacing = 35.ToResolutionY();
-        for (int i = 0; i < _info.Length; i++) {
-            // staggered animation for list items
-            float itemProgress = Easings.OutCubic(MathHelper.Clamp(_statsOpenProgress * 2f - (i * 0.05f), 0f, 1f));
-            if (itemProgress <= 0f) continue;
-
-            var parts = _info[i].Split(':');
-            var label = parts[0];
-            var value = parts.Length > 1 ? parts[1] : string.Empty;
-
-            var pos = new Vector2(leftColX, colStartY + 50.ToResolutionY() + (i * spacing));
-
-            // label
-            // still unsure if a border should be used here
-            renderer.DrawString(font, label, pos - new Vector2(20, 0).ToResolution(), Color.White * itemProgress, new Vector2(0.9f).ToResolution(), 0f, new Vector2(font.MeasureString(label).X, 0), 0f);
-
-            // value
-            renderer.DrawString(font, value, pos + new Vector2(20, 0).ToResolution(), Color.Yellow * itemProgress, new Vector2(0.9f).ToResolution(), 0f, Vector2.Zero, 0f);
-        }
-
-        // tank kill dict display
-        DrawUtils.DrawStringWithBorder(renderer, font, "- Combat Efficiency -", new Vector2(rightColX, colStartY), Color.LightGray * smoothProgress, Color.Black * smoothProgress, Vector2.One.ToResolution(), 0f, Anchor.Center);
-
-        int count = 0;
         // only use tanks that have kills attached to them to not spoil anything
-        var activeKills = TankGame.SaveFile.TankKills.Where(x => x.Value > 0).ToList();
+        var kills = new List<StatRow>();
+        foreach (var kill in save.TankKills) {
+            if (kill.Value == 0)
+                continue;
 
-        foreach (var kill in activeKills) {
-            count++;
-            // creates the smooth fade in for different lines
-            float itemProgress = Easings.OutCubic(MathHelper.Clamp(_statsOpenProgress * 2f - (count * 0.05f + 0.5f), 0f, 1f));
-            if (itemProgress <= 0f) continue;
-
-            var split = TankID.Collection.GetKey(kill.Key)!.SplitByCamel();
-            var color = AITank.TankDestructionColors.ContainsKey(kill.Key) ? AITank.TankDestructionColors[kill.Key] : Color.Gray;
-
-            var pos = new Vector2(rightColX, colStartY + 50.ToResolutionY() + ((count - 1) * spacing));
-
-            // tank names
-            DrawUtils.DrawStringWithBorder(renderer, font, split, pos - new Vector2(20, 0).ToResolution(), color * itemProgress, ColorUtils.WhiteBlack(color) * itemProgress, new Vector2(0.9f).ToResolution(), 0f, Anchor.TopRight, 0.25f);
-
-            // rolling number effect
-            int displayedValue = (int)(kill.Value * itemProgress);
-            renderer.DrawString(font, displayedValue.ToString(), pos + new Vector2(20, 0).ToResolution(), Color.White * itemProgress, new Vector2(0.9f).ToResolution(), 0f, Vector2.Zero, 0f);
+            var name = TankID.Collection.GetKey(kill.Key)!.SplitByCamel();
+            var color = AITank.TankDestructionColors.TryGetValue(kill.Key, out var found) ? found : Color.Gray;
+            kills.Add(new StatRow(name, kill.Value, "{0:0}", color, ColorUtils.WhiteBlack(color)));
         }
 
-        // footer
-        if (TankGame.SaveFile.ReadingOutdatedFile) {
-            var warning = $"Warning: Outdated save file ({TankGame.SaveFile.Name})!";
-            DrawUtils.DrawStringWithBorder(renderer, font, warning, new Vector2(panelRect.X + 20, panelRect.Bottom - 40), Color.Red * smoothProgress, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.BottomLeft);
+        AddStatsElement(new ModifiersFrame(), StatsPanelX, StatsPanelY, StatsPanelW, StatsPanelH);
+
+        const float backW = 150, gap = 12;
+        const float backX = StatsInnerRight - backW;
+        AddStatsElement(new StatsTitleBar(), StatsLeftX, StatsTitleY, backX - gap - StatsLeftX, StatsTitleH);
+        AddStatsElement(new ModsPillButton(() => TankGame.GameLanguage.Menu.Back, () => _pendingStatsAction = LeaveStatsMenu), backX, StatsTitleY, backW, StatsTitleH);
+
+        AddStatsElement(new StatsSection("General Statistics", general, string.Empty), StatsLeftX, StatsSectionY, StatsColumnW, StatsSectionH);
+        AddStatsElement(new StatsSection("Combat Efficiency", kills, "No tanks destroyed yet", startDelay: 0.5f), StatsRightX, StatsSectionY, StatsColumnW, StatsSectionH);
+
+        AddStatsElement(new StatsInfoBar(), StatsLeftX, StatsInfoY, StatsInnerRight - StatsLeftX, StatsInfoH);
+    }
+
+    public static void UpdateStatsMenu() {
+        if (_pendingStatsAction is { } pending) {
+            _pendingStatsAction = null;
+            pending();
         }
 
-        DrawUtils.DrawStringWithBorder(renderer, font, "Press ESC to return", new Vector2(panelRect.Center.X, panelRect.Bottom - 20), Color.Gray * smoothProgress, Color.Black * smoothProgress, new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomCenter);
+        // the window can be left from elsewhere (ESC, the back button), so tidy up whenever the menu isn't the stats menu
+        if (MenuState != UIState.StatsMenu && _statsElements.Count > 0)
+            DisposeStatsMenu();
+    }
+
+    static void AddStatsElement(UIElement element, float x, float y, float width, float height) {
+        element.SetDimensions(() => new Vector2(x, y).ToResolution(), () => new Vector2(width, height).ToResolution());
+        _statsElements.Add(element);
+    }
+
+    static void LeaveStatsMenu() {
+        MenuState = UIState.PrimaryMenu;
+        DisposeStatsMenu();
+    }
+
+    public static void DisposeStatsMenu() {
+        foreach (var element in _statsElements)
+            element.Remove();
+        _statsElements.Clear();
     }
 }

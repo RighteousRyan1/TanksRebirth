@@ -17,6 +17,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Slightly updated the look of the XP bar
 - Largely updated the look of the loading mods / mods user interfaces
 - Day cycle lighting mode now matches your real time
+- Changed the Game Stats menu to look more like the other UI refreshes
 
 # Changes Important for Modders
 
@@ -27,6 +28,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - Fix some desync and animation issues in online multiplayer
 - Various UI fixes
+- Improve some performance for AI tanks
 
 # TODO
 
