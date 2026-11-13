@@ -31,6 +31,7 @@ public partial class MainMenuUI {
     internal static int ModsHovered = -1;
 
     static readonly List<UIElement> _modsMenuElements = [];
+    static readonly List<ModEntryCard> _modsCards = [];
     static ModsList? _modsList;
 
     // clicks are handled while the UI is updating, so anything that removes elements waits until the next UpdateModsMenu
@@ -65,11 +66,14 @@ public partial class MainMenuUI {
         foreach (var element in _modsMenuElements)
             element.IsVisible = !busy;
 
-        if (busy || _modsList is null)
+        if (_modsList is null)
             return;
 
-        _modsList.ScrollBy(-scrollDelta * 0.5f); // sensitivity
-        _modsList.Tick();
+        if (!busy)
+            _modsList.ScrollBy(-scrollDelta * 0.5f); // sensitivity
+
+        // also places the cards, which hide themselves while busy
+        _modsList.Tick(busy);
     }
 
     public static void InitModMenuGraphics(GraphicsDevice device) {
@@ -89,7 +93,11 @@ public partial class MainMenuUI {
         AddModsElement(new ModsPillButton(() => TankGame.GameLanguage.Misc.ReloadMods, () => _pendingModsAction = ReloadModsFromMenu), reloadX, ModsTitleY, reloadW, ModsTitleH);
         AddModsElement(new ModsPillButton(() => TankGame.GameLanguage.Menu.Back, () => _pendingModsAction = LeaveModsMenu), backX, ModsTitleY, backW, ModsTitleH);
 
-        _modsList = new ModsList();
+        // the cards are made before the list, so the list's scroll bar is drawn over them. the list sizes and places them
+        for (var i = 0; i < ModEntries.Count; i++)
+            _modsCards.Add(new ModEntryCard(i, ModEntries[i]));
+
+        _modsList = new ModsList(_modsCards);
         AddModsElement(_modsList, ModsListX, ModsListY, ModsListW, ModsListH);
         AddModsElement(new ModsInfoBar(), ModsLeftX, ModsInfoY, ModsRightX - ModsLeftX, ModsInfoH);
     }
@@ -153,6 +161,10 @@ public partial class MainMenuUI {
             entry.Icon?.Dispose();
         ModEntries.Clear();
         ModsHovered = -1;
+
+        foreach (var card in _modsCards)
+            card.Remove();
+        _modsCards.Clear();
 
         foreach (var element in _modsMenuElements)
             element.Remove();

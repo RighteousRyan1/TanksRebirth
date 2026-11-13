@@ -2,6 +2,7 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.Internals.Common;
@@ -11,7 +12,6 @@ using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
-// update to use the actual ui system.... stupid claude.
 sealed class ModMenuEntry(string name, string displayName, string description, string version, Texture2D? icon, Color accent, bool loadable) {
     /// <summary>The folder name, which is what <see cref="ModLoader.IsModEnabled"/> goes by.</summary>
     public string Name { get; } = name;
@@ -87,7 +87,7 @@ public sealed class ModsPillButton : UIElement {
     }
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        ModifierDraw.PillButton(spriteBatch, Hitbox, Hitbox.Contains(MouseUtils.MousePosition), 1f);
+        ModifierDraw.PillButton(spriteBatch, Hitbox, MouseHovering, 1f);
 
         var font = FontGlobals.RebirthFont;
         var text = _label();
@@ -102,117 +102,65 @@ public sealed class ModsPillButton : UIElement {
     }
 }
 
-/// <summary>The scrolling list of mods. Draws every card itself so they can be clipped to the window.</summary>
-public sealed class ModsList : UIElement {
-    const float CardHeight = 130f;
-    const float CardStep = 146f;
+/// <summary>One mod in the list: a button of its own, placed and clipped by its <see cref="ModsList"/>.</summary>
+sealed class ModEntryCard : UIElement {
     const float HeaderHeight = 46f;
-    const float EdgeMargin = 14f;
-    const float ScrollbarRoom = 42f;
 
     static readonly RasterizerState _clipped = new() { CullMode = CullMode.None, ScissorTestEnable = true };
 
-    float _scroll;
-    float _targetScroll;
-    int _lastHovered = -1;
+    public int Index { get; }
+    public ModMenuEntry Entry { get; }
 
-    public ModsList() {
-        OnLeftClick = _ => Click();
+    // where the whole card is, and the part of the screen it may be seen in (the hitbox is only the part inside it)
+    Rectangle _bounds;
+    Rectangle _view;
+
+    public ModEntryCard(int index, ModMenuEntry entry) {
+        Index = index;
+        Entry = entry;
+
+        OnLeftClick = _ => {
+            if (!Entry.Loadable) {
+                SoundPlayer.SoundError();
+                return;
+            }
+
+            ModLoader.ToggleMod(Entry.Name);
+            SettingsUI.PlayTick();
+        };
+        OnMouseOver = _ => SettingsUI.PlayTick();
+
+        IsVisible = false;
     }
 
-    static int PadPx => ModifierDraw.Px(10f);
-    static int StepPx => (int)CardStep.ToResolutionY();
-    static int CardPx => (int)CardHeight.ToResolutionY();
+    /// <summary>Moves the card to <paramref name="bounds"/>. Only the part inside <paramref name="view"/> is drawn or can be clicked.</summary>
+    public void Place(Rectangle bounds, Rectangle view, bool show) {
+        _bounds = bounds;
+        _view = view;
+        Position = bounds.Location.ToVector2();
+        Size = bounds.Size.ToVector2();
 
-    float MaxScroll {
-        get {
-            var count = MainMenuUI.ModEntries.Count;
-            if (count == 0)
-                return 0f;
-            var content = (count - 1) * StepPx + CardPx + PadPx * 2;
-            return MathF.Max(0f, content - Hitbox.Height);
-        }
-    }
-
-    public void ScrollBy(float pixels) => _targetScroll = MathHelper.Clamp(_targetScroll + pixels, 0f, MaxScroll);
-
-    /// <summary>Eases the list towards where it is meant to be scrolled to.</summary>
-    public void Tick() {
-        _targetScroll = MathHelper.Clamp(_targetScroll, 0f, MaxScroll);
-        _scroll = MathUtils.SoftStep(_scroll, _targetScroll, 0.2f);
-    }
-
-    Rectangle CardAt(int index) {
-        var view = Hitbox;
-        var y = view.Y + PadPx + index * StepPx - (int)_scroll;
-        return new Rectangle(view.X + (int)EdgeMargin.ToResolutionX(), y, view.Width - (int)ScrollbarRoom.ToResolutionX(), CardPx);
-    }
-
-    int IndexAt(Vector2 position) {
-        if (!Hitbox.Contains(position))
-            return -1;
-        for (var i = 0; i < MainMenuUI.ModEntries.Count; i++) {
-            if (CardAt(i).Contains(position))
-                return i;
-        }
-        return -1;
-    }
-
-    void Click() {
-        var index = IndexAt(MouseUtils.MousePosition);
-        if (index < 0)
-            return;
-
-        var entry = MainMenuUI.ModEntries[index];
-        if (!entry.Loadable) {
-            SoundPlayer.SoundError();
-            return;
-        }
-
-        ModLoader.ToggleMod(entry.Name);
-        SettingsUI.PlayTick();
+        // a card scrolled under the title row or the info bar must not take clicks meant for them
+        var visible = Rectangle.Intersect(bounds, view);
+        Hitbox = visible;
+        IsVisible = show && !visible.IsEmpty;
     }
 
     public override void DrawSelf(SpriteBatch spriteBatch) {
-        var entries = MainMenuUI.ModEntries;
-        var view = Hitbox;
-
-        var hovered = IndexAt(MouseUtils.MousePosition);
-        if (hovered != _lastHovered && hovered >= 0)
-            SettingsUI.PlayTick();
-        _lastHovered = hovered;
-        MainMenuUI.ModsHovered = hovered;
-
         // cards are clipped to the list, so one scrolling out of view doesn't draw over the title or the info bar
         var device = TankGame.Instance.GraphicsDevice;
         spriteBatch.End();
-        device.ScissorRectangle = Rectangle.Intersect(view, device.Viewport.Bounds);
+        device.ScissorRectangle = Rectangle.Intersect(_view, device.Viewport.Bounds);
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: _clipped);
 
-        for (var i = 0; i < entries.Count; i++) {
-            var card = CardAt(i);
-            if (card.Bottom < view.Y || card.Y > view.Bottom)
-                continue;
-            DrawCard(spriteBatch, entries[i], card, i == hovered);
-        }
+        DrawCard(spriteBatch, _bounds, MouseHovering);
 
         spriteBatch.End();
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
-
-        if (entries.Count == 0)
-            DrawEmpty(spriteBatch, view);
-
-        DrawScrollHints(spriteBatch, view);
     }
 
-    static void DrawEmpty(SpriteBatch spriteBatch, Rectangle view) {
-        var font = FontGlobals.RebirthFont;
-        var text = "No mods found";
-        var scale = ModifierColors.Scale(0.8f);
-        DrawUtils.DrawStringWithBorder(spriteBatch, font, text, view.Center.ToVector2(), Color.White, Color.Black, scale, 0f, Anchor.Center, 1f);
-    }
-
-    void DrawCard(SpriteBatch spriteBatch, ModMenuEntry entry, Rectangle section, bool hovered) {
+    void DrawCard(SpriteBatch spriteBatch, Rectangle section, bool hovered) {
+        var entry = Entry;
         var font = FontGlobals.RebirthFont;
         var enabled = entry.Enabled;
         var dim = entry.Loadable ? 1f : 0.55f;
@@ -301,6 +249,80 @@ public sealed class ModsList : UIElement {
         var letter = entry.DisplayName[..1].ToUpperInvariant();
         var size = font.MeasureString(letter);
         spriteBatch.DrawString(font, letter, icon.Center.ToVector2(), ModifierDraw.Fade(ModifierColors.Gold, dim), ModifierColors.Scale(1.3f), 0f, size / 2f);
+    }
+}
+
+/// <summary>Scrolls and lays out the <see cref="ModEntryCard"/>s, and draws the scroll bar and edge fades over them.</summary>
+/// <remarks>Create it after its cards so it is drawn on top of them.</remarks>
+public sealed class ModsList : UIElement {
+    internal const float CardHeight = 130f;
+    internal const float CardStep = 146f;
+    internal const float EdgeMargin = 14f;
+    internal const float ScrollbarRoom = 42f;
+
+    readonly IReadOnlyList<ModEntryCard> _cards;
+
+    float _scroll;
+    float _targetScroll;
+
+    internal ModsList(IReadOnlyList<ModEntryCard> cards) {
+        _cards = cards;
+        IgnoreMouseInteractions = true;
+    }
+
+    static int PadPx => ModifierDraw.Px(10f);
+    static int StepPx => (int)CardStep.ToResolutionY();
+    static int CardPx => (int)CardHeight.ToResolutionY();
+
+    float MaxScroll {
+        get {
+            var count = _cards.Count;
+            if (count == 0)
+                return 0f;
+            var content = (count - 1) * StepPx + CardPx + PadPx * 2;
+            return MathF.Max(0f, content - Hitbox.Height);
+        }
+    }
+
+    public void ScrollBy(float pixels) => _targetScroll = MathHelper.Clamp(_targetScroll + pixels, 0f, MaxScroll);
+
+    /// <summary>Eases the list towards where it is meant to be scrolled to, then puts the cards where that leaves them.</summary>
+    /// <param name="hidden">True while the menu is covered (mods loading), so no card takes input.</param>
+    public void Tick(bool hidden) {
+        _targetScroll = MathHelper.Clamp(_targetScroll, 0f, MaxScroll);
+        _scroll = MathUtils.SoftStep(_scroll, _targetScroll, 0.2f);
+
+        var view = Hitbox;
+        var hovered = -1;
+        for (var i = 0; i < _cards.Count; i++) {
+            var card = _cards[i];
+            card.Place(CardAt(i), view, !hidden);
+            if (!hidden && card.IsVisible && card.MouseHovering)
+                hovered = i;
+        }
+        MainMenuUI.ModsHovered = hovered;
+    }
+
+    Rectangle CardAt(int index) {
+        var view = Hitbox;
+        var y = view.Y + PadPx + index * StepPx - (int)_scroll;
+        return new Rectangle(view.X + (int)EdgeMargin.ToResolutionX(), y, view.Width - (int)ScrollbarRoom.ToResolutionX(), CardPx);
+    }
+
+    public override void DrawSelf(SpriteBatch spriteBatch) {
+        var view = Hitbox;
+
+        if (_cards.Count == 0)
+            DrawEmpty(spriteBatch, view);
+
+        DrawScrollHints(spriteBatch, view);
+    }
+
+    static void DrawEmpty(SpriteBatch spriteBatch, Rectangle view) {
+        var font = FontGlobals.RebirthFont;
+        var text = "No mods found";
+        var scale = ModifierColors.Scale(0.8f);
+        DrawUtils.DrawStringWithBorder(spriteBatch, font, text, view.Center.ToVector2(), Color.White, Color.Black, scale, 0f, Anchor.Center, 1f);
     }
 
     /// <summary>A fade at whichever edges have more cards past them, and the scroll bar.</summary>
