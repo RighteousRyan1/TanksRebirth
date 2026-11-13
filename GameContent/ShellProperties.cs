@@ -27,6 +27,8 @@ public struct ShellProperties() {
     public bool CanFriendlyFire { get; set; } = true;
     /// <summary>The amount of times this bullet can penetrate other ones. A value of -1 will penetrate infinitely.</summary>
     public int Penetration { get; set; }
+    /// <summary>If <see langword="true"/>, <c>ricochet_zip</c> is played upon ricochet, like the green tank <see cref="Shell"/>s.</summary>
+    public bool SuperRicochet { get; set; }
     /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
     public HomingProperties Homing = default;
 }
