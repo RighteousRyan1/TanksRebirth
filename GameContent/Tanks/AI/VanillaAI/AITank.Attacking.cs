@@ -32,6 +32,11 @@ public partial struct VanillaAISystem {
     /// <summary>The location(s) of which this tank's shot path hits an tank.</summary>
     public Vector2[] ShotPathTankCollPoints { get; private set; } = [];
 
+    // the last shot scan. the original only predicts its shot when the shoot timer rolls over, so this is reused in between.
+    bool _hasShotScan;
+    ShotCones _shotCones;
+    bool _tooCloseToExplosiveShell;
+
     readonly List<Tank> _tanksInPathBuffer = [];
     readonly List<ShotSegment> _segments = [];
     readonly List<Vector2> _ricochetPointsBuffer = [];
@@ -129,35 +134,14 @@ public partial struct VanillaAISystem {
         // stop doing expensive checks if the tank can't even shoot anyway
         if (friendliesNearby) return;
 
-        var turretDir = MathUtils.DirectionOf(Owner.TurretRotation);
-        var shellOffset = Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE;
-        bool explosive = Owner.Properties.ShellType == ShellID.Explosive;
+        // the original only predicts its shot when the shoot timer rolls over, and fires right after.
+        // tracing and scanning every frame between those ticks can't change the decision, so it only happens on the tick.
+        bool shotTick = ShellFire.TimerSatisfies(Owner.CurrentRandomShoot);
+        if (shotTick || !_hasShotScan)
+            ScanShot();
 
-        // explosive shells blow up destructible blocks, so they don't count as the end of the path
-        Func<Block, bool>? pattern = explosive
-            ? x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter
-            : null;
-
-        // the original's shot check: scan up to 3 straight segments, then test each cone against them
-        _tanksInPathBuffer.Clear();
-        var pathValid = ShotPath.Trace(Owner, Owner.Position + shellOffset.RotatedBy(Owner.TurretRotation), turretDir, _segments, pattern);
-        var cones = pathValid ? ScanShotCones() : default;
-
-        if (explosive) {
-            // last ricochet point = where the final segment starts
-            // ...arbitrary ahh number.
-            if (_segments.Count > 1 && GameUtils.TanksDistance(_segments[^1].Start, Owner.Position) < 150f)
-                tooCloseToExplosiveShell = true;
-        }
-        else {
-            if (_tanksInPathBuffer.Count != Owner.TanksSpotted.Length)
-                Owner.TanksSpotted = [.. _tanksInPathBuffer]; // unavoidable alloc if size changes, but cheaper than constant realloc
-            else
-                _tanksInPathBuffer.CopyTo(Owner.TanksSpotted);
-
-            ShotPathRicochetPoints = GetRicochetPoints();
-            ShotPathTankCollPoints = [];
-        }
+        var cones = _shotCones;
+        tooCloseToExplosiveShell = _tooCloseToExplosiveShell;
 
         // only set if the prediction below overrides the normal path
         List<Tank>? predictedPath = null;
@@ -239,7 +223,7 @@ public partial struct VanillaAISystem {
             return;
 
         if (!DoAttack) return;
-        if (!ShellFire.TimerSatisfies(Owner.CurrentRandomShoot)) return;
+        if (!shotTick) return;
         // if (!Behaviors[2].IsModOf(CurrentRandomShoot)) return;
 
         Owner.CurrentRandomShoot = PRNG.Next(Owner.Parameters.RandomTimerMinShoot, Owner.Parameters.RandomTimerMaxShoot);
@@ -251,7 +235,7 @@ public partial struct VanillaAISystem {
         if (!Owner.SeesTarget || Owner.CurShootCooldown > 0) return;
         if (!Owner.Parameters.PredictsPositions && (findsSelf || findsFriendly)) return;
 
-        Owner.Shoot();
+        Owner.Shoot(false);
     }
     /// <summary>Gets the a <see cref="Tanks.Tank"/> that is hostile and is targetable (with respect to <see cref="Parameters"/>).</summary>
     public readonly Tank? GetAppropriateTarget() {
@@ -369,6 +353,41 @@ public partial struct VanillaAISystem {
             if (GeometryUtils.InCone(position, seg.Start, seg.Direction, coneAngle, seg.Length)) return true;
         }
         return false;
+    }
+
+    // traces the shot from the turret and tests it against every tank
+    void ScanShot() {
+        _hasShotScan = true;
+        _tooCloseToExplosiveShell = false;
+
+        var turretDir = MathUtils.DirectionOf(Owner.TurretRotation);
+        var shellOffset = Vector2.UnitY * Tank.SHELL_SPAWN_DISTANCE;
+        bool explosive = Owner.Properties.ShellType == ShellID.Explosive;
+
+        // explosive shells blow up destructible blocks, so they don't count as the end of the path
+        Func<Block, bool>? pattern = explosive
+            ? x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter
+            : null;
+
+        _tanksInPathBuffer.Clear();
+        var pathValid = ShotPath.Trace(Owner, Owner.Position + shellOffset.RotatedBy(Owner.TurretRotation), turretDir, _segments, pattern);
+        _shotCones = pathValid ? ScanShotCones() : default;
+
+        if (explosive) {
+            // last ricochet point = where the final segment starts
+            // ...arbitrary ahh number.
+            if (_segments.Count > 1 && GameUtils.TanksDistance(_segments[^1].Start, Owner.Position) < 150f)
+                _tooCloseToExplosiveShell = true;
+        }
+        else {
+            if (_tanksInPathBuffer.Count != Owner.TanksSpotted.Length)
+                Owner.TanksSpotted = [.. _tanksInPathBuffer]; // unavoidable alloc if size changes, but cheaper than constant realloc
+            else
+                _tanksInPathBuffer.CopyTo(Owner.TanksSpotted);
+
+            ShotPathRicochetPoints = GetRicochetPoints();
+            ShotPathTankCollPoints = [];
+        }
     }
 
     /// <summary>

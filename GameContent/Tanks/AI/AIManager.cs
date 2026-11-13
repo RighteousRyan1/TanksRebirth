@@ -992,7 +992,6 @@ public static class AIManager {
         AIThread3.Start();
     }
     internal static void UpdateAITanks() {
-
         if (ModLoader.Status != LoadStatus.Complete)
             return;
 

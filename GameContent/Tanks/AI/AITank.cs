@@ -285,6 +285,12 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
         base.Destroy(context, netSend);
 
+        // only play sfx if in single player (and a player exists) or a player was the cause of death.
+        if (context.Source is PlayerTank || (!Client.IsConnected() && PlayerTank.ClientTank is not null)) {
+            const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
+            SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 1f, position: Position3D);
+        }
+
         if (MainMenuUI.IsActive) return;
         if (LevelEditorUI.IsActive) return;
         if (LevelEditorUI.IsEditing) return;
@@ -334,11 +340,6 @@ public partial class AITank : Tank, IHasModContent<ModTank> {
 
             // TODO: nonono, not yet. cosmetics are NOT ready
             // KeyDropLogic(PlayerID.PlayerTankColors[p.PlayerId]);
-        }
-        // only play sfx if in single player (and a player exists) or a player was the cause of death.
-        if (context.Source is PlayerTank || (!Client.IsConnected() && PlayerTank.ClientTank is not null)) {
-            const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
-            SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, position: Position3D);
         }
 
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))

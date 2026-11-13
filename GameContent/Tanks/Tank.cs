@@ -666,7 +666,7 @@ public abstract class Tank(bool ignoresRegister) {
         IsDestroyed = true;
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
-        var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, position: Position3D);
+        var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 1f, position: Position3D);
 
         //if (CameraGlobals.IsUsingFirstPresonCamera)
         //    SoundUtils.CreateSpatialSound(destroy, Position3D, CameraGlobals.PerspectiveCamera.Position, 1.25f);
