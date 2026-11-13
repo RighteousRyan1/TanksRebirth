@@ -6,7 +6,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - Added Tanks Rebirth's first official MOD, "Original Campaign"
     - Has the same randomized missions/tanks as the original, even down to the RNG implementation
-    - You may view the mod's repository and guide for installation [here](link)
+    - You may view the mod's repository and guide for installation [here](https://github.com/RighteousRyan1/TanksRebirth/wiki/Official-Mods)
 - The level editor now remembers the last directory you saved to / loaded from
 
 # Changes
@@ -21,6 +21,14 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Changes Important for Modders
 
+- No need for a `projrefs` folder anymore or a folder containing the game's assemblies.
+    - The game now sets an environment variable on your system locating the last used Tanks Rebirth location
+    - Also, the game creates a `TanksRebirth.targets` file within the `Mods/` folder
+    - Now, just have the `.csproj` file of your mod contain the following:
+```xml
+<!-- You will need to launch the game once so it generates this file in order for it to work -->
+<Import Project="..\TanksRebirth.targets" />
+```
 - Slight changes to mine behavior
 - Various UI changes
 
