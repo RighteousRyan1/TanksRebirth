@@ -171,11 +171,7 @@ public class Explosion : IAITankDanger {
                 // only one client reports each hit, the others get it over the network
                 if (!NetPlay.IsReporter(Owner)) continue;
 
-                // Owner.Damage prevents damage within the method
-                if (Owner == null)
-                    tank.Damage(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion"), true);
-                else
-                    tank.Damage(new TankHurtContextExplosion(this), true);
+                tank.Damage(new TankHurtContextExplosion(this), true);
             }
         }
         if (LifeTime > LingerDuration)

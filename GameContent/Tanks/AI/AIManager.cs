@@ -23,10 +23,13 @@ public static class AIManager {
     const float MPITCH_LOW     = -1 / 3f;
 
     public static readonly List<int> RandomBendShiftTanks = [TankID.Marine, TankID.Pink, TankID.Yellow, TankID.Green];
+
+    // removing this stuff for now until i can brainstorm a proper solution
+    // basically some modifiers straight up do NOT work due to property caching
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
-    public static Dictionary<int, AIParameters> AIParameterDefaults = [];
+    // public static Dictionary<int, AIParameters> AIParameterDefaults = [];
     // /// <summary>The AI parameter defaults for a given tank ID.</summary>
-    public static Dictionary<int, TankProperties> AIPropertyDefaults = [];
+    // public static Dictionary<int, TankProperties> AIPropertyDefaults = [];
     /// <summary>
     /// Fetch the default AI parameters from the given input tank type.
     /// </summary>
@@ -35,8 +38,8 @@ public static class AIManager {
     public static AIParameters GetAIParameters(int tankType) {
         var aiParams = new AIParameters();
 
-        if (AIParameterDefaults.TryGetValue(tankType, out AIParameters? value))
-            return value.Clone();
+        //if (AIParameterDefaults.TryGetValue(tankType, out AIParameters? value))
+        //    return value.Clone();
 
         /*if (!AIParameterDefaults.TryGetValue(tankType, out AIParameters? value)) {
             var json = File.ReadAllText("Owner/tank_" + TankID.Collection.GetKey(tankType) + ".json");
@@ -527,14 +530,14 @@ public static class AIManager {
             #endregion 
         }
 
-        AIParameterDefaults.TryAdd(tankType, aiParams.Clone());
+        // AIParameterDefaults.TryAdd(tankType, aiParams.Clone());
         return aiParams;
     }
     public static TankProperties GetAITankProperties(int tankType) {
         var properties = new TankProperties();
 
-        if (AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value))
-            return value.Clone();
+        //if (AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value))
+        //    return value.Clone();
 
         /*if (!AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value)) {
             var json = File.ReadAllText("Owner/tank_" + TankID.Collection.GetKey(tankType) + ".json");
@@ -888,7 +891,7 @@ public static class AIManager {
                 #endregion
         }
 
-        AIPropertyDefaults.TryAdd(tankType, properties.Clone());
+        //AIPropertyDefaults.TryAdd(tankType, properties.Clone());
         return properties;
     }
     /// <summary>

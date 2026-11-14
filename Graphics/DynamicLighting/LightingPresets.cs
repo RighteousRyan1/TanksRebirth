@@ -350,12 +350,15 @@ public static class LightingPresets {
     /// <summary>Advances the day cycle clock and updates the lighting. Call every update.</summary>
     public static void UpdateDayCycle(Model? room = null) {
         if (Current != Preset.DayCycle) return; 
-        if (!DayCyclePaused)
-            Hour = RoomScene.HourFractional;
+        if (!DayCyclePaused) {
+            // realtime is just determined by day length value...
+            if (IsRealtime)
+                Hour = RoomScene.HourFractional;
+            else if (DayLengthSeconds > 0f)
+                Hour = _hour + RuntimeData.DeltaTime / DayLengthSeconds * 24f;
+        }
 
         // if (!TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)) Hour++;
-            //else if (DayLengthSeconds > 0f)
-            //    Hour = _hour + elapsedSeconds / DayLengthSeconds * 24f;
         ApplyTimeOfDay(SampleDay(_hour), room);
     }
 
