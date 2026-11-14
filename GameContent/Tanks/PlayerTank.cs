@@ -297,7 +297,7 @@ public class PlayerTank : Tank {
 
                 // THIS MUST HAVE A BETTER WAY
                 if (InputUtils.Click() && (UsesKeyboard || KbPlayer == -2)) {
-                    Shoot(false);
+                    Shoot();
                 }
             }
         }
@@ -388,7 +388,7 @@ public class PlayerTank : Tank {
     }
     public override void Shoot(bool netSend = true) {
         PlayerStatistics.ShellsShot++;
-        base.Shoot();
+        base.Shoot(netSend);
     }
     public override void LayMine() {
         PlayerStatistics.MinesLaid++;

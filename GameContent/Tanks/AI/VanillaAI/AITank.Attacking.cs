@@ -235,7 +235,7 @@ public partial struct VanillaAISystem {
         if (!Owner.SeesTarget || Owner.CurShootCooldown > 0) return;
         if (!Owner.Parameters.PredictsPositions && (findsSelf || findsFriendly)) return;
 
-        Owner.Shoot(false);
+        Owner.Shoot();
     }
     /// <summary>Gets the a <see cref="Tanks.Tank"/> that is hostile and is targetable (with respect to <see cref="Parameters"/>).</summary>
     public readonly Tank? GetAppropriateTarget() {
